@@ -1,0 +1,618 @@
+/* ==========================================================================
+   HeroSection - E-commerce Hero (Amazon/Flipkart style)
+   ========================================================================== */
+
+/* Section Container */
+.heroSection {
+  width: 100%;
+  padding: 12px 16px 0;
+}
+
+/* Main Hero Area: Carousel + Sidebar */
+.heroMain {
+  display: flex;
+  gap: 12px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* ==========================================================================
+   Banner Carousel
+   ========================================================================== */
+.carouselContainer {
+  flex: 7;
+  min-width: 0;
+}
+
+.carouselInner {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  height: 340px;
+}
+
+/* Individual Slide */
+.slide {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  padding: 48px 56px;
+  overflow: hidden;
+}
+
+.slideContent {
+  position: relative;
+  z-index: 2;
+  max-width: 480px;
+}
+
+.slideLabel {
+  display: inline-block;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  margin-bottom: 12px;
+  backdrop-filter: blur(4px);
+}
+
+.slideTitle {
+  font-size: 2.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 8px;
+  line-height: 1.15;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.slideSubtitle {
+  font-size: 1.1rem;
+  color: rgba(255, 255, 255, 0.9);
+  margin: 0 0 24px;
+  line-height: 1.5;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+}
+
+.slideCta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 28px;
+  border: none;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #1a1a2e;
+  font-size: 0.95rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.slideCta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
+}
+
+/* Decorative Elements */
+.slideDecor {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+}
+
+.decorCircle1 {
+  position: absolute;
+  width: 300px;
+  height: 300px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  top: -80px;
+  right: -40px;
+}
+
+.decorCircle2 {
+  position: absolute;
+  width: 200px;
+  height: 200px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  bottom: -60px;
+  right: 120px;
+}
+
+.decorCircle3 {
+  position: absolute;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.1);
+  top: 40px;
+  right: 200px;
+}
+
+/* Arrow Buttons */
+.arrowBtn {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 5;
+  transition: all 0.2s ease;
+  opacity: 0;
+  background: rgba(255, 255, 255, 0.9);
+  color: #333;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.carouselInner:hover .arrowBtn {
+  opacity: 1;
+}
+
+.arrowBtn:hover {
+  background: #ffffff;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+
+.arrowLeft {
+  left: 12px;
+}
+
+.arrowRight {
+  right: 12px;
+}
+
+/* Dot Navigation */
+.dotsContainer {
+  position: absolute;
+  bottom: 6px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 0;
+  z-index: 5;
+}
+
+/* The visible dot stays small, but content-box padding + background-clip give
+   each button a ~32px touch target (the padding also spaces the dots apart). */
+.dot {
+  box-sizing: content-box;
+  width: 8px;
+  height: 8px;
+  padding: 13px;
+  border-radius: 50%;
+  border: none;
+  background-color: rgba(255, 255, 255, 0.45);
+  background-clip: content-box;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.dot:hover {
+  background-color: rgba(255, 255, 255, 0.7);
+}
+
+.dotActive {
+  width: 24px;
+  /* 17px on the padding box = 4px radius on the visible (content-box) pill */
+  border-radius: 17px;
+  background-color: #ffffff;
+}
+
+/* ==========================================================================
+   Right Sidebar - Promo Cards
+   ========================================================================== */
+.sidebar {
+  flex: 3;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  min-width: 0;
+}
+
+.promoCard {
+  position: relative;
+  flex: 1;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  min-height: 162px;
+}
+
+.promoCardBg {
+  position: absolute;
+  inset: 0;
+}
+
+.promoCardContent {
+  position: relative;
+  z-index: 2;
+  padding: 20px 24px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.promoTag {
+  display: inline-block;
+  width: fit-content;
+  padding: 3px 10px;
+  border-radius: 4px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+  margin-bottom: 8px;
+  backdrop-filter: blur(4px);
+}
+
+.promoTitle {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 4px;
+  line-height: 1.2;
+}
+
+.promoText {
+  font-size: 0.8rem;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0 0 10px;
+  line-height: 1.4;
+}
+
+.promoLink {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #ffffff;
+  text-decoration: none;
+}
+
+.promoLink svg {
+  transition: transform 0.2s ease;
+}
+
+.promoCard:hover .promoLink svg {
+  transform: translateX(3px);
+}
+
+/* ==========================================================================
+   Category Quick Links
+   ========================================================================== */
+.categoryBar {
+  max-width: 1400px;
+  margin: 16px auto 0;
+  padding: 0;
+}
+
+.categoryScroll {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 8px 4px 12px;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  justify-content: center;
+}
+
+.categoryScroll::-webkit-scrollbar {
+  display: none;
+}
+
+.categoryItem {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  min-width: 88px;
+  padding: 8px 4px;
+  transition: all 0.2s ease;
+}
+
+.categoryIcon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.heroSection[data-theme="dark"] .categoryIcon {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.heroSection[data-theme="light"] .categoryIcon {
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.categoryItem:hover .categoryIcon {
+  transform: scale(1.08);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+
+.categoryLabel {
+  font-size: 0.78rem;
+  font-weight: 600;
+  text-align: center;
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 88px;
+}
+
+.heroSection[data-theme="dark"] .categoryLabel {
+  color: #e2e8f0;
+}
+
+.heroSection[data-theme="light"] .categoryLabel {
+  color: #334155;
+}
+
+/* ==========================================================================
+   Theme-specific overrides
+   ========================================================================== */
+.heroSection[data-theme="dark"] {
+  background-color: #0f172a;
+}
+
+.heroSection[data-theme="light"] {
+  background-color: #f1f3f6;
+}
+
+.heroSection[data-theme="dark"] .carouselInner {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.heroSection[data-theme="light"] .carouselInner {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+.heroSection[data-theme="dark"] .promoCard {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
+
+.heroSection[data-theme="light"] .promoCard {
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+}
+
+/* ==========================================================================
+   Responsive - Tablet (max-width: 1024px)
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .heroSection {
+    padding: 10px 12px 0;
+  }
+
+  .heroMain {
+    gap: 10px;
+  }
+
+  .carouselInner {
+    height: 300px;
+  }
+
+  .slide {
+    padding: 36px 40px;
+  }
+
+  .slideTitle {
+    font-size: 1.85rem;
+  }
+
+  .slideSubtitle {
+    font-size: 1rem;
+    margin-bottom: 20px;
+  }
+
+  .promoTitle {
+    font-size: 1.05rem;
+  }
+
+  .promoCardContent {
+    padding: 16px 18px;
+  }
+}
+
+/* ==========================================================================
+   Responsive - Mobile (max-width: 768px)
+   ========================================================================== */
+@media (max-width: 768px) {
+  .heroSection {
+    padding: 8px 8px 0;
+  }
+
+  .heroMain {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .carouselContainer {
+    flex: none;
+  }
+
+  .carouselInner {
+    height: 220px;
+    border-radius: 10px;
+  }
+
+  .slide {
+    padding: 28px 24px;
+  }
+
+  .slideLabel {
+    font-size: 0.65rem;
+    padding: 3px 10px;
+    margin-bottom: 8px;
+  }
+
+  .slideTitle {
+    font-size: 1.5rem;
+    margin-bottom: 4px;
+  }
+
+  .slideSubtitle {
+    font-size: 0.85rem;
+    margin-bottom: 16px;
+  }
+
+  .slideCta {
+    padding: 10px 20px;
+    font-size: 0.85rem;
+  }
+
+  /* Hide sidebar on mobile */
+  .sidebar {
+    display: none;
+  }
+
+  /* Arrow buttons always visible on mobile (no hover); keep ≥40px for touch */
+  .arrowBtn {
+    opacity: 0.85;
+    width: 40px;
+    height: 40px;
+  }
+
+  .arrowLeft {
+    left: 8px;
+  }
+
+  .arrowRight {
+    right: 8px;
+  }
+
+  .dotsContainer {
+    bottom: 2px;
+    gap: 0;
+  }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .dotActive {
+    width: 18px;
+  }
+
+  /* Category bar scrollable on mobile */
+  .categoryBar {
+    margin-top: 12px;
+  }
+
+  .categoryScroll {
+    justify-content: flex-start;
+    gap: 4px;
+    padding: 4px 8px 8px;
+  }
+
+  .categoryItem {
+    min-width: 76px;
+    gap: 6px;
+    padding: 6px 2px;
+  }
+
+  .categoryIcon {
+    width: 52px;
+    height: 52px;
+  }
+
+  .categoryIcon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .categoryLabel {
+    font-size: 0.7rem;
+    max-width: 76px;
+  }
+}
+
+/* ==========================================================================
+   Responsive - Small Mobile (max-width: 480px)
+   ========================================================================== */
+@media (max-width: 480px) {
+  .heroSection {
+    padding: 6px 6px 0;
+  }
+
+  .carouselInner {
+    height: 190px;
+    border-radius: 8px;
+  }
+
+  .slide {
+    padding: 20px 18px;
+  }
+
+  .slideLabel {
+    font-size: 0.6rem;
+    margin-bottom: 6px;
+  }
+
+  .slideTitle {
+    font-size: 1.25rem;
+  }
+
+  .slideSubtitle {
+    font-size: 0.78rem;
+    margin-bottom: 14px;
+  }
+
+  .slideCta {
+    padding: 8px 16px;
+    font-size: 0.8rem;
+    border-radius: 6px;
+  }
+
+  .arrowBtn {
+    width: 40px;
+    height: 40px;
+  }
+
+  .arrowBtn svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .categoryItem {
+    min-width: 68px;
+  }
+
+  .categoryIcon {
+    width: 46px;
+    height: 46px;
+  }
+
+  .categoryIcon svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .categoryLabel {
+    font-size: 0.65rem;
+    max-width: 68px;
+  }
+}

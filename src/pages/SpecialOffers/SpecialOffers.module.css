@@ -1,0 +1,1228 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Special Offers & Deals Page
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Page Shell ─────────────────────────────────────────────────────────── */
+
+.page {
+  min-height: 100vh;
+  background: #f5f6fa;
+  padding-bottom: 80px;
+}
+
+.dark.page {
+  background: #0c0f1d;
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ── Hero Banner ────────────────────────────────────────────────────────── */
+
+.heroBanner {
+  background: linear-gradient(135deg, #ff6b35 0%, #f7418f 50%, #7b2ff7 100%);
+  padding: 56px 20px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.heroBanner::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 20% 50%, rgba(255, 255, 255, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 80% 50%, rgba(255, 255, 255, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+}
+
+.heroContent {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+.heroInner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.heroTag {
+  display: inline-block;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  padding: 6px 18px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  backdrop-filter: blur(4px);
+}
+
+.heroTitle {
+  font-size: 2.6rem;
+  font-weight: 800;
+  color: #fff;
+  margin: 8px 0 0;
+  line-height: 1.15;
+}
+
+.heroSubtitle {
+  color: rgba(255, 255, 255, 0.88);
+  font-size: 1.05rem;
+  line-height: 1.6;
+  max-width: 520px;
+  margin: 0;
+}
+
+/* Countdown in banner */
+.heroCountdown {
+  margin-top: 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 12px 24px;
+  border-radius: 16px;
+  backdrop-filter: blur(4px);
+}
+
+.countdownLabel {
+  color: rgba(255, 255, 255, 0.8);
+  font-size: 0.85rem;
+  font-weight: 500;
+}
+
+.countdownBoxes {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.countdownUnit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 46px;
+}
+
+.countdownNumber {
+  font-size: 1.4rem;
+  font-weight: 800;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 4px 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.countdownText {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.7);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-top: 4px;
+}
+
+.countdownSep {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: rgba(255, 255, 255, 0.6);
+  margin-bottom: 16px;
+}
+
+/* ── Sections ───────────────────────────────────────────────────────────── */
+
+.section {
+  margin-top: 40px;
+}
+
+.sectionHeader {
+  margin-bottom: 24px;
+}
+
+.sectionTitleRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.sectionTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.dark .sectionTitle {
+  color: #f0f0f5;
+}
+
+.sectionSubtitle {
+  font-size: 0.9rem;
+  color: #6b7280;
+  margin: 4px 0 0;
+}
+
+.dark .sectionSubtitle {
+  color: #9ca3af;
+}
+
+/* ── Coupons Grid ───────────────────────────────────────────────────────── */
+
+.couponGrid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 16px;
+}
+
+.couponCard {
+  display: flex;
+  border-radius: 14px;
+  overflow: hidden;
+  background: #fff;
+  border: 1px dashed #e5e7eb;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+  transition: box-shadow 0.2s;
+}
+
+.couponCard:hover {
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+}
+
+.dark .couponCard {
+  background: #1a1f3a;
+  border-color: rgba(168, 85, 247, 0.25);
+}
+
+.couponLeft {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #7b2ff7, #f7418f);
+  color: #fff;
+  min-width: 100px;
+}
+
+.couponDiscount {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1.1;
+}
+
+.couponLabel {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  opacity: 0.85;
+}
+
+.couponRight {
+  flex: 1;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.couponDesc {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0;
+}
+
+.dark .couponDesc {
+  color: #f0f0f5;
+}
+
+.couponMeta {
+  font-size: 0.75rem;
+  color: #9ca3af;
+  margin: 0;
+}
+
+.couponCodeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.couponCode {
+  background: #f3f4f6;
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #7b2ff7;
+  letter-spacing: 1px;
+  border: 1px dashed #d1d5db;
+}
+
+.dark .couponCode {
+  background: rgba(123, 47, 247, 0.12);
+  border-color: rgba(168, 85, 247, 0.3);
+  color: #c084fc;
+}
+
+.copyBtn {
+  padding: 5px 14px;
+  border: none;
+  border-radius: 6px;
+  background: #7b2ff7;
+  color: #fff;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s;
+  white-space: nowrap;
+}
+
+.copyBtn:hover {
+  background: #6d28d9;
+}
+
+.copyBtn.copied {
+  background: #10b981;
+}
+
+/* Empty / skeleton states for the coupons grid */
+.couponEmpty {
+  text-align: center;
+  padding: 32px 20px;
+  color: #6b7280;
+  font-size: 0.95rem;
+  background: #fff;
+  border: 1px dashed #e5e7eb;
+  border-radius: 14px;
+}
+
+.dark .couponEmpty {
+  background: #1a1f3a;
+  border-color: rgba(168, 85, 247, 0.25);
+  color: #9ca3af;
+}
+
+.couponSkeletonLeft {
+  min-width: 100px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.dark .couponSkeletonLeft {
+  background: linear-gradient(90deg, #1e2340 25%, #2d3154 50%, #1e2340 75%);
+  background-size: 200% 100%;
+}
+
+/* ── Deal of the Day ────────────────────────────────────────────────────── */
+
+.dotdTimer {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #fee2e2;
+  color: #dc2626;
+  padding: 4px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.dark .dotdTimer {
+  background: rgba(220, 38, 38, 0.15);
+  color: #f87171;
+}
+
+.timerIcon {
+  font-size: 1rem;
+}
+
+.dotdGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.dotdCard {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+  transition: transform 0.25s, box-shadow 0.25s;
+  border: 2px solid transparent;
+}
+
+.dotdCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 32px rgba(123, 47, 247, 0.15);
+  border-color: #7b2ff7;
+}
+
+.dark .dotdCard {
+  background: #1a1f3a;
+  border-color: rgba(168, 85, 247, 0.15);
+}
+
+.dark .dotdCard:hover {
+  border-color: #a855f7;
+  box-shadow: 0 12px 32px rgba(168, 85, 247, 0.2);
+}
+
+.dotdImageWrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.dark .dotdImageWrap {
+  background: #151830;
+}
+
+.dotdImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.3s;
+}
+
+.dotdCard:hover .dotdImage {
+  transform: scale(1.05);
+}
+
+.dotdBadge {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: #fff;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  font-weight: 800;
+}
+
+.dotdInfo {
+  padding: 18px;
+}
+
+.dotdName {
+  font-size: 1rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 10px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dark .dotdName {
+  color: #f0f0f5;
+}
+
+.dotdPriceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.dotdSalePrice {
+  font-size: 1.2rem;
+  font-weight: 800;
+  color: #10b981;
+}
+
+.dotdOriginalPrice {
+  font-size: 0.85rem;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.dotdSavings {
+  font-size: 0.82rem;
+  color: #059669;
+  font-weight: 600;
+  margin: 0 0 4px;
+}
+
+.dark .dotdSavings {
+  color: #34d399;
+}
+
+.dotdSavingsAmount {
+  font-weight: 800;
+}
+
+.dotdBtn {
+  margin-top: 12px;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7b2ff7, #f7418f);
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.dotdBtn:hover {
+  opacity: 0.9;
+}
+
+/* ── Category Tabs (fully responsive, never clipped) ────────────────────── */
+
+.tabBarWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+.tabBar {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 2px;
+  flex: 1;
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.tabBar::-webkit-scrollbar {
+  display: none;
+}
+
+/* Edge fades hint that more tabs sit off-screen (hidden at each end). */
+.tabFade {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 44px;
+  pointer-events: none;
+  z-index: 2;
+  transition: opacity 0.2s;
+}
+
+.tabFadeHidden {
+  opacity: 0;
+}
+
+.tabFadeLeft {
+  left: 0;
+  background: linear-gradient(to right, #f5f6fa, rgba(245, 246, 250, 0));
+}
+
+.tabFadeRight {
+  right: 0;
+  background: linear-gradient(to left, #f5f6fa, rgba(245, 246, 250, 0));
+}
+
+.dark .tabFadeLeft {
+  background: linear-gradient(to right, #0c0f1d, rgba(12, 15, 29, 0));
+}
+
+.dark .tabFadeRight {
+  background: linear-gradient(to left, #0c0f1d, rgba(12, 15, 29, 0));
+}
+
+/* Scroll buttons (desktop/tablet); hidden on touch where the strip swipes. */
+.tabScrollBtn {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 1px solid #e5e7eb;
+  background: #fff;
+  color: #4b5563;
+  font-size: 1.3rem;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  transition: opacity 0.2s, transform 0.15s, background 0.2s, visibility 0.2s;
+}
+
+.tabScrollBtn:hover {
+  background: #f3f4f6;
+  transform: scale(1.06);
+}
+
+.tabScrollLeft {
+  margin-right: 6px;
+}
+
+.tabScrollRight {
+  margin-left: 6px;
+}
+
+.tabScrollHidden {
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.dark .tabScrollBtn {
+  background: #1a1f3a;
+  border-color: #2d3154;
+  color: #c7c9e0;
+}
+
+.dark .tabScrollBtn:hover {
+  background: #232845;
+}
+
+.tab {
+  padding: 8px 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 24px;
+  background: #fff;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  white-space: nowrap;
+  scroll-snap-align: start;
+  transition: all 0.2s;
+}
+
+.tab:hover {
+  border-color: #7b2ff7;
+  color: #7b2ff7;
+}
+
+.tab.tabActive {
+  background: linear-gradient(135deg, #7b2ff7, #f7418f);
+  color: #fff;
+  border-color: transparent;
+  font-weight: 600;
+}
+
+.dark .tab {
+  background: #1a1f3a;
+  border-color: #2d3154;
+  color: #9ca3af;
+}
+
+.dark .tab:hover {
+  border-color: #a855f7;
+  color: #c084fc;
+}
+
+.dark .tab.tabActive {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: #fff;
+  border-color: transparent;
+}
+
+/* ── Products Grid ──────────────────────────────────────────────────────── */
+
+.productsGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+
+/* ── Product Card ───────────────────────────────────────────────────────── */
+
+.productCard {
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.05);
+  transition: transform 0.25s, box-shadow 0.25s;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.productCard:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.1);
+}
+
+.dark .productCard {
+  background: #1a1f3a;
+  border: 1px solid rgba(168, 85, 247, 0.1);
+}
+
+.dark .productCard:hover {
+  box-shadow: 0 10px 28px rgba(168, 85, 247, 0.18);
+}
+
+.productImageWrap {
+  position: relative;
+  aspect-ratio: 4 / 3;
+  overflow: hidden;
+  background: #f9fafb;
+}
+
+.dark .productImageWrap {
+  background: #151830;
+}
+
+.productImage {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.35s;
+}
+
+.productCard:hover .productImage {
+  transform: scale(1.06);
+}
+
+.discountBadge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #dc2626, #ef4444);
+  color: #fff;
+  padding: 3px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.wishlistBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.9);
+  border: none;
+  font-size: 1.15rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: transform 0.2s, background 0.2s;
+  color: #9ca3af;
+  line-height: 1;
+}
+
+.wishlistBtn:hover {
+  transform: scale(1.15);
+}
+
+.wishlistBtn.wishlisted {
+  color: #ef4444;
+  background: #fff;
+}
+
+.dark .wishlistBtn {
+  background: rgba(26, 31, 58, 0.85);
+  color: #9ca3af;
+}
+
+.dark .wishlistBtn.wishlisted {
+  color: #ef4444;
+}
+
+.productOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+
+.productCard:hover .productOverlay {
+  opacity: 1;
+}
+
+.quickViewBtn {
+  padding: 8px 22px;
+  background: #fff;
+  color: #7b2ff7;
+  border: none;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.quickViewBtn:hover {
+  background: #f3f4f6;
+}
+
+/* Product Info */
+.productInfo {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+}
+
+.productCategory {
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: #7b2ff7;
+  margin-bottom: 4px;
+}
+
+.dark .productCategory {
+  color: #c084fc;
+}
+
+.productName {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: #1a1a2e;
+  margin: 0 0 8px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.dark .productName {
+  color: #f0f0f5;
+}
+
+/* Star Rating */
+.starRating {
+  display: flex;
+  align-items: center;
+  gap: 1px;
+  margin-bottom: 10px;
+}
+
+.starFull {
+  color: #f59e0b;
+  font-size: 0.85rem;
+}
+
+.starHalf {
+  color: #f59e0b;
+  font-size: 0.85rem;
+  opacity: 0.6;
+}
+
+.starEmpty {
+  color: #d1d5db;
+  font-size: 0.85rem;
+}
+
+.dark .starEmpty {
+  color: #4b5563;
+}
+
+.reviewCount {
+  font-size: 0.72rem;
+  color: #9ca3af;
+  margin-left: 4px;
+}
+
+/* Price */
+.priceRow {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 12px;
+  margin-top: auto;
+  flex-wrap: wrap;
+}
+
+.salePrice {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: #10b981;
+}
+
+.originalPrice {
+  font-size: 0.82rem;
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.discountPercent {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #dc2626;
+}
+
+.addToCartBtn {
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #7b2ff7, #f7418f);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.addToCartBtn:hover {
+  opacity: 0.9;
+}
+
+/* ── Skeleton ───────────────────────────────────────────────────────────── */
+
+.skeletonImage {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+}
+
+.dark .skeletonImage {
+  background: linear-gradient(90deg, #1e2340 25%, #2d3154 50%, #1e2340 75%);
+  background-size: 200% 100%;
+}
+
+.skeletonLine {
+  height: 12px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.4s infinite;
+  margin-bottom: 10px;
+}
+
+.dark .skeletonLine {
+  background: linear-gradient(90deg, #1e2340 25%, #2d3154 50%, #1e2340 75%);
+  background-size: 200% 100%;
+}
+
+.skeletonShort {
+  width: 40%;
+}
+
+.skeletonMedium {
+  width: 75%;
+}
+
+.skeletonFull {
+  width: 100%;
+  height: 36px;
+  border-radius: 10px;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: 200% 0;
+  }
+  100% {
+    background-position: -200% 0;
+  }
+}
+
+/* ── Empty State ────────────────────────────────────────────────────────── */
+
+.emptyState {
+  text-align: center;
+  padding: 80px 20px;
+}
+
+.emptyIcon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+}
+
+.emptyTitle {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #4b5563;
+  margin: 0 0 8px;
+}
+
+.dark .emptyTitle {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.emptyText {
+  color: #9ca3af;
+  max-width: 400px;
+  margin: 0 auto 24px;
+  line-height: 1.6;
+}
+
+.dark .emptyText {
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.emptyBtn {
+  padding: 12px 32px;
+  border: none;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7b2ff7, #f7418f);
+  color: #fff;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.2s;
+}
+
+.emptyBtn:hover {
+  opacity: 0.9;
+}
+
+/* ── Responsive ─────────────────────────────────────────────────────────── */
+
+@media (max-width: 1024px) {
+  .productsGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .dotdGrid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .heroBanner {
+    padding: 40px 16px;
+  }
+
+  .heroTitle {
+    font-size: 1.8rem;
+  }
+
+  .heroSubtitle {
+    font-size: 0.95rem;
+  }
+
+  .heroCountdown {
+    flex-direction: column;
+    gap: 8px;
+    padding: 10px 18px;
+  }
+
+  /* On touch, the tab strip swipes — drop the scroll buttons, slim the fades. */
+  .tabScrollBtn {
+    display: none;
+  }
+
+  .tabFade {
+    width: 28px;
+  }
+
+  .couponGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .couponLeft {
+    min-width: 80px;
+    padding: 16px;
+  }
+
+  .couponDiscount {
+    font-size: 1.1rem;
+  }
+
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .dotdGrid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .dotdCard {
+    display: flex;
+    flex-direction: row;
+  }
+
+  .dotdImageWrap {
+    width: 140px;
+    min-height: 140px;
+    aspect-ratio: unset;
+  }
+
+  .dotdInfo {
+    flex: 1;
+    padding: 14px;
+  }
+
+  .sectionTitle {
+    font-size: 1.25rem;
+  }
+
+  /* Touch-target sizing */
+  .tab {
+    padding: 10px 20px;
+    min-height: 40px;
+  }
+
+  .copyBtn {
+    padding: 10px 14px;
+    min-height: 40px;
+  }
+
+  .quickViewBtn,
+  .addToCartBtn {
+    min-height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .heroBanner {
+    padding: 32px 14px;
+  }
+
+  .heroTitle {
+    font-size: 1.5rem;
+  }
+
+  .countdownNumber {
+    font-size: 1.1rem;
+    padding: 3px 8px;
+  }
+
+  .productsGrid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+
+  .productInfo {
+    padding: 10px 12px 14px;
+  }
+
+  .productName {
+    font-size: 0.82rem;
+  }
+
+  .salePrice {
+    font-size: 0.95rem;
+  }
+
+  .addToCartBtn {
+    padding: 8px;
+    font-size: 0.8rem;
+  }
+
+  .dotdCard {
+    flex-direction: column;
+  }
+
+  .dotdImageWrap {
+    width: 100%;
+    aspect-ratio: 4 / 3;
+  }
+
+  .tab {
+    padding: 6px 14px;
+    font-size: 0.8rem;
+  }
+
+  .couponRight {
+    padding: 12px 14px;
+  }
+
+  .couponCodeRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+}
+
+/* ── Hero "ended" note (timer expired with onExpiry: hide) ──────────────── */
+
+.heroEnded {
+  margin-top: 18px;
+  background: rgba(0, 0, 0, 0.2);
+  color: #fff;
+  padding: 10px 22px;
+  border-radius: 14px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  backdrop-filter: blur(4px);
+}
+
+/* ── Config gate loader ─────────────────────────────────────────────────── */
+
+.pageLoader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+}
+
+.spinner {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 4px solid rgba(123, 47, 247, 0.18);
+  border-top-color: #7b2ff7;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── Unavailable state (admin master toggle off) ────────────────────────── */
+
+.unavailableState {
+  text-align: center;
+  max-width: 540px;
+  margin: 0 auto;
+  padding: 90px 20px;
+}
+
+.unavailableIcon {
+  font-size: 4rem;
+  margin-bottom: 12px;
+}
+
+.unavailableTitle {
+  font-size: 1.9rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  margin: 0 0 10px;
+}
+
+.dark .unavailableTitle {
+  color: #f0f0f5;
+}
+
+.unavailableText {
+  color: #6b7280;
+  line-height: 1.6;
+  margin: 0 auto 24px;
+}
+
+.dark .unavailableText {
+  color: #9ca3af;
+}

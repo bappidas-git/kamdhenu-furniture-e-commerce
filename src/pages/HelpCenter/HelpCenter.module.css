@@ -1,0 +1,74 @@
+.container { max-width: 1000px; margin: 0 auto; padding: 24px 16px 80px; min-height: calc(100vh - 200px); }
+.dark { color: #e2e8f0; }
+.breadcrumb { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; font-size: 0.875rem; color: #64748b; }
+.breadcrumb a { color: #667eea; text-decoration: none; }
+/* Touch-target sizing: grow the breadcrumb hit area without moving the row */
+@media (max-width: 768px) {
+  .breadcrumb a { display: inline-block; padding: 10px 2px; margin: -10px 0; }
+}
+.dark .breadcrumb { color: #94a3b8; }
+.header { text-align: center; margin-bottom: 40px; }
+.header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
+.header p { color: #64748b; margin-bottom: 20px; }
+.dark .header p { color: #94a3b8; }
+.searchBox { max-width: 500px; margin: 0 auto; }
+.searchBox input { width: 100%; padding: 12px 20px; border-radius: 12px; border: 2px solid #e2e8f0; font-size: 1rem; background: #fff; transition: border-color 0.2s; }
+.dark .searchBox input { background: #1e293b; border-color: #334155; color: #e2e8f0; }
+.searchBox input:focus { outline: none; border-color: #667eea; }
+.topics { margin-bottom: 48px; }
+.topics h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; }
+.topicGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+@media (max-width: 768px) { .topicGrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 480px) { .topicGrid { grid-template-columns: 1fr; } }
+.topicCard { padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; text-decoration: none; color: inherit; transition: all 0.3s; }
+.dark .topicCard { background: #1e293b; border-color: #334155; }
+.topicCard:hover { transform: translateY(-4px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); border-color: #667eea; }
+.topicIcon { font-size: 1.5rem; display: block; margin-bottom: 8px; }
+.topicCard h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
+.topicCard p { font-size: 0.85rem; color: #64748b; }
+.dark .topicCard p { color: #94a3b8; }
+.faqSection { margin-bottom: 48px; }
+.faqSection h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 20px; }
+.faqList { display: flex; flex-direction: column; gap: 8px; }
+.faqItem { border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; transition: border-color 0.2s; }
+.dark .faqItem { border-color: #334155; }
+.faqItem.open { border-color: #667eea; }
+.faqQuestion { width: 100%; padding: 16px 20px; background: #fff; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; color: inherit; }
+.dark .faqQuestion { background: #1e293b; color: #e2e8f0; }
+.faqQuestion:hover { background: #f8fafc; }
+.dark .faqQuestion:hover { background: #273349; }
+
+/* Plus icon drawn with pseudo-elements so it can rotate into a cross. */
+.faqToggle { position: relative; flex: 0 0 auto; width: 18px; height: 18px; }
+.faqToggle::before, .faqToggle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; border-radius: 2px; background: #667eea; transform: translate(-50%, -50%); transition: transform 0.28s ease; }
+.faqToggle::after { transform: translate(-50%, -50%) rotate(90deg); }
+.faqItem.open .faqToggle::after { transform: translate(-50%, -50%) rotate(180deg); }
+
+/* Smooth height animation via animatable grid-template-rows (0fr -> 1fr). */
+.faqAnswer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s ease; }
+.faqItem.open .faqAnswer { grid-template-rows: 1fr; }
+.faqAnswerInner { overflow: hidden; min-height: 0; }
+.faqAnswerInner p { padding: 0 20px 16px; margin: 0; color: #475569; line-height: 1.6; font-size: 0.95rem; }
+.dark .faqAnswerInner p { color: #94a3b8; }
+
+@media (prefers-reduced-motion: reduce) {
+  .faqAnswer, .faqToggle::before, .faqToggle::after { transition: none; }
+}
+.noResults { text-align: center; color: #64748b; padding: 24px; }
+.noResults a { color: #667eea; }
+.contactBanner { text-align: center; padding: 40px; border-radius: 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; }
+.contactBanner h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 8px; }
+.contactBanner p { opacity: 0.9; margin-bottom: 12px; }
+.contactMeta { display: flex; gap: 12px; justify-content: center; align-items: center; flex-wrap: wrap; margin-bottom: 20px; font-size: 0.95rem; }
+.contactMeta a { color: #fff; text-decoration: none; font-weight: 600; }
+.contactMeta a:hover { text-decoration: underline; }
+/* Touch-target sizing for the standalone email/phone links on phones */
+@media (max-width: 768px) {
+  .contactMeta a { display: inline-block; padding: 10px 4px; margin: -6px 0; }
+}
+.contactMeta span { opacity: 0.7; }
+.contactActions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; }
+.primaryBtn { padding: 12px 28px; border-radius: 10px; background: #fff; color: #667eea; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+.primaryBtn:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+.secondaryBtn { padding: 12px 28px; border-radius: 10px; border: 2px solid #fff; color: #fff; font-weight: 600; text-decoration: none; transition: all 0.3s; }
+.secondaryBtn:hover { background: rgba(255,255,255,0.15); }
