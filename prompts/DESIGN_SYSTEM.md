@@ -47,6 +47,7 @@ The storefront is a premium, editorial, warm-minimalist boutique: warm paper sur
 | selected-state fill | `--sf-color-accent-soft` |
 | focus | `box-shadow: var(--sf-shadow-focus)` |
 | navy footer / band | `--sf-color-surface-dark` + `--sf-color-on-dark*` |
+| form field on navy (footer newsletter) | fill `--sf-color-on-dark-soft`, boundary `--sf-color-on-dark-border-strong`, errors `--sf-color-on-dark-error` (section 18) |
 | text over photography | `--sf-gradient-scrim` (or `--sf-color-scrim`) + `--sf-color-on-dark` |
 | drawer / modal backdrop | `--sf-color-overlay` |
 
@@ -123,6 +124,9 @@ Why the light accent is `#ae773d` and not the logo's `#ddb185`: no caramel from 
 | `--sf-color-on-dark-muted` | `rgba(250, 247, 242, 0.72)` | 8.46 |
 | `--sf-color-on-dark-border` | `rgba(250, 247, 242, 0.16)` | hairline, decorative |
 | `--sf-color-on-dark-accent` | `#ddb185` | 8.35 (focus ring on navy too) |
+| `--sf-color-on-dark-soft` | `rgba(250, 247, 242, 0.08)` | field fill and subtle tint on navy; on-dark text on it 12.35, on-dark muted 7.18 |
+| `--sf-color-on-dark-border-strong` | `rgba(250, 247, 242, 0.4)` | 3.53 (control boundary on navy, WCAG 1.4.11) |
+| `--sf-color-on-dark-error` | `#ec9483` | 7.12 (error text and invalid border on navy; the light-mode brick `--sf-color-error` measures 2.45 there) |
 | `--sf-color-scrim` | `rgba(11, 31, 63, 0.7)` | — |
 | `--sf-gradient-scrim` | `linear-gradient(to top right, rgba(11, 31, 63, 0.72) 0%, rgba(11, 31, 63, 0.7) 35%, rgba(11, 31, 63, 0) 80%)` | — |
 
@@ -724,3 +728,71 @@ Written by Prompt 07. Files: `src/components/Header/Header.js` (shell), `MegaMen
 - Panel: one instance under the department row, in the DOM only while open; a column per group (eyebrow link + its children), four to a row; a flat department gets a serif introduction (name, description, "Shop all"); the feature column shows the department's admin-managed `image` at 4:5 (`object-fit: cover`, lazy, `onImageError`) with the eyebrow/line/"Shop all <Department>" copy (`navigationContent.js` overrides by slug); every panel ends with "View all departments" (`/products`).
 - Motion: opacity 0 → 1 and `y` −8 → 0 over `--sf-duration` (`TOKENS.motion.duration.base`) with `--sf-ease-out`; exit `duration.fast`; nothing under reduced motion.
 - Interaction model (keyboard and pointer) is documented at the top of `MegaMenu.js` and in `BUILD_LOG.md` (Prompt 07).
+
+---
+
+## 18. Footer and newsletter
+
+Written by Prompt 08. Files: `src/components/Footer/Footer.js` + `.module.css`, `src/components/Newsletter/Newsletter.js` + `.module.css` (the site's only sign-up form).
+
+### 18.1 Structure and grid
+
+| Block | Content | Layout |
+|---|---|---|
+| Newsletter band | `Newsletter` inside a `Reveal`: eyebrow `h2` "Newsletter", the serif `NEWSLETTER_LINE`, labelled email field, `.sf-btn--paper` "Subscribe" | stacked below 1024px; on the 12-column grid from 1024px (intro 1–6, form 7–12) and from 1280px (intro 1–7, form 9–12, in line with the Contact column) |
+| Columns | brand (white `BrandLogo` at 40px linking home, `BRAND_PROMISE`, social icons) · Shop · Help · Contact | stacked below 768px, where Shop, Help and Contact collapse; two columns at 768–1023px (Brand, Shop / Help, Contact, in DOM order); 12 columns from 1024px, spans 4 / 2 / 2 / 4 |
+| Trust bar | the promises the data backs (18.3) and the "We accept" marks (18.4) | wraps; a hairline above and below |
+| Bottom bar | © year `APP_NAME` · Terms · Privacy · Cookies · "Prices in INR" | wraps |
+
+- `.sf-container--wide` (1440px + gutter), like the header. `--sf-color-surface-dark` in both modes; text `--sf-color-on-dark`; links and secondary text `--sf-color-on-dark-muted`; rules `1px solid var(--sf-color-on-dark-border)`. No fills, shadows or gradients.
+- Vertical rhythm: the band and the columns are each padded by half of `--sf-section-y`, so one full `--sf-section-y` separates the newsletter from the columns with the hairline between them. The band has no rule on the navy edge itself: on paper pages a rule there reads as a seam.
+- Column headings are `h2`s styled as eyebrows (12px, 500, 0.16em, uppercase) in `--sf-color-on-dark`; the newsletter eyebrow uses `--sf-color-on-dark-muted` (section 5.6).
+- Links: 15px muted; on hover `--sf-color-on-dark` with a 1px `--sf-color-on-dark-accent` underline (the only motion besides the band's `Reveal`); focus is a 2px `--sf-color-on-dark-accent` outline. Rows are 32px on desktop and 44px below 768px and on touch screens (`pointer: coarse`).
+- Phones: each link column is `<h2><button aria-expanded aria-controls>` over a panel with the `hidden` attribute; the plus/minus is drawn in `currentColor` and swaps without animating. The switch is `useMediaQuery("(max-width: 767.98px)", { noSsr: true })`, so the first paint is already right.
+- Forced colours: the white logo keeps a navy ground (`forced-color-adjust: none`), icons follow `CanvasText`, and the payment marks inherit the forced text colour.
+
+### 18.2 Form fields on navy
+
+`.sf-field`, `.sf-input` and `.sf-btn--paper`, restyled by module classes (the same weight as the primitives' states and later in the bundle, so no `!important`). Reuse this for any form on navy or photography.
+
+| Part | Tokens |
+|---|---|
+| field fill | `--sf-color-on-dark-soft` (paper 8%) |
+| boundary | `--sf-color-on-dark-border-strong` (3.53 : 1); hover `--sf-color-on-dark-muted` |
+| text / placeholder / caret | `--sf-color-on-dark` / `--sf-color-on-dark-muted` / `--sf-color-on-dark-accent` |
+| focus | border `--sf-color-on-dark-accent` + `0 0 0 2px var(--sf-color-on-dark-accent), 0 0 0 5px var(--sf-color-focus-halo)` (the paper button's ring) |
+| invalid | border and `.sf-field__error` text `--sf-color-on-dark-error` (7.12 : 1) |
+| label | `.sf-field__label` in `--sf-color-on-dark-muted` |
+| native UI | `color-scheme: dark` (autofill, spellcheck) |
+
+### 18.3 Trust bar rules
+
+An item renders only when the data backs it, and stays absent until its read settles (no flash of a claim). The rules are the product page's (`resolveTrustBadgeDetail` in `tokens.js`).
+
+| Item | Shown when | Source |
+|---|---|---|
+| Secure payment | always (store-attested policy) | — |
+| Cash on Delivery | `resolveTrustBadgeDetail("cod", { settings })` is not null, i.e. `settings.payment.codEnabled` | `apiService.settings.get()`, read once |
+| Easy returns · N days | `resolveTrustBadgeDetail("easyReturns")` is not null, i.e. `STOREFRONT_CONFIG.returnsWindowDays` > 0 | config |
+| Free delivery · Above ₹X | `resolveTrustBadgeDetail("freeShipping", { shipping })` is not null (the lowest positive `freeAbove`); its string is shown as is | `apiService.shipping.getMethods()`, read once |
+
+The COD payment mark follows the COD rule. No "24/7", guarantees, counts or other unbacked claims.
+
+### 18.4 Payment marks
+
+Four one-colour line marks on a 48 × 32 card (VISA, two rings for Mastercard, UPI, COD), 28px tall, each `role="img"` with a name, in a list labelled by the visible "We accept". The colour is set on the list (`--sf-color-on-dark`) and inherited by the SVGs (so a contrast theme's text colour reaches them); the frame is `currentColor` at 40% (= `--sf-color-on-dark-border-strong`); the texts use `font-family: inherit` at 600.
+
+### 18.5 BottomNav clearance
+
+Up to 768px the footer adds `padding-bottom: calc(var(--sf-space-24) + env(safe-area-inset-bottom, 0px))`, so the fixed BottomNav (60–79px today, plus the inset) never covers the bottom bar; the navy runs on beneath it. **Prompt 09:** keep the nav within 96px plus the inset, or raise this value.
+
+### 18.6 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Footer field text (on-dark on the paper-8% fill over navy) (both modes) | 12.35 ✓ | 12.35 ✓ | 4.5:1 |
+| Footer field placeholder (on-dark muted on the fill) (both modes) | 7.18 ✓ | 7.18 ✓ | 4.5:1 |
+| Footer field boundary (on-dark-border-strong) on navy (both modes) | 3.53 ✓ | 3.53 ✓ | 3:1 |
+| Footer error text and invalid border (on-dark-error) on navy (both modes) | 7.12 ✓ | 7.12 ✓ | 4.5:1 |
+
+Every other footer pairing is already in section 14 (on-dark, on-dark muted and the caramel focus ring on navy, the paper button and its hover).

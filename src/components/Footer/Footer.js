@@ -1,357 +1,469 @@
-import React, { useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "../../context/ThemeContext";
+import { useMediaQuery } from "@mui/material";
 import { useDealsConfig } from "../../context/DealsConfigContext";
 import apiService from "../../services/api";
+import { categoryParam, getMainMenuCategories } from "../../utils/categories";
 import {
   APP_NAME,
-  SUPPORT_EMAIL,
-  SUPPORT_PHONE,
-  SUPPORT_ADDRESS,
-  SUPPORT_HOURS,
   SOCIAL_LINKS,
+  SUPPORT_ADDRESS,
+  SUPPORT_EMAIL,
+  SUPPORT_HOURS,
+  SUPPORT_PHONE,
 } from "../../utils/constants";
-import { isEmailValid } from "../../utils/helpers";
+import { STOREFRONT_CONFIG, resolveTrustBadgeDetail } from "../../theme/tokens";
+import { BRAND_PROMISE } from "../../content/brandContent";
+import { BrandLogo, Reveal } from "../ui";
+import Newsletter from "../Newsletter/Newsletter";
 import styles from "./Footer.module.css";
 
+// =============================================================================
+// Footer — navy in both modes
+// =============================================================================
+//
+//   newsletter band   the site's one sign-up form (Newsletter), revealed
+//   columns           brand (white logo, promise, social) · Shop · Help ·
+//                     Contact; 4/2/2/4 of 12 from 1024px, two columns from
+//                     768px, stacked below with Shop/Help/Contact collapsing
+//                     behind their headings
+//   trust bar         only promises the data backs, plus the payment marks
+//   bottom bar        copyright, legal links, currency note
+//
+// Data: categories (the departments), settings (COD) and shipping methods
+// (free-delivery threshold), each read once on mount. The links never wait
+// for them; until a read settles its items are simply not shown, and a
+// failed read counts as no data, so the footer can never claim something
+// the store has not confirmed.
+// =============================================================================
+
+const SHOP_LINKS = [
+  { label: "All furniture", to: "/products" },
+  { label: "New arrivals", to: "/products?sort=newest" },
+  { label: "Best sellers", to: "/products?sort=popular" },
+];
+
+const HELP_LINKS = [
+  { label: "My account", to: "/profile" },
+  { label: "Track order", to: "/orders" },
+  { label: "Help centre", to: "/help" },
+  { label: "Returns & refunds", to: "/refund" },
+  { label: "Contact", to: "/support" },
+  { label: "Our story", to: "/about" },
+];
+
+const LEGAL_LINKS = [
+  { label: "Terms", to: "/terms" },
+  { label: "Privacy", to: "/privacy" },
+  { label: "Cookies", to: "/cookies" },
+];
+
+// Brand glyphs, drawn in currentColor. Only profiles with a URL in
+// SOCIAL_LINKS are shown.
+const SOCIAL = [
+  {
+    key: "WHATSAPP",
+    label: "WhatsApp",
+    path: "M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z",
+  },
+  {
+    key: "INSTAGRAM",
+    label: "Instagram",
+    path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
+  },
+  {
+    key: "FACEBOOK",
+    label: "Facebook",
+    path: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
+  },
+  {
+    key: "YOUTUBE",
+    label: "YouTube",
+    path: "M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
+  },
+  {
+    key: "TWITTER",
+    label: "X (Twitter)",
+    path: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
+  },
+];
+
+// Outline icons for the trust bar (the same drawings as the product page's
+// TrustBadges), stroked in currentColor.
+const TRUST_ICONS = {
+  lock: (
+    <>
+      <rect x="3" y="11" width="18" height="11" rx="2" />
+      <path d="M7 11V7a5 5 0 0110 0v4" />
+    </>
+  ),
+  cash: (
+    <>
+      <rect x="2" y="6" width="20" height="12" rx="2" />
+      <circle cx="12" cy="12" r="2.5" />
+      <path d="M6 12h.01M18 12h.01" />
+    </>
+  ),
+  rotate: (
+    <>
+      <polyline points="1 4 1 10 7 10" />
+      <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
+    </>
+  ),
+  truck: (
+    <>
+      <rect x="1" y="3" width="15" height="13" />
+      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
+      <circle cx="5.5" cy="18.5" r="2.5" />
+      <circle cx="18.5" cy="18.5" r="2.5" />
+    </>
+  ),
+};
+
+// The accepted-payment marks: one-colour line drawings on a 48 × 32 card
+// (the frame is drawn by CSS-coloured strokes, the marks in currentColor).
+// Cards and UPI match the checkout's options; COD shows only while the
+// store has cash on delivery switched on.
+const CardFrame = () => <rect className={styles.markFrame} x="0.5" y="0.5" width="47" height="31" rx="3.5" />;
+const PAYMENT_MARKS = [
+  {
+    id: "visa",
+    label: "Visa",
+    art: (
+      <text
+        x="24"
+        y="20.5"
+        textAnchor="middle"
+        fontSize="12.5"
+        fontStyle="italic"
+        className={styles.markText}
+      >
+        VISA
+      </text>
+    ),
+  },
+  {
+    id: "mastercard",
+    label: "Mastercard",
+    art: (
+      <>
+        <circle cx="19.5" cy="16" r="7" className={styles.markRing} />
+        <circle cx="28.5" cy="16" r="7" className={styles.markRing} />
+      </>
+    ),
+  },
+  {
+    id: "upi",
+    label: "UPI",
+    art: (
+      <text x="24" y="20.5" textAnchor="middle" fontSize="12" className={styles.markText}>
+        UPI
+      </text>
+    ),
+  },
+  {
+    id: "cod",
+    label: "Cash on delivery",
+    cod: true,
+    art: (
+      <text x="24" y="20" textAnchor="middle" fontSize="10.5" className={styles.markText}>
+        COD
+      </text>
+    ),
+  },
+];
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, "")}`;
+const NewTab = () => <span className="sf-visually-hidden"> (opens in a new tab)</span>;
+
+// Categories, settings and shipping methods, each read once. A failed read
+// leaves the empty value in place (no departments, no COD, no threshold).
+const useFooterData = () => {
+  const [data, setData] = useState({ categories: [], settings: null, shipping: null });
+
+  useEffect(() => {
+    let active = true;
+    const read = (key, request, normalise) =>
+      request()
+        .then(normalise)
+        .catch(() => normalise(null))
+        .then((value) => {
+          if (active) setData((prev) => ({ ...prev, [key]: value }));
+        });
+    const list = (value) => (Array.isArray(value) ? value : []);
+    read("categories", () => apiService.categories.getAll(), list);
+    read("settings", () => apiService.settings.get(), (value) => value || {});
+    read("shipping", () => apiService.shipping.getMethods(), list);
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return data;
+};
+
+// A link column. On phones the heading becomes a disclosure button that
+// shows and hides the list; from 768px the list is always shown.
+const FooterColumn = ({ id, title, collapsible, open, onToggle, className, children }) => {
+  const panelId = `sf-footer-${id}`;
+  return (
+    <div className={cx(styles.column, className)}>
+      <h2 className={styles.heading}>
+        {collapsible ? (
+          <button
+            type="button"
+            className={styles.toggle}
+            aria-expanded={open}
+            aria-controls={panelId}
+            onClick={onToggle}
+          >
+            {title}
+            <span className={styles.toggleIcon} aria-hidden="true" />
+          </button>
+        ) : (
+          title
+        )}
+      </h2>
+      <div id={panelId} className={styles.panel} hidden={collapsible && !open}>
+        {children}
+      </div>
+    </div>
+  );
+};
+
+const LinkList = ({ links, className, ...rest }) => (
+  <ul className={cx(styles.links, className)} {...rest}>
+    {links.map((link) => (
+      <li key={link.to}>
+        <Link to={link.to} className={styles.link}>
+          {link.label}
+        </Link>
+      </li>
+    ))}
+  </ul>
+);
+
 const Footer = () => {
-  const { isDarkMode } = useTheme();
-  const { enabled: dealsEnabled } = useDealsConfig();
-  const [email, setEmail] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [subscribeStatus, setSubscribeStatus] = useState("idle"); // idle | success | error
-  const [errorMsg, setErrorMsg] = useState("");
+  const { enabled: dealsEnabled, loading: dealsLoading } = useDealsConfig();
+  const { categories, settings, shipping } = useFooterData();
+  const collapsible = useMediaQuery("(max-width: 767.98px)", { noSsr: true });
+  const [openColumns, setOpenColumns] = useState({});
+  const toggleColumn = (id) => setOpenColumns((prev) => ({ ...prev, [id]: !prev[id] }));
 
-  const handleSubscribe = async (e) => {
-    e.preventDefault();
-    if (isSubmitting) return;
+  // One "Offers" link, only once the deals page is known to be on.
+  const showOffers = dealsEnabled && !dealsLoading;
+  const shopLinks = useMemo(
+    () => (showOffers ? [...SHOP_LINKS, { label: "Offers", to: "/special-offers" }] : SHOP_LINKS),
+    [showOffers]
+  );
 
-    const trimmed = email.trim();
-    if (!isEmailValid(trimmed)) {
-      setSubscribeStatus("error");
-      setErrorMsg("Please enter a valid email address.");
-      return;
-    }
+  // The admin-curated departments, with the header's canonical links.
+  const departments = useMemo(
+    () =>
+      getMainMenuCategories(categories).map((category) => ({
+        label: category.name,
+        to: `/products?category=${categoryParam(category)}`,
+      })),
+    [categories]
+  );
 
-    setIsSubmitting(true);
-    try {
-      await apiService.leads.createNewsletter(trimmed);
-      setSubscribeStatus("success");
-      setEmail("");
-      // Reset back to the input after a few seconds so visitors can add another.
-      setTimeout(() => setSubscribeStatus("idle"), 4000);
-    } catch {
-      // Surface genuine failures instead of a fake "success". We still don't
-      // reveal whether this address was already subscribed — the API returns a
-      // uniform response for that — but a network/5xx error must not look like
-      // a win, otherwise real failures stay invisible and nothing is recorded.
-      setSubscribeStatus("error");
-      setErrorMsg("Something went wrong. Please try again.");
-    } finally {
-      setIsSubmitting(false);
-    }
-  };
+  // The same rules as the product page's TrustBadges (resolveTrustBadgeDetail).
+  const codAvailable = resolveTrustBadgeDetail("cod", { settings }) !== null;
+  const trustItems = useMemo(() => {
+    const days = STOREFRONT_CONFIG.returnsWindowDays;
+    const freeDelivery = resolveTrustBadgeDetail("freeShipping", { shipping });
+    return [
+      { id: "securePayment", icon: "lock", label: "Secure payment" },
+      codAvailable && { id: "cod", icon: "cash", label: "Cash on Delivery" },
+      resolveTrustBadgeDetail("easyReturns") !== null && {
+        id: "easyReturns",
+        icon: "rotate",
+        label: "Easy returns",
+        detail: `${days} ${days === 1 ? "day" : "days"}`,
+      },
+      freeDelivery && { id: "freeShipping", icon: "truck", label: "Free delivery", detail: freeDelivery },
+    ].filter(Boolean);
+  }, [codAvailable, shipping]);
 
-  // Every target below resolves to a real route in App.js — no path here hits
-  // the catch-all redirect to "/". "Deals" shares the Special Offers hub (that
-  // page is titled "Special Offers & Deals"); New Arrivals / Best Sellers are
-  // sort deep-links the Products page understands (newest / popular).
-  const quickLinks = [
-    { label: "Products", path: "/products" },
-    { label: "New Arrivals", path: "/products?sort=newest" },
-    // "Deals" / "Special Offers" point at the deals page — dropped when the
-    // admin disables it so the footer never shows a dead link.
-    { label: "Deals", path: "/special-offers", deals: true },
-    { label: "Best Sellers", path: "/products?sort=popular" },
-    { label: "Special Offers", path: "/special-offers", deals: true },
-  ].filter((link) => dealsEnabled || !link.deals);
+  const paymentMarks = PAYMENT_MARKS.filter((mark) => !mark.cod || codAvailable);
+  const socialLinks = SOCIAL.map((s) => ({ ...s, url: SOCIAL_LINKS[s.key] })).filter((s) => s.url);
+  const year = new Date().getFullYear();
 
-  // Shipping Info and FAQs both live in the Help Center (it covers shipping
-  // topics and the FAQ accordion); Returns maps to the Refund Policy page.
-  const customerServiceLinks = [
-    { label: "My Account", path: "/profile" },
-    { label: "Order Tracking", path: "/orders" },
-    { label: "Shipping Info", path: "/help" },
-    { label: "Returns & Exchange", path: "/refund" },
-    { label: "FAQs", path: "/help" },
-  ];
-
-  // Social links are sourced from constants (SOCIAL_LINKS) so a new store
-  // updates them in one place; only entries with a URL are rendered.
-  const socialLinks = [
-    {
-      label: "Facebook",
-      url: SOCIAL_LINKS.FACEBOOK,
-      path: "M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z",
-    },
-    {
-      label: "Twitter",
-      url: SOCIAL_LINKS.TWITTER,
-      path: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
-    },
-    {
-      label: "Instagram",
-      url: SOCIAL_LINKS.INSTAGRAM,
-      path: "M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 100 12.324 6.162 6.162 0 000-12.324zM12 16a4 4 0 110-8 4 4 0 010 8zm6.406-11.845a1.44 1.44 0 100 2.881 1.44 1.44 0 000-2.881z",
-    },
-    {
-      label: "YouTube",
-      url: SOCIAL_LINKS.YOUTUBE,
-      path: "M23.498 6.186a3.016 3.016 0 00-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 00.502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 002.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 002.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z",
-    },
-  ].filter((s) => s.url);
-
-  const currentYear = new Date().getFullYear();
+  const column = (id) => ({
+    id,
+    collapsible,
+    open: Boolean(openColumns[id]),
+    onToggle: () => toggleColumn(id),
+  });
 
   return (
-    <footer
-      className={styles.footer}
-      data-theme={isDarkMode ? "dark" : "light"}
-    >
-      {/* Newsletter Section */}
-      <section className={styles.newsletter}>
-        <div className={styles.container}>
-          <div className={styles.newsletterInner}>
-            <div className={styles.newsletterText}>
-              <h3 className={styles.newsletterTitle}>
-                Subscribe to our newsletter
-              </h3>
-              <p className={styles.newsletterDesc}>
-                Get the latest deals, new arrivals, and exclusive offers
-                delivered to your inbox.
-              </p>
-            </div>
-            <form onSubmit={handleSubscribe} className={styles.newsletterForm} noValidate>
-              <div className={styles.inputGroup}>
-                <input
-                  type="email"
-                  placeholder={
-                    subscribeStatus === "success"
-                      ? "Subscribed successfully!"
-                      : "Enter your email address"
-                  }
-                  value={email}
-                  onChange={(e) => {
-                    setEmail(e.target.value);
-                    if (subscribeStatus === "error") setSubscribeStatus("idle");
-                  }}
-                  className={`${styles.emailInput} ${
-                    subscribeStatus === "error" ? styles.emailInputError : ""
-                  }`}
-                  disabled={isSubmitting || subscribeStatus === "success"}
-                  aria-label="Email address"
-                  aria-invalid={subscribeStatus === "error"}
-                />
-                <button
-                  type="submit"
-                  className={styles.subscribeBtn}
-                  disabled={isSubmitting || subscribeStatus === "success"}
-                >
-                  {isSubmitting
-                    ? "Subscribing..."
-                    : subscribeStatus === "success"
-                    ? "Subscribed"
-                    : "Subscribe"}
-                </button>
-              </div>
-              {subscribeStatus === "error" && (
-                <p className={styles.newsletterError} role="alert">
-                  {errorMsg}
-                </p>
-              )}
-              {subscribeStatus === "success" && (
-                <p className={styles.newsletterSuccess} role="status">
-                  Thanks for subscribing! Check your inbox for exclusive deals.
-                </p>
-              )}
-            </form>
-          </div>
-        </div>
-      </section>
+    <footer className={styles.footer} aria-label="Footer">
+      <div className="sf-container sf-container--wide">
+        <Reveal className={styles.band}>
+          <Newsletter />
+        </Reveal>
 
-      {/* Main Footer */}
-      <div className={styles.mainFooter}>
-        <div className={styles.container}>
-          <div className={styles.footerGrid}>
-            {/* Column 1: About */}
-            <div className={styles.footerCol}>
-              <h4 className={styles.brandName}>{APP_NAME}</h4>
-              <p className={styles.aboutText}>
-                Your one-stop destination for quality products at unbeatable
-                prices. We are committed to delivering the best online shopping
-                experience with fast shipping and excellent customer service.
-              </p>
-              <div className={styles.socialIcons}>
+        <div className={styles.columns}>
+          <div className={styles.brand}>
+            <Link to="/" className={styles.logoLink}>
+              <BrandLogo variant="white" height={40} />
+            </Link>
+            <p className={styles.promise}>{BRAND_PROMISE}</p>
+            {socialLinks.length > 0 && (
+              <ul className={styles.social} aria-label="Social media">
                 {socialLinks.map((social) => (
-                  <a
-                    key={social.label}
-                    href={social.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={styles.socialLink}
-                    aria-label={social.label}
-                  >
-                    <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                      <path d={social.path} />
-                    </svg>
-                  </a>
-                ))}
-              </div>
-            </div>
-
-            {/* Column 2: Quick Links */}
-            <div className={styles.footerCol}>
-              <h4 className={styles.colTitle}>Quick Links</h4>
-              <ul className={styles.linkList}>
-                {quickLinks.map((link) => (
-                  <li key={link.label}>
-                    <Link to={link.path} className={styles.footerLink}>
-                      {link.label}
-                    </Link>
+                  <li key={social.key}>
+                    <a
+                      href={social.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.socialLink}
+                      aria-label={`${social.label} (opens in a new tab)`}
+                    >
+                      <svg
+                        viewBox="0 0 24 24"
+                        width="20"
+                        height="20"
+                        fill="currentColor"
+                        aria-hidden="true"
+                        focusable="false"
+                      >
+                        <path d={social.path} />
+                      </svg>
+                    </a>
                   </li>
                 ))}
               </ul>
-            </div>
+            )}
+          </div>
 
-            {/* Column 3: Customer Service */}
-            <div className={styles.footerCol}>
-              <h4 className={styles.colTitle}>Customer Service</h4>
-              <ul className={styles.linkList}>
-                {customerServiceLinks.map((link) => (
-                  <li key={link.label}>
-                    <Link to={link.path} className={styles.footerLink}>
-                      {link.label}
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
+          <FooterColumn title="Shop" className={styles.shop} {...column("shop")}>
+            <LinkList links={shopLinks} />
+            {departments.length > 0 && (
+              <LinkList links={departments} className={styles.departments} aria-label="Departments" />
+            )}
+          </FooterColumn>
 
-            {/* Column 4: Contact Us */}
-            <div className={styles.footerCol}>
-              <h4 className={styles.colTitle}>Contact Us</h4>
+          <FooterColumn title="Help" className={styles.help} {...column("help")}>
+            <LinkList links={HELP_LINKS} />
+          </FooterColumn>
+
+          <FooterColumn title="Contact" className={styles.contact} {...column("contact")}>
+            <address className={styles.address}>
               <ul className={styles.contactList}>
-                <li className={styles.contactItem}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" className={styles.contactIcon}>
-                    <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5a2.5 2.5 0 010-5 2.5 2.5 0 010 5z" />
-                  </svg>
-                  <span>{SUPPORT_ADDRESS}</span>
-                </li>
-                <li className={styles.contactItem}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" className={styles.contactIcon}>
-                    <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-                  </svg>
-                  <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.contactLink}>
-                    {SUPPORT_EMAIL}
-                  </a>
-                </li>
-                <li className={styles.contactItem}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" className={styles.contactIcon}>
-                    <path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z" />
-                  </svg>
-                  <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`} className={styles.contactLink}>
-                    {SUPPORT_PHONE}
-                  </a>
-                </li>
-                <li className={styles.contactItem}>
-                  <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18" className={styles.contactIcon}>
-                    <path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2zM12 20c-4.42 0-8-3.58-8-8s3.58-8 8-8 8 3.58 8 8-3.58 8-8 8zm.5-13H11v6l5.25 3.15.75-1.23-4.5-2.67z" />
-                  </svg>
-                  <span>{SUPPORT_HOURS}</span>
-                </li>
+                {SUPPORT_ADDRESS && <li className={styles.contactText}>{SUPPORT_ADDRESS}</li>}
+                {SUPPORT_EMAIL && (
+                  <li>
+                    <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.link}>
+                      {SUPPORT_EMAIL}
+                    </a>
+                  </li>
+                )}
+                {SUPPORT_PHONE && (
+                  <li>
+                    <a
+                      href={telHref(SUPPORT_PHONE)}
+                      className={styles.link}
+                      aria-label={`Call ${SUPPORT_PHONE}`}
+                    >
+                      {SUPPORT_PHONE}
+                    </a>
+                  </li>
+                )}
+                {SOCIAL_LINKS.WHATSAPP && (
+                  <li>
+                    <a
+                      href={SOCIAL_LINKS.WHATSAPP}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={styles.link}
+                    >
+                      Message us on WhatsApp
+                      <NewTab />
+                    </a>
+                  </li>
+                )}
+                {SUPPORT_HOURS && <li className={styles.contactText}>{SUPPORT_HOURS}</li>}
               </ul>
-            </div>
-          </div>
+            </address>
+          </FooterColumn>
         </div>
-      </div>
 
-      {/* Trust & Payment Bar */}
-      <div className={styles.trustBar}>
-        <div className={styles.container}>
-          <div className={styles.trustBarInner}>
-            {/* Payment Methods */}
-            <div className={styles.paymentMethods}>
-              <span className={styles.paymentLabel}>We Accept:</span>
-              <div className={styles.paymentIcons}>
-                <span className={styles.paymentBadge} title="Visa">
-                  <svg viewBox="0 0 48 32" width="40" height="26">
-                    <rect width="48" height="32" rx="4" fill="#1A1F71" />
-                    <text x="24" y="20" textAnchor="middle" fill="#FFFFFF" fontSize="12" fontWeight="bold" fontFamily="Arial">VISA</text>
-                  </svg>
+        <div className={styles.trust}>
+          <ul className={styles.trustList} aria-label="Our promises">
+            {trustItems.map((item) => (
+              <li key={item.id} className={styles.trustItem}>
+                <svg
+                  className={styles.trustIcon}
+                  viewBox="0 0 24 24"
+                  width="20"
+                  height="20"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                  focusable="false"
+                >
+                  {TRUST_ICONS[item.icon]}
+                </svg>
+                <span>
+                  {item.label}
+                  {item.detail && (
+                    <>
+                      <span className={`sf-divider--dot ${styles.dot}`} aria-hidden="true" />
+                      <span className="sf-visually-hidden">, </span>
+                      <span className={styles.trustDetail}>{item.detail}</span>
+                    </>
+                  )}
                 </span>
-                <span className={styles.paymentBadge} title="Mastercard">
-                  <svg viewBox="0 0 48 32" width="40" height="26">
-                    <rect width="48" height="32" rx="4" fill="#252525" />
-                    <circle cx="19" cy="16" r="8" fill="#EB001B" />
-                    <circle cx="29" cy="16" r="8" fill="#F79E1B" />
-                    <path d="M24 10.34a8 8 0 010 11.32 8 8 0 000-11.32z" fill="#FF5F00" />
-                  </svg>
-                </span>
-                <span className={styles.paymentBadge} title="UPI">
-                  <svg viewBox="0 0 48 32" width="40" height="26">
-                    <rect width="48" height="32" rx="4" fill="#EDEDED" />
-                    <text x="24" y="20" textAnchor="middle" fill="#00897B" fontSize="11" fontWeight="bold" fontFamily="Arial">UPI</text>
-                  </svg>
-                </span>
-                <span className={styles.paymentBadge} title="Cash on Delivery">
-                  <svg viewBox="0 0 48 32" width="40" height="26">
-                    <rect width="48" height="32" rx="4" fill="#4CAF50" />
-                    <text x="24" y="20" textAnchor="middle" fill="#FFFFFF" fontSize="10" fontWeight="bold" fontFamily="Arial">COD</text>
-                  </svg>
-                </span>
-              </div>
-            </div>
+              </li>
+            ))}
+          </ul>
 
-            {/* Trust Badges */}
-            <div className={styles.trustBadges}>
-              <div className={styles.trustBadge}>
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-2 16l-4-4 1.41-1.41L10 14.17l6.59-6.59L18 9l-8 8z" />
-                </svg>
-                <span>Secure Payment</span>
-              </div>
-              <div className={styles.trustBadge}>
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z" />
-                </svg>
-                <span>Easy Returns</span>
-              </div>
-              <div className={styles.trustBadge}>
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M18 18.5a1.5 1.5 0 001.5-1.5 1.5 1.5 0 00-1.5-1.5 1.5 1.5 0 00-1.5 1.5 1.5 1.5 0 001.5 1.5zM19.5 9.5h-3V12h4.46L19.5 9.5zM6 18.5A1.5 1.5 0 007.5 17 1.5 1.5 0 006 15.5 1.5 1.5 0 004.5 17 1.5 1.5 0 006 18.5zM20 8l3 4v5h-2c0 1.66-1.34 3-3 3s-3-1.34-3-3H9c0 1.66-1.34 3-3 3s-3-1.34-3-3H1V6c0-1.11.89-2 2-2h14v4h3zM3 6v9h.76c.55-.61 1.35-1 2.24-1 .89 0 1.69.39 2.24 1H15V6H3z" />
-                </svg>
-                <span>Free Shipping*</span>
-              </div>
-              <div className={styles.trustBadge}>
-                <svg viewBox="0 0 24 24" fill="currentColor" width="20" height="20">
-                  <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 17h-2v-2h2v2zm2.07-7.75l-.9.92C13.45 12.9 13 13.5 13 15h-2v-.5c0-1.1.45-2.1 1.17-2.83l1.24-1.26c.37-.36.59-.86.59-1.41 0-1.1-.9-2-2-2s-2 .9-2 2H8c0-2.21 1.79-4 4-4s4 1.79 4 4c0 .88-.36 1.68-.93 2.25z" />
-                </svg>
-                <span>24/7 Support</span>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Bottom Bar */}
-      <div className={styles.bottomBar}>
-        <div className={styles.container}>
-          <div className={styles.bottomBarInner}>
-            <p className={styles.copyright}>
-              &copy; {currentYear} {APP_NAME}. All rights reserved.
+          <div className={styles.payments}>
+            <p className={styles.paymentsLabel} id="sf-footer-payments">
+              We accept
             </p>
-            <div className={styles.legalLinks}>
-              <Link to="/terms" className={styles.legalLink}>
-                Terms of Service
-              </Link>
-              <Link to="/privacy" className={styles.legalLink}>
-                Privacy Policy
-              </Link>
-              <Link to="/cookies" className={styles.legalLink}>
-                Cookie Policy
-              </Link>
-            </div>
+            <ul className={styles.marks} aria-labelledby="sf-footer-payments">
+              {paymentMarks.map((mark) => (
+                <li key={mark.id}>
+                  <svg
+                    className={styles.mark}
+                    viewBox="0 0 48 32"
+                    width="42"
+                    height="28"
+                    role="img"
+                    aria-label={mark.label}
+                    focusable="false"
+                  >
+                    <CardFrame />
+                    {mark.art}
+                  </svg>
+                </li>
+              ))}
+            </ul>
           </div>
+        </div>
+
+        <div className={styles.bottom}>
+          <div className={styles.bottomStart}>
+            <p className={styles.copyright}>
+              © {year} {APP_NAME}
+            </p>
+            <ul className={styles.legal}>
+              {LEGAL_LINKS.map((link) => (
+                <li key={link.to}>
+                  <Link to={link.to} className={cx(styles.link, styles.legalLink)}>
+                    {link.label}
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </div>
+          <p className={styles.note}>Prices in INR</p>
         </div>
       </div>
     </footer>

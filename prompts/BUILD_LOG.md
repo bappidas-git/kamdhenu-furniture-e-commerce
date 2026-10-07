@@ -939,3 +939,105 @@ No other file changed: no page, context, service, `src/utils/categories.js`, `db
 - The six feature-panel eyebrows in `src/content/navigationContent.js` ("Light and weather-ready", "For the workday", "For cafés and dining rooms", "For verandas and lawns", "For every room at home", "For work and study").
 - Department photography: the panel crops each department's `image` to 4:5, so the photos uploaded in Admin → Categories should survive a portrait crop (today's landscape placeholders lose the edges of their text).
 - With the current department names the department row takes two lines on 1024–1279px screens (deviation 1). Shorter names in the admin would keep it on one line.
+
+---
+
+## Prompt 08 — Footer, newsletter, trust bar and payment marks
+
+**Date:** 2026-10-07. **Result:** the boilerplate's slate-and-purple footer (its own gradient newsletter form, a generic blurb, "Free Shipping\*" and "24/7 Support" badges, coloured payment logos) is replaced by a navy editorial footer that looks the same in both modes: a newsletter band carrying the revived `Newsletter` (now the site's only sign-up form), a white-logo brand column with WhatsApp, Shop / Help / Contact columns with the live departments, a trust bar that only states what the data backs, one-colour payment marks, and a quiet bottom bar. Reference: `prompts/DESIGN_SYSTEM.md` §18.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/Footer/Footer.js` | Rewritten. `footer aria-label="Footer"`; `Reveal` band with `<Newsletter />`; brand column (`BrandLogo variant="white" height={40}` linking home, `BRAND_PROMISE`, social icons for non-empty `SOCIAL_LINKS`, WhatsApp added with its glyph); Shop / Help / Contact columns (`h2` headings, disclosure buttons below 768px); trust bar; "We accept" marks; bottom bar. Reads `categories.getAll`, `settings.get` and `shipping.getMethods` once each (`useFooterData`, failures become empty data). The inline newsletter form, its uncleared 4s timer, `useTheme` / `data-theme` theming and the inline brand-colour SVG fills are gone. |
+| `src/components/Footer/Footer.module.css` | Rewritten: tokens only (was 51 hex/rgb lines, gradients and a system font stack). |
+| `src/components/Newsletter/Newsletter.js` + `.module.css` | Revived as the single newsletter form (was an orphan with a purple gradient): eyebrow `h2`, serif `NEWSLETTER_LINE`, labelled `.sf-input` styled for navy, `.sf-btn--paper`; validation, success and failure states (below); `apiService.leads.createNewsletter(email)` as before. Tokens only (was 15 literals). |
+| `src/theme/storefront-tokens.css` | Three always-dark tokens: `--sf-color-on-dark-soft` (paper 8%, field fill), `--sf-color-on-dark-border-strong` (paper 40%, 3.53 : 1 boundary), `--sf-color-on-dark-error` (`#ec9483`, 7.12 : 1). |
+| `src/utils/constants.js` | `TRUST_BADGES` deleted (see below). Nothing else. |
+| `scripts/check-contrast.js` | Four footer pairs (DESIGN_SYSTEM §18.6). |
+| New `Footer.test.js` (11), `Newsletter.test.js` (6) | Links and targets, deals gating, departments, social, trust-bar gating before/after data and on failure, payment marks, the phone disclosure; validation, trimming, single submit, success reset, failure, timers cleared on unmount. |
+| `prompts/DESIGN_SYSTEM.md` | §1 lookup row, §3.3 rows for the three tokens, new §18 "Footer and newsletter". |
+
+No page, context, service, `db.json`, header, bottom nav, sidebar, CTA or admin file changed.
+
+### Layout
+
+- **Desktop (≥ 1024px):** newsletter band (intro left; form in columns 7–12, or 9–12 from 1280px, in line with Contact), rule, 12-column grid brand 4 / Shop 2 / Help 2 / Contact 4, trust bar between rules (marks on the right at 1440, on a second line below that), bottom bar.
+- **Tablet (768–1023px):** band stacked; two columns in DOM order (Brand, Shop / Help, Contact).
+- **Phone (< 768px):** stacked; Shop, Help and Contact are `<h2><button aria-expanded aria-controls>` rows between hairlines, collapsed by default, Enter/Space toggle, 44px link rows; a plus/minus swaps without animating.
+- **Shop:** All furniture `/products`, New arrivals `?sort=newest`, Best sellers `?sort=popular`, one Offers `/special-offers` (only when `useDealsConfig()` is enabled and has loaded), then the departments from `getMainMenuCategories` with the header's canonical `/products?category=<slug>`. **Help:** My account `/profile`, Track order `/orders`, Help centre `/help`, Returns & refunds `/refund`, Contact `/support`, Our story `/about`. **Contact** (`<address>`): `SUPPORT_ADDRESS`, `mailto:`, `tel:+918472918653` (named "Call +91 84729 18653", as in the header), "Message us on WhatsApp" when set, `SUPPORT_HOURS`. **Bottom:** `© {year} A & S Urbanseat`, Terms, Privacy, Cookies, "Prices in INR".
+- Every old link target is still there: the two deals links became one Offers link, and the two `/help` links ("Shipping Info", "FAQs") became "Help centre".
+
+### Newsletter behaviour
+
+- Empty or malformed address: "Enter your email address." / "Enter a valid email address, like name@example.com." under the field (`role="alert"`, linked by `aria-describedby`), field `aria-invalid="true"`, no request; typing clears it.
+- Valid: the trimmed address is posted once (repeat submits are ignored while sending; the button is `aria-disabled`, never `disabled`, so keyboard focus stays on it), then the field clears and "You're on the list." appears in a `role="status"` region that is always in the DOM. It resets after 6s; the timer is cleared on unmount, and a request settling after unmount changes nothing.
+- Request failure: "We couldn't add you just now. Please try again." (`role="alert"`), the typed address stays, the field is not marked invalid.
+- Field: visible label "Email address", placeholder `name@example.com`, `type="email"`, `inputMode="email"`, `autoComplete="email"`, `required` (with `noValidate`). The button's two labels share one grid cell, so its width never changes while sending.
+
+### Trust-bar data rules
+
+Items appear in this order and only when backed, with nothing shown for an item until its read settles. The rules are the product page's (`resolveTrustBadgeDetail`).
+
+| Item | Shown when |
+|---|---|
+| Secure payment | always (store-attested) |
+| Cash on Delivery | `resolveTrustBadgeDetail("cod", { settings })` is not null (`settings.payment.codEnabled`); the COD payment mark follows the same rule |
+| Easy returns · 7 days | `resolveTrustBadgeDetail("easyReturns")` is not null; N from `STOREFRONT_CONFIG.returnsWindowDays` (hidden at 0) |
+| Free delivery · Above ₹9,999 | `resolveTrustBadgeDetail("freeShipping", { shipping })` is not null (lowest positive `freeAbove` of the active methods; hidden when none) |
+
+"24/7 Support" and the "Free Shipping\*" asterisk are gone. A failed read shows only the first and third items.
+
+### `TRUST_BADGES` decision
+
+Deleted from `constants.js`. A grep found no import before or after this prompt, and its strings were the kind of claims this redesign removes ("24/7 Support", "Best Price Guarantee"). The footer's list is code plus `resolveTrustBadgeDetail`, so it cannot drift from the product page. `WHY_CHOOSE_US` and `FAQ_ITEMS` are untouched for Prompts 12 and 28.
+
+### Deviations from the prompt, and why
+
+1. **"Free delivery · Above ₹9,999"** rather than "Free delivery above ₹X": the detail is `resolveTrustBadgeDetail`'s own string, so the footer and the product page can never disagree on the threshold, and it matches "Easy returns · 7 days". Screen readers hear "Free delivery, Above ₹9,999" (the dot is `aria-hidden`; a visually hidden comma separates the parts).
+2. **Three new always-dark tokens.** The prompt named only the 8% fill. A field also needs a 3 : 1 boundary on navy (the 16% hairline is 1.4 : 1) and an error tone that works on navy in light mode (the light brick `--sf-color-error` measures 2.45 there).
+3. **Bottom clearance is padding, 96px + safe area**, not the old 70px margin. The bottom nav measures 60–79px (75–79px at 600–768px, depending on the route), so 70px left it over the bottom bar; and a margin shows a paper strip under the navy whenever the nav hides on scroll. The bottom bar's own bottom padding drops to 8px there.
+4. **Offers also waits for the deals config to load**, so a disabled deals page never flashes a link (the default config is "enabled").
+5. **The band has no rule on its top edge.** It is bounded by the navy edge and a rule below. Tried both: on paper pages, a rule on the edge reads as a seam. (`.main-content`'s 80px paper padding also separates the footer from Home's closing CTA.)
+6. **Newsletter split:** four columns are too narrow for the field at 1024px (the placeholder truncated), so the form takes columns 7–12 at 1024–1279px and 9–12 from 1280px. The band is top-aligned, so a message under the field never moves the field (bottom alignment pushed it up 28px).
+7. **Small additions:** the footer logo links home; new-tab links say "(opens in a new tab)"; the social list is labelled "Social media" and the trust list "Our promises" (as on the product page); the payment-mark list is labelled by its visible "We accept"; forced-colours fixes (the white logo keeps a navy ground, icons follow `CanvasText`, marks inherit the forced text colour); the success reset is 6s (4–5s before).
+
+### Verification
+
+- `npm run build`: "Compiled successfully", no warnings. Gzip against the Prompt 07 baseline: JS 397.67 → 399.13 kB (+1.46), CSS 55.94 → 56.24 kB (+0.30).
+- `CI=true npm test -- --passWithNoTests`: 50 tests (33 + 17 new), exit 0. Mutation check: each of four seeded faults (COD always claimed, Offers ignoring `loading`, the timer not cleared, a request failure marking the field invalid) failed at least one test.
+- `node scripts/check-contrast.js`: passes (field text 12.35, placeholder 7.18, boundary 3.53, error 7.12). `node scripts/validate-db.js`: passes; `db.json` unchanged.
+- Literal grep: no hex/rgb/hsl, gradient or font-name literal in either CSS module (only `var(--sf-font-*)` and `inherit`); no colour literal or `Arial` in the JS.
+- **Browser QA** (Playwright + Chromium; JSON Server on a scratch copy of `db.json`; dev server and a mock-mode production build): 27 scripted checks plus interaction and geometry scripts, all passing on the production build:
+  - **Structure:** contentinfo "Footer"; `h2`s Newsletter, Shop, Help, Contact; one form on the page (named "Newsletter"); labelled email field; six departments with canonical links; white logo 40px tall; marks 28px, their text in Inter; navy `rgb(11, 31, 63)`.
+  - **Links:** 19 of the 20 internal footer links land on their own route. The 20th, `/profile`, sends a guest to `/` because `Profile.js` redirects guests (the same before this prompt; signed in, it lands on `/profile`). Both external links use `noopener noreferrer`.
+  - **Deals:** turning the master switch off in Admin → Special Offers removes Offers after a window focus; turning it back on restores it (and it was left on).
+  - **Newsletter (JSON Server mode):** empty and malformed submits error without a request. A valid one posted `{ type: "newsletter", email: "footer-qa@example.com", status: "subscribed", … }`, and the scratch `db.json` gained the row; the repo `db.json` was never written, so there is no demo row to remove. Focus stayed on the button, success cleared after 6s, and a forced 500 kept the address.
+  - **Keyboard:** Tab runs field → Subscribe → logo → WhatsApp → Shop → departments → Help → Contact links → Terms, Privacy, Cookies, each with a visible ring. On phones the disclosures toggle with Enter and Space, and link and legal rows are 44px.
+  - **Widths and themes:** no horizontal overflow at 320/360/768/1024/1440. The footer is pixel-identical in light and dark mode at every width.
+  - **Motion:** the band rises 20px → 0 and fades in; under reduced motion it only fades.
+  - **BottomNav:** with the nav shown at the very bottom of `/help`, `/wishlist` and `/`, the bottom bar clears it by 15.6–35px at 360/390/414/600/768. At 769px there is no nav.
+  - **Forced colours:** checked in both light and dark contrast schemes.
+- **Admin parity:** 24 screenshots (login, dashboard, Products, Leads, Special Offers, Settings; 1440 and 390; light and dark). 23 are identical to a second baseline run. The last, the light dashboard at 1440, differs in 38 pixels by at most 1/255, and the two baseline runs also differ from each other in that screenshot. No admin file, or anything the admin imports, changed.
+
+### Pre-existing issues noticed (not changed)
+
+- Guests following "My account" (footer or bottom nav) are silently sent to `/` by `Profile.js:140`. Prompt 21 could open the sign-in modal instead.
+- The bottom nav is 75px on `/help` but 79px on `/` and `/wishlist` at 600–768px (Prompt 09).
+- The header and the footer each fetch `/categories` on mount (two requests).
+
+### Notes for later prompts
+
+- **09:** the footer reserves 96px + safe area at ≤ 768px (DESIGN_SYSTEM §18.5).
+- **12:** the closing CTA sits above the newsletter band; `.main-content` adds 80px of paper below the page, so a navy CTA and the navy footer are already separated.
+- **29:** footer labels and the newsletter messages (`MESSAGES` in `Newsletter.js`) are in the voice pass.
+- **31:** forced colours are handled in the footer; the header's auto logo still disappears on a contrast theme whose canvas matches it.
+
+### Needs client confirmation
+
+- **Social profiles:** only WhatsApp (`https://wa.me/918472919541`) is set. Facebook, Instagram, YouTube and X appear automatically once their URLs are added to `SOCIAL_LINKS`.
+- **Contact:** address "Assam, India" (street and PIN missing), email `info@kamdhenufurniture.com` (old domain), phone `+91 84729 18653`, WhatsApp `+91 84729 19541`, hours "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sunday closed".
+- **Payment methods actually accepted:** the marks show Visa, Mastercard and UPI (the checkout's card and UPI options) and COD while it is enabled in settings. RuPay, net banking and wallets are offered at checkout without a mark. Confirm the real list and the gateway; "Secure payment" rests on it (Razorpay and Stripe are disabled in settings today).
+- **Promises:** the 7-day returns window and the ₹9,999 free-delivery threshold (placeholders) now appear in the footer too.
+- **Copy:** `NEWSLETTER_LINE`, "You're on the list.", "Prices in INR", and whether the Laravel side sends a confirmation or double opt-in (the storefront only records the lead).

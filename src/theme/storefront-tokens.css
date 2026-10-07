@@ -81,6 +81,12 @@
   --sf-color-on-dark-muted: rgba(250, 247, 242, 0.72);
   --sf-color-on-dark-border: rgba(250, 247, 242, 0.16);
   --sf-color-on-dark-accent: var(--sf-brand-caramel);
+  /* Form controls on navy (the footer newsletter): paper 8% field fill, a
+     paper 40% boundary (3.5:1, WCAG 1.4.11) and an error tone that stays
+     readable on navy in both modes (the light-mode brick does not). */
+  --sf-color-on-dark-soft: rgba(250, 247, 242, 0.08);
+  --sf-color-on-dark-border-strong: rgba(250, 247, 242, 0.4);
+  --sf-color-on-dark-error: #ec9483;
   --sf-color-scrim: rgba(11, 31, 63, 0.7);      /* minimum behind text on photos */
   /* The one permitted gradient: navy → transparent over photography, weighted
      to the bottom-left where hero copy sits (>= scrim strength in that zone). */

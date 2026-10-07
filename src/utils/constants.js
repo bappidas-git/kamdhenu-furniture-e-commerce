@@ -245,11 +245,3 @@ export const BREAKPOINTS = {
   LG: 1280,
   XL: 1440,
 };
-
-// Trust badges
-export const TRUST_BADGES = [
-  "100% Secure Payment",
-  "Easy 7-Day Returns",
-  "24/7 Support",
-  "Best Price Guarantee",
-];
