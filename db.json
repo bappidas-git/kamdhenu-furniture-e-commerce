@@ -433,6 +433,286 @@
       "menuOrder": 0,
       "createdAt": "2026-04-10T09:00:00.000Z",
       "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 30,
+      "name": "Living Room",
+      "slug": "living-room",
+      "description": "Sofas, sofa-cum-beds, centre tables and showcases for the room where the family gathers.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Living+Room",
+      "parentId": 5,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 31,
+      "name": "Sofas",
+      "slug": "sofas",
+      "description": "Wooden, L-shaped and full-size sofa sets with cushioned seats in a choice of fabric colours.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Sofas",
+      "parentId": 30,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 32,
+      "name": "Sofa-cum-Beds",
+      "slug": "sofa-cum-beds",
+      "description": "Sofas that open into a bed for guests, in a steel or a wooden frame.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Sofa+Cum+Beds",
+      "parentId": 30,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 33,
+      "name": "Centre Tables & Showcases",
+      "slug": "centre-tables-showcases",
+      "description": "A wooden centre table for the middle of the room and a showcase for the things you want on display.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Centre+Tables+Showcases",
+      "parentId": 30,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 34,
+      "name": "Bedroom",
+      "slug": "bedroom",
+      "description": "Beds, mattresses, dressing tables, almirahs and clothes stands for a calm, well-ordered bedroom.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Bedroom",
+      "parentId": 5,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 35,
+      "name": "Beds",
+      "slug": "beds",
+      "description": "Wooden beds in king, queen and single sizes, finished in warm wood tones.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Beds",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 36,
+      "name": "Mattresses",
+      "slug": "mattresses",
+      "description": "Mattresses from Carlton and Nilkamal in single, double, queen and king sizes.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Mattresses",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 37,
+      "name": "Dressing Tables & Mirrors",
+      "slug": "dressing-tables-mirrors",
+      "description": "Dressing tables with storage, plus standing and wall mirrors for getting ready.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Dressing+Tables+Mirrors",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 38,
+      "name": "Bedside & Bed Tables",
+      "slug": "bedside-bed-tables",
+      "description": "Bedside tables for the lamp and the phone, and a folding table for breakfast or a laptop in bed.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Bedside+Bed+Tables",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 4,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 39,
+      "name": "Almirahs",
+      "slug": "almirahs",
+      "description": "Two- and three-door almirahs (wardrobes) with hanging space, shelves and a locker.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Almirahs",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 5,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 40,
+      "name": "Alna Clothes Stands",
+      "slug": "alna-clothes-stands",
+      "description": "Alna clothes stands in iron and wood for the clothes you wear again tomorrow.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Alna+Clothes+Stands",
+      "parentId": 34,
+      "isActive": true,
+      "sortOrder": 6,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 41,
+      "name": "Dining Room",
+      "slug": "dining-room",
+      "description": "Dining sets for four or six, including a marble-top table for the formal dining room.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Dining+Room",
+      "parentId": 5,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 42,
+      "name": "Dining Sets",
+      "slug": "dining-sets",
+      "description": "Wooden and marble-top dining tables sold with their matching chairs.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Dining+Sets",
+      "parentId": 41,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 43,
+      "name": "Storage",
+      "slug": "storage",
+      "description": "Open racks in steel and wood for kitchens, stores, studies and utility rooms.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Storage",
+      "parentId": 5,
+      "isActive": true,
+      "sortOrder": 4,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 44,
+      "name": "Racks",
+      "slug": "racks",
+      "description": "Steel and wooden storage racks in three, four or five shelves.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Racks",
+      "parentId": 43,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 45,
+      "name": "Office Tables",
+      "slug": "office-tables",
+      "description": "Office tables for cabins and work floors, with drawers and space for files.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Tables",
+      "parentId": 6,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 46,
+      "name": "Computer Tables",
+      "slug": "computer-tables",
+      "description": "Computer tables with a keyboard tray and room for the CPU, for home and office.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Computer+Tables",
+      "parentId": 6,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 47,
+      "name": "Reading Tables",
+      "slug": "reading-tables",
+      "description": "Compact reading and study tables with a shelf for books, sized for a child's room or a corner.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Reading+Tables",
+      "parentId": 6,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 48,
+      "name": "Dining Sets",
+      "slug": "plastic-dining-sets",
+      "description": "Plastic dining tables with matching chairs for four or six, easy to wipe down after every meal.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Dining+Sets",
+      "parentId": 1,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 49,
+      "name": "Sofas",
+      "slug": "plastic-sofas",
+      "description": "Moulded plastic sofa sets with cushions for verandas, terraces and everyday sitting.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Sofas",
+      "parentId": 1,
+      "isActive": true,
+      "sortOrder": 4,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     }
   ],
   "products": [
@@ -2266,7 +2546,8 @@
       "createdAt": "2026-08-06T12:00:00.000Z",
       "updatedAt": "2026-09-06T12:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        27
+        27,
+        77
       ],
       "relatedProductIds": [
         22,
@@ -2343,7 +2624,8 @@
       "createdAt": "2026-07-19T10:00:00.000Z",
       "updatedAt": "2026-08-04T10:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        27
+        27,
+        77
       ],
       "relatedProductIds": [
         21,
@@ -2430,7 +2712,8 @@
       "createdAt": "2026-05-12T11:00:00.000Z",
       "updatedAt": "2026-05-16T11:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        27
+        27,
+        77
       ],
       "relatedProductIds": [
         22,
@@ -2518,7 +2801,8 @@
       "createdAt": "2026-08-28T13:00:00.000Z",
       "updatedAt": "2026-09-16T13:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        21
+        21,
+        79
       ],
       "relatedProductIds": [
         25,
@@ -2594,7 +2878,9 @@
       "metaDescription": "A padded fabric low-back chair, a simple and comfortable seat for desks and counters. Shop online at A & S Urbanseat.",
       "createdAt": "2026-06-28T17:00:00.000Z",
       "updatedAt": "2026-07-26T17:00:00.000Z",
-      "frequentlyBoughtTogetherIds": [],
+      "frequentlyBoughtTogetherIds": [
+        79
+      ],
       "relatedProductIds": [
         24,
         26,
@@ -2833,7 +3119,8 @@
       "createdAt": "2026-08-05T15:00:00.000Z",
       "updatedAt": "2026-08-27T15:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        35
+        35,
+        76
       ],
       "relatedProductIds": [
         30,
@@ -2920,7 +3207,8 @@
       "createdAt": "2026-04-22T11:00:00.000Z",
       "updatedAt": "2026-05-12T11:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        35
+        35,
+        76
       ],
       "relatedProductIds": [
         29,
@@ -2997,7 +3285,8 @@
       "createdAt": "2026-07-25T09:00:00.000Z",
       "updatedAt": "2026-08-04T09:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        35
+        35,
+        76
       ],
       "relatedProductIds": [
         30,
@@ -3074,7 +3363,8 @@
       "createdAt": "2026-09-05T13:00:00.000Z",
       "updatedAt": "2026-09-09T13:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        30
+        30,
+        76
       ],
       "relatedProductIds": [
         33,
@@ -3160,7 +3450,9 @@
       "metaDescription": "A low-back ergonomic mesh chair with adjustable lumbar support and a synchro tilt. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-03T11:00:00.000Z",
       "updatedAt": "2026-09-09T11:00:00.000Z",
-      "frequentlyBoughtTogetherIds": [],
+      "frequentlyBoughtTogetherIds": [
+        78
+      ],
       "relatedProductIds": [
         32,
         34,
@@ -4192,6 +4484,2953 @@
         44,
         43,
         42
+      ]
+    },
+    {
+      "id": 47,
+      "name": "Wooden Sofa Set",
+      "slug": "wooden-sofa-set",
+      "sku": "LIV-SOF-01",
+      "shortDescription": "A solid-wood 3+1+1 sofa set with cushioned seats, made in our own workshop.",
+      "description": "Exposed wooden arms and a carved back rail give this sofa set the warmth of a traditional drawing room, with deep cushions that keep it comfortable through long evenings.\n\nMade in our own workshop, the frame is joined and finished by hand before the seat and back cushions go on. The set is a three-seater with two single chairs, so the room can be arranged around a centre table.\n\nSpecifications: Frame: Seasoned solid wood; Upholstery: Fabric over high-density foam cushions; Configuration: 3 + 1 + 1 (five seats); Three-seater size: approx. 190 × 80 × 85 cm; Finish: Walnut polish on exposed wood; Care: Vacuum the cushions, dust the wood with a dry cloth",
+      "categoryId": 31,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa+Set+In+situ"
+      ],
+      "price": 32999,
+      "comparePrice": 37999,
+      "costPrice": 21500,
+      "stock": 22,
+      "lowStockThreshold": 5,
+      "weight": 72,
+      "dimensions": {
+        "length": 190,
+        "width": 80,
+        "height": 85
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Sand Beige",
+          "price": 32999,
+          "stock": 6,
+          "sku": "LIV-SOF-01-BGE",
+          "attributes": {
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
+        },
+        {
+          "id": "v2",
+          "name": "Slate Grey",
+          "price": 32999,
+          "stock": 9,
+          "sku": "LIV-SOF-01-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        },
+        {
+          "id": "v3",
+          "name": "Maroon",
+          "price": 32999,
+          "stock": 7,
+          "sku": "LIV-SOF-01-MRN",
+          "attributes": {
+            "Colour": "Maroon"
+          },
+          "swatchHex": "#6e2a2f"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "sofa",
+        "sofa set",
+        "wooden sofa",
+        "3+1+1",
+        "living room",
+        "workshop made"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Sofa Set | A & S Urbanseat",
+      "metaDescription": "A solid-wood 3+1+1 sofa set with cushioned seats, made in our own workshop. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-14T09:00:00.000Z",
+      "updatedAt": "2026-09-18T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        53
+      ],
+      "relatedProductIds": [
+        48,
+        49,
+        50,
+        53
+      ]
+    },
+    {
+      "id": 48,
+      "name": "L-Shaped Sofa",
+      "slug": "l-shaped-sofa",
+      "sku": "LIV-SOF-02",
+      "shortDescription": "A five-seat L-shaped sofa with a long chaise end that fits neatly into a corner.",
+      "description": "An L-shaped sofa turns an empty corner into the most used seat in the house. The long end is deep enough to stretch out on, and the corner seat is the one everyone reaches for first.\n\nSeat cushions sit on a sprung base for an even feel, and the low arms keep the outline clean in smaller living rooms. The chaise can be set on the left or the right when the sofa is placed.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Seating capacity: 5; Overall size: approx. 260 × 170 × 85 cm; Chaise: Left or right, chosen at placement; Care: Vacuum weekly, spot-clean with a damp cloth",
+      "categoryId": 31,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=L-Shaped+Sofa",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=L-Shaped+Sofa+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=L-Shaped+Sofa+In+situ"
+      ],
+      "price": 44999,
+      "comparePrice": 0,
+      "costPrice": 30500,
+      "stock": 21,
+      "lowStockThreshold": 5,
+      "weight": 88,
+      "dimensions": {
+        "length": 260,
+        "width": 170,
+        "height": 85
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Slate Grey",
+          "price": 44999,
+          "stock": 7,
+          "sku": "LIV-SOF-02-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        },
+        {
+          "id": "v2",
+          "name": "Sand Beige",
+          "price": 44999,
+          "stock": 8,
+          "sku": "LIV-SOF-02-BGE",
+          "attributes": {
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
+        },
+        {
+          "id": "v3",
+          "name": "Teal Blue",
+          "price": 44999,
+          "stock": 6,
+          "sku": "LIV-SOF-02-TEL",
+          "attributes": {
+            "Colour": "Teal Blue"
+          },
+          "swatchHex": "#2f5d62"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "sofa",
+        "l-shaped sofa",
+        "corner sofa",
+        "sectional",
+        "living room"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "L-Shaped Sofa | A & S Urbanseat",
+      "metaDescription": "A five-seat L-shaped sofa with a long chaise end that fits neatly into a corner. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-02T10:00:00.000Z",
+      "updatedAt": "2026-09-20T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        53
+      ],
+      "relatedProductIds": [
+        49,
+        50,
+        47,
+        53
+      ]
+    },
+    {
+      "id": 49,
+      "name": "5-Seater Sofa Set",
+      "slug": "5-seater-sofa-set",
+      "sku": "LIV-SOF-03",
+      "shortDescription": "A 3+2 fabric sofa set that seats five, for living rooms that host family often.",
+      "description": "A three-seater and a two-seater, matched in fabric and outline, so a family of five can sit together without anyone taking a stool.\n\nFirm foam seats keep their shape under daily use, and the removable back cushions make the covers easy to brush down. The two pieces can face each other or sit in an L around a centre table.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Configuration: 3 + 2 (five seats); Three-seater size: approx. 200 × 85 × 88 cm; Two-seater size: approx. 145 × 85 × 88 cm; Care: Vacuum the cushions, spot-clean with a damp cloth",
+      "categoryId": 31,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=5-Seater+Sofa+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=5-Seater+Sofa+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=5-Seater+Sofa+Set+In+situ"
+      ],
+      "price": 38999,
+      "comparePrice": 44999,
+      "costPrice": 26000,
+      "stock": 24,
+      "lowStockThreshold": 5,
+      "weight": 84,
+      "dimensions": {
+        "length": 200,
+        "width": 85,
+        "height": 88
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Sand Beige",
+          "price": 38999,
+          "stock": 8,
+          "sku": "LIV-SOF-03-BGE",
+          "attributes": {
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
+        },
+        {
+          "id": "v2",
+          "name": "Slate Grey",
+          "price": 38999,
+          "stock": 10,
+          "sku": "LIV-SOF-03-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        },
+        {
+          "id": "v3",
+          "name": "Teal Blue",
+          "price": 38999,
+          "stock": 6,
+          "sku": "LIV-SOF-03-TEL",
+          "attributes": {
+            "Colour": "Teal Blue"
+          },
+          "swatchHex": "#2f5d62"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "sofa",
+        "sofa set",
+        "5 seater",
+        "3+2",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "5-Seater Sofa Set | A & S Urbanseat",
+      "metaDescription": "A 3+2 fabric sofa set that seats five, for living rooms that host family often. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-08T11:00:00.000Z",
+      "updatedAt": "2026-09-12T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        53
+      ],
+      "relatedProductIds": [
+        50,
+        48,
+        47,
+        53
+      ]
+    },
+    {
+      "id": 50,
+      "name": "7-Seater Sofa Set",
+      "slug": "7-seater-sofa-set",
+      "sku": "LIV-SOF-04",
+      "shortDescription": "A 3+2+1+1 sofa set that seats seven, for large living rooms and joint families.",
+      "description": "Seven seats across four pieces: a three-seater, a two-seater and two single chairs. It is the set for a large living room and for the evenings when everyone is home.\n\nEach piece stands on its own, so the arrangement can change from a formal U to a relaxed cluster. The cushions are filled firm and covered in a hard-wearing fabric.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Configuration: 3 + 2 + 1 + 1 (seven seats); Three-seater size: approx. 205 × 85 × 88 cm; Single chair size: approx. 90 × 85 × 88 cm; Care: Vacuum weekly, spot-clean with a damp cloth",
+      "categoryId": 31,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=7-Seater+Sofa+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=7-Seater+Sofa+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=7-Seater+Sofa+Set+In+situ"
+      ],
+      "price": 58999,
+      "comparePrice": 0,
+      "costPrice": 40000,
+      "stock": 16,
+      "lowStockThreshold": 5,
+      "weight": 128,
+      "dimensions": {
+        "length": 205,
+        "width": 85,
+        "height": 88
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Slate Grey",
+          "price": 58999,
+          "stock": 3,
+          "sku": "LIV-SOF-04-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        },
+        {
+          "id": "v2",
+          "name": "Sand Beige",
+          "price": 58999,
+          "stock": 7,
+          "sku": "LIV-SOF-04-BGE",
+          "attributes": {
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
+        },
+        {
+          "id": "v3",
+          "name": "Maroon",
+          "price": 58999,
+          "stock": 6,
+          "sku": "LIV-SOF-04-MRN",
+          "attributes": {
+            "Colour": "Maroon"
+          },
+          "swatchHex": "#6e2a2f"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "sofa",
+        "sofa set",
+        "7 seater",
+        "3+2+1+1",
+        "living room",
+        "large"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "7-Seater Sofa Set | A & S Urbanseat",
+      "metaDescription": "A 3+2+1+1 sofa set that seats seven, for large living rooms and joint families. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-12T12:00:00.000Z",
+      "updatedAt": "2026-09-26T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        53
+      ],
+      "relatedProductIds": [
+        49,
+        48,
+        47,
+        54
+      ]
+    },
+    {
+      "id": 51,
+      "name": "Steel Sofa-cum-Bed",
+      "slug": "steel-sofa-cum-bed",
+      "sku": "LIV-SCB-01",
+      "shortDescription": "A powder-coated steel sofa that unfolds into a bed for guests in a single movement.",
+      "description": "By day a three-seat sofa, by night a bed for the guest who stays over. The steel frame folds out in one movement and the cushion becomes the mattress.\n\nPowder-coated steel keeps the frame slim and rust-resistant, which suits compact flats, study rooms and the room that has to do two jobs.\n\nSpecifications: Frame: Powder-coated steel; Upholstery: Fabric over foam mattress cushion; Sofa size: approx. 185 × 80 × 82 cm; Bed size: approx. 185 × 120 × 40 cm; Sleeping capacity: 2; Care: Wipe the frame, vacuum the cushion",
+      "categoryId": 32,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Sofa-cum-Bed",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Sofa-cum-Bed+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Sofa-cum-Bed+In+situ"
+      ],
+      "price": 15999,
+      "comparePrice": 0,
+      "costPrice": 10400,
+      "stock": 28,
+      "lowStockThreshold": 5,
+      "weight": 38,
+      "dimensions": {
+        "length": 185,
+        "width": 80,
+        "height": 82
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Slate Grey",
+          "price": 15999,
+          "stock": 11,
+          "sku": "LIV-SCB-01-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        },
+        {
+          "id": "v2",
+          "name": "Maroon",
+          "price": 15999,
+          "stock": 8,
+          "sku": "LIV-SCB-01-MRN",
+          "attributes": {
+            "Colour": "Maroon"
+          },
+          "swatchHex": "#6e2a2f"
+        },
+        {
+          "id": "v3",
+          "name": "Teal Blue",
+          "price": 15999,
+          "stock": 9,
+          "sku": "LIV-SCB-01-TEL",
+          "attributes": {
+            "Colour": "Teal Blue"
+          },
+          "swatchHex": "#2f5d62"
+        }
+      ],
+      "tags": [
+        "sofa cum bed",
+        "sofa bed",
+        "steel",
+        "guest bed",
+        "space saving",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": true,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Steel Sofa-cum-Bed | A & S Urbanseat",
+      "metaDescription": "A powder-coated steel sofa that unfolds into a bed for guests in a single movement. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-21T13:00:00.000Z",
+      "updatedAt": "2026-09-29T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        52,
+        47,
+        48,
+        53
+      ]
+    },
+    {
+      "id": 52,
+      "name": "Wooden Sofa-cum-Bed",
+      "slug": "wooden-sofa-cum-bed",
+      "sku": "LIV-SCB-02",
+      "shortDescription": "A wooden-framed sofa that pulls out into a double bed, with storage under the seat.",
+      "description": "A wooden sofa-cum-bed for a living room that sometimes becomes a guest room. The seat slides forward and the back folds down to make a flat double bed.\n\nThere is a storage well under the seat for the spare pillows and blankets, so the bedding is always where the bed is.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Sofa size: approx. 195 × 90 × 85 cm; Bed size: approx. 195 × 140 × 42 cm; Storage: Under-seat box; Care: Vacuum the cushions, dust the wood with a dry cloth",
+      "categoryId": 32,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa-cum-Bed",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa-cum-Bed+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa-cum-Bed+In+situ"
+      ],
+      "price": 28999,
+      "comparePrice": 32999,
+      "costPrice": 19400,
+      "stock": 13,
+      "lowStockThreshold": 5,
+      "weight": 68,
+      "dimensions": {
+        "length": 195,
+        "width": 90,
+        "height": 85
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Sand Beige",
+          "price": 28999,
+          "stock": 7,
+          "sku": "LIV-SCB-02-BGE",
+          "attributes": {
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
+        },
+        {
+          "id": "v2",
+          "name": "Slate Grey",
+          "price": 28999,
+          "stock": 6,
+          "sku": "LIV-SCB-02-GRY",
+          "attributes": {
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "sofa cum bed",
+        "sofa bed",
+        "wooden",
+        "storage",
+        "guest bed",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Sofa-cum-Bed | A & S Urbanseat",
+      "metaDescription": "A wooden-framed sofa that pulls out into a double bed, with storage under the seat. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-25T14:00:00.000Z",
+      "updatedAt": "2026-09-08T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        51,
+        47,
+        49,
+        53
+      ]
+    },
+    {
+      "id": 53,
+      "name": "Wooden Centre Table",
+      "slug": "wooden-centre-table",
+      "sku": "LIV-CTB-01",
+      "shortDescription": "A solid-wood centre table with a lower shelf for magazines and remotes.",
+      "description": "The table at the middle of the living room, sized to sit in front of a three-seater sofa with space to walk around it.\n\nA lower shelf takes the newspapers, remotes and the tray of snacks, keeping the top clear for cups and conversation.\n\nSpecifications: Material: Solid wood; Finish: Polished wood, sealed against spills; Top size: approx. 110 × 60 cm; Height: approx. 45 cm; Storage: Lower shelf; Care: Wipe with a soft dry cloth, use coasters for hot cups",
+      "categoryId": 33,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Centre+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Centre+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Centre+Table+In+situ"
+      ],
+      "price": 7999,
+      "comparePrice": 0,
+      "costPrice": 5200,
+      "stock": 22,
+      "lowStockThreshold": 6,
+      "weight": 18,
+      "dimensions": {
+        "length": 110,
+        "width": 60,
+        "height": 45
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 7999,
+          "stock": 12,
+          "sku": "LIV-CTB-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 7999,
+          "stock": 10,
+          "sku": "LIV-CTB-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "centre table",
+        "coffee table",
+        "wooden",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Centre Table | A & S Urbanseat",
+      "metaDescription": "A solid-wood centre table with a lower shelf for magazines and remotes. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-28T09:00:00.000Z",
+      "updatedAt": "2026-09-02T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        47,
+        49
+      ],
+      "relatedProductIds": [
+        54,
+        47,
+        48,
+        49
+      ]
+    },
+    {
+      "id": 54,
+      "name": "Wooden Showcase",
+      "slug": "wooden-showcase",
+      "sku": "LIV-SHC-01",
+      "shortDescription": "A tall wooden showcase with glass-fronted shelves and closed cabinets below.",
+      "description": "A showcase for the crockery, trophies and keepsakes the family wants on view. Glass-fronted shelves at eye level, closed cabinets underneath for everything else.\n\nThe cabinet doors close flush, and adjustable shelves let the upper section take tall vases or rows of glasses.\n\nSpecifications: Material: Solid wood frame with engineered-wood panels; Doors: Toughened glass upper, wooden lower; Overall size: approx. 120 × 40 × 180 cm; Shelves: 4 adjustable; Finish: Polished wood; Care: Dust with a dry cloth, clean the glass with a glass cleaner",
+      "categoryId": 33,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Showcase",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Showcase+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Showcase+In+situ"
+      ],
+      "price": 18999,
+      "comparePrice": 0,
+      "costPrice": 12600,
+      "stock": 13,
+      "lowStockThreshold": 5,
+      "weight": 64,
+      "dimensions": {
+        "length": 120,
+        "width": 40,
+        "height": 180
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 18999,
+          "stock": 6,
+          "sku": "LIV-SHC-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Teak",
+          "price": 18999,
+          "stock": 7,
+          "sku": "LIV-SHC-01-TEK",
+          "attributes": {
+            "Finish": "Teak"
+          },
+          "swatchHex": "#8a5a35"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "showcase",
+        "display cabinet",
+        "crockery unit",
+        "wooden",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Showcase | A & S Urbanseat",
+      "metaDescription": "A tall wooden showcase with glass-fronted shelves and closed cabinets below. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-16T10:00:00.000Z",
+      "updatedAt": "2026-09-15T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        53,
+        47,
+        50,
+        72
+      ]
+    },
+    {
+      "id": 55,
+      "name": "King Size Bed",
+      "slug": "king-size-bed",
+      "sku": "BED-BED-01",
+      "shortDescription": "A wooden king size bed with a panelled headboard, sized for a 72 × 78 inch mattress.",
+      "description": "A king size bed with a tall panelled headboard and a frame that stands firmly on its legs. There is room on both sides for two adults to sleep without crowding.\n\nThe bed takes a standard 72 × 78 inch mattress. Slatted support underneath lets the mattress breathe.\n\nSpecifications: Material: Solid wood and engineered wood; Finish: Polished wood; Mattress size: 72 × 78 in (approx. 183 × 198 cm); Overall size: approx. 195 × 210 × 105 cm; Sleeping capacity: 2; Care: Dust with a dry cloth, avoid standing water",
+      "categoryId": 35,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=King+Size+Bed",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=King+Size+Bed+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=King+Size+Bed+In+situ"
+      ],
+      "price": 34999,
+      "comparePrice": 39999,
+      "costPrice": 23400,
+      "stock": 13,
+      "lowStockThreshold": 5,
+      "weight": 92,
+      "dimensions": {
+        "length": 210,
+        "width": 195,
+        "height": 105
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 34999,
+          "stock": 6,
+          "sku": "BED-BED-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Wenge",
+          "price": 34999,
+          "stock": 7,
+          "sku": "BED-BED-01-WNG",
+          "attributes": {
+            "Finish": "Wenge"
+          },
+          "swatchHex": "#3b2a22"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "bed",
+        "king size bed",
+        "double bed",
+        "wooden",
+        "bedroom"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "King Size Bed | A & S Urbanseat",
+      "metaDescription": "A wooden king size bed with a panelled headboard, sized for a 72 × 78 inch mattress. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-06T11:00:00.000Z",
+      "updatedAt": "2026-09-22T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        58,
+        64
+      ],
+      "relatedProductIds": [
+        56,
+        57,
+        58,
+        64
+      ]
+    },
+    {
+      "id": 56,
+      "name": "Queen Size Bed",
+      "slug": "queen-size-bed",
+      "sku": "BED-BED-02",
+      "shortDescription": "A wooden queen size bed with a clean headboard, sized for a 60 × 78 inch mattress.",
+      "description": "A queen size bed for the master bedroom that has to leave room for an almirah and a dressing table. Two adults sleep comfortably, and the walkway stays clear.\n\nThe headboard is plain and upright, so it sits well against a painted or textured wall. The bed takes a standard 60 × 78 inch mattress.\n\nSpecifications: Material: Solid wood and engineered wood; Finish: Polished wood; Mattress size: 60 × 78 in (approx. 152 × 198 cm); Overall size: approx. 165 × 210 × 100 cm; Sleeping capacity: 2; Care: Dust with a dry cloth, avoid standing water",
+      "categoryId": 35,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Queen+Size+Bed",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Queen+Size+Bed+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Queen+Size+Bed+In+situ"
+      ],
+      "price": 27999,
+      "comparePrice": 0,
+      "costPrice": 18800,
+      "stock": 14,
+      "lowStockThreshold": 5,
+      "weight": 78,
+      "dimensions": {
+        "length": 210,
+        "width": 165,
+        "height": 100
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 27999,
+          "stock": 8,
+          "sku": "BED-BED-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 27999,
+          "stock": 6,
+          "sku": "BED-BED-02-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "bed",
+        "queen size bed",
+        "double bed",
+        "wooden",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Queen Size Bed | A & S Urbanseat",
+      "metaDescription": "A wooden queen size bed with a clean headboard, sized for a 60 × 78 inch mattress. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-03T12:00:00.000Z",
+      "updatedAt": "2026-09-10T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        58,
+        64
+      ],
+      "relatedProductIds": [
+        55,
+        57,
+        58,
+        64
+      ]
+    },
+    {
+      "id": 57,
+      "name": "Single Bed",
+      "slug": "single-bed",
+      "sku": "BED-BED-03",
+      "shortDescription": "A wooden single bed for a child's room, a hostel room or a guest room.",
+      "description": "A straightforward wooden single bed for a child's room, a guest room or a study that doubles as a bedroom.\n\nThe low headboard keeps it compact, and the bed takes a standard 36 × 78 inch mattress.\n\nSpecifications: Material: Solid wood and engineered wood; Finish: Polished wood; Mattress size: 36 × 78 in (approx. 91 × 198 cm); Overall size: approx. 100 × 205 × 85 cm; Sleeping capacity: 1; Care: Dust with a dry cloth, avoid standing water",
+      "categoryId": 35,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Single+Bed",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Single+Bed+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Single+Bed+In+situ"
+      ],
+      "price": 13999,
+      "comparePrice": 15999,
+      "costPrice": 9300,
+      "stock": 19,
+      "lowStockThreshold": 5,
+      "weight": 42,
+      "dimensions": {
+        "length": 205,
+        "width": 100,
+        "height": 85
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 13999,
+          "stock": 10,
+          "sku": "BED-BED-03-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 13999,
+          "stock": 9,
+          "sku": "BED-BED-03-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "bed",
+        "single bed",
+        "wooden",
+        "kids room",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Single Bed | A & S Urbanseat",
+      "metaDescription": "A wooden single bed for a child's room, a hostel room or a guest room. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-14T13:00:00.000Z",
+      "updatedAt": "2026-09-16T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        59,
+        65
+      ],
+      "relatedProductIds": [
+        56,
+        55,
+        59,
+        65
+      ]
+    },
+    {
+      "id": 58,
+      "name": "Carlton Mattress",
+      "slug": "carlton-mattress",
+      "sku": "BED-MAT-01",
+      "shortDescription": "A Carlton foam mattress with a quilted cover, in single, double, queen and king sizes.",
+      "description": "A Carlton mattress with a medium-firm feel: layered foam under a soft quilted cover, for a bed that feels the same night after night.\n\nChoose the size to match the bed; the price changes with the size. The mattress arrives roll-free and ready to place.\n\nSpecifications: Brand: Carlton; Construction: Layered foam with a quilted fabric cover; Feel: Medium-firm; Thickness: approx. 6 in (15 cm); Sizes: Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
+      "categoryId": 36,
+      "brand": "Carlton",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Carlton+Mattress",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Carlton+Mattress+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Carlton+Mattress+In+situ"
+      ],
+      "price": 8999,
+      "comparePrice": 0,
+      "costPrice": 6100,
+      "stock": 35,
+      "lowStockThreshold": 6,
+      "weight": 24,
+      "dimensions": {
+        "length": 198,
+        "width": 183,
+        "height": 15
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Single",
+          "price": 8999,
+          "stock": 12,
+          "sku": "BED-MAT-01-SGL",
+          "attributes": {
+            "Size": "Single"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "Double",
+          "price": 14999,
+          "stock": 10,
+          "sku": "BED-MAT-01-DBL",
+          "attributes": {
+            "Size": "Double"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "Queen",
+          "price": 19999,
+          "stock": 9,
+          "sku": "BED-MAT-01-QN",
+          "attributes": {
+            "Size": "Queen"
+          }
+        },
+        {
+          "id": "v4",
+          "name": "King",
+          "price": 23999,
+          "stock": 4,
+          "sku": "BED-MAT-01-KG",
+          "attributes": {
+            "Size": "King"
+          }
+        }
+      ],
+      "tags": [
+        "carlton",
+        "mattress",
+        "foam mattress",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Carlton Mattress | A & S Urbanseat",
+      "metaDescription": "A Carlton foam mattress with a quilted cover, in single, double, queen and king sizes. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-20T14:00:00.000Z",
+      "updatedAt": "2026-09-24T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        55,
+        56
+      ],
+      "relatedProductIds": [
+        59,
+        55,
+        56,
+        57
+      ]
+    },
+    {
+      "id": 59,
+      "name": "Nilkamal Mattress",
+      "slug": "nilkamal-mattress",
+      "sku": "BED-MAT-02",
+      "shortDescription": "A Nilkamal foam mattress in single, double, queen and king sizes, for everyday beds.",
+      "description": "A Nilkamal foam mattress with an even, supportive feel and a breathable fabric cover. A dependable choice for the master bed, the children's room or the guest bed.\n\nChoose the size to match the bed; the price changes with the size.\n\nSpecifications: Brand: Nilkamal; Construction: Foam core with a fabric cover; Feel: Medium; Thickness: approx. 5 in (12.5 cm); Sizes: Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
+      "categoryId": 36,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Mattress",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Mattress+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Mattress+In+situ"
+      ],
+      "price": 5599,
+      "comparePrice": 0,
+      "costPrice": 3800,
+      "stock": 50,
+      "lowStockThreshold": 6,
+      "weight": 18,
+      "dimensions": {
+        "length": 198,
+        "width": 183,
+        "height": 12.5
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Single",
+          "price": 5599,
+          "stock": 16,
+          "sku": "BED-MAT-02-SGL",
+          "attributes": {
+            "Size": "Single"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "Double",
+          "price": 9499,
+          "stock": 14,
+          "sku": "BED-MAT-02-DBL",
+          "attributes": {
+            "Size": "Double"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "Queen",
+          "price": 12499,
+          "stock": 11,
+          "sku": "BED-MAT-02-QN",
+          "attributes": {
+            "Size": "Queen"
+          }
+        },
+        {
+          "id": "v4",
+          "name": "King",
+          "price": 14999,
+          "stock": 9,
+          "sku": "BED-MAT-02-KG",
+          "attributes": {
+            "Size": "King"
+          }
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "mattress",
+        "foam mattress",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Nilkamal Mattress | A & S Urbanseat",
+      "metaDescription": "A Nilkamal foam mattress in single, double, queen and king sizes, for everyday beds. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-12T09:00:00.000Z",
+      "updatedAt": "2026-09-21T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        56,
+        57
+      ],
+      "relatedProductIds": [
+        58,
+        56,
+        57,
+        55
+      ]
+    },
+    {
+      "id": 60,
+      "name": "Plain Dressing Table",
+      "slug": "plain-dressing-table",
+      "sku": "BED-DRS-01",
+      "shortDescription": "A compact wooden dressing table with a mirror, two drawers and a stool.",
+      "description": "A compact dressing table with a tall mirror, two drawers for the everyday things and a matching stool that tucks underneath.\n\nPlain lines keep it easy to place beside a bed or in an alcove, and the top is wide enough for the daily routine without clutter.\n\nSpecifications: Material: Engineered wood with wooden legs; Finish: Laminated wood grain; Overall size: approx. 80 × 40 × 150 cm; Storage: 2 drawers; Includes: Mirror and stool; Care: Wipe with a dry cloth, clean the mirror with glass cleaner",
+      "categoryId": 37,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Plain+Dressing+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Plain+Dressing+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Plain+Dressing+Table+In+situ"
+      ],
+      "price": 7499,
+      "comparePrice": 0,
+      "costPrice": 4900,
+      "stock": 22,
+      "lowStockThreshold": 6,
+      "weight": 28,
+      "dimensions": {
+        "length": 80,
+        "width": 40,
+        "height": 150
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 7499,
+          "stock": 13,
+          "sku": "BED-DRS-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Frosty White",
+          "price": 7499,
+          "stock": 9,
+          "sku": "BED-DRS-01-WHT",
+          "attributes": {
+            "Finish": "Frosty White"
+          },
+          "swatchHex": "#ece9e2"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "dressing table",
+        "mirror",
+        "bedroom",
+        "compact"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Plain Dressing Table | A & S Urbanseat",
+      "metaDescription": "A compact wooden dressing table with a mirror, two drawers and a stool. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-07T10:00:00.000Z",
+      "updatedAt": "2026-09-05T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        61,
+        62,
+        63,
+        67
+      ]
+    },
+    {
+      "id": 61,
+      "name": "Large Dressing Table",
+      "slug": "large-dressing-table",
+      "sku": "BED-DRS-02",
+      "shortDescription": "A wide dressing table with a large mirror, side cabinets and drawers.",
+      "description": "A full-width dressing table for the master bedroom, with a large mirror and storage on both sides: cabinets for bottles and boxes, drawers for jewellery and accessories.\n\nThe wide top gives room to lay everything out, and a matching cushioned stool comes with it.\n\nSpecifications: Material: Engineered wood with a solid-wood frame; Finish: Polished wood grain; Overall size: approx. 120 × 45 × 170 cm; Storage: 2 cabinets, 3 drawers; Includes: Mirror and cushioned stool; Care: Wipe with a dry cloth, clean the mirror with glass cleaner",
+      "categoryId": 37,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Large+Dressing+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Large+Dressing+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Large+Dressing+Table+In+situ"
+      ],
+      "price": 15999,
+      "comparePrice": 17999,
+      "costPrice": 10600,
+      "stock": 13,
+      "lowStockThreshold": 5,
+      "weight": 48,
+      "dimensions": {
+        "length": 120,
+        "width": 45,
+        "height": 170
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 15999,
+          "stock": 7,
+          "sku": "BED-DRS-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Wenge",
+          "price": 15999,
+          "stock": 6,
+          "sku": "BED-DRS-02-WNG",
+          "attributes": {
+            "Finish": "Wenge"
+          },
+          "swatchHex": "#3b2a22"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "dressing table",
+        "large",
+        "mirror",
+        "storage",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Large Dressing Table | A & S Urbanseat",
+      "metaDescription": "A wide dressing table with a large mirror, side cabinets and drawers. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-04T11:00:00.000Z",
+      "updatedAt": "2026-09-27T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        60,
+        62,
+        63,
+        68
+      ]
+    },
+    {
+      "id": 62,
+      "name": "Standing Mirror",
+      "slug": "standing-mirror",
+      "sku": "BED-MIR-01",
+      "shortDescription": "A full-length standing mirror in a wooden frame that leans or stands on its own.",
+      "description": "A full-length mirror in a wooden frame, for checking the whole outfit before you leave. It stands on its own stand or leans against the wall.\n\nThe tilt can be set to suit the room, and the frame is slim enough for the corner beside an almirah.\n\nSpecifications: Frame: Solid wood; Glass: Clear mirror glass; Overall size: approx. 50 × 45 × 160 cm; Mirror size: approx. 40 × 140 cm; Finish: Polished wood; Care: Clean with glass cleaner, dust the frame",
+      "categoryId": 37,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Standing+Mirror",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Standing+Mirror+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Standing+Mirror+In+situ"
+      ],
+      "price": 5499,
+      "comparePrice": 0,
+      "costPrice": 3500,
+      "stock": 18,
+      "lowStockThreshold": 6,
+      "weight": 12,
+      "dimensions": {
+        "length": 50,
+        "width": 45,
+        "height": 160
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 5499,
+          "stock": 10,
+          "sku": "BED-MIR-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 5499,
+          "stock": 8,
+          "sku": "BED-MIR-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "mirror",
+        "standing mirror",
+        "full length mirror",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Standing Mirror | A & S Urbanseat",
+      "metaDescription": "A full-length standing mirror in a wooden frame that leans or stands on its own. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-29T12:00:00.000Z",
+      "updatedAt": "2026-09-09T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        63,
+        60,
+        61,
+        70
+      ]
+    },
+    {
+      "id": 63,
+      "name": "Wall Mirror",
+      "slug": "wall-mirror",
+      "sku": "BED-MIR-02",
+      "shortDescription": "A framed wall mirror for the bedroom, the entrance or above a wash basin.",
+      "description": "A framed wall mirror for the bedroom, the entrance or above the wash basin. Simple enough to suit any wall.\n\nIt comes with fixings for a straight hang, in a portrait orientation.\n\nSpecifications: Frame: Engineered wood; Glass: Clear mirror glass; Overall size: approx. 60 × 3 × 90 cm; Mounting: Wall hooks included; Finish: Wood-grain laminate; Care: Clean with glass cleaner, dust the frame",
+      "categoryId": 37,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wall+Mirror",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wall+Mirror+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wall+Mirror+In+situ"
+      ],
+      "price": 2799,
+      "comparePrice": 0,
+      "costPrice": 1800,
+      "stock": 30,
+      "lowStockThreshold": 8,
+      "weight": 6,
+      "dimensions": {
+        "length": 60,
+        "width": 3,
+        "height": 90
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 2799,
+          "stock": 16,
+          "sku": "BED-MIR-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Frosty White",
+          "price": 2799,
+          "stock": 14,
+          "sku": "BED-MIR-02-WHT",
+          "attributes": {
+            "Finish": "Frosty White"
+          },
+          "swatchHex": "#ece9e2"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "mirror",
+        "wall mirror",
+        "bedroom",
+        "entrance"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wall Mirror | A & S Urbanseat",
+      "metaDescription": "A framed wall mirror for the bedroom, the entrance or above a wash basin. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-19T13:00:00.000Z",
+      "updatedAt": "2026-09-19T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        62,
+        60,
+        61,
+        64
+      ]
+    },
+    {
+      "id": 64,
+      "name": "Wooden Bedside Table",
+      "slug": "wooden-bedside-table",
+      "sku": "BED-BST-01",
+      "shortDescription": "A wooden bedside table with a drawer and an open shelf, at mattress height.",
+      "description": "A wooden bedside table with a drawer for the small things and an open shelf for the book you are reading.\n\nIt stands at mattress height, so the lamp, the glass of water and the phone are in easy reach.\n\nSpecifications: Material: Solid wood; Finish: Polished wood; Overall size: approx. 45 × 40 × 55 cm; Storage: 1 drawer, 1 open shelf; Weight capacity: approx. 15 kg on top; Care: Wipe with a dry cloth, use coasters",
+      "categoryId": 38,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Bedside+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Bedside+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Bedside+Table+In+situ"
+      ],
+      "price": 4499,
+      "comparePrice": 0,
+      "costPrice": 2900,
+      "stock": 25,
+      "lowStockThreshold": 6,
+      "weight": 9,
+      "dimensions": {
+        "length": 45,
+        "width": 40,
+        "height": 55
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 4499,
+          "stock": 14,
+          "sku": "BED-BST-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 4499,
+          "stock": 11,
+          "sku": "BED-BST-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "bedside table",
+        "nightstand",
+        "wooden",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Bedside Table | A & S Urbanseat",
+      "metaDescription": "A wooden bedside table with a drawer and an open shelf, at mattress height. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-30T14:00:00.000Z",
+      "updatedAt": "2026-09-01T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        55
+      ],
+      "relatedProductIds": [
+        65,
+        66,
+        55,
+        56
+      ]
+    },
+    {
+      "id": 65,
+      "name": "Particle-Board Bedside Table",
+      "slug": "particle-board-bedside-table",
+      "sku": "BED-BST-02",
+      "shortDescription": "A light particle-board bedside table with a drawer, for budget-friendly bedrooms.",
+      "description": "A practical bedside table in laminated particle board, with a drawer and a small cabinet below.\n\nLight to move and simple to keep clean, it suits rented flats, guest rooms and children's rooms.\n\nSpecifications: Material: Laminated particle board; Finish: Wood-grain laminate; Overall size: approx. 40 × 35 × 50 cm; Storage: 1 drawer, 1 cabinet; Weight capacity: approx. 10 kg on top; Care: Wipe with a dry cloth, keep away from water",
+      "categoryId": 38,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Particle-Board+Bedside+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Particle-Board+Bedside+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Particle-Board+Bedside+Table+In+situ"
+      ],
+      "price": 2499,
+      "comparePrice": 2899,
+      "costPrice": 1600,
+      "stock": 31,
+      "lowStockThreshold": 8,
+      "weight": 7,
+      "dimensions": {
+        "length": 40,
+        "width": 35,
+        "height": 50
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 2499,
+          "stock": 18,
+          "sku": "BED-BST-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Frosty White",
+          "price": 2499,
+          "stock": 13,
+          "sku": "BED-BST-02-WHT",
+          "attributes": {
+            "Finish": "Frosty White"
+          },
+          "swatchHex": "#ece9e2"
+        }
+      ],
+      "tags": [
+        "bedside table",
+        "nightstand",
+        "particle board",
+        "bedroom",
+        "budget"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Particle-Board Bedside Table | A & S Urbanseat",
+      "metaDescription": "A light particle-board bedside table with a drawer, for budget-friendly bedrooms. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-28T09:00:00.000Z",
+      "updatedAt": "2026-09-14T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        57
+      ],
+      "relatedProductIds": [
+        64,
+        66,
+        57,
+        56
+      ]
+    },
+    {
+      "id": 66,
+      "name": "Folding Bed Table",
+      "slug": "folding-bed-table",
+      "sku": "BED-BTB-01",
+      "shortDescription": "A light folding table for breakfast, a laptop or homework in bed.",
+      "description": "A small table that stands over your lap in bed, for breakfast on a slow morning, a laptop on a work-from-home day or homework at the end of it.\n\nThe legs fold flat, so it slides under the bed or behind a door when you are done.\n\nSpecifications: Material: Engineered-wood top, steel legs; Top size: approx. 60 × 40 cm; Height: approx. 28 cm; Folding: Legs fold flat; Weight capacity: approx. 8 kg; Care: Wipe with a damp cloth",
+      "categoryId": 38,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Folding+Bed+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Folding+Bed+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Folding+Bed+Table+In+situ"
+      ],
+      "price": 1899,
+      "comparePrice": 0,
+      "costPrice": 1150,
+      "stock": 40,
+      "lowStockThreshold": 8,
+      "weight": 2.5,
+      "dimensions": {
+        "length": 60,
+        "width": 40,
+        "height": 28
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Natural Oak",
+          "price": 1899,
+          "stock": 22,
+          "sku": "BED-BTB-01-OAK",
+          "attributes": {
+            "Colour": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        },
+        {
+          "id": "v2",
+          "name": "Matte Black",
+          "price": 1899,
+          "stock": 18,
+          "sku": "BED-BTB-01-BLK",
+          "attributes": {
+            "Colour": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        }
+      ],
+      "tags": [
+        "bed table",
+        "folding table",
+        "laptop table",
+        "breakfast table",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Folding Bed Table | A & S Urbanseat",
+      "metaDescription": "A light folding table for breakfast, a laptop or homework in bed. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-26T10:00:00.000Z",
+      "updatedAt": "2026-09-30T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        64,
+        65,
+        57,
+        59
+      ]
+    },
+    {
+      "id": 67,
+      "name": "Two-Door Almirah",
+      "slug": "two-door-almirah",
+      "sku": "BED-ALM-01",
+      "shortDescription": "A two-door almirah (wardrobe) with a hanging rail, shelves and a locker.",
+      "description": "A two-door almirah, the wardrobe at the heart of most Indian bedrooms: one side for hanging clothes, the other for folded ones, with a locker for valuables.\n\nA full-length mirror on the inside of one door saves wall space, and the doors close with a lock and key.\n\nSpecifications: Material: Engineered wood with a solid-wood frame; Doors: 2, with lock and key; Interior: Hanging rail, 4 shelves, 1 locker; Overall size: approx. 90 × 52 × 185 cm; Finish: Wood-grain laminate; Care: Wipe with a dry cloth, keep away from damp walls",
+      "categoryId": 39,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Two-Door+Almirah",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Two-Door+Almirah+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Two-Door+Almirah+In+situ"
+      ],
+      "price": 12999,
+      "comparePrice": 0,
+      "costPrice": 8600,
+      "stock": 16,
+      "lowStockThreshold": 5,
+      "weight": 62,
+      "dimensions": {
+        "length": 90,
+        "width": 52,
+        "height": 185
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 12999,
+          "stock": 9,
+          "sku": "BED-ALM-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Wenge",
+          "price": 12999,
+          "stock": 7,
+          "sku": "BED-ALM-01-WNG",
+          "attributes": {
+            "Finish": "Wenge"
+          },
+          "swatchHex": "#3b2a22"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "almirah",
+        "wardrobe",
+        "2 door",
+        "storage",
+        "bedroom"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Two-Door Almirah | A & S Urbanseat",
+      "metaDescription": "A two-door almirah (wardrobe) with a hanging rail, shelves and a locker. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-19T11:00:00.000Z",
+      "updatedAt": "2026-09-11T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        68,
+        70,
+        69,
+        60
+      ]
+    },
+    {
+      "id": 68,
+      "name": "Three-Door Almirah",
+      "slug": "three-door-almirah",
+      "sku": "BED-ALM-02",
+      "shortDescription": "A three-door almirah (wardrobe) with two hanging sections, shelves and drawers.",
+      "description": "A three-door almirah for a couple's wardrobe: two hanging sections, a column of shelves in the middle and drawers for the smaller things.\n\nThe centre door carries a full-length mirror, and every door locks. It fills a bedroom wall with storage instead of clutter.\n\nSpecifications: Material: Engineered wood with a solid-wood frame; Doors: 3, with lock and key; Interior: 2 hanging rails, 5 shelves, 2 drawers, 1 locker; Overall size: approx. 135 × 55 × 200 cm; Finish: Wood-grain laminate; Care: Wipe with a dry cloth, keep away from damp walls",
+      "categoryId": 39,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Three-Door+Almirah",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Three-Door+Almirah+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Three-Door+Almirah+In+situ"
+      ],
+      "price": 21999,
+      "comparePrice": 24999,
+      "costPrice": 14800,
+      "stock": 6,
+      "lowStockThreshold": 5,
+      "weight": 95,
+      "dimensions": {
+        "length": 135,
+        "width": 55,
+        "height": 200
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 21999,
+          "stock": 6,
+          "sku": "BED-ALM-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Wenge",
+          "price": 21999,
+          "stock": 0,
+          "sku": "BED-ALM-02-WNG",
+          "attributes": {
+            "Finish": "Wenge"
+          },
+          "swatchHex": "#3b2a22"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "almirah",
+        "wardrobe",
+        "3 door",
+        "storage",
+        "bedroom"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Three-Door Almirah | A & S Urbanseat",
+      "metaDescription": "A three-door almirah (wardrobe) with two hanging sections, shelves and drawers. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-11T12:00:00.000Z",
+      "updatedAt": "2026-09-25T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        67,
+        70,
+        61,
+        55
+      ]
+    },
+    {
+      "id": 69,
+      "name": "Iron Alna (Clothes Stand)",
+      "slug": "iron-alna-clothes-stand",
+      "sku": "BED-ALN-01",
+      "shortDescription": "An iron alna, the clothes stand for the shirts and sarees you will wear again.",
+      "description": "An alna is the clothes stand every home needs: a place for the shirt, saree or towel that is not going back in the almirah yet.\n\nThis one is made of powder-coated iron with three hanging bars and a bottom shelf for footwear or a bag.\n\nSpecifications: Material: Powder-coated iron; Hanging bars: 3; Overall size: approx. 90 × 40 × 150 cm; Bottom shelf: Yes; Weight capacity: approx. 20 kg; Care: Wipe with a dry cloth",
+      "categoryId": 40,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Iron+Alna+(Clothes+Stand)",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Iron+Alna+(Clothes+Stand)+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Iron+Alna+(Clothes+Stand)+In+situ"
+      ],
+      "price": 1699,
+      "comparePrice": 0,
+      "costPrice": 1050,
+      "stock": 34,
+      "lowStockThreshold": 8,
+      "weight": 6,
+      "dimensions": {
+        "length": 90,
+        "width": 40,
+        "height": 150
+      },
+      "variants": [],
+      "tags": [
+        "alna",
+        "clothes stand",
+        "iron",
+        "bedroom",
+        "storage"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Iron Alna (Clothes Stand) | A & S Urbanseat",
+      "metaDescription": "An iron alna, the clothes stand for the shirts and sarees you will wear again. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-24T13:00:00.000Z",
+      "updatedAt": "2026-09-03T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        70,
+        67,
+        68,
+        71
+      ]
+    },
+    {
+      "id": 70,
+      "name": "Wooden Alna (Clothes Stand)",
+      "slug": "wooden-alna-clothes-stand",
+      "sku": "BED-ALN-02",
+      "shortDescription": "A wooden alna clothes stand with hanging bars and a shelf, finished in walnut.",
+      "description": "The alna in wood: a clothes stand that looks at home in the bedroom, with hanging bars for the day's clothes and a shelf beneath.\n\nThe frame is joined and polished like furniture rather than hardware, so it can stand in view.\n\nSpecifications: Material: Solid wood; Finish: Walnut polish; Hanging bars: 2, plus a top rail; Overall size: approx. 85 × 40 × 155 cm; Weight capacity: approx. 15 kg; Care: Dust with a dry cloth",
+      "categoryId": 40,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Alna+(Clothes+Stand)",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Alna+(Clothes+Stand)+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Alna+(Clothes+Stand)+In+situ"
+      ],
+      "price": 4299,
+      "comparePrice": 0,
+      "costPrice": 2800,
+      "stock": 14,
+      "lowStockThreshold": 6,
+      "weight": 11,
+      "dimensions": {
+        "length": 85,
+        "width": 40,
+        "height": 155
+      },
+      "variants": [],
+      "tags": [
+        "a & s urbanseat",
+        "alna",
+        "clothes stand",
+        "wooden",
+        "bedroom",
+        "storage"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Alna (Clothes Stand) | A & S Urbanseat",
+      "metaDescription": "A wooden alna clothes stand with hanging bars and a shelf, finished in walnut. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-09T14:00:00.000Z",
+      "updatedAt": "2026-09-17T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        69,
+        67,
+        68,
+        62
+      ]
+    },
+    {
+      "id": 71,
+      "name": "Steel Storage Rack",
+      "slug": "steel-storage-rack",
+      "sku": "STO-RCK-01",
+      "shortDescription": "A slotted-angle steel rack in three, four or five shelves for stores and kitchens.",
+      "description": "A steel rack for the store room, the kitchen, the garage or the shop's back room: open shelves that take heavy tins, cartons and tools.\n\nChoose three, four or five shelves; the price and height change with the shelf count. Shelf heights can be set to suit what you store.\n\nSpecifications: Material: Powder-coated steel; Shelves: 3, 4 or 5; Width × depth: approx. 90 × 40 cm; Height: approx. 120 / 150 / 180 cm (3 / 4 / 5 shelves); Weight capacity: approx. 50 kg per shelf; Care: Wipe with a dry cloth",
+      "categoryId": 44,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Storage+Rack",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Storage+Rack+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+Storage+Rack+In+situ"
+      ],
+      "price": 3199,
+      "comparePrice": 0,
+      "costPrice": 2050,
+      "stock": 45,
+      "lowStockThreshold": 6,
+      "weight": 21,
+      "dimensions": {
+        "length": 90,
+        "width": 40,
+        "height": 180
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "3 shelves",
+          "price": 3199,
+          "stock": 18,
+          "sku": "STO-RCK-01-3S",
+          "attributes": {
+            "Shelves": "3 shelves"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "4 shelves",
+          "price": 3799,
+          "stock": 15,
+          "sku": "STO-RCK-01-4S",
+          "attributes": {
+            "Shelves": "4 shelves"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "5 shelves",
+          "price": 4499,
+          "stock": 12,
+          "sku": "STO-RCK-01-5S",
+          "attributes": {
+            "Shelves": "5 shelves"
+          }
+        }
+      ],
+      "tags": [
+        "rack",
+        "steel rack",
+        "storage",
+        "kitchen",
+        "store room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Steel Storage Rack | A & S Urbanseat",
+      "metaDescription": "A slotted-angle steel rack in three, four or five shelves for stores and kitchens. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-05T09:00:00.000Z",
+      "updatedAt": "2026-09-07T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        72,
+        69,
+        67,
+        54
+      ]
+    },
+    {
+      "id": 72,
+      "name": "Wooden Storage Rack",
+      "slug": "wooden-storage-rack",
+      "sku": "STO-RCK-02",
+      "shortDescription": "An open wooden rack in three, four or five shelves for books, plants and display.",
+      "description": "An open wooden rack for books, plants, baskets and the pieces you want on display, at home in a study, a living room or a kitchen.\n\nChoose three, four or five shelves; the price and height change with the shelf count.\n\nSpecifications: Material: Solid wood; Finish: Polished natural wood; Shelves: 3, 4 or 5; Width × depth: approx. 80 × 35 cm; Height: approx. 100 / 130 / 160 cm (3 / 4 / 5 shelves); Care: Dust with a dry cloth",
+      "categoryId": 44,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Storage+Rack",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Storage+Rack+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Storage+Rack+In+situ"
+      ],
+      "price": 5499,
+      "comparePrice": 0,
+      "costPrice": 3600,
+      "stock": 18,
+      "lowStockThreshold": 6,
+      "weight": 24,
+      "dimensions": {
+        "length": 80,
+        "width": 35,
+        "height": 160
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "3 shelves",
+          "price": 5499,
+          "stock": 10,
+          "sku": "STO-RCK-02-3S",
+          "attributes": {
+            "Shelves": "3 shelves"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "4 shelves",
+          "price": 6999,
+          "stock": 8,
+          "sku": "STO-RCK-02-4S",
+          "attributes": {
+            "Shelves": "4 shelves"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "5 shelves",
+          "price": 8499,
+          "stock": 0,
+          "sku": "STO-RCK-02-5S",
+          "attributes": {
+            "Shelves": "5 shelves"
+          }
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "rack",
+        "wooden rack",
+        "bookshelf",
+        "storage"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wooden Storage Rack | A & S Urbanseat",
+      "metaDescription": "An open wooden rack in three, four or five shelves for books, plants and display. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-30T10:00:00.000Z",
+      "updatedAt": "2026-09-23T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        71,
+        54,
+        53,
+        67
+      ]
+    },
+    {
+      "id": 73,
+      "name": "4-Seater Dining Set",
+      "slug": "4-seater-dining-set",
+      "sku": "DIN-SET-01",
+      "shortDescription": "A wooden dining table with four cushioned chairs, for everyday family meals.",
+      "description": "A dining table for four with matching chairs: the right size for a small family, a flat's dining corner or an open kitchen.\n\nThe chairs have cushioned seats for long dinners, and the table's sealed top wipes clean after every meal.\n\nSpecifications: Material: Solid wood; Finish: Polished wood, sealed top; Seating capacity: 4; Table size: approx. 120 × 75 × 76 cm; Includes: Table and 4 cushioned chairs; Care: Wipe with a damp cloth and dry, use mats for hot dishes",
+      "categoryId": 42,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Dining+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Dining+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Dining+Set+In+situ"
+      ],
+      "price": 21999,
+      "comparePrice": 0,
+      "costPrice": 14800,
+      "stock": 15,
+      "lowStockThreshold": 5,
+      "weight": 58,
+      "dimensions": {
+        "length": 120,
+        "width": 75,
+        "height": 76
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 21999,
+          "stock": 8,
+          "sku": "DIN-SET-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 21999,
+          "stock": 7,
+          "sku": "DIN-SET-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "dining set",
+        "dining table",
+        "4 seater",
+        "wooden",
+        "dining room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "4-Seater Dining Set | A & S Urbanseat",
+      "metaDescription": "A wooden dining table with four cushioned chairs, for everyday family meals. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-23T11:00:00.000Z",
+      "updatedAt": "2026-09-13T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        74,
+        75,
+        54,
+        72
+      ]
+    },
+    {
+      "id": 74,
+      "name": "6-Seater Dining Set",
+      "slug": "6-seater-dining-set",
+      "sku": "DIN-SET-02",
+      "shortDescription": "A wooden dining table with six cushioned chairs, for families who eat together.",
+      "description": "A dining table for six, with matching cushioned chairs: room for the whole family at dinner and for the guests who stay to eat.\n\nThe table stands on four sturdy legs set to the corners, so every chair pulls in fully.\n\nSpecifications: Material: Solid wood; Finish: Polished wood, sealed top; Seating capacity: 6; Table size: approx. 165 × 90 × 76 cm; Includes: Table and 6 cushioned chairs; Care: Wipe with a damp cloth and dry, use mats for hot dishes",
+      "categoryId": 42,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Dining+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Dining+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Dining+Set+In+situ"
+      ],
+      "price": 34999,
+      "comparePrice": 39999,
+      "costPrice": 23500,
+      "stock": 13,
+      "lowStockThreshold": 5,
+      "weight": 86,
+      "dimensions": {
+        "length": 165,
+        "width": 90,
+        "height": 76
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 34999,
+          "stock": 7,
+          "sku": "DIN-SET-02-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Teak",
+          "price": 34999,
+          "stock": 6,
+          "sku": "DIN-SET-02-TEK",
+          "attributes": {
+            "Finish": "Teak"
+          },
+          "swatchHex": "#8a5a35"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "dining set",
+        "dining table",
+        "6 seater",
+        "wooden",
+        "dining room"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "6-Seater Dining Set | A & S Urbanseat",
+      "metaDescription": "A wooden dining table with six cushioned chairs, for families who eat together. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-01T12:00:00.000Z",
+      "updatedAt": "2026-09-28T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        75,
+        73,
+        54,
+        72
+      ]
+    },
+    {
+      "id": 75,
+      "name": "Marble-Top Dining Set",
+      "slug": "marble-top-dining-set",
+      "sku": "DIN-SET-03",
+      "shortDescription": "A six-seat dining set with a marble top on a wooden base, for formal dining rooms.",
+      "description": "A marble-topped dining table on a solid wooden base, with six upholstered chairs. The centrepiece for a formal dining room.\n\nMarble stays cool and looks better with years of use. The top is sealed against everyday stains.\n\nSpecifications: Top: Natural marble, sealed; Base: Solid wood; Seating capacity: 6; Table size: approx. 170 × 90 × 76 cm; Includes: Table and 6 upholstered chairs; Care: Wipe spills at once, avoid acidic cleaners on the marble",
+      "categoryId": 42,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Marble-Top+Dining+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Marble-Top+Dining+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Marble-Top+Dining+Set+In+situ"
+      ],
+      "price": 54999,
+      "comparePrice": 0,
+      "costPrice": 37500,
+      "stock": 8,
+      "lowStockThreshold": 5,
+      "weight": 140,
+      "dimensions": {
+        "length": 170,
+        "width": 90,
+        "height": 76
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 54999,
+          "stock": 2,
+          "sku": "DIN-SET-03-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Wenge",
+          "price": 54999,
+          "stock": 6,
+          "sku": "DIN-SET-03-WNG",
+          "attributes": {
+            "Finish": "Wenge"
+          },
+          "swatchHex": "#3b2a22"
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "dining set",
+        "dining table",
+        "marble",
+        "6 seater",
+        "dining room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": true,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Marble-Top Dining Set | A & S Urbanseat",
+      "metaDescription": "A six-seat dining set with a marble top on a wooden base, for formal dining rooms. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-15T13:00:00.000Z",
+      "updatedAt": "2026-10-01T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        74,
+        73,
+        54,
+        53
+      ]
+    },
+    {
+      "id": 76,
+      "name": "Winsome Office Table",
+      "slug": "winsome-office-table",
+      "sku": "OFT-OFF-01",
+      "shortDescription": "A Winsome office table with a pedestal of drawers and a cable-managed top.",
+      "description": "A Winsome office table for a cabin or a manager's desk: a wide work surface, a lockable pedestal of drawers and grommets that keep cables tidy.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood, metal handles; Sizes: approx. 120 × 60 cm or 150 × 75 cm, 75 cm high; Storage: 3-drawer pedestal, top drawer lockable; Cable management: Desk grommets; Care: Wipe with a damp cloth",
+      "categoryId": 45,
+      "brand": "Winsome",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Office+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Office+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Office+Table+In+situ"
+      ],
+      "price": 12999,
+      "comparePrice": 0,
+      "costPrice": 8700,
+      "stock": 15,
+      "lowStockThreshold": 5,
+      "weight": 46,
+      "dimensions": {
+        "length": 150,
+        "width": 75,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "120 × 60 cm",
+          "price": 12999,
+          "stock": 9,
+          "sku": "OFT-OFF-01-120",
+          "attributes": {
+            "Size": "120 × 60 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "150 × 75 cm",
+          "price": 16999,
+          "stock": 6,
+          "sku": "OFT-OFF-01-150",
+          "attributes": {
+            "Size": "150 × 75 cm"
+          }
+        }
+      ],
+      "tags": [
+        "winsome",
+        "office table",
+        "desk",
+        "executive desk",
+        "office"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Winsome Office Table | A & S Urbanseat",
+      "metaDescription": "A Winsome office table with a pedestal of drawers and a cable-managed top. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-09T14:00:00.000Z",
+      "updatedAt": "2026-09-26T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        29,
+        31
+      ],
+      "relatedProductIds": [
+        77,
+        78,
+        80,
+        79
+      ]
+    },
+    {
+      "id": 77,
+      "name": "Workshop Office Table",
+      "slug": "workshop-office-table",
+      "sku": "OFT-OFF-02",
+      "shortDescription": "A sturdy office table with drawers, made in our own workshop.",
+      "description": "A plain, sturdy office table with a drawer unit, for the shop counter, the clinic reception or a small office.\n\nMade in our own workshop, it is a straightforward desk that does its job. Choose the size that fits; the price changes with the size.\n\nSpecifications: Material: Engineered wood with a laminated top; Sizes: approx. 120 × 60 cm or 150 × 75 cm, 75 cm high; Storage: 2 drawers; Finish: Wood-grain laminate; Weight capacity: approx. 40 kg on top; Care: Wipe with a damp cloth",
+      "categoryId": 45,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Office+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Office+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Office+Table+In+situ"
+      ],
+      "price": 8999,
+      "comparePrice": 0,
+      "costPrice": 5900,
+      "stock": 19,
+      "lowStockThreshold": 6,
+      "weight": 38,
+      "dimensions": {
+        "length": 150,
+        "width": 75,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "120 × 60 cm",
+          "price": 8999,
+          "stock": 11,
+          "sku": "OFT-OFF-02-120",
+          "attributes": {
+            "Size": "120 × 60 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "150 × 75 cm",
+          "price": 11999,
+          "stock": 8,
+          "sku": "OFT-OFF-02-150",
+          "attributes": {
+            "Size": "150 × 75 cm"
+          }
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "office table",
+        "desk",
+        "office",
+        "workshop made"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Workshop Office Table | A & S Urbanseat",
+      "metaDescription": "A sturdy office table with drawers, made in our own workshop. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-18T09:00:00.000Z",
+      "updatedAt": "2026-09-29T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        21,
+        22
+      ],
+      "relatedProductIds": [
+        76,
+        79,
+        81,
+        78
+      ]
+    },
+    {
+      "id": 78,
+      "name": "Winsome Computer Table",
+      "slug": "winsome-computer-table",
+      "sku": "OFT-CMP-01",
+      "shortDescription": "A Winsome computer table with a keyboard tray, CPU bay and an open shelf.",
+      "description": "A Winsome computer table with a sliding keyboard tray, a ventilated bay for the CPU and a shelf for the printer or files.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 90 × 60 cm or 120 × 60 cm, 75 cm high; Features: Keyboard tray, CPU bay, open shelf; Finish: Wood-grain laminate; Care: Wipe with a damp cloth",
+      "categoryId": 46,
+      "brand": "Winsome",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Computer+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Computer+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Computer+Table+In+situ"
+      ],
+      "price": 8499,
+      "comparePrice": 9499,
+      "costPrice": 5600,
+      "stock": 21,
+      "lowStockThreshold": 6,
+      "weight": 30,
+      "dimensions": {
+        "length": 120,
+        "width": 60,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "90 × 60 cm",
+          "price": 8499,
+          "stock": 12,
+          "sku": "OFT-CMP-01-90",
+          "attributes": {
+            "Size": "90 × 60 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "120 × 60 cm",
+          "price": 10999,
+          "stock": 9,
+          "sku": "OFT-CMP-01-120",
+          "attributes": {
+            "Size": "120 × 60 cm"
+          }
+        }
+      ],
+      "tags": [
+        "winsome",
+        "computer table",
+        "desk",
+        "work from home",
+        "office"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Winsome Computer Table | A & S Urbanseat",
+      "metaDescription": "A Winsome computer table with a keyboard tray, CPU bay and an open shelf. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-17T10:00:00.000Z",
+      "updatedAt": "2026-09-27T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        33
+      ],
+      "relatedProductIds": [
+        79,
+        76,
+        80,
+        77
+      ]
+    },
+    {
+      "id": 79,
+      "name": "Workshop Computer Table",
+      "slug": "workshop-computer-table",
+      "sku": "OFT-CMP-02",
+      "shortDescription": "A compact computer table with a keyboard tray, made in our own workshop.",
+      "description": "A compact computer table with a keyboard tray and a CPU shelf, for a work-from-home corner or a child's study.\n\nMade in our own workshop. Choose the size that fits; the price changes with the size.\n\nSpecifications: Material: Engineered wood with a laminated top; Sizes: approx. 90 × 60 cm or 120 × 60 cm, 75 cm high; Features: Keyboard tray, CPU shelf; Finish: Wood-grain laminate; Weight capacity: approx. 30 kg on top; Care: Wipe with a damp cloth",
+      "categoryId": 46,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Computer+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Computer+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Computer+Table+In+situ"
+      ],
+      "price": 5999,
+      "comparePrice": 0,
+      "costPrice": 3900,
+      "stock": 24,
+      "lowStockThreshold": 6,
+      "weight": 24,
+      "dimensions": {
+        "length": 120,
+        "width": 60,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "90 × 60 cm",
+          "price": 5999,
+          "stock": 14,
+          "sku": "OFT-CMP-02-90",
+          "attributes": {
+            "Size": "90 × 60 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "120 × 60 cm",
+          "price": 7499,
+          "stock": 10,
+          "sku": "OFT-CMP-02-120",
+          "attributes": {
+            "Size": "120 × 60 cm"
+          }
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "computer table",
+        "desk",
+        "work from home",
+        "workshop made"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Workshop Computer Table | A & S Urbanseat",
+      "metaDescription": "A compact computer table with a keyboard tray, made in our own workshop. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-22T11:00:00.000Z",
+      "updatedAt": "2026-09-30T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        24
+      ],
+      "relatedProductIds": [
+        78,
+        77,
+        81,
+        76
+      ]
+    },
+    {
+      "id": 80,
+      "name": "Winsome Reading Table",
+      "slug": "winsome-reading-table",
+      "sku": "OFT-RDG-01",
+      "shortDescription": "A Winsome study table with a book shelf and a drawer, sized for a child's room.",
+      "description": "A Winsome reading table with a raised shelf for books and a drawer for stationery, sized for a student's room.\n\nChoose the size that fits; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 75 × 50 cm or 90 × 60 cm, 75 cm high; Storage: Book shelf, 1 drawer; Finish: Wood-grain laminate; Care: Wipe with a damp cloth",
+      "categoryId": 47,
+      "brand": "Winsome",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Reading+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Reading+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Reading+Table+In+situ"
+      ],
+      "price": 5999,
+      "comparePrice": 0,
+      "costPrice": 3900,
+      "stock": 23,
+      "lowStockThreshold": 6,
+      "weight": 22,
+      "dimensions": {
+        "length": 90,
+        "width": 60,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "75 × 50 cm",
+          "price": 5999,
+          "stock": 13,
+          "sku": "OFT-RDG-01-75",
+          "attributes": {
+            "Size": "75 × 50 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "90 × 60 cm",
+          "price": 7499,
+          "stock": 10,
+          "sku": "OFT-RDG-01-90",
+          "attributes": {
+            "Size": "90 × 60 cm"
+          }
+        }
+      ],
+      "tags": [
+        "winsome",
+        "reading table",
+        "study table",
+        "kids",
+        "office"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Winsome Reading Table | A & S Urbanseat",
+      "metaDescription": "A Winsome study table with a book shelf and a drawer, sized for a child's room. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-03T12:00:00.000Z",
+      "updatedAt": "2026-09-18T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        25
+      ],
+      "relatedProductIds": [
+        81,
+        78,
+        79,
+        76
+      ]
+    },
+    {
+      "id": 81,
+      "name": "Workshop Reading Table",
+      "slug": "workshop-reading-table",
+      "sku": "OFT-RDG-02",
+      "shortDescription": "A simple wooden reading table with a drawer, made in our own workshop.",
+      "description": "A simple reading table with a drawer, for homework, reading or a quiet corner to write in.\n\nMade in our own workshop. Choose the size that fits; the price changes with the size.\n\nSpecifications: Material: Engineered wood with a laminated top; Sizes: approx. 75 × 50 cm or 90 × 60 cm, 75 cm high; Storage: 1 drawer; Finish: Wood-grain laminate; Weight capacity: approx. 25 kg on top; Care: Wipe with a damp cloth",
+      "categoryId": 47,
+      "brand": "A & S Urbanseat",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Reading+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Reading+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Workshop+Reading+Table+In+situ"
+      ],
+      "price": 4199,
+      "comparePrice": 4799,
+      "costPrice": 2700,
+      "stock": 28,
+      "lowStockThreshold": 6,
+      "weight": 18,
+      "dimensions": {
+        "length": 90,
+        "width": 60,
+        "height": 75
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "75 × 50 cm",
+          "price": 4199,
+          "stock": 16,
+          "sku": "OFT-RDG-02-75",
+          "attributes": {
+            "Size": "75 × 50 cm"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "90 × 60 cm",
+          "price": 5299,
+          "stock": 12,
+          "sku": "OFT-RDG-02-90",
+          "attributes": {
+            "Size": "90 × 60 cm"
+          }
+        }
+      ],
+      "tags": [
+        "a & s urbanseat",
+        "reading table",
+        "study table",
+        "kids",
+        "workshop made"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Workshop Reading Table | A & S Urbanseat",
+      "metaDescription": "A simple wooden reading table with a drawer, made in our own workshop. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-29T13:00:00.000Z",
+      "updatedAt": "2026-10-02T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        25
+      ],
+      "relatedProductIds": [
+        80,
+        79,
+        78,
+        77
+      ]
+    },
+    {
+      "id": 82,
+      "name": "4-Seater Plastic Dining Set",
+      "slug": "4-seater-plastic-dining-set",
+      "sku": "PLD-DIN-01",
+      "shortDescription": "A plastic dining table with four chairs, light to move and quick to wipe clean.",
+      "description": "A plastic dining table with four matching chairs, for a small family's everyday meals, a terrace or a canteen corner.\n\nMoulded plastic shrugs off spills and wipes clean in a moment, and the chairs stack away when the table is folded into a corner.\n\nSpecifications: Material: Moulded polypropylene; Seating capacity: 4; Table size: approx. 90 × 90 × 72 cm; Includes: Table and 4 chairs without arms; Weight capacity: approx. 100 kg per chair; Care: Wipe clean with a damp cloth",
+      "categoryId": 48,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Plastic+Dining+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Plastic+Dining+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Plastic+Dining+Set+In+situ"
+      ],
+      "price": 5999,
+      "comparePrice": 0,
+      "costPrice": 4000,
+      "stock": 42,
+      "lowStockThreshold": 6,
+      "weight": 16,
+      "dimensions": {
+        "length": 90,
+        "width": 90,
+        "height": 72
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Marble Beige",
+          "price": 5999,
+          "stock": 14,
+          "sku": "PLD-DIN-01-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 5999,
+          "stock": 16,
+          "sku": "PLD-DIN-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v3",
+          "name": "White",
+          "price": 5999,
+          "stock": 12,
+          "sku": "PLD-DIN-01-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "plastic",
+        "dining set",
+        "dining table",
+        "4 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "4-Seater Plastic Dining Set | A & S Urbanseat",
+      "metaDescription": "A plastic dining table with four chairs, light to move and quick to wipe clean. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-11T14:00:00.000Z",
+      "updatedAt": "2026-09-22T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        83,
+        84,
+        4,
+        7
+      ]
+    },
+    {
+      "id": 83,
+      "name": "6-Seater Plastic Dining Set",
+      "slug": "6-seater-plastic-dining-set",
+      "sku": "PLD-DIN-02",
+      "shortDescription": "A rectangular plastic dining table with six chairs, for larger families and terraces.",
+      "description": "A rectangular plastic dining table with six chairs, for a larger family, a farmhouse veranda or a hostel dining room.\n\nEverything wipes clean and nothing rusts, so it works indoors and on a covered terrace alike.\n\nSpecifications: Material: Moulded polypropylene; Seating capacity: 6; Table size: approx. 150 × 90 × 72 cm; Includes: Table and 6 chairs without arms; Weight capacity: approx. 100 kg per chair; Care: Wipe clean with a damp cloth",
+      "categoryId": 48,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Plastic+Dining+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Plastic+Dining+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=6-Seater+Plastic+Dining+Set+In+situ"
+      ],
+      "price": 9999,
+      "comparePrice": 10999,
+      "costPrice": 6700,
+      "stock": 22,
+      "lowStockThreshold": 5,
+      "weight": 24,
+      "dimensions": {
+        "length": 150,
+        "width": 90,
+        "height": 72
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Marble Beige",
+          "price": 9999,
+          "stock": 10,
+          "sku": "PLD-DIN-02-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 9999,
+          "stock": 12,
+          "sku": "PLD-DIN-02-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "plastic",
+        "dining set",
+        "dining table",
+        "6 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "6-Seater Plastic Dining Set | A & S Urbanseat",
+      "metaDescription": "A rectangular plastic dining table with six chairs, for larger families and terraces. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-07T09:00:00.000Z",
+      "updatedAt": "2026-09-25T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        82,
+        84,
+        6,
+        8
+      ]
+    },
+    {
+      "id": 84,
+      "name": "Nilkamal Plastic Sofa Set",
+      "slug": "nilkamal-plastic-sofa-set",
+      "sku": "PLS-SOF-01",
+      "shortDescription": "A Nilkamal moulded plastic 3+1+1 sofa set with seat cushions.",
+      "description": "A Nilkamal plastic sofa set: a three-seater and two single chairs in moulded plastic, with seat cushions for comfort.\n\nIt sits as happily on a veranda as in a living room, wipes clean in a moment and never needs polishing.\n\nSpecifications: Brand: Nilkamal; Material: Moulded polypropylene, fabric seat cushions; Configuration: 3 + 1 + 1 (five seats); Three-seater size: approx. 165 × 70 × 80 cm; Weight capacity: approx. 100 kg per seat; Care: Wipe the frame clean, brush the cushions",
+      "categoryId": 49,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Plastic+Sofa+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Plastic+Sofa+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Nilkamal+Plastic+Sofa+Set+In+situ"
+      ],
+      "price": 12999,
+      "comparePrice": 14999,
+      "costPrice": 8700,
+      "stock": 24,
+      "lowStockThreshold": 5,
+      "weight": 26,
+      "dimensions": {
+        "length": 165,
+        "width": 70,
+        "height": 80
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Coffee Brown",
+          "price": 12999,
+          "stock": 9,
+          "sku": "PLS-SOF-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v2",
+          "name": "Marble Beige",
+          "price": 12999,
+          "stock": 8,
+          "sku": "PLS-SOF-01-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v3",
+          "name": "Pearl Grey",
+          "price": 12999,
+          "stock": 7,
+          "sku": "PLS-SOF-01-GRY",
+          "attributes": {
+            "Colour": "Pearl Grey"
+          },
+          "swatchHex": "#b9b6b0"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "plastic",
+        "sofa",
+        "sofa set",
+        "veranda"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Nilkamal Plastic Sofa Set | A & S Urbanseat",
+      "metaDescription": "A Nilkamal moulded plastic 3+1+1 sofa set with seat cushions. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-22T10:00:00.000Z",
+      "updatedAt": "2026-09-20T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        17
+      ],
+      "relatedProductIds": [
+        82,
+        83,
+        12,
+        17
       ]
     }
   ],
