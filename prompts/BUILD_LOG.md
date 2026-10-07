@@ -1186,7 +1186,7 @@ The gradient banner carousel, the invented promo cards and the electronics-era c
 | File | Change |
 |---|---|
 | New `src/content/homeContent.js` | The home page's editorial content module. `HERO` = `{ eyebrow, headline, support, primaryCta, secondaryCta, media: { image: { src, alt, width, height }, video: { src, poster }, focalPoint } }`. `headline`/`support` are imported from `HERO_HEADLINES[0]` / `HERO_SUPPORT_LINES[0]` in `brandContent.js`, not copied. Media is a `placehold.co` 2400×1350 in the placeholder tones (`f1ebe1`/`686158`), with `video.src: null`. Prompts 11 and 12 add their entries here. |
-| `src/components/HeroSection/HeroSection.js` + `.module.css` | Rewritten. 417 → 166 lines of JS. CSS colour literals: 37 → 0. Optional `content` prop (default `HERO`), so tests and later variants can pass their own. |
+| `src/components/HeroSection/HeroSection.js` + `.module.css` | Rewritten. 417 → 172 lines of JS. CSS colour literals: 37 → 0. Optional `content` prop (default `HERO`), so tests and later variants can pass their own. |
 | New `src/components/storefront/AssuranceStrip.js` + `.module.css` | The strip, plus an exported pure `resolveAssuranceItems({ settings, shipping })`. Also exported from the `storefront` barrel. |
 | `src/components/storefront/TrustBadges.js` | One added line: `export { ICONS as TRUST_BADGE_ICONS }`, so the strip reuses the same icon drawings instead of copying them. Behaviour unchanged. |
 | `src/pages/Home/Home.js` | Only the mount: `<HeroSection />` then `<AssuranceStrip />`, replacing the old `<section className={styles.heroSection}>` wrapper (it would have nested a section inside the hero's own `<section>`), plus one import. The `.heroSection` class in `Home.module.css` is now unused; Prompt 11 can drop it. |
