@@ -92,12 +92,14 @@ export const TRUST_BADGE_CATALOG = {
 
 // --- The per-client storefront configuration --------------------------------
 export const STOREFRONT_CONFIG = {
-  // Which trust badges appear near the buy box, in order. Domain-agnostic
-  // defaults; a furniture or beauty client can reorder/swap these freely.
-  trustBadges: ["genuine", "securePayment", "easyReturns", "freeShipping"],
+  // Which trust badges appear near the buy box, in order. Only badges the
+  // business can honestly show: "warranty" and "support" stay out until the
+  // client confirms them (see prompts/BUILD_LOG.md, Prompt 02).
+  trustBadges: ["securePayment", "cod", "easyReturns", "genuine"],
 
   // Returns policy window (days). Drives the "Easy Returns" badge + the
   // Delivery & Returns panel copy. Set to 0 to advertise "no returns".
+  // Placeholder pending client confirmation of the returns policy.
   returnsWindowDays: 7,
 
   // Average-Order-Value modules. Each is data-driven and renders nothing when
