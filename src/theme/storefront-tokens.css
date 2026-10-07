@@ -205,6 +205,7 @@
   --sf-z-sticky: 40;
   --sf-z-header: 50;
   --sf-z-megamenu: 55;
+  --sf-z-bottomnav: 58;                /* mobile bottom nav: above content, below overlays */
   --sf-z-stickybar: 60;                /* mobile sticky Add-to-Cart bar */
   --sf-z-overlay: 1000;
   --sf-z-modal: 1100;

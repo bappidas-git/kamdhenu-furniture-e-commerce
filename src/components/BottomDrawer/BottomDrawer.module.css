@@ -1,10 +1,137 @@
-.backdrop { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 1300; }
-.drawer { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-radius: 16px 16px 0 0; z-index: 1301; max-height: 80vh; overflow-y: auto; }
-.dark { background: #1e293b; color: #e2e8f0; }
-.handle { width: 40px; height: 4px; border-radius: 2px; background: #d1d5db; margin: 12px auto 0; }
-.dark .handle { background: #475569; }
-.drawerHeader { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid #e2e8f0; }
-.dark .drawerHeader { border-color: #334155; }
-.drawerHeader h3 { font-size: 1.1rem; font-weight: 600; }
-.closeBtn { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: inherit; padding: 0; line-height: 1; }
-.drawerContent { padding: 16px 20px; }
+/* ==========================================================================
+   BottomDrawer — the shared bottom sheet
+   Tokens only (prompts/DESIGN_SYSTEM.md). Paper surface, a hairline header
+   with the serif title, the one place a larger radius (--sf-radius-lg) is
+   used: the sheet's top corners.
+   ========================================================================== */
+
+.backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: var(--sf-z-overlay);
+  background-color: var(--sf-color-overlay);
+  -webkit-tap-highlight-color: transparent;
+}
+
+.sheet {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: var(--sf-z-overlay);
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--sf-container-narrow);
+  margin-inline: auto;
+  overflow: hidden;
+  border-radius: var(--sf-radius-lg) var(--sf-radius-lg) 0 0;
+  background-color: var(--sf-color-bg);
+  box-shadow: var(--sf-shadow-lg);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+}
+
+/* The sheet itself only takes focus as a fallback; its controls show rings. */
+.sheet:focus {
+  outline: none;
+}
+
+/* Visual only: there is no drag-to-dismiss. */
+.handle {
+  flex: none;
+  align-self: center;
+  width: 36px;
+  height: 4px;
+  margin-top: var(--sf-space-2);
+  border-radius: var(--sf-radius-pill);
+  background-color: var(--sf-color-border-strong);
+}
+
+.header {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-3);
+  min-height: 56px;
+  padding: var(--sf-space-1) var(--sf-space-2) var(--sf-space-1) var(--sf-space-5);
+  border-bottom: var(--sf-hairline);
+}
+
+.title {
+  min-width: 0;
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-sm);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+  overflow-wrap: break-word;
+}
+
+.close {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  margin-inline-start: auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.close svg {
+  font-size: 22px;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background-color: var(--sf-color-sand);
+  }
+}
+
+.close:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: var(--sf-space-5);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+}
+
+/* The last block also clears the home indicator. */
+.body:last-child {
+  padding-bottom: calc(var(--sf-space-5) + env(safe-area-inset-bottom, 0px));
+}
+
+.footer {
+  flex: none;
+  display: flex;
+  gap: var(--sf-space-3);
+  padding: var(--sf-space-4) var(--sf-space-5)
+    calc(var(--sf-space-4) + env(safe-area-inset-bottom, 0px));
+  border-top: var(--sf-hairline);
+  background-color: var(--sf-color-bg);
+}
+
+@media print {
+  .backdrop,
+  .sheet {
+    display: none;
+  }
+}

@@ -328,12 +328,13 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-sticky` | 40 | sticky in-page elements (filter rail, section nav) |
 | `--sf-z-header` | 50 | site header |
 | `--sf-z-megamenu` | 55 | mega-menu flyout (desktop) |
+| `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
 | `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar |
 | `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves |
 | `--sf-z-modal` | 1100 | modals and full-screen overlays (search, auth) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
-Reserved, defined by their owners if needed: `--sf-z-bottomnav` (Prompt 09; it must sit above content and below `--sf-z-stickybar`; 58 is suggested) and `--sf-z-search` (Prompt 15; only if search must sit above another modal).
+Reserved, defined by its owner if needed: `--sf-z-search` (Prompt 15; only if search must sit above another modal). `--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
 
 ---
 
@@ -590,7 +591,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 
 ### 16.4 React primitives (`src/components/ui`)
 
-Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`).
+Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`, and since Prompt 09 `BottomDrawer`, `useFocusTrap`, `useBodyScrollLock`, `useBodyScrollLocked` and `getFocusableElements`: section 19).
 
 **`<Reveal>`**: the standard scroll reveal (section 8). Fades in with a 20px rise once the element is 10% inside the viewport (`whileInView`, `viewport={{ once, margin: "-10% 0px" }}`, `TOKENS.motion` duration 0.9s and ease-out). With reduced motion (`useReducedMotion()`, and `MotionConfig` around the storefront) it only fades: no transform.
 
@@ -784,7 +785,7 @@ Four one-colour line marks on a 48 × 32 card (VISA, two rings for Mastercard, U
 
 ### 18.5 BottomNav clearance
 
-Up to 768px the footer adds `padding-bottom: calc(var(--sf-space-24) + env(safe-area-inset-bottom, 0px))`, so the fixed BottomNav (60–79px today, plus the inset) never covers the bottom bar; the navy runs on beneath it. **Prompt 09:** keep the nav within 96px plus the inset, or raise this value.
+Up to 768px the footer adds `padding-bottom: calc(var(--sf-space-24) + env(safe-area-inset-bottom, 0px))`, so the fixed BottomNav never covers the bottom bar; the navy runs on beneath it. Since Prompt 09 the nav is 57px (56px items and the 1px top hairline) plus the inset, inside the 96px reserve. A nav that grows past 96px must raise this value.
 
 ### 18.6 New contrast pairs
 
@@ -796,3 +797,99 @@ Up to 768px the footer adds `padding-bottom: calc(var(--sf-space-24) + env(safe-
 | Footer error text and invalid border (on-dark-error) on navy (both modes) | 7.12 ✓ | 7.12 ✓ | 4.5:1 |
 
 Every other footer pairing is already in section 14 (on-dark, on-dark muted and the caramel focus ring on navy, the paper button and its hover).
+
+---
+
+## 19. Mobile navigation and overlays
+
+Written by Prompt 09. Files: `src/components/SidebarMenu/*`, `src/components/BottomNav/*`, `src/components/BottomDrawer/*` (the shared bottom sheet, also exported from `ui/`), and `src/components/ui/useFocusTrap.js` (the focus-trap helper).
+
+### 19.1 The overlay contract
+
+Every drawer, sheet and modal on the storefront should behave the same way. The sidebar and the bottom sheet follow this contract, and later overlays (cart drawer, search, auth modal) can adopt it with the same helper.
+
+| Concern | Rule |
+|---|---|
+| Semantics | `role="dialog"`, `aria-modal="true"` and a name (`aria-label`, or `aria-labelledby` pointing at a visible title) |
+| Focus | `useFocusTrap(ref, { active, onEscape, initialFocusRef, returnFocusRef, returnFocus })`: on open, focus moves to `initialFocusRef`, else the first focusable element, else the container (give it `tabIndex={-1}`). Tab and Shift+Tab cycle inside. On close, focus returns to the element that opened the layer, unless another layer has taken focus in the meantime. Only the most recently opened trap handles keys, so nested layers work. Focus is not forcibly pulled back into the layer: `aria-modal` hides the page from assistive technology, and portalled popovers and SweetAlert dialogs opened from inside the layer keep their own focus. |
+| Escape | `onEscape` (usually `onClose`), handled by the topmost trap only |
+| Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. This is the same signal the cart drawer, search and auth modal already set, and the one BottomNav listens to through `useBodyScrollLocked()`. |
+| Stacking | Backdrops and panels at `--sf-z-overlay` (1000); full-screen modals at `--sf-z-modal` (1100); BottomNav (58) is always beneath them |
+| Backdrop | `--sf-color-overlay`, no blur; a click closes the layer |
+| Motion | Enter with `--sf-ease-out`; exit in `--sf-duration` with `--sf-ease-in-out`; under reduced motion, opacity only (an explicit `useReducedMotion()` variant, on top of `MotionConfig`) |
+
+### 19.2 SidebarMenu
+
+| Part | Spec |
+|---|---|
+| Panel | Fixed on the left, `min(360px, 88vw)` wide, full height; `--sf-color-bg` (paper / navy-ink); `border-right: var(--sf-hairline)`, square corners, `--sf-shadow-lg`; safe-area padding. It slides in over `--sf-duration-slow` with `--sf-ease-out` (no spring) and out over `--sf-duration` with `--sf-ease-in-out`. |
+| Top row | 60px plus the top inset, with a hairline below: `<BrandLogo height={28} />` (auto variant: the white logo in dark mode) and a 44px "Close menu" button, which takes focus on open |
+| Account block | **Guest:** the serif line "Sign in for faster checkout and order tracking." (20px), a `.sf-btn--primary --block` "Sign in" (`onClose(); onOpenAuth()`) and a `.sf-btn--ghost --block` "Create account" (`onOpenAuth("signup")`). **Signed in:** a 48px hairline circle with the serif initial (or the user's image), name, email, and a "My account" link (`/profile`). |
+| Shop | An accordion built by `groupCategoryTree` (`Header/groupCategoryTree.js`), the same grouping as the mega-menu. Department rows are 48px, in the display serif at 20px, with a plus/minus glyph (a swap, as in the footer). Only one department is open at a time (`aria-expanded`, `aria-controls`). The open panel (`role="group"`, named by its department) is indented 16px and lists "Shop all <Department>" (or the `navigationContent.js` `ctaLabel`), then each group as an eyebrow link (12px, 600, 0.16em, uppercase, ink) with its leaves beneath (sans 15px, secondary, 48px rows; deeper levels indented 16px more). A flat department is a plain link. "View all products" (`/products`) closes the section. A loading skeleton shows on the first read; on failure, a message and "Try again". |
+| Discover | New arrivals `/products?sort=newest` · Best sellers `/products?sort=popular` · Offers `/special-offers` (only while the deals page is enabled and its config has loaded) · Our story `/about` |
+| Account | "My orders" (signed in) or "Track order" (guest) → `/orders` · "My wishlist" → `/wishlist`, with a `.sf-count` and an `aria-label` that carries the number · "Sign out" (signed in: `logout()`, then `navigate("/")`) |
+| Settings | Help & support `/support` · "Dark mode": a `<button role="switch" aria-checked>` that calls `toggleTheme`, drawn as the `.sf-switch` pill |
+| Legal | Terms · Privacy · Cookies (13px, muted, 44px targets) and `© {year} {APP_NAME}` |
+| Rhythm | Sections are separated by a hairline, have 20px vertical padding and use `.sf-eyebrow` `h2` titles. Rows are 48px. Rows get an accent underline on hover and on the current page. |
+
+Behaviour:
+
+- Categories are read on every open. The last good list stays in state, so a re-open renders at once and a failed refresh keeps it.
+- Each opening starts with the department of the current listing expanded (`?category=`), or none.
+- `aria-current`: `"page"` goes on the link to the current category and on path links to the current page. `"true"` goes on the department button that holds the current category.
+- A plain click on a link closes the menu as it navigates; a modified click (new tab or window) leaves it open. Any route change also closes it.
+- IDs: `sf-sidebar-department-<slug>`, `sf-sidebar-panel-<slug>`, `sf-sidebar-group-<slug>`.
+
+### 19.3 BottomNav
+
+| Part | Spec |
+|---|---|
+| When | Up to 768px: `display: block` under `@media (max-width: 768px)`, the same query as the footer's reserve, so from 769px it is gone |
+| Items | Home `/` · Shop `/products` (the chair glyph) · Search (opens the bar's own search overlay) · Wishlist `/wishlist` (`.sf-count`, "99+" above 99; the link's `aria-label` reads "Wishlist, N items") · Account (`/profile` when signed in; `openAuthModal("login")` for guests). The cart stays in the header. |
+| Look | Paper with a top hairline; no blur, no shadow. Items are 56px tall in a grid of five, capped at 560px and centred on tablets. Glyphs are 24px outline icons; labels are 11px, 500, uppercase, 0.08em (0.04em below 360px). Items are muted; the current one is ink, with a 2px caramel mark on the hairline (drawn as a border, so it also shows in forced-colours mode). Keyboard focus shows a 2px focus outline inset by 4px. |
+| Height | 57px plus the bottom inset, within the footer's 96px reserve (§18.5) |
+| `aria-current` | `"page"` on `/`, `/products`, `/wishlist`, `/profile`; `"true"` for Shop on `/products/:slug` and for Account on `/orders` |
+| Scroll | Past 80px, a scroll down of 6px or more slides the bar away (transform only, `--sf-duration`, `--sf-ease-out`); a scroll up brings it back. Keyboard focus inside the bar (`:focus-visible`, not the focus a tapped link keeps) keeps it on screen, and focusing it brings it back. |
+| Overlays | While any overlay holds the body scroll lock, the bar is shown, stays put (scroll is ignored) and is `inert`. It is beneath every overlay and out of the tab order and the accessibility tree. |
+| Search | It keeps its own `SearchModal` instance; the header owns the other. The modal caches the catalogue at module level, so both instances share one fetch, and they can never be open together. When the overlay closes, focus returns to the Search button. |
+
+### 19.4 BottomDrawer (the shared bottom sheet)
+
+```jsx
+import { BottomDrawer } from "../../components/ui";
+
+<BottomDrawer
+  open={open}
+  onClose={() => setOpen(false)}
+  title="Filters"
+  footer={<button className="sf-btn sf-btn--primary sf-btn--block" onClick={apply}>Show 24 results</button>}
+>
+  …
+</BottomDrawer>
+```
+
+| Prop | Default | Notes |
+|---|---|---|
+| `open`, `onClose` | — | required |
+| `title` | — | string or node, shown as the serif `h2`; a string title names the dialog, a node title is referenced with `aria-labelledby` |
+| `ariaLabel` | the string title | the dialog's name (required when there is no title) |
+| `initialFocusRef` | the close button | what takes focus on open |
+| `maxHeight` | `"80vh"` | any CSS length, inline on the sheet |
+| `footer` | — | a fixed row under the scrolling body (hairline above; flex, 12px gap; clears the home indicator) |
+| `className`, `children` | — | the class goes on the sheet; children go in the scrolling body (20px padding) |
+
+- **Rendering:** a portal on `<body>`, so a transformed ancestor can never re-anchor it.
+- **Size:** full width up to `--sf-container-narrow` (720px), centred.
+- **Surface:** paper (`--sf-color-bg`), `--sf-shadow-lg`. The top corners use `--sf-radius-lg`, the one place a larger radius is allowed.
+- **Handle:** a 36 × 4px drag handle in `--sf-color-border-strong`. It is visual only; there is no drag-to-dismiss.
+- **Header:** 56px with a hairline below, holding the title (display-sm serif) and a 44px "Close" button.
+- **Body:** scrolls with `overscroll-behavior: contain`.
+- **Motion:** slides up (`y: 100% → 0`) over `--sf-duration` with `--sf-ease-out`; fades under reduced motion.
+
+### 19.5 Notes for later prompts
+
+- **14 (listing):** `BottomDrawer` covers the filter sheet's semantics: dialog, Escape, focus on the close button, focus back to the trigger, scroll lock. Its `footer` slot holds "Clear all" and "Show N results". The sheet's old `z-index: 1300` was there to beat a bottom nav at 1200 and is no longer needed.
+- **15 (search):** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's own restore becomes a no-op.
+- **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58).
+- **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`.
+- **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
