@@ -1,0 +1,324 @@
+/* ==========================================================================
+   MegaMenu — the department row and its flyout panel (desktop, ≥ 1024px)
+   Tokens only (prompts/DESIGN_SYSTEM.md). Below 1024px the row is not shown;
+   the sidebar accordion (Prompt 09) takes over.
+   ========================================================================== */
+
+.nav {
+  position: relative;
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .nav {
+    display: block;
+    box-shadow: inset 0 -1px 0 var(--sf-color-border);
+  }
+}
+
+/* ---- Department row ------------------------------------------------------
+   Inline items so a row that runs out of room wraps into balanced, centred
+   lines instead of hiding departments. 48px tall on one line. */
+.row {
+  min-height: 48px;
+  max-width: var(--sf-container-wide);
+  margin: 0 auto;
+  padding: 2px var(--sf-space-6);
+  list-style: none;
+  text-align: center;
+  text-wrap: balance;
+}
+
+.item {
+  display: inline-block;
+  vertical-align: top;
+}
+
+.rowLink {
+  --row-link-tracking: 0.12em;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sf-tap-target);
+  /* The tracking also follows the last letter; trim it on the right. */
+  padding-inline: var(--sf-space-3) calc(var(--sf-space-3) - var(--row-link-tracking));
+  border-radius: var(--sf-radius-sm);
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--row-link-tracking);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-color-text-secondary);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.55em;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .rowLink:hover {
+    color: var(--sf-color-text);
+    text-decoration-color: var(--sf-color-border-strong);
+  }
+}
+
+.rowLinkOpen {
+  color: var(--sf-color-text);
+  text-decoration-color: var(--sf-color-border-strong);
+}
+
+/* The department holding the current ?category= (or the current page). */
+.rowLink.rowLinkActive {
+  color: var(--sf-color-text);
+  text-decoration-color: var(--sf-color-accent);
+}
+
+.rowLink:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: -2px;
+}
+
+.divider {
+  display: inline-block;
+  vertical-align: top;
+  min-height: var(--sf-tap-target);
+  padding-inline: var(--sf-space-2);
+  font-size: 0.8125rem;
+  line-height: var(--sf-tap-target);
+  color: var(--sf-color-text-muted);
+}
+
+.divider::before {
+  content: "\00B7";
+}
+
+/* Long department names: tighten the row before it has to wrap. With the
+   seeded six departments it fits on one line from 1280px; between 1024px
+   and 1279px it wraps onto two balanced lines. */
+@media (max-width: 1439.98px) {
+  .rowLink {
+    --row-link-tracking: 0.1em;
+    padding-inline: var(--sf-space-2) calc(var(--sf-space-2) - var(--row-link-tracking));
+    font-size: var(--sf-text-xs);
+  }
+
+  .divider {
+    padding-inline: var(--sf-space-1);
+  }
+}
+
+@media (max-width: 1279.98px) {
+  .rowLink {
+    --row-link-tracking: 0.08em;
+  }
+}
+
+/* ---- Panel -----------------------------------------------------------------
+   Full width under the row, inside the sticky header (so it stays anchored
+   when the header compacts); scrolls itself when the viewport is short. */
+.panel {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: var(--sf-z-megamenu);
+  max-height: 70vh;
+  max-height: min(70vh, calc(100vh - var(--sf-header-height) - var(--sf-space-6)));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-bottom: var(--sf-hairline);
+  background-color: var(--sf-color-bg);
+  box-shadow: var(--sf-shadow-md);
+  color: var(--sf-color-text);
+  text-align: left;
+  scrollbar-width: thin;
+  scrollbar-color: var(--sf-color-border-strong) transparent;
+}
+
+.inner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(12rem, 16vw, 15rem);
+  gap: var(--sf-space-12) clamp(var(--sf-space-8), 4vw, var(--sf-space-16));
+  max-width: var(--sf-container-wide);
+  margin-inline: auto;
+  padding: var(--sf-space-12) var(--sf-gutter);
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-8);
+  min-width: 0;
+}
+
+/* A column per group, four to a row; more groups wrap onto a second row. */
+.columns {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sf-space-8) clamp(var(--sf-space-4), 2vw, var(--sf-space-8));
+  align-items: start;
+}
+
+/* Links size to their text (so does the focus ring); rows stay 44px tall. */
+.column,
+.links li {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.groupLink,
+.link {
+  display: flex;
+  align-items: center;
+  max-width: 100%;
+  min-height: var(--sf-tap-target);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+/* The group heading: an eyebrow, in ink because it is a link too. */
+.groupLink {
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  text-underline-offset: 0.5em;
+  color: var(--sf-color-text);
+}
+
+.links {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.link {
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-tight);
+  text-underline-offset: 0.3em;
+  color: var(--sf-color-text-secondary);
+}
+
+.linkNested {
+  padding-left: var(--sf-space-4);
+  font-size: var(--sf-text-sm);
+}
+
+@media (hover: hover) {
+  .groupLink:hover,
+  .link:hover {
+    color: var(--sf-color-text);
+    text-decoration-color: var(--sf-color-accent);
+  }
+}
+
+.groupLink:focus-visible,
+.link:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* A flat department: a short serif introduction instead of columns. */
+.intro {
+  display: grid;
+  gap: var(--sf-space-4);
+  align-content: start;
+  max-width: 36rem;
+}
+
+.intro > p {
+  margin: 0;
+}
+
+.introTitle {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-md);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+  overflow-wrap: break-word;
+}
+
+.introText {
+  max-width: 52ch;
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.introAction {
+  padding-top: var(--sf-space-2);
+}
+
+.footer {
+  margin: auto 0 0;
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
+}
+
+/* ---- Editorial feature ---------------------------------------------------- */
+.feature {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-5);
+  min-width: 0;
+}
+
+.media {
+  display: block;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+
+.media img {
+  display: block;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;
+  object-fit: cover;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .media:hover img {
+    transform: scale(1.03);
+  }
+}
+
+.featureText {
+  display: grid;
+  gap: var(--sf-space-2);
+}
+
+.featureText > p {
+  margin: 0;
+}
+
+.featureLine {
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.featureAction {
+  padding-top: var(--sf-space-2);
+}
+
+@media print {
+  .nav {
+    display: none;
+  }
+}

@@ -1,755 +1,507 @@
 /* ==========================================================================
-   Header Component — Professional E-Commerce Storefront
+   Header — utility strip, centred-logo main row, compact sticky state
+   Tokens only (prompts/DESIGN_SYSTEM.md). The department row and the
+   mega-menu panel are styled in MegaMenu.module.css.
    ========================================================================== */
 
-/* ---- Fixed header wrapper ---- */
+/* ---- Shell -----------------------------------------------------------------
+   Sticky, so it holds its own place in the flow and needs no spacer. Row
+   heights per breakpoint, at rest and compact; --sf-header-height mirrors the
+   visible height (useHeaderHeight.js). */
 .header {
-  position: fixed;
+  --hdr-utility-h: 0px;
+  --hdr-main-h: 60px;
+  --hdr-main-h-compact: 60px;
+  --hdr-logo-h: 28px;
+  --hdr-logo-scale-compact: 1;
+  /* What compacting hides: the utility strip plus the main row's extra height. */
+  --hdr-compact-shift: calc(var(--hdr-utility-h) + var(--hdr-main-h) - var(--hdr-main-h-compact));
+  position: sticky;
   top: 0;
-  left: 0;
-  right: 0;
-  z-index: 1100;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
-}
-
-.headerSpacer {
-  flex-shrink: 0;
-}
-
-/* ==========================================================================
-   1. TOP BAR
-   ========================================================================== */
-
-.topBar {
-  height: 36px;
-  display: flex;
-  align-items: center;
-  font-size: 0.75rem;
-  letter-spacing: 0.02em;
-  user-select: none;
-}
-
-.light .topBar {
-  background: #232f3e;
-  color: #ffffff;
-}
-
-.dark .topBar {
-  background: #0f1111;
-  color: #cccccc;
-}
-
-.topBarInner {
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-
-.topBarLeft {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.topBarRight {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.topBarIcon {
-  font-size: 15px !important;
-  opacity: 0.85;
-}
-
-.topBarLink {
-  color: inherit;
-  text-decoration: none;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  transition: color 0.2s;
-}
-
-.topBarLink:hover {
-  color: #febd69;
-  text-decoration: underline;
-}
-
-.topBarDivider {
-  opacity: 0.3;
-  font-size: 0.7rem;
-}
-
-.themeToggleBtn {
-  color: inherit !important;
-  padding: 2px !important;
-}
-
-.themeToggleBtn svg {
-  font-size: 16px !important;
-}
-
-/* ==========================================================================
-   2. MAIN HEADER ROW
-   ========================================================================== */
-
-.mainHeader {
-  height: 64px;
-  display: flex;
-  align-items: center;
-}
-
-.light .mainHeader {
-  background: #131921;
-  color: #ffffff;
-}
-
-.dark .mainHeader {
-  background: #131921;
-  color: #e0e0e0;
-}
-
-.mainHeaderInner {
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-/* ---- Hamburger (mobile) ---- */
-.hamburger {
-  color: #ffffff !important;
-  padding: 8px !important;
-}
-
-/* ---- Logo ---- */
-.logoLink {
-  text-decoration: none;
-  color: inherit;
-  flex-shrink: 0;
-}
-
-.logo {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  cursor: pointer;
-  padding: 4px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  transition: border-color 0.2s;
-}
-
-.logo:hover {
-  border-color: #ffffff;
-}
-
-.logoIcon {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 32px;
-  height: 32px;
-  background: linear-gradient(135deg, #febd69, #f3a847);
-  border-radius: 6px;
-}
-
-.logoCartIcon {
-  font-size: 20px !important;
-  color: #131921;
-}
-
-.logoText {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #ffffff;
-  letter-spacing: -0.02em;
-  white-space: nowrap;
-}
-
-/* ---- Search Bar ---- */
-.searchBar {
-  flex: 1;
-  max-width: 720px;
-  height: 42px;
-  display: flex;
-  align-items: stretch;
-  border-radius: 8px;
-  overflow: hidden;
-  cursor: text;
-  border: 2px solid transparent;
-  transition: border-color 0.2s, box-shadow 0.2s;
-}
-
-.searchBar:hover,
-.searchBar:focus-within {
-  border-color: #febd69;
-  box-shadow: 0 0 0 3px rgba(254, 189, 105, 0.2);
-}
-
-.searchCategoryLabel {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 0 12px;
-  font-size: 0.8rem;
-  font-weight: 500;
-  white-space: nowrap;
-  cursor: pointer;
-  user-select: none;
-  border-right: 1px solid #ddd;
-}
-
-.light .searchCategoryLabel {
-  background: #e6e6e6;
-  color: #555;
-}
-
-.dark .searchCategoryLabel {
-  background: #3a3a3a;
-  color: #ccc;
-  border-right-color: #555;
-}
-
-.searchInput {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  padding: 0 14px;
-}
-
-.light .searchInput {
-  background: #ffffff;
-}
-
-.dark .searchInput {
-  background: #2a2a2a;
-}
-
-.searchPlaceholder {
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.light .searchPlaceholder {
-  color: #999;
-}
-
-.dark .searchPlaceholder {
-  color: #777;
-}
-
-.searchButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 48px;
-  border: none;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.light .searchButton {
-  background: #febd69;
-  color: #131921;
-}
-
-.dark .searchButton {
-  background: #f3a847;
-  color: #131921;
-}
-
-.searchButton:hover {
-  background: #f3a847;
-}
-
-.searchButton svg {
-  font-size: 22px;
-}
-
-/* ---- Right actions ---- */
-.actions {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin-left: auto;
-  flex-shrink: 0;
-}
-
-.actionItem {
-  display: flex;
-  align-items: center;
-  cursor: pointer;
-  padding: 4px 6px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  transition: border-color 0.2s;
-}
-
-.actionItem:hover {
-  border-color: #ffffff;
-}
-
-.actionIcon {
-  color: #ffffff !important;
-  padding: 6px !important;
-}
-
-.actionIcon svg {
-  font-size: 24px;
-}
-
-.actionLabel {
-  display: flex;
-  flex-direction: column;
-  line-height: 1.2;
-  cursor: pointer;
-}
-
-.actionLabelSmall {
-  font-size: 0.7rem;
-  color: #ccc;
-  white-space: nowrap;
-}
-
-.actionLabelMain {
-  font-size: 0.85rem;
-  font-weight: 700;
-  color: #ffffff;
-  display: flex;
-  align-items: center;
-  gap: 1px;
-  white-space: nowrap;
-}
-
-.avatar {
-  background: linear-gradient(135deg, #febd69, #f3a847) !important;
-  color: #131921 !important;
-  font-weight: 700 !important;
-  font-size: 0.9rem !important;
-}
-
-/* ==========================================================================
-   3. NAVIGATION BAR
-   ========================================================================== */
-
-.navBar {
-  height: 40px;
-  display: flex;
-  align-items: center;
-}
-
-.light .navBar {
-  background: #232f3e;
-  color: #ffffff;
-}
-
-.dark .navBar {
-  background: #1a1a2e;
-  color: #e0e0e0;
-}
-
-.navBarInner {
-  width: 100%;
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-/* ---- All Categories dropdown ---- */
-.allCategoriesWrapper {
-  position: relative;
-  flex-shrink: 0;
-}
-
-.allCategoriesBtn {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  height: 34px;
-  padding: 0 12px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  background: transparent;
-  color: #ffffff;
-  font-size: 0.85rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.2s;
-  white-space: nowrap;
-}
-
-.allCategoriesBtn:hover {
-  border-color: #ffffff;
-}
-
-.chevron {
-  transition: transform 0.2s;
-}
-
-.chevronOpen {
-  transform: rotate(180deg);
-}
-
-.allCategoriesDropdown {
-  position: absolute;
-  top: 100%;
-  left: 0;
-  min-width: 240px;
-  max-height: 400px;
-  overflow-y: auto;
-  border-radius: 8px;
-  z-index: 1200;
-  padding: 8px 0;
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.25);
-}
-
-.light .allCategoriesDropdown {
-  background: #ffffff;
-  border: 1px solid #e0e0e0;
-}
-
-.dark .allCategoriesDropdown {
-  background: #1e1e30;
-  border: 1px solid #333;
-}
-
-.categoryDropdownItem {
-  display: block;
-  width: 100%;
-  padding: 10px 20px;
-  border: none;
-  background: transparent;
-  text-align: left;
-  font-size: 0.875rem;
-  cursor: pointer;
-  transition: background 0.15s, padding-left 0.15s;
-}
-
-.light .categoryDropdownItem {
-  color: #333;
-}
-
-.dark .categoryDropdownItem {
-  color: #ddd;
-}
-
-.categoryDropdownItem:hover {
-  padding-left: 26px;
-}
-
-.light .categoryDropdownItem:hover {
-  background: #f5f5f5;
-  color: #131921;
-}
-
-.dark .categoryDropdownItem:hover {
-  background: #2a2a40;
-  color: #ffffff;
-}
-
-.categoryDropdownEmpty {
-  padding: 16px 20px;
-  font-size: 0.85rem;
-  opacity: 0.6;
-  text-align: center;
-}
-
-/* ---- Horizontal nav links ---- */
-.navLinks {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  flex: 1;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.navLinks::-webkit-scrollbar {
+  z-index: var(--sf-z-header);
+  background-color: var(--sf-color-bg);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  overflow-anchor: none;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out),
+    box-shadow var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+@media (min-width: 768px) {
+  .header {
+    --hdr-main-h: 64px;
+    --hdr-main-h-compact: 64px;
+    --hdr-logo-h: 40px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .header {
+    --hdr-utility-h: 32px;
+    --hdr-main-h: 88px;
+    --hdr-main-h-compact: 64px;
+    --hdr-logo-h: 48px;
+    --hdr-logo-scale-compact: 0.75; /* 48px → 36px */
+  }
+}
+
+/* Compact (past 80px of scroll): the header slides up by the utility strip
+   and the main row's extra height, so the strip leaves the viewport and the
+   main row shows 64px; the row's content re-centres and the logo scales to
+   36px. Transforms only: the header's box, and so everything below it, never
+   moves, and no layout shift is recorded. The shadow is the only one the
+   header ever shows. */
+.compact {
+  box-shadow: var(--sf-shadow-sm);
+}
+
+@media (min-width: 1024px) {
+  .compact {
+    transform: translateY(calc(-1 * var(--hdr-compact-shift)));
+  }
+}
+
+/* ---- Utility strip (desktop) ---------------------------------------------- */
+.utility {
   display: none;
 }
 
-.navLink {
+@media (min-width: 1024px) {
+  .utility {
+    display: block;
+    height: var(--hdr-utility-h);
+    overflow: hidden;
+    box-shadow: inset 0 -1px 0 var(--sf-color-border);
+    transition: visibility 0s linear 0s;
+  }
+
+  /* Out of view once the header has slid up; hidden then, so its links
+     leave the tab order too. */
+  .compact .utility {
+    visibility: hidden;
+    transition: visibility 0s linear var(--sf-duration-slow);
+  }
+}
+
+.utilityInner {
   display: flex;
   align-items: center;
-  height: 34px;
-  padding: 0 10px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 0.84rem;
-  font-weight: 500;
-  color: #ffffff;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: border-color 0.2s, background 0.2s;
+  justify-content: space-between;
+  gap: var(--sf-space-6);
+  height: var(--hdr-utility-h);
+  max-width: var(--sf-container-wide);
+  margin-inline: auto;
+  padding-inline: var(--sf-gutter);
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
 }
 
-.navLink:hover {
-  border-color: #ffffff;
-}
-
-.dark .navLink {
-  color: #d0d0d0;
-}
-
-.dark .navLink:hover {
-  border-color: #aaa;
-}
-
-/* ---- Deals link ---- */
-.dealsLink {
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  height: 34px;
-  padding: 0 12px;
-  margin-left: auto;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-size: 0.85rem;
-  font-weight: 700;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: border-color 0.2s;
-  color: #febd69;
-  flex-shrink: 0;
-}
-
-.dealsLink:hover {
-  border-color: #ffffff;
-  color: #febd69;
-}
-
-/* ==========================================================================
-   4. USER DROPDOWN MENU
-   ========================================================================== */
-
-.userMenu {
-  margin-top: 4px;
-}
-
-.userMenuPaper {
-  border-radius: 10px !important;
-  min-width: 240px;
+.utilityNote {
+  min-width: 0;
+  margin: 0;
   overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
 }
 
-.userMenuPaper:not(.dark) {
-  background: #ffffff !important;
-  border: 1px solid #e0e0e0;
-}
-
-.userMenuPaper.dark {
-  background: #1e1e30 !important;
-  border: 1px solid #333;
-  color: #e0e0e0;
-}
-
-.menuGreeting {
+.utilityLinks {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 16px 20px;
+  gap: var(--sf-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.menuAvatar {
-  background: linear-gradient(135deg, #febd69, #f3a847) !important;
-  color: #131921 !important;
-  font-weight: 700 !important;
+.utilityLink {
+  display: inline-flex;
+  align-items: center;
+  height: var(--hdr-utility-h);
+  color: inherit;
+  white-space: nowrap;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.35em;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.menuUserName {
-  font-weight: 600 !important;
-}
-
-.dark .menuUserName {
-  color: #ffffff !important;
-}
-
-.menuUserEmail {
-  opacity: 0.6;
-}
-
-.dark .menuUserEmail {
-  color: #aaa !important;
-}
-
-.menuItem {
-  padding: 10px 20px !important;
-  font-size: 0.875rem !important;
-  display: flex !important;
-  align-items: center !important;
-  gap: 12px !important;
-  transition: background 0.15s !important;
-}
-
-.dark .menuItem {
-  color: #e0e0e0 !important;
-}
-
-.dark .menuItem:hover {
-  background: rgba(255, 255, 255, 0.06) !important;
-}
-
-.menuItemIcon {
-  opacity: 0.7;
-}
-
-.logoutItem {
-  color: #d32f2f !important;
-}
-
-.dark .logoutItem {
-  color: #ef5350 !important;
-}
-
-/* ==========================================================================
-   5. MOBILE STYLES
-   ========================================================================== */
-
-@media (max-width: 768px) {
-  .mainHeader {
-    height: 56px;
-  }
-
-  .mainHeaderInner {
-    padding: 0 8px;
-    gap: 8px;
-  }
-
-  .logoIcon {
-    width: 28px;
-    height: 28px;
-    border-radius: 5px;
-  }
-
-  .logoCartIcon {
-    font-size: 16px !important;
-  }
-
-  .logoText {
-    font-size: 1.1rem;
-  }
-
-  .logo {
-    padding: 2px 4px;
-  }
-
-  .logo:hover {
-    border-color: transparent;
-  }
-
-  .actions {
-    gap: 0;
-  }
-
-  .actionItem {
-    padding: 2px;
-  }
-
-  .actionItem:hover {
-    border-color: transparent;
-  }
-
-  .actionIcon {
-    padding: 6px !important;
-  }
-
-  .actionIcon svg {
-    font-size: 22px;
+@media (hover: hover) {
+  .utilityLink:hover {
+    color: var(--sf-color-text);
+    text-decoration-color: var(--sf-color-accent);
   }
 }
 
-/* ==========================================================================
-   6. TABLET STYLES
-   ========================================================================== */
-
-@media (min-width: 769px) and (max-width: 1024px) {
-  .mainHeaderInner {
-    gap: 12px;
-  }
-
-  .searchBar {
-    max-width: 420px;
-  }
-
-  .actionLabel {
-    display: none;
-  }
-
-  .navLink {
-    font-size: 0.8rem;
-    padding: 0 8px;
-  }
+.utilityLink:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: -2px;
 }
 
-/* ==========================================================================
-   7. LARGE DESKTOP
-   ========================================================================== */
+.utilityToggle {
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  margin-inline-end: calc(-1 * var(--sf-space-2));
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: inherit;
+  cursor: pointer;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
 
-@media (min-width: 1441px) {
-  .topBarInner,
-  .mainHeaderInner,
-  .navBarInner {
-    max-width: 1600px;
+.utilityToggle svg {
+  font-size: 18px;
+}
+
+@media (hover: hover) {
+  .utilityToggle:hover {
+    color: var(--sf-color-text);
+    background-color: var(--sf-color-sand);
   }
 }
 
-/* ==========================================================================
-   8. SCROLLBAR FOR DROPDOWN
-   ========================================================================== */
-
-.allCategoriesDropdown::-webkit-scrollbar {
-  width: 6px;
+/* An inset ring: the strip clips anything drawn outside it. */
+.utilityToggle:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: inset 0 0 0 2px var(--sf-color-focus);
 }
 
-.allCategoriesDropdown::-webkit-scrollbar-track {
-  background: transparent;
+/* ---- Main row --------------------------------------------------------------- */
+.main {
+  height: var(--hdr-main-h);
 }
 
-.light .allCategoriesDropdown::-webkit-scrollbar-thumb {
-  background: #ccc;
-  border-radius: 3px;
+/* Below 1024px the main row is the whole header: the hairline closes it. */
+@media (max-width: 1023.98px) {
+  .main {
+    box-shadow: inset 0 -1px 0 var(--sf-color-border);
+  }
 }
 
-.dark .allCategoriesDropdown::-webkit-scrollbar-thumb {
-  background: #555;
-  border-radius: 3px;
+.mainInner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--sf-space-4);
+  height: 100%;
+  max-width: var(--sf-container-wide);
+  margin-inline: auto;
+  padding-inline: var(--sf-gutter);
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
-/* ==========================================================================
-   9. ACCESSIBILITY
-   ========================================================================== */
+/* Centre the row's content in the part of the row still in view. */
+.compact .mainInner {
+  transform: translateY(calc((var(--hdr-main-h) - var(--hdr-main-h-compact)) / 2));
+}
 
-.allCategoriesBtn:focus-visible,
-.searchBar:focus-visible,
-.navLink:focus-visible,
-.dealsLink:focus-visible {
-  outline: 2px solid #febd69;
+.start {
+  display: flex;
+  align-items: center;
+  justify-self: start;
+  min-width: 0;
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-self: end;
+  gap: var(--sf-space-1);
+}
+
+/* ---- Logo ------------------------------------------------------------------ */
+.logoLink {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--sf-radius-sm);
+}
+
+.logoLink:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 4px;
+}
+
+/* BrandLogo's width/height attributes keep the ratio; the height comes from
+   the breakpoint. Compact scales it (no layout change, so nothing reflows). */
+.logoLink .logo {
+  height: var(--hdr-logo-h);
+  width: auto;
+  transform-origin: center;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+.compact .logoLink .logo {
+  transform: scale(var(--hdr-logo-scale-compact));
+}
+
+/* ---- Icon buttons (tablet and mobile) -------------------------------------- */
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.iconButton svg {
+  font-size: 22px;
+}
+
+/* Line the hamburger's glyph up with the page gutter. */
+.menuButton {
+  margin-inline-start: calc(-1 * var(--sf-space-3));
+}
+
+/* ---- Search trigger (desktop) --------------------------------------------- */
+.searchTrigger {
+  display: none;
+  align-items: center;
+  gap: var(--sf-space-2);
+  min-height: var(--sf-tap-target);
+  margin-inline-start: calc(-1 * var(--sf-space-1));
+  padding: 0 var(--sf-space-1);
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-button);
+  cursor: pointer;
+}
+
+.searchTrigger svg {
+  font-size: 22px;
+}
+
+.searchLabel {
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.35em;
+  transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .searchTrigger:hover .searchLabel {
+    text-decoration-color: var(--sf-color-accent);
+  }
+}
+
+.searchTrigger:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
   outline-offset: 2px;
 }
 
-/* ==========================================================================
-   10. PRINT — HIDE HEADER
-   ========================================================================== */
+/* ---- Account, wishlist, cart ---------------------------------------------- */
+.action {
+  position: relative;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sf-space-1);
+  min-width: var(--sf-tap-target);
+  min-height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
 
+.actionIcon {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+}
+
+.actionIcon svg {
+  font-size: 22px;
+}
+
+/* The count: .sf-count's ink disc at the glyph's corner (decorative; the
+   button's aria-label carries the number). */
+.count {
+  position: absolute;
+  top: -2px;
+  left: calc(50% + var(--sf-space-1));
+  pointer-events: none;
+}
+
+/* Labels are read by screen readers at every width; shown from 1280px. */
+.actionLabel {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  border: 0;
+  white-space: nowrap;
+}
+
+@media (hover: hover) {
+  .iconButton:hover,
+  .action:hover {
+    background-color: var(--sf-color-sand);
+  }
+}
+
+.iconButton:focus-visible,
+.action:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+/* ---- What shows where -------------------------------------------------------
+   < 768px:   menu | logo | search, cart
+   768–1023:  menu | logo | search, theme, account, cart
+   ≥ 1024px:  search trigger | logo | account, wishlist, cart (+ utility strip)
+   ≥ 1280px:  the action labels appear under the icons. */
+.themeButton,
+.accountAction,
+.wishlistAction {
+  display: none;
+}
+
+/* Line the last glyph up with the page gutter on the narrow layouts. */
+.cartAction {
+  margin-inline-end: calc(-1 * var(--sf-space-3));
+}
+
+@media (min-width: 768px) {
+  .themeButton {
+    display: inline-grid;
+  }
+
+  .accountAction {
+    display: inline-flex;
+  }
+}
+
+@media (min-width: 1024px) {
+  .menuButton,
+  .searchButton,
+  .themeButton {
+    display: none;
+  }
+
+  .searchTrigger {
+    display: inline-flex;
+  }
+
+  .wishlistAction {
+    display: inline-flex;
+  }
+
+  .actions {
+    gap: var(--sf-space-2);
+  }
+
+  .action {
+    min-width: 52px;
+    padding-inline: var(--sf-space-1);
+  }
+
+  .cartAction {
+    margin-inline-end: calc(-1 * var(--sf-space-1));
+  }
+}
+
+@media (min-width: 1280px) {
+  .action {
+    min-width: 64px;
+    padding: var(--sf-space-1) var(--sf-space-2);
+  }
+
+  /* The eyebrow style, under the icon. */
+  .actionLabel {
+    position: static;
+    width: auto;
+    height: auto;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    clip-path: none;
+    font-size: var(--sf-text-eyebrow);
+    font-weight: var(--sf-font-medium);
+    line-height: 1;
+    letter-spacing: var(--sf-tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--sf-color-text-muted);
+    transition: color var(--sf-duration-fast) var(--sf-ease-out);
+  }
+
+  /* With labels, hover darkens the label instead of filling the button. */
+  @media (hover: hover) {
+    .action:hover {
+      background-color: transparent;
+    }
+
+    .action:hover .actionLabel {
+      color: var(--sf-color-text);
+    }
+  }
+}
+
+/* ---- Account menu (MUI Menu; surface, hairline and rows from the theme) --- */
+.accountSummary {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  padding: var(--sf-space-2) var(--sf-space-4) var(--sf-space-3);
+  list-style: none;
+}
+
+.accountText {
+  min-width: 0;
+}
+
+.accountName {
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+.accountEmail {
+  margin: var(--sf-space-1) 0 0;
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
+  overflow-wrap: anywhere;
+}
+
+/* ---- Print ------------------------------------------------------------------ */
 @media print {
-  .header,
-  .headerSpacer {
-    display: none !important;
+  .header {
+    display: none;
   }
 }

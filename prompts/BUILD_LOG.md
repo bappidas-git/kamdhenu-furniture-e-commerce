@@ -847,3 +847,95 @@ Nothing new on content. Two design choices they may want to see:
 
 - Paper buttons turn caramel on hover (on navy).
 - Account avatars use serif initials.
+
+---
+
+## Prompt 07 — Header and mega-menu
+
+**Date:** 2026-10-07. **Result:** the boilerplate's marketplace header (amber cart-icon wordmark, fake search bar, "All Categories" dropdown, flat link row) is replaced by an editorial header: a slim utility strip, a centred `BrandLogo` with quiet actions, and a department row whose links open one mega-menu panel built from the admin-managed category tree. It is sticky, compacts on scroll without moving the page, and publishes `--sf-header-height` for every sticky offset that follows. Reference: `prompts/DESIGN_SYSTEM.md` §17.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/Header/Header.js` | Rewritten. Kept: `categories.getAll()` on mount and on window `focus`, the five contexts (`isDarkMode`/`toggleTheme`, auth incl. the modal state, cart count and drawer, wishlist count, deals `enabled`), account handling (menu when signed in, `openAuthModal("login")` for guests, Sign out → `logout()` + `navigate("/")`), the mounts of `CartDrawer`, `SidebarMenu`, `AuthModal` (still only here) and `SearchModal`, `FREE_SHIPPING_THRESHOLD` via `formatCurrency`, `SUPPORT_PHONE`. Removed: the spacer div, the "All Categories" dropdown, `useMediaQuery` layout switching (now CSS), the entrance animation. |
+| `src/components/Header/Header.module.css` | Rewritten: tokens only (was ~80 hex values and a system font stack). |
+| New `src/components/Header/MegaMenu.js` + `.module.css` | The department row (`nav aria-label="Primary"`) and the single flyout panel, with all open/close behaviour. Re-exports `groupCategoryTree`. |
+| New `src/components/Header/groupCategoryTree.js` | Pure helper: `categories` → departments (`getMainMenuCategories`) → groups (direct children) → links (descendants, depth-first, `orderCategoriesHierarchically` order). Inactive categories skipped; parent cycles cannot loop. For Prompt 09's sidebar too. |
+| New `src/components/Header/useHeaderHeight.js` | Writes `--sf-header-height` on `<html>` (ResizeObserver, plus every frame while the header slides) and returns a ref with the value. |
+| New `src/content/navigationContent.js` | `DEPARTMENT_FEATURES` (per-slug `eyebrow` / `line` / `ctaLabel` overrides; eyebrows set for the six departments) and `getDepartmentFeature()`. Never supplies images. |
+| New `groupCategoryTree.test.js` (5), `MegaMenu.test.js` (6) | Grouping rules; ARIA, canonical links, click toggle, flat department, Enter/Escape focus, deals gating, active department. |
+| `src/theme/storefront-tokens.css` | One addition: `--sf-header-height: 0px` (default until the header mounts). |
+| `prompts/DESIGN_SYSTEM.md` | §6 row for `--sf-header-height`; new §17 "Header and the `--sf-header-height` contract". |
+
+No other file changed: no page, context, service, `src/utils/categories.js`, `db.json` or admin file.
+
+### Layouts (what lives where; Prompt 09 needs this)
+
+- **≥ 1024px:** utility strip (32px: free-delivery line · phone `tel:` · Help `/help` · Track order `/orders` · 32px theme toggle) / main row (88px: "Search" trigger · logo 48px · Sign in/Account, Wishlist, Cart; eyebrow labels under the icons from 1280px) / department row (48px: departments · dot · Offers when deals are enabled · Our Story).
+- **768–1023px:** one 64px row: hamburger · logo 40px · search, theme toggle, account, cart. No wishlist (sidebar and bottom nav), no department row (sidebar accordion).
+- **< 768px:** one 60px row: hamburger · logo 28px · search, cart. Account, wishlist and the theme toggle live in the sidebar and the bottom nav.
+- Counts: `.sf-count` ink disc, "99+" above 99, hidden at 0; the buttons carry `aria-label` "Cart, 3 items" / "Wishlist, 1 item" / "…, empty".
+- `SidebarMenu` now receives `onOpenAuth={(tab) => openAuthModal(tab === "signup" ? "signup" : "login")}`: called with no argument it opens Sign in as before; Prompt 09 can call `onOpenAuth("signup")` for "Create account".
+- `BottomNav` is hidden only from 769px (its own `min-width: 769px` rule), so at exactly 768px the tablet header and the bottom nav both appear; Prompt 09 may align it to the 768px token breakpoint.
+
+### Sticky vs fixed, and the spacer
+
+- **Sticky** (`position: sticky; top: 0`, `--sf-z-header`), so the header holds its own place in the flow and the spacer is gone. Checked on all 16 storefront routes at 360/768/1024/1440, before vs after (gap from the header's bottom edge to the first text in `<main>`): identical at 1024 and 1440 on every route. At 360/768 the gap is 4px smaller only because the old 60px spacer sat under a 56px header; the content's position on screen is unchanged at 360 and 4px lower at 768 (the tablet row is 64px). No page CSS compensated for the old header (the negative margins found are breadcrumb hit areas).
+- **Compaction** (past 80px; never hidden): transforms only. The header slides up by `--hdr-compact-shift` (56px at ≥ 1024px), so the utility strip leaves the viewport and is then `visibility: hidden` (out of the tab order), the main row shows 64px with its content re-centred, the logo scales to 36px, and `--sf-shadow-sm` appears; all over `--sf-duration-slow`. Below 1024px compaction only adds the shadow. The header's box never changes size: the first element of the page stayed at exactly 168/168/168px (before/mid/after) and a `PerformanceObserver` recorded no layout shift while compacting or expanding.
+
+### The `--sf-header-height` contract (Prompts 08–34)
+
+- `--sf-header-height` on `<html>` is the **visible** header height: 60 (< 768) · 64 (768–1023) · 212 → 156 compact (1024–1279, department row on two lines) · 168 → 112 compact (≥ 1280). It is updated before paint on resize and on every frame of the slide, and defaults to `0px` (`storefront-tokens.css`) until the header mounts.
+- Sticky elements: `top: calc(var(--sf-header-height) + 24px)`. Anchor targets: `scroll-margin-top: calc(var(--sf-header-height) + 16px)`. JS offsets: `parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height"))`. Never hardcode a header height again.
+- Still hardcoded today, for their owners (none overlaps more than before):
+  - `Products.module.css` `.sidebar` `top: 152px`, `max-height: calc(100vh - 172px)` (Prompt 14): 40px of extra gap under the compact header.
+  - `Checkout.module.css` `.sidebar` `top: 152px` / `116px` at ≤ 1024px (Prompt 26): extra gap only.
+  - `Profile.module.css` `.sidebar` `top: 5rem` (Prompt 21): 32px under the compact header (60px under the old one).
+  - `ProductDetails.module.css` `.gallerySection` `top: 24px` (Prompt 16): 88px under the compact header (116px under the old one).
+- Page content must stay below `--sf-z-header` (50); drawers and modals (≥ 1000) stay above it.
+
+### Mega-menu behaviour
+
+- **Pointer:** a mouse resting 120ms on a department opens its panel (passing over one does not); leaving the row and panel closes it after 200ms. Touch and pen never hover-open. A click toggles; a click right after a hover-open keeps the panel open, the next click closes it. Ctrl/Cmd/Shift/middle click still opens the department's listing in a new tab.
+- **Keyboard:** Tab moves along the row, and keyboard focus on a department previews its panel. Enter, Space or ArrowDown open it on purpose and move focus to its first link. Tab and Shift+Tab walk the panel; Tab past its last link continues to the next row item; Shift+Tab from its first link returns to the department. Enter or Space on a department whose panel is open on purpose closes it. Escape closes from anywhere and returns focus to the department link when focus was in the menu. ArrowLeft/Right move along the row, ArrowUp/Down inside the panel.
+- **Also closes on** a click outside (`ClickAwayListener`), focus moving to a control outside the menu, any route change (pathname **or** query, so `?category=` changes on `/products` close it too), a viewport below 1024px, or the open department leaving the menu after a refetch.
+- **ARIA:** department links carry `aria-expanded`, `aria-controls` (`sf-megamenu-<slug>`), `aria-haspopup="true"` and `aria-current` ("page" on the department's own listing, "true" when the current category is below it; Offers/Our Story get "page" on their routes). The panel is `role="region"` with `aria-label="<Department> menu"`; each group's list is labelled by its heading link; the feature image link is `aria-hidden` with `tabindex="-1"` (the "Shop all" link is its accessible equivalent). Chromium's accessibility tree shows `hasPopup=menu`, `expanded=false/true` and `controls` when open, which is what screen readers announce as expandable. NVDA and VoiceOver were not available in this environment.
+- **Panel content (real data):** Plastic Furniture → Essentials (4) · Premium (3) · Dining Sets · Sofas; Office Chairs → Essentials · Premium (3 each); Home Furniture → Living Room (3) · Bedroom (6) · Dining Room · Storage; Office Tables & Desks → three single-link columns; Café & Restaurant Chairs and Outdoor Furniture → serif introduction (name, description, "Shop all"). Every department, group and leaf is reachable with a canonical `?category=<slug>` link; every panel ends with "View all departments" → `/products`.
+- **Motion:** opacity 0 → 1 and y −8 → 0 over 320ms (`--sf-ease-out`), exit 160ms; none under reduced motion (verified: first frame at opacity 1, no transform; compaction instant).
+
+### Deviations from the prompt, and why
+
+1. **Department row type below 1440px.** At the specified 13px/0.12em the seeded labels measure 1,125px of text (measured in Chromium), which only fits from ~1440px. Below that the row tightens (12px with 0.1em tracking; 0.08em below 1280px) and, if it still runs out of room, wraps into balanced centred lines rather than hiding departments behind a scroll or a "More" menu. With the six seeded departments it fits one line from 1280px and takes two lines at 1024–1279px (header 212px at rest, 156px compact). Needs client confirmation (below).
+2. **Compaction by transform, not by animating heights to 0.** Animating the strip's and row's heights moved the rows inside the header every frame, which Chrome's Layout Instability API reports as layout shift (~0.003 per compaction) even though the page did not move. Sliding the header gives the same picture with zero layout shift; the strip still ends hidden (`visibility`) so its links leave the tab order.
+3. **Focus opens a preview; it does not pull Tab into the panel.** The prompt asks for opening on focus and toggling on click/Enter/Space. Taken literally, Tab would walk every open panel (about 50 links) before reaching the page. So focus previews, Enter/Space/ArrowDown enter the panel, and Tab continues along the row. This matches the prompt's QA script (Tab along the row, Enter opens, move through, Escape closes). Likewise a click right after a hover keeps the panel open instead of toggling it shut under the pointer.
+4. **Flat departments** show their description and "Shop all" once, in a serif introduction; their feature column is the image alone (the prompt's layout would print the description and the link twice).
+5. **Account menu wording:** "My profile", "My orders", "My wishlist", "Sign out"; guest variant "Sign in" / "Create account" (the labels Prompts 09, 20, 21 and 29 use); icons dropped from the rows. Targets and actions unchanged. The signed-in summary is a non-focusable list item (`muiSkipListHighlight`), so the menu now focuses "My profile" on open (the old greeting div took the focus slot with `tabindex=0`).
+6. **Utility links:** "Help" → `/help` as specified (previously "Help Center" → `/support`). The phone link's `href` is normalised to `tel:+918472918653`; the visible number is unchanged.
+7. **`useHeaderHeight` returns a ref**, not state: the value changes every frame while the header slides, and state would re-render the header and the drawers and modals it mounts each time.
+8. **Additions:** `groupCategoryTree` as its own module (with tests), `MegaMenu.test.js`, the `--sf-header-height` default token, DESIGN_SYSTEM §17.
+
+### Verification
+
+- `npm run build`: "Compiled successfully", no warnings. Gzip sizes against the Prompt 06 baseline: JS 395.26 → 397.67 kB (+2.41), CSS 54.85 → 55.94 kB (+1.09).
+- `CI=true npm test -- --passWithNoTests`: 33 tests pass (22 before + 11 new), exit 0, no console output.
+- `node scripts/check-contrast.js`: passes. No new pairs: the header uses ink, secondary and muted text, accent and border-strong underlines and the focus ring on the page surface (and sand on hover), all already checked.
+- Literal grep: `Header.module.css` and `MegaMenu.module.css` have no hex/rgb/hsl, no font-family literal, no gradient; z-index only `--sf-z-header` / `--sf-z-megamenu`. No colour literal in the header JS.
+- **Browser QA** (Playwright + Chromium against JSON Server on a scratch copy of `db.json`; dev server, then a mock-mode production build): 120 scripted checks, 0 failures, no console errors at 360/768/1024/1280/1440 in both modes. Covered: hover timing (closed at 50ms, open after 120ms, a 40ms pass does not switch), leave grace, click toggles without navigating, click-away; the full keyboard model above; leaf links navigate with canonical slugs and close the panel (also on `/products` → `/products?category=…`); active department underline and `aria-current` (incl. the legacy `?category=3` link); compaction (none at 60px of scroll, compact at 140px: box 168, visible 112, variable 112px, strip hidden, logo 36px, shadow only then), no content movement and no layout shift; header pinned while scrolling 2,400px; expands at the top; theme toggle (body class, white logo, label flip, dark surface); search trigger, cart drawer, sidebar and search at 768/360; live cart and wishlist counts with their labels; guest Sign in → auth modal → signed in (avatar initial, "Account") → menu items and focus → My orders → Sign out → home as a guest; deals off/on hides/shows Offers after a focus refetch; admin edits (hide Café & Restaurant Chairs, move Office Tables & Desks first) appear after a window `focus` and revert; panels fit within 1024×768, 1280×800 and 1440×900 and scroll inside at 1024×600; no horizontal overflow at any width; the logo keeps its 145×48 / 121×40 / 85×28 box even when the image is blocked.
+- **Admin parity:** 16 screenshots (login, Categories, Products, Settings; 1440 and 390; light and dark) before vs after: 15 byte-identical, 1 differs by 24px inside a remote placeholder thumbnail, the same region that differs between two baseline runs. Nothing the admin imports changed.
+- `db.json` unchanged; `node scripts/validate-db.js --catalogue` passes.
+
+### Notes for later prompts
+
+- **08 (footer):** mirror the header's labels ("Help", "Track order", "Our Story"); the footer needs no header offset.
+- **09 (mobile nav):** see "Layouts" for what the header shows below 1024px; reuse `groupCategoryTree` (from `Header/groupCategoryTree.js` or `Header/MegaMenu.js`); `onOpenAuth("signup")` works; keep the bottom nav above content and below the header's overlays.
+- **14, 16, 21, 26:** replace the hardcoded sticky offsets listed above with the contract. **17:** use it for `scroll-margin-top`.
+- **15 (search):** the header opens its one `SearchModal` instance from the desktop "Search" trigger and the icon below 1024px.
+- **30 (motion):** slide 640ms `--sf-ease-out`; panel 320ms in / 160ms out; hover delays 120/200ms are intent timers, not motion.
+- **31 (a11y):** put the skip link before the header; the header's first focusable element is the phone link (≥ 1024px) or the hamburger.
+
+### Needs client confirmation
+
+- The six feature-panel eyebrows in `src/content/navigationContent.js` ("Light and weather-ready", "For the workday", "For cafés and dining rooms", "For verandas and lawns", "For every room at home", "For work and study").
+- Department photography: the panel crops each department's `image` to 4:5, so the photos uploaded in Admin → Categories should survive a portrait crop (today's landscape placeholders lose the edges of their text).
+- With the current department names the department row takes two lines on 1024–1279px screens (deviation 1). Shorter names in the admin would keep it on one line.
