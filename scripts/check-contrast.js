@@ -246,6 +246,11 @@ const PAIRS_FIXED = [
   ["Paper button text (brand ink on brand paper)", "--sf-brand-ink", "--sf-brand-paper", AA],
   ["Paper button hover (brand ink on on-dark accent)", "--sf-brand-ink", "--sf-color-on-dark-accent", AA],
   ["Paper-ghost hover (on-dark on on-dark-border over navy)", "--sf-color-on-dark", ["--sf-color-on-dark-border", "--sf-color-surface-dark"], AA],
+  // Footer newsletter field on navy (Prompt 08)
+  ["Footer field text (on-dark on the paper-8% fill over navy)", "--sf-color-on-dark", ["--sf-color-on-dark-soft", "--sf-color-surface-dark"], AA],
+  ["Footer field placeholder (on-dark muted on the fill)", ["--sf-color-on-dark-muted", "--sf-color-on-dark-soft", "--sf-color-surface-dark"], ["--sf-color-on-dark-soft", "--sf-color-surface-dark"], AA],
+  ["Footer field boundary (on-dark-border-strong) on navy", ["--sf-color-on-dark-border-strong", "--sf-color-surface-dark"], "--sf-color-surface-dark", LARGE],
+  ["Footer error text and invalid border (on-dark-error) on navy", "--sf-color-on-dark-error", "--sf-color-surface-dark", AA],
   // Hero: text sits where the scrim is >= --sf-color-scrim. Worst case is a
   // pure-white photograph under the scrim.
   ["Hero: on-dark text on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], AA],

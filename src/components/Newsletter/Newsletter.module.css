@@ -1,15 +1,169 @@
-.newsletter { padding: 48px 16px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); text-align: center; color: #fff; }
-.dark.newsletter { background: linear-gradient(135deg, #1e1b4b 0%, #312e81 100%); }
-.content { max-width: 560px; margin: 0 auto; }
-.content h2 { font-size: 1.75rem; font-weight: 700; margin-bottom: 8px; }
-.content p { opacity: 0.9; margin-bottom: 24px; }
-.form { display: flex; gap: 8px; }
-@media (max-width: 480px) { .form { flex-direction: column; } }
-.form input { flex: 1; padding: 12px 16px; border-radius: 10px; border: 2px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.15); color: #fff; font-size: 1rem; backdrop-filter: blur(4px); }
-.form input::placeholder { color: rgba(255,255,255,0.7); }
-.form input:focus { outline: none; border-color: #fff; }
-.form button { padding: 12px 28px; border-radius: 10px; border: none; background: #fff; color: #667eea; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-.form button:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-.form button:disabled { opacity: 0.7; cursor: not-allowed; }
-.successMsg { padding: 12px 20px; border-radius: 10px; background: rgba(255,255,255,0.2); }
-.errorMsg { font-size: 0.85rem; margin-top: 8px; color: #fca5a5; }
+/* ==========================================================================
+   Newsletter — the one sign-up form, set in the footer's navy top band.
+   The band is navy in both modes, so everything here uses the always-dark
+   tokens (--sf-color-on-dark*). Tokens only (prompts/DESIGN_SYSTEM.md).
+   Composes the .sf-field / .sf-input / .sf-btn--paper primitives; the
+   classes below only restyle them for navy.
+   ========================================================================== */
+
+.newsletter {
+  display: grid;
+  gap: var(--sf-space-8);
+  color: var(--sf-color-on-dark);
+}
+
+.intro {
+  display: grid;
+  gap: var(--sf-space-4);
+  min-width: 0;
+}
+
+/* .sf-eyebrow on navy */
+.eyebrow {
+  margin: 0;
+  color: var(--sf-color-on-dark-muted);
+}
+
+.line {
+  max-width: 34ch;
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-sm);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-on-dark);
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+
+.form {
+  min-width: 0;
+}
+
+/* Desktop: on the footer's 12-column grid (same column gap as
+   Footer.module.css). The form lines up with the Help column at 1024px,
+   where four columns are too narrow for the field, and with the Contact
+   column from 1280px. Top-aligned, so the label sits level with the
+   eyebrow and a message below the field never moves the field itself. */
+@media (min-width: 1024px) {
+  .newsletter {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(var(--sf-space-6), 2.5vw, var(--sf-space-8));
+    align-items: start;
+  }
+
+  .intro {
+    grid-column: 1 / span 6;
+  }
+
+  .form {
+    grid-column: 7 / span 6;
+  }
+}
+
+@media (min-width: 1280px) {
+  .intro {
+    grid-column: 1 / span 7;
+  }
+
+  .form {
+    grid-column: 9 / span 4;
+  }
+}
+
+/* .sf-field__label on navy */
+.label {
+  color: var(--sf-color-on-dark-muted);
+}
+
+.controls {
+  display: flex;
+  gap: var(--sf-space-2);
+}
+
+/* .sf-input on navy: paper 8% fill, a 3.5:1 boundary, paper text. Same
+   weight as the primitive's states and later in the bundle, so these win;
+   hover, then focus, then invalid, as in the primitive. */
+.input {
+  flex: 1 1 auto;
+  min-width: 0;
+  border-color: var(--sf-color-on-dark-border-strong);
+  background-color: var(--sf-color-on-dark-soft);
+  color: var(--sf-color-on-dark);
+  caret-color: var(--sf-color-on-dark-accent);
+  color-scheme: dark;
+}
+
+.input::placeholder {
+  color: var(--sf-color-on-dark-muted);
+  opacity: 1;
+}
+
+@media (hover: hover) {
+  .input:hover {
+    border-color: var(--sf-color-on-dark-muted);
+  }
+}
+
+.input:focus {
+  border-color: var(--sf-color-on-dark-accent);
+  box-shadow: 0 0 0 2px var(--sf-color-on-dark-accent), 0 0 0 5px var(--sf-color-focus-halo);
+}
+
+.input[aria-invalid="true"] {
+  border-color: var(--sf-color-on-dark-error);
+}
+
+/* .sf-btn--paper; the two labels stack in one cell (see Newsletter.js). */
+.submit {
+  flex: none;
+  display: inline-grid;
+  place-content: center;
+}
+
+.submitLabel {
+  grid-area: 1 / 1;
+}
+
+.submitLabel[data-active="false"] {
+  visibility: hidden;
+}
+
+/* .sf-field__error on navy (its circled "!" follows currentColor) */
+.error {
+  color: var(--sf-color-on-dark-error);
+}
+
+/* The polite live region stays in the DOM, empty until a sign-up succeeds. */
+.status {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-on-dark);
+}
+
+.status:not(:empty) {
+  margin-top: var(--sf-space-3);
+}
+
+.statusIcon {
+  flex: none;
+  color: var(--sf-color-on-dark-accent);
+}
+
+@media (forced-colors: active) {
+  .statusIcon {
+    color: CanvasText;
+  }
+}
+
+/* The narrowest phones: the button drops under the field, full width. */
+@media (max-width: 359.98px) {
+  .controls {
+    flex-direction: column;
+  }
+}

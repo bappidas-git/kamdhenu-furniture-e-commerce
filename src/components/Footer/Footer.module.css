@@ -1,568 +1,457 @@
-/* ============================================
-   Footer Component Styles
-   Professional e-commerce footer
-   ============================================ */
+/* ==========================================================================
+   Footer — navy in both modes: the newsletter band, link columns, the trust
+   bar with the payment marks, and the bottom bar. Always-dark tokens only
+   (--sf-color-surface-dark, --sf-color-on-dark*; prompts/DESIGN_SYSTEM.md),
+   hairlines rather than fills, no gradients. The only motion is the link
+   underline and the band's Reveal.
+   ========================================================================== */
 
-/* Shared container */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 24px;
-}
-
-/* Main Footer Wrapper */
 .footer {
-  position: relative;
   margin-top: auto;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
-    Arial, sans-serif;
+  background-color: var(--sf-color-surface-dark);
+  color: var(--sf-color-on-dark);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
 }
 
-@media screen and (max-width: 768px) {
+/* The fixed BottomNav (up to 768px; 60–79px tall today, plus the safe-area
+   inset) must never cover the bottom bar, so the navy runs on beneath it
+   with room to spare. If the nav grows past 96px, grow this too. */
+@media (max-width: 768px) {
   .footer {
-    margin-bottom: 70px;
-  }
-
-  /* Touch-friendly link rows: pad each link instead of relying on list gap so
-     the tap target grows without changing the visual rhythm much. */
-  .footerLink,
-  .legalLink,
-  .contactLink {
-    display: inline-block;
-    padding: 8px 0;
-  }
-
-  .linkList {
-    gap: 4px;
+    padding-bottom: calc(var(--sf-space-24) + env(safe-area-inset-bottom, 0px));
   }
 }
 
-/* ========== NEWSLETTER SECTION ========== */
-
-.newsletter {
-  padding: 48px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+/* ---- Newsletter band ------------------------------------------------------ */
+.band {
+  padding-block: calc(var(--sf-section-y) / 2);
+  border-bottom: 1px solid var(--sf-color-on-dark-border);
 }
 
-.footer[data-theme="light"] .newsletter {
-  background: linear-gradient(135deg, #1e293b 0%, #334155 100%);
-}
-
-.footer[data-theme="dark"] .newsletter {
-  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-}
-
-.newsletterInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 40px;
-}
-
-.newsletterText {
-  flex: 1;
-  min-width: 0;
-}
-
-.newsletterTitle {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 8px;
-  line-height: 1.3;
-}
-
-.newsletterDesc {
-  font-size: 0.95rem;
-  color: rgba(255, 255, 255, 0.7);
-  margin: 0;
-  line-height: 1.5;
-}
-
-.newsletterForm {
-  flex: 1;
-  max-width: 480px;
-}
-
-.inputGroup {
-  display: flex;
-  gap: 0;
-  border-radius: 8px;
-  overflow: hidden;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.emailInput {
-  flex: 1;
-  padding: 14px 18px;
-  font-size: 0.95rem;
-  border: 2px solid transparent;
-  outline: none;
-  background: #ffffff;
-  color: #1e293b;
-  min-width: 0;
-  transition: border-color 0.2s ease;
-}
-
-.emailInput::placeholder {
-  color: #94a3b8;
-}
-
-.emailInput:focus {
-  border-color: #667eea;
-}
-
-.emailInput:disabled {
-  background: #f1f5f9;
-  color: #64748b;
-}
-
-.subscribeBtn {
-  padding: 14px 28px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: background 0.2s ease, transform 0.1s ease;
-  color: #ffffff;
-  background: #667eea;
-}
-
-.subscribeBtn:hover:not(:disabled) {
-  background: #5568d3;
-}
-
-.subscribeBtn:active:not(:disabled) {
-  transform: scale(0.98);
-}
-
-.subscribeBtn:disabled {
-  opacity: 0.7;
-  cursor: not-allowed;
-}
-
-.emailInputError {
-  border-color: #ef4444;
-}
-
-.newsletterError,
-.newsletterSuccess {
-  margin: 10px 0 0;
-  font-size: 0.85rem;
-  line-height: 1.4;
-}
-
-.newsletterError {
-  color: #fecaca;
-}
-
-.footer[data-theme="light"] .newsletterError {
-  color: #b91c1c;
-}
-
-.newsletterSuccess {
-  color: #bbf7d0;
-}
-
-.footer[data-theme="light"] .newsletterSuccess {
-  color: #15803d;
-}
-
-/* ========== MAIN FOOTER ========== */
-
-.mainFooter {
-  padding: 56px 0 40px;
-}
-
-.footer[data-theme="light"] .mainFooter {
-  background: #1e293b;
-  color: #cbd5e1;
-}
-
-.footer[data-theme="dark"] .mainFooter {
-  background: #0f172a;
-  color: #94a3b8;
-}
-
-.footerGrid {
+/* ---- Columns ----------------------------------------------------------------
+   Phones: stacked; the link columns collapse behind their headings and the
+   last one closes on the trust bar's rule. 768px: two columns. 1024px: the
+   12-column grid, brand 4 / Shop 2 / Help 2 / Contact 4. */
+.columns {
   display: grid;
-  grid-template-columns: 1.4fr 1fr 1fr 1.2fr;
-  gap: 40px;
+  padding-top: calc(var(--sf-section-y) / 2);
 }
 
-/* Column Styles */
-.footerCol {
+@media (min-width: 768px) {
+  .columns {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sf-space-12) clamp(var(--sf-space-6), 2.5vw, var(--sf-space-8));
+    padding-block: calc(var(--sf-section-y) / 2);
+  }
+}
+
+@media (min-width: 1024px) {
+  .columns {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+  }
+
+  .brand,
+  .contact {
+    grid-column: span 4;
+  }
+
+  .shop,
+  .help {
+    grid-column: span 2;
+  }
+}
+
+/* ---- Brand column ----------------------------------------------------------- */
+.brand {
+  display: grid;
+  gap: var(--sf-space-5);
+  align-content: start;
+  justify-items: start;
   min-width: 0;
+  padding-bottom: var(--sf-space-8);
 }
 
-.brandName {
-  font-size: 1.35rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 16px;
-  letter-spacing: -0.01em;
+@media (min-width: 768px) {
+  .brand {
+    padding-bottom: 0;
+  }
 }
 
-.aboutText {
-  font-size: 0.9rem;
-  line-height: 1.7;
-  margin: 0 0 24px;
-  color: #94a3b8;
+.logoLink {
+  display: block;
+  border-radius: var(--sf-radius-sm);
 }
 
-.colTitle {
-  font-size: 1rem;
-  font-weight: 700;
-  color: #ffffff;
-  margin: 0 0 20px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  position: relative;
-  padding-bottom: 12px;
+.logoLink:focus-visible {
+  outline: 2px solid var(--sf-color-on-dark-accent);
+  outline-offset: 4px;
 }
 
-.colTitle::after {
-  content: "";
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  width: 32px;
-  height: 3px;
-  border-radius: 2px;
-  background: #667eea;
+/* Windows contrast themes repaint the navy; the white logo keeps a navy
+   ground so it never vanishes on a light canvas. */
+@media (forced-colors: active) {
+  .logoLink {
+    padding: var(--sf-space-2);
+    background-color: var(--sf-color-surface-dark);
+    forced-color-adjust: none;
+  }
 }
 
-/* Social Icons */
-.socialIcons {
+.promise {
+  max-width: 34ch;
+  margin: 0;
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-on-dark-muted);
+}
+
+.social {
   display: flex;
-  gap: 12px;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
 .socialLink {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #94a3b8;
-  text-decoration: none;
-  transition: all 0.25s ease;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  border: 1px solid var(--sf-color-on-dark-border);
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-color-on-dark);
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.socialLink:hover {
-  background: #667eea;
-  color: #ffffff;
-  transform: translateY(-2px);
-}
-
-/* Link Lists */
-.linkList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-.footerLink {
-  color: #94a3b8;
-  text-decoration: none;
-  font-size: 0.9rem;
-  transition: color 0.2s ease, padding-left 0.2s ease;
-  display: inline-block;
-  line-height: 1.4;
-}
-
-.footerLink:hover {
-  color: #ffffff;
-  padding-left: 4px;
-}
-
-/* Contact List */
-.contactList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.contactItem {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-  font-size: 0.9rem;
-  line-height: 1.6;
-  color: #94a3b8;
-}
-
-.contactIcon {
-  flex-shrink: 0;
-  margin-top: 2px;
-  color: #667eea;
-}
-
-.contactLink {
-  color: #94a3b8;
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.contactLink:hover {
-  color: #ffffff;
-}
-
-/* ========== TRUST & PAYMENT BAR ========== */
-
-.trustBar {
-  padding: 24px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.footer[data-theme="light"] .trustBar {
-  background: #172033;
-}
-
-.footer[data-theme="dark"] .trustBar {
-  background: #0b1120;
-}
-
-.trustBarInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 32px;
-  flex-wrap: wrap;
-}
-
-/* Payment Methods */
-.paymentMethods {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-
-.paymentLabel {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: rgba(255, 255, 255, 0.5);
-  white-space: nowrap;
-}
-
-.paymentIcons {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-}
-
-.paymentBadge {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  overflow: hidden;
-  opacity: 0.85;
-  transition: opacity 0.2s ease, transform 0.2s ease;
-}
-
-.paymentBadge:hover {
-  opacity: 1;
-  transform: scale(1.05);
-}
-
-/* Trust Badges */
-.trustBadges {
-  display: flex;
-  gap: 24px;
-  flex-wrap: wrap;
-}
-
-.trustBadge {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  font-size: 0.85rem;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.6);
-  white-space: nowrap;
-}
-
-.trustBadge svg {
-  color: #667eea;
-}
-
-/* ========== BOTTOM BAR ========== */
-
-.bottomBar {
-  padding: 20px 0;
-}
-
-.footer[data-theme="light"] .bottomBar {
-  background: #0f172a;
-}
-
-.footer[data-theme="dark"] .bottomBar {
-  background: #070c18;
-}
-
-.bottomBarInner {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 20px;
-  flex-wrap: wrap;
-}
-
-.copyright {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-  margin: 0;
-}
-
-.legalLinks {
-  display: flex;
-  gap: 24px;
-  align-items: center;
-}
-
-.legalLink {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.5);
-  text-decoration: none;
-  transition: color 0.2s ease;
-}
-
-.legalLink:hover {
-  color: #ffffff;
-}
-
-/* ========== RESPONSIVE: Tablet (2 columns) ========== */
-
-@media (max-width: 960px) {
-  .newsletterInner {
-    flex-direction: column;
-    text-align: center;
-    gap: 24px;
-  }
-
-  .newsletterForm {
-    max-width: 100%;
-    width: 100%;
-  }
-
-  .footerGrid {
-    grid-template-columns: 1fr 1fr;
-    gap: 36px;
-  }
-
-  .trustBarInner {
-    flex-direction: column;
-    align-items: center;
-    text-align: center;
-    gap: 20px;
-  }
-
-  .trustBadges {
-    justify-content: center;
-  }
-
-  .paymentMethods {
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .bottomBarInner {
-    flex-direction: column;
-    text-align: center;
-    gap: 12px;
-  }
-
-  .legalLinks {
-    justify-content: center;
+@media (hover: hover) {
+  .socialLink:hover {
+    border-color: var(--sf-color-on-dark-accent);
+    color: var(--sf-color-on-dark-accent);
   }
 }
 
-/* ========== RESPONSIVE: Mobile (1 column) ========== */
-
-@media (max-width: 600px) {
-  .newsletter {
-    padding: 36px 0;
-  }
-
-  .newsletterTitle {
-    font-size: 1.25rem;
-  }
-
-  .newsletterDesc {
-    font-size: 0.88rem;
-  }
-
-  .inputGroup {
-    flex-direction: column;
-    border-radius: 8px;
-  }
-
-  .emailInput {
-    border-radius: 8px 8px 0 0;
-    padding: 14px 16px;
-  }
-
-  .subscribeBtn {
-    border-radius: 0 0 8px 8px;
-    padding: 14px 16px;
-  }
-
-  .mainFooter {
-    padding: 40px 0 32px;
-  }
-
-  .footerGrid {
-    grid-template-columns: 1fr;
-    gap: 32px;
-  }
-
-  .socialIcons {
-    justify-content: flex-start;
-  }
-
-  .trustBar {
-    padding: 20px 0;
-  }
-
-  .trustBadges {
-    gap: 16px;
-    justify-content: center;
-  }
-
-  .trustBadge {
-    font-size: 0.8rem;
-  }
-
-  .legalLinks {
-    flex-wrap: wrap;
-    gap: 16px;
-    justify-content: center;
-  }
-
-  .copyright {
-    font-size: 0.8rem;
-  }
-}
-
-/* ========== ACCESSIBILITY ========== */
-
-.footerLink:focus-visible,
-.socialLink:focus-visible,
-.contactLink:focus-visible,
-.legalLink:focus-visible,
-.subscribeBtn:focus-visible,
-.emailInput:focus-visible {
-  outline: 2px solid #667eea;
+.socialLink:focus-visible {
+  outline: 2px solid var(--sf-color-on-dark-accent);
   outline-offset: 2px;
+}
+
+/* ---- Link columns ---------------------------------------------------------- */
+.column {
+  min-width: 0;
+}
+
+/* h2, styled as an eyebrow */
+.heading {
+  margin: 0 0 var(--sf-space-4);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-on-dark);
+}
+
+/* Phones: each column is a disclosure row between hairlines. */
+@media (max-width: 767.98px) {
+  .column {
+    border-top: 1px solid var(--sf-color-on-dark-border);
+  }
+
+  .heading {
+    margin: 0;
+  }
+
+  .panel {
+    padding-bottom: var(--sf-space-5);
+  }
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  width: 100%;
+  min-height: calc(var(--sf-space-12) + var(--sf-space-2));
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  letter-spacing: inherit;
+  text-align: start;
+  text-transform: inherit;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.toggle:focus-visible {
+  outline: 2px solid var(--sf-color-on-dark-accent);
+  outline-offset: 2px;
+}
+
+/* Plus when closed, minus when open; it swaps, it does not animate. */
+.toggleIcon {
+  position: relative;
+  flex: none;
+  width: var(--sf-space-3);
+  height: var(--sf-space-3);
+}
+
+.toggleIcon::before,
+.toggleIcon::after {
+  content: "";
+  position: absolute;
+  background-color: currentColor;
+}
+
+.toggleIcon::before {
+  inset: calc(50% - 0.5px) 0 auto;
+  height: 1px;
+}
+
+.toggleIcon::after {
+  inset: 0 auto 0 calc(50% - 0.5px);
+  width: 1px;
+}
+
+.toggle[aria-expanded="true"] .toggleIcon::after {
+  display: none;
+}
+
+/* Windows contrast themes repaint backgrounds; keep the strokes visible. */
+@media (forced-colors: active) {
+  .toggleIcon::before,
+  .toggleIcon::after {
+    background-color: CanvasText;
+  }
+}
+
+.links {
+  display: grid;
+  justify-items: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The departments follow the curated links as a second group. */
+.departments {
+  margin-top: var(--sf-space-5);
+}
+
+/* Footer links: muted at rest; paper with the accent underline on hover. */
+.link {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sf-space-8);
+  padding-block: var(--sf-space-1);
+  color: var(--sf-color-on-dark-muted);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-tight);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  overflow-wrap: anywhere;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    color: var(--sf-color-on-dark);
+    text-decoration-color: var(--sf-color-on-dark-accent);
+  }
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--sf-color-on-dark-accent);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* 44px targets on phones and touch screens. */
+@media (max-width: 767.98px), (pointer: coarse) {
+  .link {
+    min-height: var(--sf-tap-target);
+  }
+}
+
+/* ---- Contact -------------------------------------------------------------- */
+.address {
+  font-style: normal;
+}
+
+.contactList {
+  display: grid;
+  justify-items: start;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.contactText {
+  display: flex;
+  align-items: center;
+  max-width: 36ch;
+  min-height: var(--sf-space-8);
+  color: var(--sf-color-on-dark-muted);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-normal);
+}
+
+/* ---- Trust bar and payment marks ----------------------------------------- */
+.trust {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-6) var(--sf-space-12);
+  padding-block: var(--sf-space-6);
+  border-top: 1px solid var(--sf-color-on-dark-border);
+  border-bottom: 1px solid var(--sf-color-on-dark-border);
+}
+
+.trustList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-4) var(--sf-space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Eyebrow-style items with outline icons. */
+.trustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-on-dark);
+}
+
+.trustIcon {
+  flex: none;
+  color: var(--sf-color-on-dark-accent);
+}
+
+@media (forced-colors: active) {
+  .trustIcon {
+    color: CanvasText;
+  }
+}
+
+/* .sf-divider--dot on navy */
+.dot,
+.trustDetail {
+  color: var(--sf-color-on-dark-muted);
+}
+
+.payments {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-3) var(--sf-space-4);
+}
+
+.paymentsLabel {
+  margin: 0;
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-on-dark-muted);
+}
+
+/* One-colour marks in the off-white tone. The colour is set here, on the
+   list, so the SVGs inherit it (and follow a Windows contrast theme too). */
+.marks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--sf-color-on-dark);
+}
+
+.mark {
+  display: block;
+}
+
+/* The card frame: the mark's colour at 40%, i.e. --sf-color-on-dark-border-strong. */
+.markFrame {
+  fill: none;
+  stroke: currentColor;
+  stroke-opacity: 0.4;
+  stroke-width: 1;
+}
+
+.markText {
+  fill: currentColor;
+  font-family: inherit;
+  font-weight: var(--sf-font-semibold);
+  letter-spacing: 0.04em;
+}
+
+.markRing {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+}
+
+/* ---- Bottom bar ------------------------------------------------------------- */
+.bottom {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-2) var(--sf-space-8);
+  padding-block: var(--sf-space-5) var(--sf-space-8);
+  font-size: var(--sf-text-xs);
+  color: var(--sf-color-on-dark-muted);
+}
+
+/* Phones: the footer's own padding already clears the BottomNav. */
+@media (max-width: 768px) {
+  .bottom {
+    padding-bottom: var(--sf-space-2);
+  }
+}
+
+.bottomStart {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-1) var(--sf-space-6);
+}
+
+.copyright,
+.note {
+  margin: 0;
+}
+
+.legal {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0 var(--sf-space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* After .link, so the smaller size wins. */
+.legalLink {
+  font-size: inherit;
 }
