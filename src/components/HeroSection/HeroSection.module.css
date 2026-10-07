@@ -1,618 +1,214 @@
-/* ==========================================================================
-   HeroSection - E-commerce Hero (Amazon/Flipkart style)
-   ========================================================================== */
+/* =============================================================================
+   HeroSection — full-bleed editorial hero (DESIGN_SYSTEM.md, sections 3.3,
+   5.5, 8). Always-dark: the same tokens in light and dark mode.
 
-/* Section Container */
-.heroSection {
+   Contrast: the text sits on a wash of --sf-color-scrim (navy at 70%) that
+   covers the whole content block, the strength section 3.3 requires for text
+   on photography (on-dark 5.77 : 1, on-dark accent ≥ 3 : 1 at display size,
+   measured over a white photograph). The wash's top and right edges fade out
+   so it reads as a scrim rising from the bottom-left; it is the only
+   gradient here.
+   ============================================================================= */
+
+.hero {
+  --hero-inset: 24px;                 /* side gutter on phones */
+  --hero-pad-bottom: var(--sf-space-12);
+  --hero-wash-fade-y: clamp(96px, 18vh, 200px);
+  --hero-wash-fade-x: clamp(160px, 22vw, 360px);
+  --hero-content-max: 640px;
+
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  height: max(520px, 72vh);
+  background-color: var(--sf-color-surface-dark);
+  color: var(--sf-color-on-dark);
+}
+
+@media (min-width: 768px) {
+  .hero {
+    /* Align with the wide container (1440px, centred, --sf-gutter inside). */
+    --hero-inset: max(
+      var(--sf-gutter),
+      calc((100% - var(--sf-container-wide)) / 2 + var(--sf-gutter))
+    );
+    --hero-pad-bottom: clamp(48px, 7vw, 96px);
+    height: clamp(560px, 86vh, 920px);
+  }
+}
+
+/* ── Media ──────────────────────────────────────────────────────────────── */
+
+.mediaFrame,
+.media {
+  position: absolute;
+  inset: 0;
+}
+
+.mediaFrame {
+  z-index: -1;
+}
+
+.media {
+  transform-origin: 50% 60%;
+}
+
+.mediaEl {
+  display: block;
   width: 100%;
-  padding: 12px 16px 0;
-}
-
-/* Main Hero Area: Carousel + Sidebar */
-.heroMain {
-  display: flex;
-  gap: 12px;
-  max-width: 1400px;
-  margin: 0 auto;
-}
-
-/* ==========================================================================
-   Banner Carousel
-   ========================================================================== */
-.carouselContainer {
-  flex: 7;
-  min-width: 0;
-}
-
-.carouselInner {
-  position: relative;
-  border-radius: 12px;
-  overflow: hidden;
-  height: 340px;
-}
-
-/* Individual Slide */
-.slide {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  padding: 48px 56px;
-  overflow: hidden;
-}
-
-.slideContent {
-  position: relative;
-  z-index: 2;
-  max-width: 480px;
-}
-
-.slideLabel {
-  display: inline-block;
-  padding: 4px 14px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  background: rgba(255, 255, 255, 0.2);
-  color: #ffffff;
-  margin-bottom: 12px;
-  backdrop-filter: blur(4px);
-}
-
-.slideTitle {
-  font-size: 2.25rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 8px;
-  line-height: 1.15;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.slideSubtitle {
-  font-size: 1.1rem;
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0 0 24px;
-  line-height: 1.5;
-  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
-}
-
-.slideCta {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 12px 28px;
-  border: none;
-  border-radius: 8px;
-  background: #ffffff;
-  color: #1a1a2e;
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.slideCta:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 24px rgba(0, 0, 0, 0.2);
-}
-
-/* Decorative Elements */
-.slideDecor {
-  position: absolute;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-}
-
-.decorCircle1 {
-  position: absolute;
-  width: 300px;
-  height: 300px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.08);
-  top: -80px;
-  right: -40px;
-}
-
-.decorCircle2 {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.06);
-  bottom: -60px;
-  right: 120px;
-}
-
-.decorCircle3 {
-  position: absolute;
-  width: 120px;
-  height: 120px;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.1);
-  top: 40px;
-  right: 200px;
-}
-
-/* Arrow Buttons */
-.arrowBtn {
-  position: absolute;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: none;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 5;
-  transition: all 0.2s ease;
-  opacity: 0;
-  background: rgba(255, 255, 255, 0.9);
-  color: #333;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-}
-
-.carouselInner:hover .arrowBtn {
-  opacity: 1;
-}
-
-.arrowBtn:hover {
-  background: #ffffff;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
-}
-
-.arrowLeft {
-  left: 12px;
-}
-
-.arrowRight {
-  right: 12px;
-}
-
-/* Dot Navigation */
-.dotsContainer {
-  position: absolute;
-  bottom: 6px;
-  left: 50%;
-  transform: translateX(-50%);
-  display: flex;
-  gap: 0;
-  z-index: 5;
-}
-
-/* The visible dot stays small, but content-box padding + background-clip give
-   each button a ~32px touch target (the padding also spaces the dots apart). */
-.dot {
-  box-sizing: content-box;
-  width: 8px;
-  height: 8px;
-  padding: 13px;
-  border-radius: 50%;
-  border: none;
-  background-color: rgba(255, 255, 255, 0.45);
-  background-clip: content-box;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.dot:hover {
-  background-color: rgba(255, 255, 255, 0.7);
-}
-
-.dotActive {
-  width: 24px;
-  /* 17px on the padding box = 4px radius on the visible (content-box) pill */
-  border-radius: 17px;
-  background-color: #ffffff;
-}
-
-/* ==========================================================================
-   Right Sidebar - Promo Cards
-   ========================================================================== */
-.sidebar {
-  flex: 3;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  min-width: 0;
-}
-
-.promoCard {
-  position: relative;
-  flex: 1;
-  border-radius: 12px;
-  overflow: hidden;
-  cursor: pointer;
-  min-height: 162px;
-}
-
-.promoCardBg {
-  position: absolute;
-  inset: 0;
-}
-
-.promoCardContent {
-  position: relative;
-  z-index: 2;
-  padding: 20px 24px;
   height: 100%;
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
+  object-fit: cover;
+  background-color: var(--sf-color-sand);
 }
 
-.promoTag {
-  display: inline-block;
-  width: fit-content;
-  padding: 3px 10px;
-  border-radius: 4px;
-  font-size: 0.65rem;
-  font-weight: 700;
+/* ── Content and scrim ──────────────────────────────────────────────────── */
+
+.inner {
+  position: absolute;
+  inset-inline: 0;
+  bottom: 0;
+  padding: 0 var(--hero-inset) var(--hero-pad-bottom);
+}
+
+/* The scrim: solid --sf-color-scrim behind the whole content block, fading
+   out over --hero-wash-fade-y above it (and, from 768px, over
+   --hero-wash-fade-x to its right, via a mask drawn with an opaque token:
+   only its alpha counts). The fades ease out through two color-mix() steps
+   where supported; older browsers get a linear fade. */
+.inner::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  left: 0;
+  bottom: 0;
+  top: calc(-1 * var(--hero-wash-fade-y));
+  width: 100%;
+  background: linear-gradient(
+    to top,
+    var(--sf-color-scrim) 0%,
+    var(--sf-color-scrim) calc(100% - var(--hero-wash-fade-y)),
+    transparent 100%
+  );
+  pointer-events: none;
+}
+
+@supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+  .inner::before {
+    background: linear-gradient(
+      to top,
+      var(--sf-color-scrim) 0%,
+      var(--sf-color-scrim) calc(100% - var(--hero-wash-fade-y)),
+      color-mix(in srgb, var(--sf-color-scrim) 62%, transparent)
+        calc(100% - var(--hero-wash-fade-y) * 0.6),
+      color-mix(in srgb, var(--sf-color-scrim) 24%, transparent)
+        calc(100% - var(--hero-wash-fade-y) * 0.28),
+      transparent 100%
+    );
+  }
+}
+
+@media (min-width: 768px) {
+  .inner::before {
+    width: min(
+      100%,
+      calc(var(--hero-inset) + var(--hero-content-max) + var(--hero-wash-fade-x))
+    );
+    -webkit-mask-image: linear-gradient(
+      to right,
+      var(--sf-color-surface-dark) calc(100% - var(--hero-wash-fade-x)),
+      transparent 100%
+    );
+    mask-image: linear-gradient(
+      to right,
+      var(--sf-color-surface-dark) calc(100% - var(--hero-wash-fade-x)),
+      transparent 100%
+    );
+  }
+
+  @supports (color: color-mix(in srgb, currentColor 50%, transparent)) {
+    .inner::before {
+      -webkit-mask-image: linear-gradient(
+        to right,
+        var(--sf-color-surface-dark) calc(100% - var(--hero-wash-fade-x)),
+        color-mix(in srgb, var(--sf-color-surface-dark) 62%, transparent)
+          calc(100% - var(--hero-wash-fade-x) * 0.6),
+        color-mix(in srgb, var(--sf-color-surface-dark) 24%, transparent)
+          calc(100% - var(--hero-wash-fade-x) * 0.28),
+        transparent 100%
+      );
+      mask-image: linear-gradient(
+        to right,
+        var(--sf-color-surface-dark) calc(100% - var(--hero-wash-fade-x)),
+        color-mix(in srgb, var(--sf-color-surface-dark) 62%, transparent)
+          calc(100% - var(--hero-wash-fade-x) * 0.6),
+        color-mix(in srgb, var(--sf-color-surface-dark) 24%, transparent)
+          calc(100% - var(--hero-wash-fade-x) * 0.28),
+        transparent 100%
+      );
+    }
+  }
+}
+
+.content {
+  position: relative;
+  max-width: var(--hero-content-max);
+}
+
+.eyebrow {
+  margin: 0 0 var(--sf-space-4);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  line-height: var(--sf-leading-normal);
   text-transform: uppercase;
-  letter-spacing: 0.8px;
-  background: rgba(255, 255, 255, 0.25);
-  color: #ffffff;
-  margin-bottom: 8px;
-  backdrop-filter: blur(4px);
+  color: var(--sf-color-on-dark);
 }
 
-.promoTitle {
-  font-size: 1.2rem;
-  font-weight: 800;
-  color: #ffffff;
-  margin: 0 0 4px;
-  line-height: 1.2;
+.headline {
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-xl);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-display);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-on-dark);
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
-.promoText {
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.85);
-  margin: 0 0 10px;
-  line-height: 1.4;
-}
-
-.promoLink {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  color: #ffffff;
+.headline em {
+  font-family: var(--sf-font-display);
+  font-style: italic;
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-on-dark-accent);
   text-decoration: none;
 }
 
-.promoLink svg {
-  transition: transform 0.2s ease;
+.support {
+  margin: var(--sf-space-5) 0 0;
+  max-width: 34ch;
+  font-family: var(--sf-font-sans);
+  font-size: 1.125rem;
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-on-dark);
 }
 
-.promoCard:hover .promoLink svg {
-  transform: translateX(3px);
-}
-
-/* ==========================================================================
-   Category Quick Links
-   ========================================================================== */
-.categoryBar {
-  max-width: 1400px;
-  margin: 16px auto 0;
-  padding: 0;
-}
-
-.categoryScroll {
-  display: flex;
-  gap: 8px;
-  overflow-x: auto;
-  padding: 8px 4px 12px;
-  scrollbar-width: none;
-  -ms-overflow-style: none;
-  justify-content: center;
-}
-
-.categoryScroll::-webkit-scrollbar {
-  display: none;
-}
-
-.categoryItem {
+.ctas {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  min-width: 88px;
-  padding: 8px 4px;
-  transition: all 0.2s ease;
+  gap: var(--sf-space-3);
+  margin-top: var(--sf-space-8);
 }
 
-.categoryIcon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
+.cta {
+  --sf-btn-size: 48px;
+  padding-inline: var(--sf-space-8);
 }
 
-.heroSection[data-theme="dark"] .categoryIcon {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-}
-
-.heroSection[data-theme="light"] .categoryIcon {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
-}
-
-.categoryItem:hover .categoryIcon {
-  transform: scale(1.08);
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
-}
-
-.categoryLabel {
-  font-size: 0.78rem;
-  font-weight: 600;
-  text-align: center;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 88px;
-}
-
-.heroSection[data-theme="dark"] .categoryLabel {
-  color: #e2e8f0;
-}
-
-.heroSection[data-theme="light"] .categoryLabel {
-  color: #334155;
-}
-
-/* ==========================================================================
-   Theme-specific overrides
-   ========================================================================== */
-.heroSection[data-theme="dark"] {
-  background-color: #0f172a;
-}
-
-.heroSection[data-theme="light"] {
-  background-color: #f1f3f6;
-}
-
-.heroSection[data-theme="dark"] .carouselInner {
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
-.heroSection[data-theme="light"] .carouselInner {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-.heroSection[data-theme="dark"] .promoCard {
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
-}
-
-.heroSection[data-theme="light"] .promoCard {
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
-}
-
-/* ==========================================================================
-   Responsive - Tablet (max-width: 1024px)
-   ========================================================================== */
-@media (max-width: 1024px) {
-  .heroSection {
-    padding: 10px 12px 0;
-  }
-
-  .heroMain {
-    gap: 10px;
-  }
-
-  .carouselInner {
-    height: 300px;
-  }
-
-  .slide {
-    padding: 36px 40px;
-  }
-
-  .slideTitle {
-    font-size: 1.85rem;
-  }
-
-  .slideSubtitle {
-    font-size: 1rem;
-    margin-bottom: 20px;
-  }
-
-  .promoTitle {
-    font-size: 1.05rem;
-  }
-
-  .promoCardContent {
-    padding: 16px 18px;
-  }
-}
-
-/* ==========================================================================
-   Responsive - Mobile (max-width: 768px)
-   ========================================================================== */
-@media (max-width: 768px) {
-  .heroSection {
-    padding: 8px 8px 0;
-  }
-
-  .heroMain {
-    flex-direction: column;
-    gap: 8px;
-  }
-
-  .carouselContainer {
-    flex: none;
-  }
-
-  .carouselInner {
-    height: 220px;
-    border-radius: 10px;
-  }
-
-  .slide {
-    padding: 28px 24px;
-  }
-
-  .slideLabel {
-    font-size: 0.65rem;
-    padding: 3px 10px;
-    margin-bottom: 8px;
-  }
-
-  .slideTitle {
-    font-size: 1.5rem;
-    margin-bottom: 4px;
-  }
-
-  .slideSubtitle {
-    font-size: 0.85rem;
-    margin-bottom: 16px;
-  }
-
-  .slideCta {
-    padding: 10px 20px;
-    font-size: 0.85rem;
-  }
-
-  /* Hide sidebar on mobile */
-  .sidebar {
-    display: none;
-  }
-
-  /* Arrow buttons always visible on mobile (no hover); keep ≥40px for touch */
-  .arrowBtn {
-    opacity: 0.85;
-    width: 40px;
-    height: 40px;
-  }
-
-  .arrowLeft {
-    left: 8px;
-  }
-
-  .arrowRight {
-    right: 8px;
-  }
-
-  .dotsContainer {
-    bottom: 2px;
-    gap: 0;
-  }
-
-  .dot {
-    width: 6px;
-    height: 6px;
-  }
-
-  .dotActive {
-    width: 18px;
-  }
-
-  /* Category bar scrollable on mobile */
-  .categoryBar {
-    margin-top: 12px;
-  }
-
-  .categoryScroll {
-    justify-content: flex-start;
-    gap: 4px;
-    padding: 4px 8px 8px;
-  }
-
-  .categoryItem {
-    min-width: 76px;
-    gap: 6px;
-    padding: 6px 2px;
-  }
-
-  .categoryIcon {
-    width: 52px;
-    height: 52px;
-  }
-
-  .categoryIcon svg {
-    width: 20px;
-    height: 20px;
-  }
-
-  .categoryLabel {
-    font-size: 0.7rem;
-    max-width: 76px;
-  }
-}
-
-/* ==========================================================================
-   Responsive - Small Mobile (max-width: 480px)
-   ========================================================================== */
-@media (max-width: 480px) {
-  .heroSection {
-    padding: 6px 6px 0;
-  }
-
-  .carouselInner {
-    height: 190px;
-    border-radius: 8px;
-  }
-
-  .slide {
-    padding: 20px 18px;
-  }
-
-  .slideLabel {
-    font-size: 0.6rem;
-    margin-bottom: 6px;
-  }
-
-  .slideTitle {
-    font-size: 1.25rem;
-  }
-
-  .slideSubtitle {
-    font-size: 0.78rem;
-    margin-bottom: 14px;
-  }
-
-  .slideCta {
-    padding: 8px 16px;
-    font-size: 0.8rem;
-    border-radius: 6px;
-  }
-
-  .arrowBtn {
-    width: 40px;
-    height: 40px;
-  }
-
-  .arrowBtn svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .categoryItem {
-    min-width: 68px;
-  }
-
-  .categoryIcon {
-    width: 46px;
-    height: 46px;
-  }
-
-  .categoryIcon svg {
-    width: 18px;
-    height: 18px;
-  }
-
-  .categoryLabel {
-    font-size: 0.65rem;
-    max-width: 68px;
+@media (min-width: 480px) {
+  .ctas {
+    flex-direction: row;
+    flex-wrap: wrap;
   }
 }

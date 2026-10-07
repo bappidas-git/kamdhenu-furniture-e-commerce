@@ -117,4 +117,7 @@ const TrustBadges = ({
   );
 };
 
+// The outline icon set, shared with the home page's AssuranceStrip.
+export { ICONS as TRUST_BADGE_ICONS };
+
 export default TrustBadges;
