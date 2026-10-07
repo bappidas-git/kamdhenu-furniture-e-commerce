@@ -299,9 +299,15 @@ Self-test: a copy with seeded faults (wrong price, dangling relation, extra key,
 
 `orders[].items`, `returns[].items`, `reviews[].productId` and `wishlist[].productId` still describe the boilerplate's electronics products. Their ids 1–20 now resolve to different furniture records, so ids alone no longer show these as broken, and variant ids may not match. Order history still renders because orders store item snapshots. In full mode the validator now fails only on ratings (products 1, 2 and 5 have old approved reviews while `totalReviews` is 0). Prompt 05 reseeds all of these. `banners` still link to `/products?category=electronics` and similar slugs (Prompt 05 owns banners).
 
-### Admin observation (pre-existing, not changed: admin is out of scope)
+### Admin fix: variant attributes kept on save (follow-up, requested by the owner)
 
-- `AdminProducts.js` rebuilds each variant from only `id, name, price, stock, sku` when saving (around lines 150–157). Saving any product with structured variants therefore **drops `attributes` and `swatchHex`**, and the storefront falls back to flat tiles. This was confirmed in the browser: editing product 1 and saving without changes removed both fields and changed `updatedAt`. The boilerplate behaved the same way. Categories save unchanged apart from `updatedAt`. Needs an owner decision (the admin is otherwise untouchable).
+- **Problem:** `AdminProducts.js` rebuilt each variant from only `id, name, price, stock, sku`, both when opening the edit dialog and when saving. Saving any product with structured variants therefore dropped `attributes` and `swatchHex`, and the storefront fell back to flat tiles. The boilerplate behaved the same way.
+- **Fix:** both places now spread the original variant first (`...v`) and then override the editable fields. Fields the form does not edit stay on the variant, in their original key order.
+- **Verified in Chromium:** with servers freshly restarted, saving products 1 (Colour), 9 (Shelves), 26 (no variants) and 37 (Finish) without edits left each `db.json` record identical apart from `updatedAt`.
+- **Limitation:** the form still cannot edit `attributes`. Renaming a variant in the admin leaves its attribute value (for example `Colour: "White"`) unchanged. A row added in the admin has no `attributes`, so that product's selector falls back to flat tiles, as before.
+
+### Admin observation (pre-existing, not changed)
+
 - In the admin's category and parent dropdowns, the names "Essentials", "Premium", "Chairs with Arms" and so on appear twice. The slug column tells them apart in the table; the dropdowns show names only.
 
 ### Verification

@@ -84,8 +84,11 @@ const AdminProducts = () => {
         length: dims.length || 0, width: dims.width || 0, height: dims.height || 0,
       },
       // Clone variants so row edits don't mutate the list's product object.
+      // Spread first so fields this form doesn't edit (structured `attributes`,
+      // `swatchHex`) ride along and survive the save.
       variants: Array.isArray(p.variants)
         ? p.variants.map((v) => ({
+            ...v,
             id: v.id || newVariantId(),
             name: v.name || "",
             price: v.price || 0,
@@ -149,6 +152,7 @@ const AdminProducts = () => {
     const cleanedVariants = form.variants
       .filter((v) => v.name.trim() || v.sku.trim() || Number(v.price) > 0 || Number(v.stock) > 0)
       .map((v) => ({
+        ...v, // keeps non-editable fields such as `attributes` / `swatchHex`
         id: v.id || newVariantId(),
         name: v.name.trim(),
         price: clampNum(v.price),
