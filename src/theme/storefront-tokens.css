@@ -190,6 +190,10 @@
   --sf-container-wide: 1440px;         /* editorial / full-bleed inner */
   --sf-container-narrow: 720px;        /* prose and forms */
   --sf-tap-target: 44px;               /* min touch target (WCAG 2.5.5) */
+  /* Live height of the sticky storefront header, written on <html> at runtime
+     by src/components/Header/useHeaderHeight.js (shrinks as it compacts). Sticky
+     offsets: top: calc(var(--sf-header-height) + 24px). 0px until it mounts. */
+  --sf-header-height: 0px;
 
   /* ---- z-index scale ---------------------------------------------------- */
   --sf-z-sticky: 40;

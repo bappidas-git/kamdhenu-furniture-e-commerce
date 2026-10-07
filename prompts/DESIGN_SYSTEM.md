@@ -252,6 +252,7 @@ Sans, `--sf-text-eyebrow` (12px), weight 500, `text-transform: uppercase`, `lett
 |---|---|---|---|
 | `--sf-section-y` | `clamp(64px, 9vw, 128px)` | 64 / 69 / 92 / 128px | vertical padding of every page section |
 | `--sf-gutter` | `clamp(16px, 4vw, 48px)` | 16 / 31 / 41 / 48px | page side padding |
+| `--sf-header-height` | runtime (written on `<html>` by the header; `0px` default) | 60 / 64 / 212 / 168px at rest; 156 at 1024 and 112 from 1280 when compact | sticky offsets below the header: `top: calc(var(--sf-header-height) + 24px)` (section 17) |
 
 **Containers:** `--sf-container-max` 1280px (content; `--sf-container` is an alias) · `--sf-container-wide` 1440px (editorial and full-bleed inner) · `--sf-container-narrow` 720px (prose and forms). Pattern: `max-width: var(--sf-container-max); margin-inline: auto; padding-inline: var(--sf-gutter);`.
 
@@ -688,3 +689,38 @@ New contrast pairs (`node scripts/check-contrast.js`):
 | Paper-ghost hover (on-dark on on-dark-border over navy) (both modes) | 9.57 ✓ | 9.57 ✓ | 4.5:1 |
 
 Every other primitive pairing is already in section 14 (ink on sand for hover states, primary-contrast on primary for selected chips, counts, tooltips and the skip link, accent-contrast on accent for the check mark, muted on surface for the switch thumb, focus ring and accent on page/surface/sand, on-dark tokens on navy for the paper variants).
+
+---
+
+## 17. Header and the `--sf-header-height` contract
+
+Written by Prompt 07. Files: `src/components/Header/Header.js` (shell), `MegaMenu.js` (department row and flyout), `useHeaderHeight.js`, `groupCategoryTree.js`; copy overrides in `src/content/navigationContent.js`.
+
+### 17.1 Structure and metrics
+
+| Width | Rows (height at rest → compact) | Main row |
+|---|---|---|
+| < 768px | main 60 | menu · logo 28px · search, cart |
+| 768–1023px | main 64 | menu · logo 40px · search, theme, account, cart |
+| ≥ 1024px | utility strip 32 → out of view · main 88 → 64 visible · department row 48 (two lines, 92, at 1024–1279 with the seeded six departments) | search trigger · logo 48 → 36px · account, wishlist, cart (labels under the icons from 1280px) |
+
+- Surface `--sf-color-bg` (paper / navy-ink), hairlines `--sf-hairline`, no gradient, no shadow at rest; `--sf-shadow-sm` only when compact. The mega-menu panel uses `--sf-color-bg`, `--sf-shadow-md` and a bottom hairline.
+- Stacking: the header is `--sf-z-header` (50); the panel sits inside it at `--sf-z-megamenu` (55). Drawers and modals (≥ 1000) stay above both. Page content must stay below 50.
+- Department row type: sans 13px / 500 / uppercase / 0.12em from 1440px; 12px / 0.1em at 1024–1439px and 0.08em at 1024–1279px, so long department names fit before the row has to wrap.
+
+### 17.2 Sticky header, compaction and `--sf-header-height`
+
+- The header is `position: sticky; top: 0` and in the page flow, so there is no spacer. Pages start right under it; never add top margins or paddings that assume a fixed header.
+- Past 80px of scroll it compacts **with transforms only**: it slides up by `--hdr-compact-shift` (56px at ≥ 1024px), so the utility strip leaves the viewport (then `visibility: hidden`), the main row shows 64px with its content re-centred, and the logo scales to 36px. Its box never changes size, so nothing below it moves and no layout shift is recorded. Below 1024px compaction only adds the shadow. Never hidden on scroll down.
+- **Contract:** `--sf-header-height` on `<html>` is the visible header height, updated before paint on resize and on every frame of the slide. Use it for every offset below the header:
+  - sticky elements: `top: calc(var(--sf-header-height) + 24px)` (listing rail, checkout summary, product gallery, account rail);
+  - anchor targets: `scroll-margin-top: calc(var(--sf-header-height) + 16px)`;
+  - JS: `parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height"))`.
+  `storefront-tokens.css` declares `--sf-header-height: 0px` for the first frame and for pages without the header.
+
+### 17.3 Mega-menu
+
+- Data: `groupCategoryTree(categories)` (exported from `Header/groupCategoryTree.js` and re-exported by `MegaMenu.js`) turns the `categories.getAll()` list into departments (`getMainMenuCategories`) → groups (direct children) → links (descendants, depth-first, in `orderCategoriesHierarchically` order). Every link is `/products?category=${categoryParam(category)}`.
+- Panel: one instance under the department row, in the DOM only while open; a column per group (eyebrow link + its children), four to a row; a flat department gets a serif introduction (name, description, "Shop all"); the feature column shows the department's admin-managed `image` at 4:5 (`object-fit: cover`, lazy, `onImageError`) with the eyebrow/line/"Shop all <Department>" copy (`navigationContent.js` overrides by slug); every panel ends with "View all departments" (`/products`).
+- Motion: opacity 0 → 1 and `y` −8 → 0 over `--sf-duration` (`TOKENS.motion.duration.base`) with `--sf-ease-out`; exit `duration.fast`; nothing under reduced motion.
+- Interaction model (keyboard and pointer) is documented at the top of `MegaMenu.js` and in `BUILD_LOG.md` (Prompt 07).
