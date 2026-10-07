@@ -1459,6 +1459,14 @@ No change to `HeroSection`, `AssuranceStrip`, `ProductCard` / `PriceBlock` / `St
   - **Complete the space:** the anchor and the curated pair; the "View" link's name; the sand band; "3 pieces, ₹45,997.00". Add all put the chair (Black), the bench (Black) and the table (120 × 60 cm) in the cart, and the drawer opened exactly once (counted through the body scroll lock).
   - **Recently viewed:** after visiting the Wooden Sofa Set and the King Size Bed it lists them latest first; it is absent without history.
   - **Console:** no warnings or errors.
+- **Click-through (re-check on the pushed head):** real mouse clicks at 1440 and 360px, on a fresh mock-mode production build, 34 checks passing:
+  - each tile lands on its filtered listing (29 / 16 / 10 / 2 products);
+  - the story CTAs land on `/products?category=home-furniture` and `/about`;
+  - a featured card and a trending card open their product pages; the two View all links open `/products` (84 products) and the listing sorted by popularity;
+  - the anchor's View link and its image open the anchor; a companion's quick add and "Add all to cart" fill the cart (the drawer open after "Add all");
+  - recently viewed lists the pages just visited, latest first, and its card opens its product;
+  - no console warnings or errors.
+- **Tab walk:** from the hero's CTAs, Tab runs tiles → story CTA → Featured (View all, the cards, Previous, Next) → the anchor's View link → the companions → "Add all to cart" → story CTA → Trending → the footer. All 86 stops in the home sections were visible once the page's smooth scroll settled (inside the viewport and inside the rail's scroller) at 1440 and 360, and each had a focus style. Each rail costs 35 stops with today's card (4 per card).
 - **Widths and themes:** 360, 768, 1024 and 1440px, light and dark: no horizontal overflow; tokens flip in dark mode (the placeholders stay light, as accepted).
 - **Empty trending:** every `trending` flag turned off through JSON Server's API on the scratch copy hides the section, with nothing in the console. Restored, the scratch data parses equal to the repo's `db.json`.
 - **CLS** (production build, `layout-shift` observer, load plus a slow scroll):
@@ -1493,13 +1501,14 @@ No change to `HeroSection`, `AssuranceStrip`, `ProductCard` / `PriceBlock` / `St
 - **13:**
   - `ProductRail` renders its own skeleton (`.skeletonText` + `sf-skeleton--image`). When `ProductCardSkeleton` exists, swap it into `ProductRail`'s loading branch, and give its text block the height of the new card's body, so a rail does not grow when its cards arrive (deviation 3: 106px at 1440, 179px at 360 today).
   - On the sand band, borderless cards with sand image slots will merge into the band; give their media a visible edge there.
+  - Today's card has four tab stops (image link, heart, name link, Add to Cart), so each 8-card rail costs a keyboard user 35 stops. Your brief's structure (one link for image and name, then the two buttons) brings that down to 27.
 - **17:** `RelatedProducts` can become `SectionHeading` + `<ProductRail products={items} label="Related pieces" {...handlers} />`, keeping its null-when-empty rule.
 - **30 (motion):**
   - Tile and anchor images scale 1.03 over `--sf-duration-slow` on hover (pointer only, not under reduced motion).
   - `Reveal` is on the tiles (staggered), both story halves (text +90ms) and each rail section.
   - Rail buttons scroll smoothly, instantly under reduced motion.
   - The home page has no page-level fade.
-- **31:** the rails' 8px focus room and edge bleed; the tile names (alt + label + line). `ProductRail` is not tested with NVDA or VoiceOver yet.
+- **31:** the rails' 8px focus room and edge bleed; the tile names (alt + label + line); the number of tab stops per rail (see 13). `ProductRail` is not tested with NVDA or VoiceOver yet. When measuring focus visibility, let the smooth page scroll (`html { scroll-behavior: smooth }`) settle first.
 - **32:**
   - Home's reads: three in parallel, then `getBySlug` and one full catalogue read (two with the fallback).
   - Candidates: a shared catalogue cache, or starting the curation through `Reveal`'s `onInView`.
