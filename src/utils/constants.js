@@ -1,7 +1,10 @@
 // App Info (override via .env)
-export const APP_NAME = process.env.REACT_APP_NAME || "My Store";
-export const APP_TAGLINE = "Quality products, great prices";
-export const APP_DESCRIPTION = "Shop with confidence – fast delivery, secure payments, easy returns";
+export const APP_NAME = process.env.REACT_APP_NAME || "A & S Urbanseat";
+// The tagline is printed inside the logo artwork: never render it as text
+// directly beside <BrandLogo />.
+export const APP_TAGLINE = "Trusted Comfort for Every Home";
+export const APP_DESCRIPTION =
+  "Furniture and seating for homes, offices, cafés and outdoor spaces, made to be lived with.";
 
 // Logo artwork (1286 × 426 PNG). `light` sits on light backgrounds, `white` on
 // dark ones; render it through <BrandLogo /> (src/components/ui) so the
@@ -113,28 +116,29 @@ export const DEFAULT_CURRENCY = CURRENCIES.INR;
 // shared by the Header banner and the CartDrawer progress bar.
 export const FREE_SHIPPING_THRESHOLD = 999;
 
-// Social links (sensible defaults — update per project). The Footer renders an
-// icon only for entries with a non-empty URL, so blanking one here hides it
-// instead of leaving a dead link.
+// Social links. The Footer renders an icon only for entries with a non-empty
+// URL, so a blank entry is hidden instead of leaving a dead link. The client's
+// existing site lists WhatsApp only; add the other profiles once confirmed.
 export const SOCIAL_LINKS = {
-  FACEBOOK: "https://facebook.com/mystore",
-  TWITTER: "https://twitter.com/mystore",
-  INSTAGRAM: "https://instagram.com/mystore",
-  YOUTUBE: "https://youtube.com/@mystore",
-  WHATSAPP: "",
+  FACEBOOK: "",
+  TWITTER: "",
+  INSTAGRAM: "",
+  YOUTUBE: "",
+  WHATSAPP: "https://wa.me/918472919541",
 };
 
-// Store contact (sensible defaults — update per project). Single source so the
-// Header top bar, Footer, Help Center and Support page all stay in sync.
-export const SUPPORT_EMAIL = "support@mystore.com";
-export const SUPPORT_PHONE = "+91 1800 102 5555";
-export const SUPPORT_ADDRESS =
-  "123 Commerce Street, Andheri East, Mumbai, Maharashtra 400069";
-export const SUPPORT_HOURS = "Mon – Sat: 9:00 AM – 8:00 PM IST";
+// Store contact, from the client's existing site (verified 2026-10-06). Single
+// source so the Header top bar, Footer, Help Center and Support page all stay
+// in sync. Pending client confirmation: the email (placeholder from the old
+// site's domain) and the full street address with PIN code.
+export const SUPPORT_EMAIL = "info@kamdhenufurniture.com";
+export const SUPPORT_PHONE = "+91 84729 18653";
+export const SUPPORT_ADDRESS = "Assam, India";
+export const SUPPORT_HOURS = "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sunday closed";
 
 // Date the legal/policy pages were last reviewed. Single source so the Privacy,
 // Terms, Cookie and Refund pages never show contradictory "last updated" dates.
-export const POLICY_LAST_UPDATED = "June 1, 2026";
+export const POLICY_LAST_UPDATED = "October 7, 2026";
 
 // FAQs
 export const FAQ_ITEMS = [

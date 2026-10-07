@@ -1,5 +1,23 @@
 {
-  "short_name": "My Store",
-  "name": "My Store - Online Shopping",
-  "icons": []
+  "name": "A & S Urbanseat",
+  "short_name": "Urbanseat",
+  "description": "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust.",
+  "icons": [
+    {
+      "src": "android-chrome-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "android-chrome-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#faf7f2",
+  "background_color": "#faf7f2"
 }

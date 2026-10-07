@@ -98,3 +98,73 @@ Literal counts from a grep of hex/rgb values (approximate):
 - The UI navy `#0b1f3f` is slightly calmer than the logo's `#051a3f`.
 - Playfair Display as the display face: if the client has (or licenses) the logo's own serif, it can replace Playfair through `--sf-font-display` alone.
 - Text on navy is warm off-white `#faf7f2` rather than the logo's pure white.
+
+---
+
+## Prompt 02 — Brand identity wiring
+
+**Date:** 2026-10-07. **Result:** the app identifies as A & S Urbanseat in constants, env files, document metadata, icons, the web manifest, the loading screen and the pre-paint theme script. Proposed brand lines live in `src/content/brandContent.js`, pending approval.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/utils/constants.js` | `APP_NAME` fallback `A & S Urbanseat`; `APP_TAGLINE` `Trusted Comfort for Every Home` (printed inside the logo: never render it beside `<BrandLogo />`); `APP_DESCRIPTION`; `SUPPORT_EMAIL` / `SUPPORT_PHONE` / `SUPPORT_ADDRESS` / `SUPPORT_HOURS` from the reference site; `SOCIAL_LINKS` WhatsApp only; `POLICY_LAST_UPDATED` `October 7, 2026`. `DEFAULT_CURRENCY` verified INR (unchanged). `FAQ_ITEMS`, `WHY_CHOOSE_US`, `TRUST_BADGES`, `ROUTES`, enums, `FREE_SHIPPING_THRESHOLD`, `ANIMATION_VARIANTS` untouched. |
+| `.env`, `.env.example`, `.env.production` | `REACT_APP_NAME=A & S Urbanseat`; every other key unchanged (`.env` keeps mock mode on `http://localhost:3001`). |
+| `src/theme/tokens.js` | `STOREFRONT_CONFIG.trustBadges` = `["securePayment", "cod", "easyReturns", "genuine"]`; `returnsWindowDays: 7` kept and commented as a placeholder. `TRUST_BADGE_CATALOG` untouched. |
+| New `src/content/brandContent.js` | `BRAND_PROMISE`, `HERO_HEADLINES`, `HERO_SUPPORT_LINES`, `NEWSLETTER_LINE`, `ABOUT_INTRO`, `ASSURANCE_ITEMS` (named exports + default object). Not imported anywhere yet. |
+| `public/index.html` | `lang="en-IN"`; new title, description, furniture-only keywords, author; two `theme-color` tags; OG (`site_name`, `locale en_IN`, placeholder `og:url`, light logo as `og:image` 1286 × 426 + alt) and Twitter tags (now `name=` rather than `property=`); icon links only to existing files; Cloudinary preconnect; brand loading screen; solid pre-paint background. Google Fonts block and the `react-loaded` / `MutationObserver` / 10 s timeout script unchanged. |
+| `public/manifest.json` | Rewritten: name, short name, description, two icons, `start_url`, `display`, colours. |
+
+### Decisions
+
+- **Icons** (`file public/*.png`): `favicon-16x16.png` 16 × 16, `favicon-32x32.png` 32 × 32, `apple-touch-icon.png` 180 × 180, `android-chrome-192x192.png` 192 × 192, `android-chrome-512x512.png` 512 × 512, all RGBA PNG; `favicon.ico` linked with `sizes="any"`. Links to the missing `favicon.svg` / `logo192.png` / `logo512.png` removed. No image files added. All six served with the right content type, manifest 200 (checked against a production build).
+- **Loading screen:** paper `#faf7f2` + light logo in light mode, dark base `#0a1426` + white logo in dark mode, keyed on `body.dark` so it always agrees with the pre-paint script. Logo `width: min(60vw, 320px)`, `alt="A & S Urbanseat"`, explicit 1286 × 426 dimensions; one 2 px caramel hairline (`#ae773d` light, `#ddb185` dark) that grows and retracts over 2.4 s; static under `prefers-reduced-motion` (and the fade transition is dropped). Spinner stack, "MY STORE"/"LOADING" text, radial glows and the body gradient animation removed. Fade-out class and 10 s safety timeout kept. The container has `role="status"` with an accessible name.
+- **Script order:** the theme-detection IIFE moved from the end of `<body>` to its start (before the loading-screen markup), so `body.dark` exists before the splash is parsed. A two-line script after the logo sets its `src` from `data-src-light` / `data-src-white`, so only the matching variant downloads. Detection logic, the `theme` key and the class names are the same; `localStorage` access is now wrapped in `try` (private-mode safety).
+- **Pre-paint background:** `document.body.style.backgroundColor` = `#faf7f2` / `#0a1426` (same as `colors.js` `LIGHT/DARK.background.default` and what `ThemeContext` writes). **Accepted side effect:** the old gradient written through the `background` shorthand also set a purple/grey `background-image` that showed under the admin's overscroll area; it is gone, and `body.admin-area` rules still win for the admin's own background.
+- **Trust badges:** `securePayment`, `cod`, `easyReturns`, `genuine` as specified. `freeShipping` dropped from the config too (the brief's list excludes it; the free-delivery promise now comes from `ASSURANCE_ITEMS` with a live threshold). `warranty` and `support` omitted until confirmed.
+- **`helpers.js` untouched:** `formatCurrency` already formats INR / `en-IN`. `formatDate` and `formatNumber` keep their locale because nine admin pages import `formatDate`; if the storefront wants `en-IN` dates, Prompt 29 adds a storefront-only helper.
+- **Admin coupling (pre-existing, no admin file edited):** `src/components/AdminLayout/AdminLayout.js:337` and `src/pages/Admin/AdminLogin.js:138` use `process.env.REACT_APP_NAME` as the admin logo's `alt`; it now reads "A & S Urbanseat" (alt text only, no visual change). `src/pages/Admin/AdminOrders.js:367` has a `"My E-Commerce Store"` fallback for the printed invoice when `settings.store.name` is missing; left alone (admin, and `db.json` settings normally supply the name).
+- `og:url` / `twitter:url` use the reserved placeholder `https://urbanseat.example/` rather than guessing a real domain.
+
+### Proposed brand lines (all need client confirmation)
+
+- `APP_TAGLINE`: "Trusted Comfort for Every Home" (from the logo artwork; adopted).
+- `APP_DESCRIPTION` / meta description / manifest: "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust." (constant variant: "…, made to be lived with.")
+- `BRAND_PROMISE`: "Furniture made to be lived with, from our own workshop and the makers we trust."
+- `HERO_HEADLINES`: "Seating for the way you *live*." / "Comfort, *quietly* made." / "Rooms that feel *finished*."
+- `HERO_SUPPORT_LINES`: "Chairs, sofas and tables for homes, offices, cafés and the open air." / "Made in our own workshop, alongside brands we trust, and built for everyday use." / "Considered furniture for every room you live, work and gather in."
+- `NEWSLETTER_LINE`: "New pieces, care notes and the occasional offer. A few letters a month, nothing more."
+- `ABOUT_INTRO`: "A & S Urbanseat makes and selects furniture for the places people spend their days: homes, offices, cafés and outdoor spaces. Much of what we sell comes from our own workshop; the rest comes from makers we know well, such as Nilkamal, Carlton and Winsome. We put quality first, keep the customer at the centre and build trust one piece at a time."
+- `ASSURANCE_ITEMS` (detail templates filled from live data, hidden when the value is missing): Free delivery — "Free delivery above {threshold}"; Easy returns — "{days}-day returns on eligible pieces"; Secure payment — "Encrypted checkout for cards, UPI and net banking"; Cash on delivery — "Pay when your furniture arrives" (only when `settings.payment.codEnabled`).
+
+### Needs client confirmation (placeholders)
+
+- **Email:** `info@kamdhenufurniture.com` (from the old site; different brand and domain).
+- **Address:** only "Assam, India"; street address and PIN code missing. Not invented.
+- **Hours:** "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sunday closed" (from the site).
+- **Phone / WhatsApp:** call `+91 84729 18653`, WhatsApp `+91 84729 19541`; `+91 98765 43210` on the site is a template placeholder and is not used.
+- **Social:** no Facebook/Instagram/YouTube/X profiles on the site; only WhatsApp set. Note: `Footer.js` maps only Facebook/Twitter/Instagram/YouTube, so WhatsApp has no footer icon yet (Prompt 08).
+- **Returns window:** `returnsWindowDays: 7` is a placeholder.
+- **Warranty and 24/7 support** badges omitted. The reference site's "20+ years" and "20+ years warranty" statements are not used anywhere as facts.
+- **Production domain** for `og:url` / `twitter:url`.
+- Brand-carried names (Nilkamal, Carlton, Winsome) in `ABOUT_INTRO`: confirm they may be named.
+
+### Colour literals in static files (Prompt 34: verify against `DESIGN_SYSTEM.md`)
+
+- `public/index.html`: `#faf7f2` (paper: `theme-color`, splash, pre-paint), `#0a1426` (dark base: dark `theme-color`, splash, pre-paint), `#ae773d` (light accent: hairline), `#ddb185` (dark accent: hairline).
+- `public/manifest.json`: `theme_color` `#faf7f2`, `background_color` `#faf7f2`.
+
+### Remaining stale identity copy outside this prompt's scope
+
+- `src/pages/Admin/AdminOrders.js:367` — `"My E-Commerce Store"` invoice fallback (admin; not to be changed).
+- `src/components/Footer/Footer.js` — generic "one-stop destination…" blurb, "Free Shipping*" and "24/7 Support" badges (Prompt 08).
+- `src/pages/Support/Support.js:99–100` — hardcoded "Mon-Sat, 9am-8pm IST" (contradicts `SUPPORT_HOURS`) and "Live Chat / Available 24/7" (Prompt 28).
+- `src/pages/AboutUs/AboutUs.js:40` — generic founding-mission paragraph (Prompt 28, use `ABOUT_INTRO`).
+- No other occurrence of "My Store", "MY STORE", "mystore.com", "Your Online Shopping Destination" or "Quality products, great prices" in `src` or `public`.
+
+### Verification
+
+- `npm run build`: "Compiled successfully", no warnings. `CI=true npm test -- --passWithNoTests`: 6 passed, exit 0. `manifest.json` parses.
+- Splash checked in Chromium on a production build with the JS bundle blocked: light → `urbanseat-logo.png` on `rgb(250,247,242)`, dark → `urbanseat-logo-white.png` on `rgb(10,20,38)`; `body` `background-image: none`; logo 216 px wide at 360, 320 px at 768/1024/1440, centred. With the bundle allowed, the loader is hidden once React mounts. Title and `lang="en-IN"` confirmed. Footer shows the new contact values.
+- `git diff` contains no file under `src/pages/Admin` or `src/components/AdminLayout`.
