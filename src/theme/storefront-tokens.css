@@ -1,76 +1,115 @@
 /* =============================================================================
- * STOREFRONT DESIGN TOKENS  —  edit this ONE file to re-skin a client storefront
+ * STOREFRONT DESIGN TOKENS  —  A & S Urbanseat
  * =============================================================================
  *
- * Every shared storefront component (and, increasingly, every storefront page)
- * reads its colours, spacing, radius, shadows and type scale from the CSS custom
- * properties defined here — never from hardcoded hex. To launch a new client in a
- * new business domain you change values in THIS file (and optionally
- * `colors.js` for the MUI layer); you do not edit component code.
+ * Every storefront component and page reads its colours, type, spacing, radius,
+ * shadows and motion from the CSS custom properties defined here — never from
+ * hardcoded hex or font names. The full reference (values, contrast ratios,
+ * usage rules) is prompts/DESIGN_SYSTEM.md; read it before using a token.
+ *
+ * THE SYSTEM IN ONE LINE
+ *   Warm paper surfaces, near-black ink, a deep navy from the logo's chair and
+ *   a caramel accent from its wordmark; Playfair Display for display type (with
+ *   a true italic for accent words), Inter for UI; hairlines, sharp radii, slow
+ *   and quiet motion. No gradients (one exception: the photo scrim), no glass,
+ *   no neon.
+ *
+ * "PRIMARY" IS INK, NOT A HUE
+ *   --sf-color-primary is the ink (primary buttons are ink with paper text and
+ *   turn navy on hover), --sf-color-secondary is the navy, --sf-color-accent is
+ *   the caramel. The boilerplate used "primary" for a purple; that is gone.
  *
  * HOW THEMING WORKS
- *   • Light mode  → the `:root` block below.
+ *   • Light mode  → the `:root` block.
  *   • Dark mode   → the `body.dark` block (ThemeContext toggles `body.dark`).
- *   • Structural tokens (spacing/radius/shadows/type) are mode-agnostic and
- *     declared once in `:root`.
+ *   • Aliases and composites that read colour tokens (border, hairline, focus
+ *     ring, legacy names…) live in the shared `:root, body.dark` block: a custom
+ *     property inherits its *computed* value, so one declared only on :root
+ *     would carry the light colours into dark mode.
+ *   • Brand constants, always-dark surfaces and structural tokens (spacing,
+ *     radius, type, motion, z-index) are mode-invariant and declared once.
  *
- * RELATIONSHIP TO colors.js
- *   `src/theme/colors.js` holds the same brand palette for the MUI theme (admin
- *   + the few MUI-based storefront bits). Keep the brand hexes here in sync with
- *   colors.js. The storefront CSS Modules consume the tokens below; MUI consumes
- *   colors.js. Documented in STOREFRONT_UX_GUIDELINES.md.
+ * RELATIONSHIP TO colors.js / tokens.js
+ *   src/theme/colors.js mirrors the colours for the storefront MUI theme and
+ *   src/theme/tokens.js mirrors the structural scale for JS (framer-motion,
+ *   inline styles). `node scripts/check-contrast.js` verifies every contrast
+ *   pairing and that both files still match this one.
  *
- * NB: This file styles the STOREFRONT only. The admin panel has its own palette
- * and is intentionally untouched by changes here.
+ * NB: This file styles the STOREFRONT only. The admin panel has its own theme
+ * (src/theme/adminTheme.js) and never reads --sf-* tokens.
  * ========================================================================== */
 
 :root {
-  /* ---- Brand ------------------------------------------------------------- */
-  --sf-color-primary: #667eea;
-  --sf-color-primary-dark: #4c5ed0;
-  --sf-color-primary-light: #8b9af3;
-  --sf-color-primary-contrast: #ffffff;
-  --sf-color-primary-soft: rgba(102, 126, 234, 0.10); /* tinted fills/hovers */
-  --sf-color-secondary: #f093fb;
-  --sf-color-accent: #ec4899;
-  --sf-gradient-primary: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --sf-gradient-primary-hover: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+  /* ---- Brand constants (identical in both modes) -------------------------
+     Sampled from the logo artwork; see DESIGN_SYSTEM.md "Sampled logo
+     colours". Use them directly only for pairings that must not flip with the
+     theme (a paper button on a photo scrim); everything else uses the roles. */
+  --sf-brand-ink: #1c1a17;             /* logo lettering #1c1c1c, warmed */
+  --sf-brand-navy: #0b1f3f;            /* logo chair #051a3f, calmed */
+  --sf-brand-caramel: #ddb185;         /* logo wordmark + hairline, exact */
+  --sf-brand-paper: #faf7f2;           /* warm off-white page */
+
+  /* ---- Brand roles ------------------------------------------------------ */
+  --sf-color-primary: var(--sf-brand-ink);      /* primary buttons, links */
+  --sf-color-primary-hover: var(--sf-brand-navy);
+  --sf-color-primary-contrast: var(--sf-brand-paper); /* text on primary */
+  --sf-color-primary-soft: rgba(28, 26, 23, 0.06);    /* ink tint: ghost hover */
+  --sf-color-secondary: var(--sf-brand-navy);   /* deep brand surface */
+  --sf-color-secondary-contrast: var(--sf-brand-paper);
+  --sf-color-accent: #ae773d;          /* caramel deepened to clear 3:1 on paper */
+  --sf-color-accent-text: #8a5d2e;     /* small caramel text: links, sale, savings */
+  --sf-color-accent-soft: rgba(174, 119, 61, 0.12); /* selected-state fill */
+  --sf-color-accent-contrast: var(--sf-brand-ink);  /* text on a solid accent */
+  --sf-color-focus-halo: rgba(174, 119, 61, 0.45);  /* outer focus glow */
 
   /* ---- Surfaces & text -------------------------------------------------- */
-  --sf-color-bg: #f5f7fa;
-  --sf-color-surface: #ffffff;
-  --sf-color-surface-2: #f3f4f6;       /* subtle panels, thumbnails, tracks */
-  --sf-color-surface-hover: #f9fafb;
-  --sf-color-text: #1a202c;
-  --sf-color-text-secondary: #4a5568;
-  --sf-color-text-muted: #6b7280;
-  --sf-color-border: #e5e7eb;
-  --sf-color-border-strong: #d1d5db;
-  --sf-color-overlay: rgba(15, 23, 42, 0.55);
+  --sf-color-bg: var(--sf-brand-paper);         /* page */
+  --sf-color-surface: #ffffff;                  /* cards, drawers, menus, inputs */
+  --sf-color-sand: #f1ebe1;            /* subtle panels, image placeholders, skeletons */
+  --sf-color-surface-hover: #f6f2ec;
+  --sf-color-stone: #d9d0c3;           /* hairlines (decorative, ~1.4:1) */
+  --sf-color-border-strong: #8a8278;   /* control boundaries: inputs, checkboxes (3:1) */
+  --sf-color-text: var(--sf-brand-ink);
+  --sf-color-text-secondary: #4d463e;
+  --sf-color-text-muted: #686158;      /* lightest text tone; still 4.5:1 on sand */
+  --sf-color-overlay: rgba(11, 31, 63, 0.6);    /* navy backdrop: drawers, modals */
+
+  /* ---- Always-dark surfaces (identical in both modes) --------------------
+     Footer, hero, navy bands. Pair the white logo with these. */
+  --sf-color-surface-dark: var(--sf-brand-navy);
+  --sf-color-on-dark: var(--sf-brand-paper);
+  --sf-color-on-dark-muted: rgba(250, 247, 242, 0.72);
+  --sf-color-on-dark-border: rgba(250, 247, 242, 0.16);
+  --sf-color-on-dark-accent: var(--sf-brand-caramel);
+  --sf-color-scrim: rgba(11, 31, 63, 0.7);      /* minimum behind text on photos */
+  /* The one permitted gradient: navy → transparent over photography, weighted
+     to the bottom-left where hero copy sits (>= scrim strength in that zone). */
+  --sf-gradient-scrim: linear-gradient(
+    to top right,
+    rgba(11, 31, 63, 0.72) 0%,
+    rgba(11, 31, 63, 0.7) 35%,
+    rgba(11, 31, 63, 0) 80%
+  );
 
   /* ---- Semantic --------------------------------------------------------- */
-  --sf-color-success: #15803d;
-  --sf-color-success-bg: #dcfce7;
-  --sf-color-warning: #b45309;
-  --sf-color-warning-bg: #fef3c7;
-  --sf-color-danger: #dc2626;
-  --sf-color-danger-bg: #fee2e2;
-  --sf-color-info: #2563eb;
-  --sf-color-info-bg: #dbeafe;
+  --sf-color-success: #2f6b46;         /* deep green */
+  --sf-color-success-bg: #e6efe8;
+  --sf-color-warning: #975f05;         /* warm amber-brown */
+  --sf-color-warning-bg: #f8eedc;
+  --sf-color-error: #a2382b;           /* brick */
+  --sf-color-error-bg: #f7e5e1;
+  --sf-color-info: #3c5a80;            /* slate blue */
+  --sf-color-info-bg: #e6ecf3;
 
   /* ---- Commerce-specific ----------------------------------------------- */
-  --sf-color-star: #f59e0b;            /* rating stars */
-  --sf-color-price: #1a202c;           /* current/sale price */
-  --sf-color-compare: #9ca3af;         /* struck-through original price */
-  --sf-color-discount: #15803d;        /* "% off" + savings */
-  --sf-color-discount-bg: #dcfce7;
-  --sf-color-badge-bg: #eef2ff;        /* neutral chip background */
+  --sf-color-star: #b08309;            /* rating stars: gold, distinct from caramel */
+  --sf-color-discount-bg: #f3e9dc;     /* "% off" chip behind accent-text */
 
-  /* ---- Radius ----------------------------------------------------------- */
-  --sf-radius-sm: 6px;
-  --sf-radius-md: 10px;
-  --sf-radius-lg: 16px;
-  --sf-radius-xl: 22px;
+  /* ---- Radius (editorial = sharp) -------------------------------------- */
+  --sf-radius-sm: 2px;
+  --sf-radius-md: 4px;
+  --sf-radius-lg: 8px;
+  --sf-radius-xl: 12px;
   --sf-radius-pill: 999px;
 
   /* ---- Spacing scale (4px base) ---------------------------------------- */
@@ -84,17 +123,30 @@
   --sf-space-10: 40px;
   --sf-space-12: 48px;
   --sf-space-16: 64px;
+  --sf-space-20: 80px;
+  --sf-space-24: 96px;
+  --sf-space-32: 128px;
+  --sf-section-y: clamp(64px, 9vw, 128px);     /* vertical rhythm between sections */
+  --sf-gutter: clamp(16px, 4vw, 48px);         /* page side padding */
 
-  /* ---- Shadows ---------------------------------------------------------- */
-  --sf-shadow-xs: 0 1px 2px rgba(15, 23, 42, 0.06);
-  --sf-shadow-sm: 0 2px 8px rgba(15, 23, 42, 0.08);
-  --sf-shadow-md: 0 6px 20px rgba(15, 23, 42, 0.10);
-  --sf-shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.14);
-  --sf-shadow-focus: 0 0 0 3px rgba(102, 126, 234, 0.45);
+  /* ---- Shadows (soft, navy-tinted) -------------------------------------- */
+  --sf-shadow-xs: 0 1px 2px rgba(11, 31, 63, 0.06);
+  --sf-shadow-sm: 0 2px 8px rgba(11, 31, 63, 0.07);
+  --sf-shadow-md: 0 8px 24px rgba(11, 31, 63, 0.1);
+  --sf-shadow-lg: 0 20px 48px rgba(11, 31, 63, 0.14);
 
   /* ---- Typography ------------------------------------------------------- */
-  --sf-font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
+  --sf-font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sf-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Roboto", sans-serif;
+  --sf-font-family: var(--sf-font-sans);       /* legacy alias */
+  /* Display sizes: fluid between 360px and 1440px viewports */
+  --sf-text-display-xl: clamp(3.5rem, 2.833rem + 2.963vw, 5.5rem);    /* 56–88px hero */
+  --sf-text-display-lg: clamp(2.5rem, 2.167rem + 1.481vw, 3.5rem);    /* 40–56px sections */
+  --sf-text-display-md: clamp(1.75rem, 1.583rem + 0.741vw, 2.25rem);  /* 28–36px */
+  --sf-text-display-sm: clamp(1.375rem, 1.292rem + 0.37vw, 1.625rem); /* 22–26px */
+  /* UI scale */
+  --sf-text-2xs: 0.6875rem;            /* 11px: badges */
   --sf-text-xs: 0.75rem;
   --sf-text-sm: 0.875rem;
   --sf-text-base: 1rem;
@@ -103,24 +155,46 @@
   --sf-text-xl: 1.5rem;
   --sf-text-2xl: 1.875rem;
   --sf-text-3xl: 2.25rem;
+  --sf-text-eyebrow: 0.75rem;          /* 12px, uppercase, tracked */
   --sf-font-normal: 400;
   --sf-font-medium: 500;
   --sf-font-semibold: 600;
-  --sf-font-bold: 700;
+  --sf-font-bold: 600;                 /* the storefront's heaviest sans weight */
+  --sf-leading-display: 1.04;          /* display-xl / display-lg */
+  --sf-leading-heading: 1.1;           /* display-md / display-sm */
   --sf-leading-tight: 1.25;
   --sf-leading-normal: 1.5;
+  --sf-leading-body: 1.6;              /* body copy, 16px */
+  --sf-leading-relaxed: 1.7;           /* long-form prose */
+  --sf-tracking-display: -0.015em;
+  --sf-tracking-eyebrow: 0.16em;
+  --sf-tracking-button: 0.02em;
+  --sf-measure: 66ch;                  /* comfortable line length */
 
-  /* ---- Motion ----------------------------------------------------------- */
-  --sf-transition-fast: 0.15s ease;
-  --sf-transition: 0.25s ease;
-  --sf-transition-slow: 0.4s ease;
+  /* ---- Motion (slow, quiet) --------------------------------------------- */
+  --sf-ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* entrances */
+  --sf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* state changes */
+  --sf-duration-fast: 160ms;           /* hover, press */
+  --sf-duration: 320ms;                /* state changes, drawers */
+  --sf-duration-slow: 640ms;           /* image crossfades */
+  --sf-duration-reveal: 900ms;         /* scroll reveals */
+  --sf-reveal-distance: 20px;
+  --sf-stagger: 90ms;                  /* delay between items in a sequence */
+  --sf-transition-fast: var(--sf-duration-fast) var(--sf-ease-out);
+  --sf-transition: var(--sf-duration) var(--sf-ease-out);
+  --sf-transition-slow: var(--sf-duration-slow) var(--sf-ease-out);
 
   /* ---- Layout & a11y ---------------------------------------------------- */
-  --sf-container-max: 1280px;
+  --sf-container-max: 1280px;          /* content */
+  --sf-container: var(--sf-container-max);
+  --sf-container-wide: 1440px;         /* editorial / full-bleed inner */
+  --sf-container-narrow: 720px;        /* prose and forms */
   --sf-tap-target: 44px;               /* min touch target (WCAG 2.5.5) */
 
   /* ---- z-index scale ---------------------------------------------------- */
   --sf-z-sticky: 40;
+  --sf-z-header: 50;
+  --sf-z-megamenu: 55;
   --sf-z-stickybar: 60;                /* mobile sticky Add-to-Cart bar */
   --sf-z-overlay: 1000;
   --sf-z-modal: 1100;
@@ -130,55 +204,83 @@
  * DARK MODE  —  overrides only the colour tokens; structural tokens persist.
  * ======================================================================== */
 body.dark {
-  --sf-color-primary: #a855f7;
-  --sf-color-primary-dark: #9333ea;
-  --sf-color-primary-light: #c084fc;
-  --sf-color-primary-contrast: #ffffff;
-  --sf-color-primary-soft: rgba(168, 85, 247, 0.16);
-  --sf-color-secondary: #ec4899;
-  --sf-color-accent: #f472b6;
-  --sf-gradient-primary: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  --sf-gradient-primary-hover: linear-gradient(135deg, #ec4899 0%, #a855f7 100%);
+  --sf-color-primary: #f3eee6;         /* warm off-white: buttons invert */
+  --sf-color-primary-hover: #ffffff;
+  --sf-color-primary-contrast: #0a1426;
+  --sf-color-primary-soft: rgba(243, 238, 230, 0.08);
+  --sf-color-secondary: var(--sf-brand-navy);   /* navy is navy */
+  --sf-color-secondary-contrast: var(--sf-brand-paper);
+  --sf-color-accent: var(--sf-brand-caramel);   /* the raw logo caramel */
+  --sf-color-accent-text: #e8c9a2;
+  --sf-color-accent-soft: rgba(221, 177, 133, 0.14);
+  --sf-color-accent-contrast: #0a1426;
+  --sf-color-focus-halo: rgba(221, 177, 133, 0.45);
 
-  --sf-color-bg: #0a0e27;
-  --sf-color-surface: #1a1f3a;
-  --sf-color-surface-2: #2d3350;
-  --sf-color-surface-hover: #242a47;
-  --sf-color-text: #f5f7fa;
-  --sf-color-text-secondary: #cbd5e1;
-  --sf-color-text-muted: #94a3b8;
-  --sf-color-border: rgba(148, 163, 184, 0.22);
-  --sf-color-border-strong: rgba(148, 163, 184, 0.4);
-  --sf-color-overlay: rgba(0, 0, 0, 0.65);
+  --sf-color-bg: #0a1426;              /* navy-ink */
+  --sf-color-surface: #111d34;         /* lighter navy */
+  --sf-color-sand: rgba(243, 238, 230, 0.06);
+  --sf-color-surface-hover: rgba(243, 238, 230, 0.08);
+  --sf-color-stone: rgba(243, 238, 230, 0.14);
+  --sf-color-border-strong: rgba(243, 238, 230, 0.4);
+  --sf-color-text: #f3eee6;
+  --sf-color-text-secondary: #cfc6b9;
+  --sf-color-text-muted: #a39a8e;
+  --sf-color-overlay: rgba(3, 8, 18, 0.7);
 
-  --sf-color-success: #4ade80;
-  --sf-color-success-bg: rgba(34, 197, 94, 0.16);
-  --sf-color-warning: #fbbf24;
-  --sf-color-warning-bg: rgba(245, 158, 11, 0.16);
-  --sf-color-danger: #f87171;
-  --sf-color-danger-bg: rgba(248, 113, 113, 0.16);
-  --sf-color-info: #60a5fa;
-  --sf-color-info-bg: rgba(96, 165, 250, 0.16);
+  --sf-color-success: #7fbf95;
+  --sf-color-success-bg: rgba(127, 191, 149, 0.16);
+  --sf-color-warning: #e9a94f;
+  --sf-color-warning-bg: rgba(233, 169, 79, 0.16);
+  --sf-color-error: #ec9483;
+  --sf-color-error-bg: rgba(236, 148, 131, 0.16);
+  --sf-color-info: #9db4d6;
+  --sf-color-info-bg: rgba(157, 180, 214, 0.16);
 
-  --sf-color-star: #fbbf24;
-  --sf-color-price: #f5f7fa;
-  --sf-color-compare: #94a3b8;
-  --sf-color-discount: #4ade80;
-  --sf-color-discount-bg: rgba(34, 197, 94, 0.16);
-  --sf-color-badge-bg: rgba(168, 85, 247, 0.16);
+  --sf-color-star: #e5c055;
+  --sf-color-discount-bg: rgba(232, 201, 162, 0.14);
 
   --sf-shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
   --sf-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
-  --sf-shadow-md: 0 6px 20px rgba(0, 0, 0, 0.5);
-  --sf-shadow-lg: 0 12px 32px rgba(0, 0, 0, 0.55);
-  --sf-shadow-focus: 0 0 0 3px rgba(168, 85, 247, 0.5);
+  --sf-shadow-md: 0 8px 24px rgba(0, 0, 0, 0.5);
+  --sf-shadow-lg: 0 20px 48px rgba(0, 0, 0, 0.6);
+}
+
+/* ===========================================================================
+ * ALIASES & COMPOSITES  —  re-resolved per mode (see "How theming works").
+ * ======================================================================== */
+:root,
+body.dark {
+  --sf-color-primary-dark: var(--sf-color-primary-hover);  /* legacy name */
+  --sf-color-primary-light: var(--sf-color-text-secondary);
+  --sf-color-focus: var(--sf-color-accent);
+  --sf-color-surface-2: var(--sf-color-sand);
+  --sf-color-border: var(--sf-color-stone);
+  --sf-color-danger: var(--sf-color-error);                /* legacy name */
+  --sf-color-danger-bg: var(--sf-color-error-bg);
+  --sf-color-price: var(--sf-color-text);
+  --sf-color-compare: var(--sf-color-text-muted);
+  --sf-color-sale: var(--sf-color-accent-text);
+  --sf-color-discount: var(--sf-color-accent-text);
+  --sf-color-badge-bg: var(--sf-color-sand);
+  /* Flat on purpose: kept for components that still reference them. */
+  --sf-gradient-primary: linear-gradient(var(--sf-color-primary), var(--sf-color-primary));
+  --sf-gradient-primary-hover: linear-gradient(
+    var(--sf-color-primary-hover),
+    var(--sf-color-primary-hover)
+  );
+  --sf-hairline: 1px solid var(--sf-color-border);
+  /* 2px solid ring (3:1 on paper, sand and navy) inside a soft 45% halo */
+  --sf-shadow-focus: 0 0 0 2px var(--sf-color-focus), 0 0 0 5px var(--sf-color-focus-halo);
 }
 
 /* Respect users who prefer reduced motion — shared, applies storefront-wide. */
 @media (prefers-reduced-motion: reduce) {
   :root {
-    --sf-transition-fast: 0s;
-    --sf-transition: 0s;
-    --sf-transition-slow: 0s;
+    --sf-duration-fast: 0.01ms;
+    --sf-duration: 0.01ms;
+    --sf-duration-slow: 0.01ms;
+    --sf-duration-reveal: 0.01ms;
+    --sf-reveal-distance: 0px;
+    --sf-stagger: 0ms;
   }
 }

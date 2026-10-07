@@ -35,7 +35,7 @@
   top: var(--sf-space-2);
   left: var(--sf-space-2);
   background: var(--sf-color-danger);
-  color: #fff;
+  color: var(--sf-color-primary-contrast);
   font-size: var(--sf-text-xs);
   font-weight: var(--sf-font-bold);
   padding: 3px 8px;

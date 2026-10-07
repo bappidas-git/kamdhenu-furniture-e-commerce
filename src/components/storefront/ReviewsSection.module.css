@@ -154,7 +154,7 @@
   height: 38px;
   border-radius: var(--sf-radius-pill);
   background: var(--sf-gradient-primary);
-  color: #fff;
+  color: var(--sf-color-primary-contrast);
   font-weight: var(--sf-font-semibold);
 }
 

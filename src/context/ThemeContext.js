@@ -1,6 +1,7 @@
-import React, { createContext, useState, useContext, useEffect } from "react";
+import React, { createContext, useState, useContext, useEffect, useMemo } from "react";
 import { createTheme, ThemeProvider } from "@mui/material/styles";
-import { LIGHT, DARK } from "../theme/colors";
+import { LIGHT, DARK, BASELINE_BODY } from "../theme/colors";
+import { TOKENS } from "../theme/tokens";
 
 const ThemeContext = createContext();
 
@@ -34,6 +35,102 @@ const iconButtonTouchOverrides = {
   },
 };
 
+// <CssBaseline /> (App.js) renders inside this provider but outside the
+// admin's own ThemeProviders, so its `body` rule also styles the admin, whose
+// page titles inherit that colour and type. Freeze the rule at its
+// pre-rebrand output (MUI's default body1 in Inter, plus the old text colour)
+// so the admin stays identical; the storefront body takes its colour and font
+// from the tokens instead (`body:not(.admin-area)` in index.css).
+const baselineBody1 = createTheme({ typography: { fontFamily: TOKENS.type.fontSans } })
+  .typography.body1;
+
+const { type } = TOKENS;
+const display = (size, leading, fontWeight = type.weight.normal) => ({
+  fontFamily: type.fontDisplay,
+  fontWeight,
+  fontSize: type.size[size],
+  lineHeight: type.leading[leading],
+  letterSpacing: type.tracking.display,
+});
+
+// Storefront MUI theme: palette from colors.js, type from the token scale
+// (Playfair Display for h1–h4, Inter for everything else). Component
+// overrides stay neutral; the final storefront overrides come with the
+// global UI primitives.
+const buildStorefrontTheme = (mode) => {
+  const palette = mode === "dark" ? DARK : LIGHT;
+  return createTheme({
+    palette: {
+      mode,
+      primary: palette.primary,
+      secondary: palette.secondary,
+      accent: palette.accent,
+      background: palette.background,
+      text: palette.text,
+      divider: palette.divider,
+      action: palette.action,
+      success: palette.success,
+      warning: palette.warning,
+      error: palette.error,
+      info: palette.info,
+    },
+    typography: {
+      fontFamily: type.fontSans,
+      h1: display("display-xl", "display"),
+      h2: display("display-lg", "display"),
+      h3: display("display-md", "heading"),
+      h4: display("display-sm", "heading", type.weight.medium),
+      h5: {
+        fontSize: type.size.lg,
+        fontWeight: type.weight.semibold,
+        lineHeight: type.leading.tight,
+      },
+      h6: {
+        fontSize: type.size.base,
+        fontWeight: type.weight.semibold,
+        lineHeight: type.leading.normal,
+      },
+      body1: {
+        fontSize: type.size.base,
+        lineHeight: type.leading.body,
+      },
+      body2: {
+        fontSize: type.size.sm,
+        lineHeight: type.leading.normal,
+      },
+      button: {
+        textTransform: "none",
+        fontWeight: type.weight.medium,
+        letterSpacing: type.tracking.button,
+      },
+      overline: {
+        fontSize: type.size.eyebrow,
+        fontWeight: type.weight.medium,
+        letterSpacing: type.tracking.eyebrow,
+        lineHeight: type.leading.normal,
+      },
+    },
+    shape: {
+      borderRadius: TOKENS.radius.sm,
+    },
+    components: {
+      MuiCssBaseline: {
+        styleOverrides: {
+          body: { ...baselineBody1, color: BASELINE_BODY[mode].color },
+        },
+      },
+      MuiPaper: {
+        styleOverrides: {
+          root: {
+            backgroundImage: "none",
+          },
+        },
+      },
+      MuiIconButton: iconButtonTouchOverrides,
+    },
+  });
+};
+
 export const ThemeContextProvider = ({ children }) => {
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const savedTheme = localStorage.getItem("theme");
@@ -57,261 +154,11 @@ export const ThemeContextProvider = ({ children }) => {
     }
   }, [isDarkMode]);
 
-  const lightTheme = createTheme({
-    palette: {
-      mode: "light",
-      primary: LIGHT.primary,
-      secondary: LIGHT.secondary,
-      background: LIGHT.background,
-      text: LIGHT.text,
-      action: {
-        hover: `rgba(102, 126, 234, 0.08)`,
-      },
-    },
-    typography: {
-      fontFamily:
-        '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-      h1: {
-        fontSize: "3rem",
-        fontWeight: 700,
-        lineHeight: 1.2,
-      },
-      h2: {
-        fontSize: "2.5rem",
-        fontWeight: 600,
-        lineHeight: 1.3,
-      },
-      h3: {
-        fontSize: "2rem",
-        fontWeight: 600,
-        lineHeight: 1.3,
-      },
-      h4: {
-        fontSize: "1.5rem",
-        fontWeight: 500,
-        lineHeight: 1.4,
-      },
-      h5: {
-        fontSize: "1.25rem",
-        fontWeight: 500,
-        lineHeight: 1.5,
-      },
-      h6: {
-        fontSize: "1rem",
-        fontWeight: 500,
-        lineHeight: 1.6,
-      },
-      button: {
-        textTransform: "none",
-        fontWeight: 500,
-      },
-    },
-    shape: {
-      borderRadius: 12,
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            borderRadius: "12px",
-            padding: "10px 24px",
-            fontSize: "1rem",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              transform: "translateY(-2px)",
-              boxShadow: "0 8px 20px rgba(102, 126, 234, 0.3)",
-            },
-          },
-          contained: {
-            background: LIGHT.gradient.primary,
-            color: "#ffffff",
-            "&:hover": {
-              background: LIGHT.gradient.primaryReverse,
-            },
-          },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: "16px",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.08)",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              transform: "translateY(-4px)",
-              boxShadow: "0 12px 30px rgba(0, 0, 0, 0.15)",
-            },
-          },
-        },
-      },
-      MuiTextField: {
-        styleOverrides: {
-          root: {
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-              "&:hover fieldset": {
-                borderColor: LIGHT.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: LIGHT.primary.main,
-                borderWidth: "2px",
-              },
-            },
-          },
-        },
-      },
-      MuiDrawer: {
-        styleOverrides: {
-          paper: {
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(20px)",
-          },
-        },
-      },
-      MuiAppBar: {
-        styleOverrides: {
-          root: {
-            backgroundColor: "rgba(255, 255, 255, 0.95)",
-            backdropFilter: "blur(20px)",
-            boxShadow: "0 2px 10px rgba(0, 0, 0, 0.08)",
-          },
-        },
-      },
-      MuiPaper: {
-        styleOverrides: {
-          root: {
-            backgroundImage: "none",
-          },
-        },
-      },
-      MuiIconButton: iconButtonTouchOverrides,
-    },
-  });
-
-  const darkTheme = createTheme({
-    palette: {
-      mode: "dark",
-      primary: DARK.primary,
-      secondary: DARK.secondary,
-      background: DARK.background,
-      text: DARK.text,
-      action: {
-        hover: "rgba(168, 85, 247, 0.15)",
-      },
-    },
-    typography: {
-      fontFamily:
-        '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
-      h1: {
-        fontSize: "3rem",
-        fontWeight: 700,
-        lineHeight: 1.2,
-      },
-      h2: {
-        fontSize: "2.5rem",
-        fontWeight: 600,
-        lineHeight: 1.3,
-      },
-      h3: {
-        fontSize: "2rem",
-        fontWeight: 600,
-        lineHeight: 1.3,
-      },
-      h4: {
-        fontSize: "1.5rem",
-        fontWeight: 500,
-        lineHeight: 1.4,
-      },
-      h5: {
-        fontSize: "1.25rem",
-        fontWeight: 500,
-        lineHeight: 1.5,
-      },
-      h6: {
-        fontSize: "1rem",
-        fontWeight: 500,
-        lineHeight: 1.6,
-      },
-      button: {
-        textTransform: "none",
-        fontWeight: 500,
-      },
-    },
-    shape: {
-      borderRadius: 12,
-    },
-    components: {
-      MuiButton: {
-        styleOverrides: {
-          root: {
-            borderRadius: "12px",
-            padding: "10px 24px",
-            fontSize: "1rem",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              transform: "translateY(-2px)",
-              boxShadow: "0 8px 20px rgba(168, 85, 247, 0.4)",
-            },
-          },
-          contained: {
-            background: DARK.gradient.primary,
-            color: "#ffffff",
-            "&:hover": {
-              background: DARK.gradient.primaryReverse,
-            },
-          },
-        },
-      },
-      MuiCard: {
-        styleOverrides: {
-          root: {
-            borderRadius: "16px",
-            background: "rgba(26, 31, 58, 0.8)",
-            backdropFilter: "blur(10px)",
-            border: `1px solid rgba(168, 85, 247, 0.2)`,
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.3)",
-            transition: "all 0.3s ease",
-            "&:hover": {
-              transform: "translateY(-4px)",
-              boxShadow: "0 12px 30px rgba(168, 85, 247, 0.3)",
-              borderColor: "rgba(168, 85, 247, 0.4)",
-            },
-          },
-        },
-      },
-      MuiTextField: {
-        styleOverrides: {
-          root: {
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "12px",
-              "&:hover fieldset": {
-                borderColor: DARK.primary.main,
-              },
-              "&.Mui-focused fieldset": {
-                borderColor: DARK.primary.main,
-                borderWidth: "2px",
-              },
-            },
-          },
-        },
-      },
-      MuiDrawer: {
-        styleOverrides: {
-          paper: {
-            backgroundColor: "rgba(26, 31, 58, 0.95)",
-            backdropFilter: "blur(20px)",
-          },
-        },
-      },
-      MuiIconButton: iconButtonTouchOverrides,
-    },
-  });
-
   const toggleTheme = () => {
     setIsDarkMode(!isDarkMode);
   };
 
-  const theme = isDarkMode ? darkTheme : lightTheme;
+  const theme = useMemo(() => buildStorefrontTheme(isDarkMode ? "dark" : "light"), [isDarkMode]);
 
   return (
     <ThemeContext.Provider value={{ isDarkMode, toggleTheme, theme }}>

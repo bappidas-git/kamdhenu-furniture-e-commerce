@@ -3,6 +3,14 @@ export const APP_NAME = process.env.REACT_APP_NAME || "My Store";
 export const APP_TAGLINE = "Quality products, great prices";
 export const APP_DESCRIPTION = "Shop with confidence – fast delivery, secure payments, easy returns";
 
+// Logo artwork (1286 × 426 PNG). `light` sits on light backgrounds, `white` on
+// dark ones; render it through <BrandLogo /> (src/components/ui) so the
+// variant always matches the background.
+export const LOGO_URLS = {
+  light: "https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo.png",
+  white: "https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo-white.png",
+};
+
 // Routes
 export const ROUTES = {
   HOME: "/",
