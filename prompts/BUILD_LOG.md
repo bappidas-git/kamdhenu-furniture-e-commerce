@@ -501,3 +501,150 @@ Unbranded items (`""`) are the steel sofa-cum-bed, the particle-board bedside ta
 - **Unbranded items:** the steel sofa-cum-bed, particle-board bedside table, folding bed table, iron alna and steel rack. Confirm whether any of these carry a brand.
 - **`plastic-sofas` with a single product:** the client can keep it, add a model, or merge the leaf (see the tree shaping decision).
 - **Category copy** for the 20 new categories.
+
+---
+
+## Prompt 05 — Supporting data and integrity
+
+**Date:** 2026-10-07. **Result:** every supporting collection now describes A & S Urbanseat and points only at real catalogue records. Order money follows the checkout's rules, and payments, refunds, returns and the store-credit ledger agree with the orders. Ratings come only from seeded approved reviews. `node scripts/validate-db.js` (full mode) passes.
+
+### What changed per collection
+
+| Collection | Change |
+|---|---|
+| `settings` | Every key kept. `store`: A & S Urbanseat, tagline, email/phone/address from `constants.js` (placeholders), INR / ₹ / Asia/Kolkata, `logo`/`favicon` null, `taxRate` 18, `taxIncluded` false. `payment`: COD on, fee 0, min 0, max ₹50,000; gateways still disabled. `shipping`: `defaultWeight` 8 kg, `defaultDimensions` 65 × 60 × 75 cm (a chair carton). `notifications`: both emails → `info@kamdhenufurniture.com`. `seo`: title and description copied from `public/index.html`. `social`: WhatsApp `https://wa.me/918472919541`, others "". |
+| `shipping_methods` | Same four ids. Standard Delivery: Shiprocket, ₹499 flat, free above ₹9,999, 7–10 days, active. Express Delivery: ₹999, never free, 3–5 days, active. Same Day Delivery: inactive (service not confirmed; ₹1,499 kept only so the admin form has a value). Free Shipping: inactive. |
+| `src/utils/constants.js` | `FREE_SHIPPING_THRESHOLD = 9999` (was 999), and the comment updated. No other code change. |
+| `coupons` | Same five ids. `WELCOME500` fixed ₹500, min ₹5,000, 14/500 used, until 2027-03-31. `FLAT10` 10%, max ₹2,000, min ₹2,000, 37 used, no limit, until 2027-06-30. `FESTIVE25` (replaces SUMMER25) 25%, max ₹3,000: inactive, expired 2025-11-15, 150/150 used. `NEWHOME20` 20% on the first order, max ₹3,000, min ₹3,000, until 2027-03-31. `WORKSPACE15` 15%, max ₹4,000, described as "15% off orders above ₹15,000, up to ₹4,000" (the coupon schema has no category restriction), 6/100 used, until 2027-06-30. |
+| `dealsConfig` | Hero "This week" / "Offers on pieces we love" / "A short list of chairs, tables and sofas at a lower price for now, plus codes you can use at checkout." Timer on, `endAt: ""`, `endOfDay`. Coupons [1 WELCOME500, 2 FLAT10]. Deal of the day [47, 21, 12]. Grid [19, 29, 40, 55, 74, 78, 81, 84] (discounted products from all six departments). |
+| `banners` | Three records, same keys: Plastic furniture / Office chairs / Home furniture, linking to `/products?category=<department slug>`. `gradient` = `linear-gradient(#0b1f3f, #0b1f3f)` (flat navy `--sf-color-surface-dark`, still a string). |
+| `orders` | All 11 records keep their ids, numbers, users, statuses, addresses, coupons, payment methods, timestamps, extra fields and `statusHistory` shape. Items are new snapshots (`"Product - Variant"` as `Checkout.js` builds it, with the hyphen it uses; first image; variant SKU). Money is recomputed with the checkout's rules (see below). |
+| `payments` / `refunds` / `returns` / `walletTransactions` | Recomputed from the orders (tables below). Return reasons are rewritten for the new products. Refund reasons on order 8 now name the Wall Mirror. |
+| `users` | Only `storeCredit`: user 3 → ₹2,302 (ledger balance); users 1 and 2 stay 0. |
+| `reviews` | 26 records (21 approved, 3 pending, 2 rejected) with the original 12-key shape, on 17 products across all six departments (table below). |
+| `products` | Only `rating` / `totalReviews`: 15 products have approved reviews, 69 show 0 / 0. |
+| `wishlist` | User 3's three rows → L-Shaped Sofa (48), Ergonomic High-Back Chair with Headrest (31), Bentwood-Style Café Chair (37), with full snapshots. |
+| `leads` | Unchanged. Order numbers did not change, so `ORD-20250310-0001` and `ORD-MQC1HWSZ-CAN8` still resolve. |
+| `admins`, `cart` (`[]`), categories and product content | Untouched. |
+
+### Money rules applied (read from `src/pages/Checkout/Checkout.js`)
+
+- `subtotal` = Σ item subtotals. `discountAmount` = `couponDiscountFor` (fixed value, or `round(subtotal × %)`, capped by `maxDiscount` and by the subtotal). `taxAmount` = `round((subtotal − discount) × 18 / 100)`. `total` = subtotal − discount + shipping + tax. `amountPayable` = total − `storeCreditUsed`.
+- **Deviation from the prompt text:** the checkout makes shipping free when the **pre-discount** `subtotal ≥ freeAbove` (not `subtotal − discount`). The seed follows the code. Order 8 used Express (it paid ₹199 before, the old Express rate); all others are Standard.
+- **Return refund rule:** the two old records disagreed with each other (`refundAmount` 8,999 = items only, but ₹10,439 = items + tax was booked). `reflectReturnRefund` books `refundAmount − deductionAmount`, so the seed uses **returned item subtotals + their proportional share of the order's tax** (no shipping). Both returns cover the whole order, so return 1 books exactly the order total.
+
+### Cascade (before → after)
+
+| Order | Items (after) | Total before → after | Payable before → after |
+|---|---|---|---|
+| 1 ORD-20250310-0001 | Executive Mesh High-Back Chair - Black ×1 | ₹10,439 → ₹16,519 | — |
+| 2 ORD-20250318-0002 | Winsome Office Table - 150 × 75 cm ×1 + Ergonomic Mesh Low-Back Chair - Black ×1 | ₹85,257 → ₹33,628 | — |
+| 3 ORD-20260310-0003 | Cane-Look Café Chair - Natural Cane ×2 | ₹19,818 → ₹9,937 | — |
+| 4 ORD-20260315-0004 | Stackable Plastic Chair - White ×4 | ₹2,874 → ₹3,893 | — |
+| 5 ORD-MMYJ01ED-ZR26 | Jhula (Garden Swing) - Small ×1 | ₹17,699 → ₹14,159 | — |
+| 6 ORD-MQA9I6E7-0IR2 | Leatherette High-Back Office Chair - Tan ×1 | ₹17,699 → ₹8,758 | — |
+| 7 ORD-MQB0JHUB-9KL6 | Wooden Bedside Table - Walnut ×2 | ₹10,029 → ₹10,527 | — |
+| 8 ORD-MQC1HWSZ-CAN8 | Wall Mirror - Walnut ×1 | ₹4,918 → ₹4,302 | — |
+| 9 ORD-MQCGV6OM-Z965 | Wooden Sofa Set - Sand Beige ×1 | ₹76,699 → ₹38,939 | ₹75,699 → ₹37,939 |
+| 10 ORD-MQDUWC74-RUVY | Queen Size Bed - Walnut ×1 + Carlton Mattress - Queen ×1 | ₹94,398 → ₹56,638 | ₹94,398 → ₹56,638 |
+| 11 ORD-MQDVIQCV-30A9 | 4-Seater Plastic Dining Set - Marble Beige ×1 + Slim Plastic Shoe Rack - 4 shelves ×1 | ₹10,619 → ₹9,819 | ₹9,619 → ₹8,819 |
+
+| Payment | Order | Amount before → after | Refunded before → after | Status |
+|---|---|---|---|---|
+| 1 | ORD-20250310-0001 | ₹10,439 → ₹16,519 | ₹10,439 → ₹16,519 | refunded |
+| 2 | ORD-20250318-0002 | ₹85,257 → ₹33,628 | — | captured |
+| 3 | ORD-20260310-0003 | ₹19,818 → ₹9,937 | ₹19,818 → ₹9,937 | refunded |
+| 4 | ORD-MQA9I6E7-0IR2 | ₹17,699 → ₹8,758 | ₹0 → ₹0 | captured |
+| 5 | ORD-MQB0JHUB-9KL6 | ₹10,029 → ₹10,527 | ₹0 → ₹0 | pending |
+| 6 | ORD-MQC1HWSZ-CAN8 | ₹4,918 → ₹4,302 | ₹4,918 → ₹4,302 | refunded |
+| 7 | ORD-MQCGV6OM-Z965 | ₹75,699 → ₹37,939 | — | captured |
+| 8 | ORD-MQDUWC74-RUVY | ₹94,398 → ₹56,638 | — | captured |
+| 9 | ORD-MQDVIQCV-30A9 | ₹9,619 → ₹8,819 | — | captured |
+
+| Wallet tx | Type | Order | Amount before → after | Balance after: before → after |
+|---|---|---|---|---|
+| 1 | credit | ORD-MQC1HWSZ-CAN8 | ₹4,918 → ₹4,302 | ₹4,918 → ₹4,302 |
+| 2 | debit | ORD-MQCGV6OM-Z965 | ₹1,000 → ₹1,000 | ₹3,918 → ₹3,302 |
+| 3 | debit | ORD-MQDVIQCV-30A9 | ₹1,000 → ₹1,000 | ₹2,918 → ₹2,302 |
+
+| Product | Approved ratings | rating / totalReviews | Pending / rejected |
+|---|---|---|---|
+| 2 Ribbed-Back Plastic Armchair | 4, 4 | 4 / 2 | 0 / 0 |
+| 6 Stackable Plastic Chair | — | 0 / 0 | 0 / 1 |
+| 9 Slim Plastic Shoe Rack | — | 0 / 0 | 1 / 0 |
+| 11 Covered Plastic Shoe Rack | 4 | 4 / 1 | 0 / 0 |
+| 12 Cushioned Plastic Armchair | 4 | 4 / 1 | 1 / 0 |
+| 19 Lobby Set | 4 | 4 / 1 | 0 / 0 |
+| 21 Mesh High-Back Office Chair | 4, 5 | 4.5 / 2 | 0 / 0 |
+| 33 Ergonomic Mesh Low-Back Chair | 4 | 4 / 1 | 0 / 0 |
+| 37 Bentwood-Style Café Chair | 5, 4 | 4.5 / 2 | 0 / 0 |
+| 46 Shell Café Chair | 3 | 3 / 1 | 0 / 0 |
+| 47 Wooden Sofa Set | 5, 4, 5 | 4.7 / 3 | 1 / 0 |
+| 55 King Size Bed | 5 | 5 / 1 | 0 / 0 |
+| 58 Carlton Mattress | 4, 5 | 4.5 / 2 | 0 / 1 |
+| 64 Wooden Bedside Table | 5 | 5 / 1 | 0 / 0 |
+| 74 6-Seater Dining Set | 4 | 4 / 1 | 0 / 0 |
+| 76 Winsome Office Table | 5 | 5 / 1 | 0 / 0 |
+| 81 Workshop Reading Table | 5 | 5 / 1 | 0 / 0 |
+
+Returns: RET-20260120-0001 (order 1, approved, processed) `refundAmount` ₹8,999 → ₹16,519 (= ₹13,999 + ₹2,520 tax = refund 1 = payment 1 refund). RET-20260612-0002 (order 6, requested) ₹14,999 → ₹8,259 (₹6,999 + ₹1,260 tax). Processing it would book ₹8,259 onto payment 4 (₹8,758) → `partially_refunded` (₹499 shipping is not refunded), by `reflectReturnRefund`. Timeline notes that quote amounts are updated: order 1 "₹16,519 refunded", order 3 "Refund issued (₹9,937)", order 8 "₹4,302 via store credit…", return 1 "Refund processed (₹16,519)".
+
+### Review → rating mapping
+
+Verified purchases follow the orders: user 3 reviewed product 64 (order 7, delivered; approved) and product 9 (order 11, delivered; **pending**, so `/orders` shows the "Review pending approval" chip). User 1 reviewed 33 and 76 (order 2; approved) and 6 (order 4; **rejected**). Product 82 on user 3's delivered order 11 is deliberately left unreviewed, so the "Rate" action stays visible. All other reviews have `userId: null`, `isVerifiedPurchase: false`, and are dated after the product's `createdAt`. Helpful counts are 0–11. The empty state shows on every product not listed above (for example the L-Shaped Sofa: "No written reviews yet. Be the first to share your experience.").
+
+### `scripts/validate-db.js` (full mode extended)
+
+New checks (all in full mode; `--catalogue` unchanged):
+- key sets for reviews, coupons, shipping methods, banners and wishlist; `cart` is `[]`; no electronics or fashion words left in supporting data;
+- settings (store name, numeric tax rate, COD limits min ≤ max);
+- an active Standard Delivery whose `freeAbove` equals `FREE_SHIPPING_THRESHOLD`, read from `constants.js` with a regex;
+- coupons: unique uppercase codes, sane values, `usedCount ≤ usageLimit`; an active coupon must be unexpired, not exhausted, and a fixed value below its minimum; one inactive, expired, exhausted coupon must remain;
+- orders: user exists; item name, image and SKU match the product/variant; discount matches the coupon rule; shipping matches a method; tax matches `taxRate`; ₹ amounts quoted in refund timeline entries match a booked refund;
+- payments: one per order, `amount` = the order's payable, `storeCreditApplied` = `storeCreditUsed`, `refundAmount` = Σ `refunds[]`, "refunded" means fully refunded;
+- returns: snapshots match the order items, and `refundAmount` = items + proportional tax;
+- refunds: return refunds = return payable; payment refunds appear in that payment's `refunds[]`; store-credit refunds = the order's `refundedAmount` with a matching wallet credit. Wallet debits equal the order's `storeCreditUsed`;
+- reviews: status, rating 1–5, title ≤ 60 characters, `helpfulCount` 0–12, user exists, `isVerifiedPurchase` ⇔ the user ordered the product, verified review dated after the order, past dates; at least one product without reviews;
+- wishlist snapshots equal the live product; deals coupons active, deal products discounted; banner links are active categories; lead order numbers resolve.
+
+Self-test: a copy with 12 seeded faults (tax off by one, payment amount, ledger amount, verified flag, long title, wishlist price, exhausted active coupon, undiscounted deal, return amount, electronics banner link, rating, stale timeline amount) produced 19 failures and exit 1.
+
+### Verification
+
+- `node scripts/validate-db.js` → ✓ (full); `--catalogue` → ✓. A script compared old and new `db.json`: the top-level key order is the same; record key sets are the same in orders, payments, refunds, returns, wallet, wishlist, coupons, shipping methods, banners and leads; `settings`/`dealsConfig` shapes are the same; products changed only in `rating`/`totalReviews`, users only in user 3's `storeCredit`; admins, categories, cart and leads are byte-identical.
+- `npm run build` → Compiled successfully. `CI=true npm test -- --passWithNoTests` → 6 passed, exit 0.
+- Browser QA (Chromium) on a mock-mode build against JSON Server, reading a **scratch copy** of `db.json` (the repo file was never written by the app):
+  - `/orders` as user 3: 7 orders with the new totals. An expanded order shows "Queen Size Bed - Walnut" and "Carlton Mattress - Queen". Cancel appears only on the two unfulfilled (processing) orders. Users 1 and 2 load their orders. No console errors.
+  - `/profile` → Store Credit: ₹2,302.00, with three ledger rows (+₹4,302, −₹1,000, −₹1,000) and running balances matching the ledger.
+  - `/wishlist`: the three new items. `/products/wooden-sofa-set`: approved reviews shown, the pending one hidden, 4.7. `/products/l-shaped-sofa`: honest empty state; the delivery panel shows "₹499.00 · free above ₹9,999.00", Express ₹999, "COD up to ₹50,000", "18% GST".
+  - `/special-offers`: WELCOME500 and FLAT10 shown, with a countdown.
+  - Checkout: 1 × Wooden Bedside Table → shipping ₹499, tax ₹810, total ₹5,808, and WELCOME500 rejected ("Minimum order amount is ₹5000"). 6 × → subtotal ₹26,994, WELCOME500 −₹500, shipping FREE, tax ₹4,769, total ₹31,263. No order placed.
+  - Header: "Free delivery on orders over ₹9,999.00".
+  - Widths 360 / 768 / 1024 / 1440: `/orders` and the product page render without errors.
+  - Admin Dashboard, Orders, Returns, Payments (totals ₹1,45,782 captured, ₹30,758 refunded; refund history per row), Coupons, Reviews, Shipping, Special Offers, Settings, Users and Leads: all open with no console errors.
+- **Not exercised in the UI:** approving a review and processing a return refund in the admin. These were checked by reading `reflectReturnRefund` / `appendPaymentRefund` / `performCancel` instead: they read `refundAmount`, `deductionAmount`, `amountPayable`, `storeCreditUsed` and the ledger, and all of these are consistent in the new data. Opening each admin dialog record by record was not done; the module list pages were.
+
+### Stale content left outside this prompt's scope
+
+- `leads` 3 and 4 still mention a "FitPulse Smartwatch" and "AirStride Running Shoes" in their subject and message. The scope allows only `orderNumber` changes there. Prompt 34 or the client should reword or remove them.
+- `src/components/CartDrawer/CartDrawer.js` hardcodes `FLAT_SHIPPING = 99`, so the drawer shows ₹99 shipping below the threshold, while checkout charges ₹499. Code change forbidden here; **Prompt 18** should read the Standard method's `flatRate` (or a shared constant).
+- Order dates (Jan–Jun 2026) are earlier than some products' `createdAt` (Apr–Sep 2026). Timestamps were kept as instructed.
+- Order 7's payment is `pending` while the order says `paid` (pre-existing; statuses kept).
+
+### Needs client confirmation (placeholders)
+
+- **Tax:** 18% GST, exclusive (`taxIncluded: false`), applied to every product.
+- **COD:** no fee, no minimum, max ₹50,000. Many sofa, bed and dining orders exceed this, so COD is hidden for them.
+- **Shipping:** Standard ₹499 / 7–10 days, Express ₹999 / 3–5 days, free Standard above **₹9,999** (`FREE_SHIPPING_THRESHOLD`). Same-day disabled. Carrier Shiprocket. Default parcel 8 kg, 65 × 60 × 75 cm.
+- **Coupons:** codes WELCOME500, FLAT10, FESTIVE25, NEWHOME20, WORKSPACE15, with their values, minimums, caps, limits and expiry dates.
+- **Store contact:** `info@kamdhenufurniture.com`, `+91 84729 18653`, "Assam, India", WhatsApp `+91 84729 19541` (same as Prompt 02).
+- **Special-offers selection and hero copy.**
+
+### Remove or replace before launch
+
+- **All 26 seeded reviews** (demo content) and therefore every `rating`/`totalReviews` value derived from them.
+- **The 11 demo orders** and their payments, refunds, returns and wallet transactions; user 3's ₹2,302 store credit.
+- **Coupon `usedCount` values** (illustrative).
+- **Placeholder product images and prices** (Prompts 03–04).
+- **Demo accounts:** `user@example.com` / `password123`, `jane@example.com` / `password123`, `mail4bappidas@gmail.com` / `Bappi@12345`, admin `admin@store.com` / `admin123`.
+- **The four demo leads.**
