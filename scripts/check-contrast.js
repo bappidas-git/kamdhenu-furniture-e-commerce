@@ -230,6 +230,11 @@ const PAIRS = [
   ["Info on info-bg", "--sf-color-info", ["--sf-color-info-bg", "--sf-color-surface"], AA],
   ["Badge text on solid error fill (primary-contrast)", "--sf-color-primary-contrast", "--sf-color-error", AA],
   ["Badge text on solid success fill (primary-contrast)", "--sf-color-primary-contrast", "--sf-color-success", AA],
+  // Primitives (Prompt 06: storefront-base.css, MUI overrides, SweetAlert)
+  ["Field error text on surface (.sf-field__error in a card)", "--sf-color-error", "--sf-color-surface", AA],
+  ["Invalid field border (error) on surface", "--sf-color-error", "--sf-color-surface", LARGE],
+  ["Selected menu item: ink on accent-soft over surface", "--sf-color-text", ["--sf-color-accent-soft", "--sf-color-surface"], AA],
+  ["Accent badge (.sf-badge--accent): discount on discount-bg over page", "--sf-color-discount", ["--sf-color-discount-bg", "--sf-color-bg"], AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -239,6 +244,8 @@ const PAIRS_FIXED = [
   ["On-dark accent (caramel) on navy", "--sf-color-on-dark-accent", "--sf-color-surface-dark", AA],
   ["Focus ring (on-dark accent) on navy", "--sf-color-on-dark-accent", "--sf-color-surface-dark", LARGE],
   ["Paper button text (brand ink on brand paper)", "--sf-brand-ink", "--sf-brand-paper", AA],
+  ["Paper button hover (brand ink on on-dark accent)", "--sf-brand-ink", "--sf-color-on-dark-accent", AA],
+  ["Paper-ghost hover (on-dark on on-dark-border over navy)", "--sf-color-on-dark", ["--sf-color-on-dark-border", "--sf-color-surface-dark"], AA],
   // Hero: text sits where the scrim is >= --sf-color-scrim. Worst case is a
   // pure-white photograph under the scrim.
   ["Hero: on-dark text on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], AA],

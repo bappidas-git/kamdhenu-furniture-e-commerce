@@ -648,3 +648,202 @@ Self-test: a copy with 12 seeded faults (tax off by one, payment amount, ledger 
 - **Placeholder product images and prices** (Prompts 03–04).
 - **Demo accounts:** `user@example.com` / `password123`, `jane@example.com` / `password123`, `mail4bappidas@gmail.com` / `Bappi@12345`, admin `admin@store.com` / `admin123`.
 - **The four demo leads.**
+
+---
+
+## Prompt 06 — Global UI primitives
+
+**Date:** 2026-10-07. **Result:** later prompts now build from one set of storefront primitives: the `.sf-*` stylesheet, matching MUI overrides, a storefront SweetAlert2 theme, framer-motion that honours the OS reduced-motion setting, and `Reveal` / `SectionHeading` / `renderAccent`. All of it is scoped away from the admin, and the admin screenshots match the baseline. Reference: `prompts/DESIGN_SYSTEM.md` §16 "Primitives".
+
+### What changed
+
+| File | Change |
+|---|---|
+| New `src/theme/storefront-base.css` | The primitives (inventory below). 136 rules, 750 lines (629 without comments and blank lines). Every selector is prefixed `:where(body:not(.admin-area))` and there are no colour literals; both checked by parsing the file with PostCSS. |
+| `src/index.css` | `@import "./theme/storefront-base.css";` right after the tokens import, plus the header comment. Nothing else. |
+| `src/context/ThemeContext.js` | Only the `components` block: a mode-independent `storefrontComponents` object (values are `var(--sf-*)`) spread after the untouched `MuiCssBaseline` pin and `MuiPaper` reset. The existing small-IconButton touch override is kept, reshaped so it can be spread. `useTheme`, `useThemeContext`, persistence, body classes, palette and typography are unchanged. |
+| `src/App.css` | 16 new rules appended after the last existing rule, all scoped `body.light:not(.admin-area)` / `body.dark:not(.admin-area)`. The original file is a byte-identical prefix of the new one (checked with `cmp`). |
+| `src/App.js` | `MotionConfig` import; `<MotionConfig reducedMotion="user">` wraps `<div className="App">` inside `DealsConfigProvider`. Admin routes are not wrapped. |
+| New `src/components/ui/Reveal.js`, `SectionHeading.js` + `.module.css`, `renderAccent.js`, `index.js` | The React primitives and the barrel. |
+| New `src/components/ui/Reveal.test.js`, `SectionHeading.test.js`, `renderAccent.test.js` | 16 tests: 5 Reveal, 6 SectionHeading, 5 renderAccent. The suite now runs 22 tests. |
+| `scripts/check-contrast.js` | 6 component-level pairs added (DESIGN_SYSTEM §16.8). All 57 checked pairings pass in both modes (plus 5 informational rows); mirror check passes. |
+| `prompts/DESIGN_SYSTEM.md` | New §16 "Primitives" appended. Earlier sections are untouched. |
+
+### Class inventory (`storefront-base.css`)
+
+- **Layout:**
+  - `.sf-container` (+ `--wide`, `--narrow`)
+  - `.sf-section`, `.sf-section--tight`
+  - `.sf-grid`, with `--cols`, `--cols-tablet`, `--cols-mobile`, `--gap`
+- **Type:**
+  - `.sf-eyebrow` (+ `--accent`, `--rule`)
+  - `.sf-display-xl/lg/md/sm`, with the accent `<em>`
+  - `.sf-prose`, `.sf-muted`, `.sf-price`, `.sf-compare`, `.sf-sale`
+- **Buttons:**
+  - `.sf-btn` with variants `--primary`, `--ghost`, `--paper`, `--paper-ghost`, `--link`
+  - sizes `--sm`, `--lg`, plus `--block` and `--icon`
+  - `.sf-btn__icon` slot
+  - restyle hook: the `--sf-btn-*` custom properties
+- **Fields:**
+  - `.sf-field`, `.sf-field__label`, `.sf-field__hint`, `.sf-field__error`
+  - `.sf-input`, `.sf-select`, `.sf-textarea`
+  - `.sf-check`, `.sf-radio`, `.sf-switch`
+- **Badges, chips, counts:**
+  - `.sf-badge` (+ `--ink`, `--paper`, `--sand`, `--accent`, `--success`, `--warning`, `--error`, `--info`)
+  - `.sf-chip` (+ `--selected`, `[aria-pressed]`, `[aria-checked]`)
+  - `.sf-count`
+- **Surfaces:**
+  - `.sf-card` (+ `--hairline`), `.sf-panel` (+ `--hairline`)
+  - `.sf-hairline`, `.sf-divider--dot`
+- **Tabs:** `.sf-tabs`, `.sf-tab`, `.sf-tabpanel`.
+- **Skeletons:** `.sf-skeleton` (+ `--text`, `--image`, `--circle`).
+- **Accessibility:** `.sf-visually-hidden`, `.sf-skip-link`, `.sf-focus`.
+
+### MUI components overridden (storefront theme only)
+
+- `MuiButtonBase`: ripple off; a focus ring on `.Mui-focusVisible`.
+- `MuiButton`: matches `.sf-btn`.
+  - Contained primary = ink, navy on hover.
+  - Outlined primary = ghost.
+  - Text = link.
+  - Small 36px / large 52px.
+  - Focus ring repeated here because `disableElevation` clears box-shadow.
+  - Hover is reset on touch screens.
+- `MuiIconButton`:
+  - 44px (medium), ink when no `color` is set, sand hover.
+  - The touch-size override for small buttons is kept.
+- `MuiBadge`: ink disc with paper 10px digits.
+- `MuiAvatar`: sand background, ink serif initials, hairline.
+- `MuiPopover` / `MuiMenu`: surface, hairline, `--sf-shadow-sm`, radius sm.
+- `MuiMenuItem`:
+  - 44px at every breakpoint, sans 14px, sand hover.
+  - Keyboard focus = sand + inset ring; selected = accent-soft.
+- `MuiDivider`: the stone token (`--sf-color-border`).
+- `MuiDrawer`: solid surface, `--sf-shadow-lg`, navy overlay backdrop.
+- `MuiOutlinedInput` / `MuiTextField`:
+  - Border-strong boundary, radius sm.
+  - Focus = 1px accent border + ring; error border.
+  - Label turns accent-text when focused.
+- `MuiChip`: 32px pill; default = sand (filled) or hairline (outlined); primary = ink.
+- `MuiSkeleton`: sand; the `wave` animation by default, switched off under reduced motion.
+- `MuiTabs` / `MuiTab`: hairline strip, 1px ink indicator, eyebrow-style 44px tabs.
+- `MuiTooltip`: ink, paper text, radius md.
+- `MuiAppBar`: left at its default, as asked.
+
+`ThemeContext.js` has no colour literals, gradients, blurs or hover lifts (checked by grep).
+
+### SweetAlert2 approach
+
+Everything goes through SweetAlert's CSS variables, set from the tokens on `.swal2-popup` (and `--swal2-backdrop` on `.swal2-container`).
+
+- **Popup:**
+  - Surface background, ink text, hairline border, radius md, `--sf-shadow-lg`.
+  - Title in Playfair 22px; body in sans 15px secondary.
+  - Icons at 75%.
+  - Navy overlay backdrop.
+- **Buttons:** 44px; the confirm is ink (navy on hover, white in dark mode); the cancel is a ghost with a `primary-soft` hover; focus uses the token ring.
+- **Toasts:** surface, hairline, `--sf-shadow-md`, radius md, 14px sans text, a 2px accent timer bar.
+- **Reduced motion:** the show/hide, toast and icon animations are off.
+
+**Per-call colours still win.** SweetAlert sets a `confirmButtonColor` inline on the button. The ink text and navy hover apply only to confirms without one (`:not([style*="--swal2-confirm-button-background-color"])`). So the destructive red confirms keep SweetAlert's white text and darkening hover in both modes. In dark mode that matters: the ink-mode text would otherwise be navy-ink on red, 3.70 : 1.
+
+### `MotionConfig` placement
+
+`src/App.js`: `DealsConfigProvider` → `MotionConfig reducedMotion="user"` → `div.App`.
+
+I recorded the header top bar on every frame, which animates `y: -30 → 0` and fades in:
+
+| Build | Reduced motion | Distinct transforms | Distinct opacities |
+|---|---|---|---|
+| Baseline | on | 17 (it slid) | 16 |
+| After | on | 2 (initial frame, then in place) | 14 (it still faded) |
+| After | off | 14 (it slid as before) | 15 |
+
+### New `ui/` exports
+
+`src/components/ui/index.js` exports `BrandLogo`, `Reveal` (+ `staggerDelay`), `SectionHeading` and `renderAccent` (+ `stripAccent`). Props are documented in DESIGN_SYSTEM §16.4.
+
+- `Reveal`: `as`, `delay` (seconds), `distance` (default `TOKENS.motion.revealDistance`), `once` (default `true`), `className`, `onInView`. Other props pass through and the ref is forwarded. With reduced motion it starts without a transform.
+- `SectionHeading`: `eyebrow`, `title` (with `*accent*`), `intro`, `align` (`"left"` | `"center"`), `action` (an element, or `{ label, to | href }` rendered as `.sf-btn--link`), `as` (default `"h2"`), `id`, `className`.
+- `renderAccent(text)` returns text with the accent wrapped in `<em>` (non-strings pass through). `stripAccent(text)` returns the plain sentence.
+
+### Decisions
+
+- **`:where()` around the scope.** Each selector starts `:where(body:not(.admin-area))` rather than a bare `body:not(.admin-area)`. The admin scoping is identical, but a primitive weighs one class. With the bare prefix (specificity 0,2,1) no CSS Module class (0,1,0) could adjust a primitive without `!important`. Later prompts do exactly that: Prompt 08 restyles `.sf-input` for the dark footer, Prompt 20 makes inputs 48px. CRA's PostCSS keeps `:where()` as written (checked in the built CSS).
+- **Variants as custom properties.** Buttons use `--sf-btn-*` and badges `--sf-badge-*`. A component can restyle one instance by setting them on its own module class.
+- **Hover only on hover-capable pointers** (`@media (hover: hover)`), so a tap never leaves a sticky hover.
+- **Small targets on touch screens.** `.sf-btn--sm` grows to 44px under `pointer: coarse`. Fields use 16px text there, so iOS does not zoom.
+- **Focus rings** pair a transparent 2px outline with the box-shadow ring, so Windows contrast themes still draw an outline. Links and tabs use a solid outline, because a box-shadow would wrap across lines or be clipped by a scrolling strip.
+- **The field error mark is a CSS-drawn circled "!"** with `content: "!" / ""`, so screen readers skip it. The error text itself carries the meaning.
+
+### Deviations from the prompt, and why
+
+1. **Select chevron:** two 1.5px `currentColor` strokes (hard-stop `linear-gradient`s), not an SVG data URI. A data-URI SVG cannot inherit `currentColor` from the page: it renders black and disappears on dark surfaces. Its colour would have to be a literal, which conflicts with guardrail 2. The strokes follow `color` (ink; muted when disabled). Forced-colours mode restores the native arrow.
+2. **"Paper" backgrounds:** inputs, popups, toasts, menus and drawers use `--sf-color-surface`. I read the brief's "paper" as MUI's `background.paper`, which DESIGN_SYSTEM §1 maps to "card, drawer, menu, input background → `--sf-color-surface`". Only `.sf-btn--paper` and `.sf-badge--paper` use the fixed `--sf-brand-paper`.
+3. **File length:** 750 lines against the "≤ 700" target. That is 629 lines of rules; the rest is comments and the hover, coarse-pointer and forced-colours guards.
+4. **Small additions beyond the brief, each to save later prompts a one-off:**
+   - Utility classes: `.sf-eyebrow--accent` and `--rule`; `.sf-btn--icon`; `.sf-panel--hairline`.
+   - Custom-property hooks: `--cols-tablet`, `--gap` and `--sf-card-padding`; `--ratio` and `--size` on skeletons.
+   - Chips selected by `aria-pressed` / `aria-checked`; a checkbox `:indeterminate` dash.
+   - The forced-colours block; `color-scheme: dark` on fields in dark mode.
+   - `Reveal`'s `onInView` callback (Prompt 12 asks for it), and the `staggerDelay` and `stripAccent` helpers.
+   - SweetAlert: backdrop, icon size and reduced motion. MUI: ripple off on the storefront theme, drawer backdrop.
+5. **`scripts/check-contrast.js`** is not in the prompt's file list. DESIGN_SYSTEM §15 requires component pairs to be added there, and guardrail 5 asks for the check, so I added six pairs.
+
+### Verification
+
+- **Build and tests.** `npm run build` compiles with no warnings, the same as the baseline build. Sizes are +1.63 kB JS and +4.07 kB CSS (gzip). `CI=true npm test -- --passWithNoTests` passes 22 tests with exit 0. The worker-exit notice is the existing Babel deprecation timer that Prompt 01 recorded; it also appears for the plain `renderAccent` test. `node scripts/check-contrast.js` passes.
+- **Kitchen sink.** A throwaway page with every primitive, the MUI controls and SweetAlert triggers ran in a temporary route on a mock-mode build. It was never in the repo: the file lived in the scratchpad and `App.js` was restored byte for byte. Results, at 360, 768, 1024 and 1440px in both modes:
+  - No horizontal overflow. Buttons, inputs, selects, tabs, check rows, MUI buttons and IconButtons measure 44px; chips 32px.
+  - `.sf-btn--sm` is 36px on desktop and 44px on touch emulation.
+  - `.sf-grid` collapses 4 → 2 → 1 (with `--cols-mobile: 1`) and 3 → 2. The container caps at 1280px.
+  - `:focus-visible` shows the ring on 13 control types in both modes, including the skip link, which appears top-left when focused.
+  - Hover states match the spec: primary → navy, ghost → ink tint, paper → caramel, link → accent underline, chip → ink border, IconButton → sand.
+  - Hovering a focused field keeps the accent border; hovering an invalid one keeps the error border.
+  - Computed SweetAlert styles:
+    - Light: confirm `#1c1a17` with `#faf7f2` text; cancel transparent with ink text; popup white; radius 4px; hairline `#d9d0c3`; Playfair 22px title.
+    - Dark: confirm `#f3eee6` with `#0a1426` text; popup `#111d34`; translucent hairline.
+    - A per-call `#d32f2f` keeps white text.
+  - Under reduced motion: `Reveal` has no transform, the skeleton shimmer is off, the SweetAlert popup has no animation and closes in 5ms.
+- **Storefront flows** (JSON Server on a scratch copy of `db.json`; light and dark; 1440 and 390px):
+  - Toasts: add to cart, add to wishlist, sign-in as the demo user.
+  - Confirms, each cancelled: wishlist "Clear all", order cancel on `/orders`.
+  - The header account menu and its badges.
+  - No new console errors.
+- **Admin parity.** Before/after, I took 36 screenshots: login, dashboard with welcome toast, dashboard, Products, the Add Product dialog, Coupons, a SweetAlert delete confirm (cancelled), Orders and Settings, at 1440 and 390px in light and dark.
+  - 30 are byte-identical to the baseline.
+  - The other 6 differ only in regions that also differed between two baseline runs, or that depend on load timing:
+    - The notification-bell badge: 24 px of anti-aliasing.
+    - The dashboard behind the welcome toast. Its Iconify stat icons load from the network, so they were or were not drawn when the toast appeared.
+  - Inside the welcome toast itself, 0–7 px differ, all on the rounded corners where it blends with that content.
+  - The settled dashboard is byte-identical in all four combinations.
+  - Re-run on the final build, after the last two fixes (`after-b`): 33 of 36 are byte-identical to baseline run B and 29 to run A. The rest fall in the same two regions: the bell badge and the toast load timing.
+
+### Interim effects on surfaces owned by later prompts
+
+- **Old header (Prompt 07 rebuilds it).** Its CSS Module sets most MUI colours with `!important`, so it mostly looks the same. The new overrides show through where it sets nothing:
+  - The cart and wishlist count discs are now ink. On the old dark bar in light mode the disc blends in, but the paper digits stay readable; in dark mode the disc is off-white.
+  - Hovering its white icons shows a sand square behind them.
+  - Menu rows are 44px.
+  - The avatar initial is in the serif.
+  - Clicks no longer ripple, and keyboard focus shows the ring.
+- **Auth modal (Prompt 20), pre-existing.** Its overlay sits at `z-index: 9999` with a blur, above SweetAlert (2000). The sign-in toast is therefore under the closing modal for about a second, the same before and after. Prompt 20 should move the modal to `--sf-z-modal` (1100).
+- **Hard-coded confirm colours.** The hex `confirmButtonColor` values in `OrderHistory.js` (`#d32f2f`), `Profile.js` (`#ef4444` ×2) and `WishlistContext.js` (`#d32f2f`) are still there for their prompts. `#ef4444` with white text is about 3.8 : 1 (pre-existing). Switching to the error token read via `getComputedStyle`, or to `customClass`, fixes it.
+
+### Notes for later prompts
+
+- Compose primitives with your module class: ``className={`sf-btn sf-btn--primary ${styles.cta}`}``. A module class (later in the bundle, same weight) wins without `!important`.
+- **On navy or photography:**
+  - Use `.sf-btn--paper` / `--paper-ghost` and `.sf-badge--paper`.
+  - Give `<em>` `--sf-color-on-dark-accent`. Display headings inherit colour, but `.sf-eyebrow` and `SectionHeading`'s intro use the paper-surface tokens.
+  - `SectionHeading` is designed for paper and sand sections.
+- **Prompt 31:** add `<a className="sf-skip-link" href="#main-content">Skip to content</a>` as the first child of `.App`, and the matching `id` on `<main>`. The skip link sits at `--sf-z-modal`, above the header.
+- **Prompts 12 and 14:** `Reveal`'s `onInView` can start the lazy review fetch. `staggerDelay(i)` gives the 90ms stagger, capped at 8 items.
+- **Prompt 30:** the reveal recipe lives in `Reveal`. The skeleton shimmer duration is `2.5 × --sf-duration-slow`. SweetAlert's reduced-motion handling is in the `App.css` storefront block.
+
+### Needs client confirmation
+
+Nothing new on content. Two design choices they may want to see:
+
+- Paper buttons turn caramel on hover (on navy).
+- Account avatars use serif initials.

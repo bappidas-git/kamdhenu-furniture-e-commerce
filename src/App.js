@@ -6,7 +6,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
-import { AnimatePresence } from "framer-motion";
+import { AnimatePresence, MotionConfig } from "framer-motion";
 
 // Context Providers
 import { ThemeContextProvider } from "./context/ThemeContext";
@@ -99,6 +99,10 @@ function App() {
                       path="/*"
                       element={
                         <DealsConfigProvider>
+                        {/* Storefront framer-motion animations honour the OS
+                            reduced-motion setting: transforms are skipped,
+                            opacity still fades. The admin routes are not wrapped. */}
+                        <MotionConfig reducedMotion="user">
                         <div className="App">
                           <Header />
                           <main className="main-content">
@@ -130,6 +134,7 @@ function App() {
                           <Footer />
                           <BottomNav />
                         </div>
+                        </MotionConfig>
                         </DealsConfigProvider>
                       }
                     />

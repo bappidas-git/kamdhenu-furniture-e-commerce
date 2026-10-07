@@ -1,0 +1,750 @@
+/* =============================================================================
+ * STOREFRONT BASE  —  A & S Urbanseat UI primitives
+ * =============================================================================
+ * Layout, type helpers, buttons, form fields, badges and chips, cards and
+ * panels, tabs, skeletons and accessibility utilities that every storefront
+ * surface composes from. Class reference and markup: prompts/DESIGN_SYSTEM.md,
+ * "Primitives".
+ *
+ * RULES OF THIS FILE
+ *   • Tokens only: colours, fonts, spacing, radii, shadows and durations are
+ *     var(--sf-*) from storefront-tokens.css; no hex or rgb() literals. Glyphs
+ *     (select chevron, check mark, error mark) are drawn in currentColor.
+ *   • Scoped away from the admin: every selector starts with
+ *     :where(body:not(.admin-area)). :where() adds no specificity, so a
+ *     primitive weighs one class and a component's CSS Module (loaded after
+ *     this file) can extend it without !important.
+ *   • Class-only: no bare element selectors outside an .sf-* container, so
+ *     nothing here can reach the admin, even before body.admin-area is set.
+ *   • Dark mode is automatic (the colour tokens flip on body.dark), and the
+ *     duration tokens collapse under prefers-reduced-motion.
+ * ========================================================================== */
+
+/* 1. LAYOUT ------------------------------------------------------------------ */
+:where(body:not(.admin-area)) .sf-container {
+  width: 100%;
+  max-width: var(--sf-container-max);
+  margin-inline: auto;
+  padding-inline: var(--sf-gutter);
+}
+:where(body:not(.admin-area)) .sf-container--wide { max-width: var(--sf-container-wide); }
+:where(body:not(.admin-area)) .sf-container--narrow { max-width: var(--sf-container-narrow); }
+:where(body:not(.admin-area)) .sf-section { padding-block: var(--sf-section-y); }
+:where(body:not(.admin-area)) .sf-section--tight { padding-block: calc(var(--sf-section-y) / 2); }
+
+/* --cols (4) on desktop, --cols-tablet (2) at <= 768px, --cols-mobile (the
+   tablet count) at <= 480px; --gap overrides the fluid 16-32px gap. */
+:where(body:not(.admin-area)) .sf-grid {
+  display: grid;
+  grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+  gap: var(--gap, clamp(var(--sf-space-4), 2.5vw, var(--sf-space-8)));
+}
+
+@media (max-width: 768px) {
+  :where(body:not(.admin-area)) .sf-grid {
+    grid-template-columns: repeat(var(--cols-tablet, 2), minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 480px) {
+  :where(body:not(.admin-area)) .sf-grid {
+    grid-template-columns: repeat(var(--cols-mobile, var(--cols-tablet, 2)), minmax(0, 1fr));
+  }
+}
+
+/* 2. TYPOGRAPHY -------------------------------------------------------------- */
+:where(body:not(.admin-area)) .sf-eyebrow {
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+:where(body:not(.admin-area)) .sf-eyebrow--accent { color: var(--sf-color-accent-text); }
+
+/* Optional short caramel rule before the eyebrow (the logo's hairline). */
+:where(body:not(.admin-area)) .sf-eyebrow--rule::before {
+  content: "";
+  display: inline-block;
+  width: var(--sf-space-6);
+  height: 1px;
+  margin-right: var(--sf-space-3);
+  vertical-align: middle;
+  background-color: var(--sf-color-accent);
+}
+
+/* Display headings inherit their colour, so they work on paper and on navy. */
+:where(body:not(.admin-area)) :is(.sf-display-xl, .sf-display-lg, .sf-display-md, .sf-display-sm) {
+  font-family: var(--sf-font-display);
+  font-weight: var(--sf-font-normal);
+  letter-spacing: var(--sf-tracking-display);
+  overflow-wrap: break-word;
+  text-wrap: balance;
+}
+:where(body:not(.admin-area)) .sf-display-xl { font-size: var(--sf-text-display-xl); line-height: var(--sf-leading-display); }
+:where(body:not(.admin-area)) .sf-display-lg { font-size: var(--sf-text-display-lg); line-height: var(--sf-leading-display); }
+:where(body:not(.admin-area)) .sf-display-md { font-size: var(--sf-text-display-md); line-height: var(--sf-leading-heading); }
+:where(body:not(.admin-area)) .sf-display-sm {
+  font-size: var(--sf-text-display-sm);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-heading);
+}
+
+/* The accent word (renderAccent's <em>): caramel from display-md up, where 3:1
+   suffices; accent-text at display-sm. */
+:where(body:not(.admin-area)) :is(.sf-display-xl, .sf-display-lg, .sf-display-md, .sf-display-sm) em {
+  font-style: italic;
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-accent);
+  text-decoration: none;
+}
+:where(body:not(.admin-area)) .sf-display-sm em { color: var(--sf-color-accent-text); }
+
+/* Long-form copy (policies, guides): measure, serif headings, a hairline
+   above every h2, accent-underlined links. */
+:where(body:not(.admin-area)) .sf-prose {
+  max-width: var(--sf-measure);
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-relaxed);
+  color: var(--sf-color-text-secondary);
+}
+:where(body:not(.admin-area)) .sf-prose :where(* + *) { margin-top: 1em; }
+:where(body:not(.admin-area)) .sf-prose :is(h2, h3, h4) {
+  font-family: var(--sf-font-display);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+  text-wrap: balance;
+}
+:where(body:not(.admin-area)) .sf-prose h2 {
+  margin-top: 2.5em;
+  padding-top: 1.25em;
+  border-top: var(--sf-hairline);
+  font-size: var(--sf-text-display-sm);
+}
+:where(body:not(.admin-area)) .sf-prose :is(h3, h4) { margin-top: 1.75em; font-size: var(--sf-text-lg); }
+:where(body:not(.admin-area)) .sf-prose :is(h2, h3, h4) + * { margin-top: 0.75em; }
+:where(body:not(.admin-area)) .sf-prose > :first-child,
+:where(body:not(.admin-area)) .sf-prose > :first-child > h2:first-child {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+:where(body:not(.admin-area)) .sf-prose :is(ul, ol) { padding-inline-start: 1.25em; }
+:where(body:not(.admin-area)) .sf-prose li + li { margin-top: 0.4em; }
+:where(body:not(.admin-area)) .sf-prose li::marker { color: var(--sf-color-text-muted); }
+:where(body:not(.admin-area)) .sf-prose strong { font-weight: var(--sf-font-semibold); color: var(--sf-color-text); }
+:where(body:not(.admin-area)) .sf-prose hr { margin-block: 2.5em; border: 0; border-top: var(--sf-hairline); }
+:where(body:not(.admin-area)) .sf-prose a {
+  color: var(--sf-color-text);
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+:where(body:not(.admin-area)) .sf-prose a:hover { text-decoration-thickness: 2px; }
+
+:where(body:not(.admin-area)) .sf-muted { color: var(--sf-color-text-muted); }
+:where(body:not(.admin-area)) :is(.sf-price, .sf-compare) {
+  font-family: var(--sf-font-sans);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+:where(body:not(.admin-area)) .sf-price { font-weight: var(--sf-font-medium); color: var(--sf-color-price); }
+/* Strike-through is not announced: add <span class="sf-visually-hidden">Was</span>. */
+:where(body:not(.admin-area)) .sf-compare {
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-compare);
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1px;
+}
+:where(body:not(.admin-area)) .sf-sale { font-weight: var(--sf-font-medium); color: var(--sf-color-sale); }
+
+/* 3. BUTTONS -------------------------------------------------------------------
+   Variants only set --sf-btn-* properties; a CSS Module can set the same
+   properties on its own class to restyle one button. */
+:where(body:not(.admin-area)) .sf-btn {
+  --sf-btn-size: var(--sf-tap-target);
+  --sf-btn-bg: transparent;
+  --sf-btn-fg: var(--sf-color-text);
+  --sf-btn-border: transparent;
+  --sf-btn-bg-hover: var(--sf-btn-bg);
+  --sf-btn-fg-hover: var(--sf-btn-fg);
+  --sf-btn-border-hover: var(--sf-btn-border);
+  --sf-btn-focus: var(--sf-shadow-focus);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sf-space-2);
+  min-height: var(--sf-btn-size);
+  padding: 0 var(--sf-space-5);
+  border: 1px solid var(--sf-btn-border);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-btn-bg);
+  color: var(--sf-btn-fg);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-button);
+  text-align: center;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration) var(--sf-ease-out),
+    border-color var(--sf-duration) var(--sf-ease-out), color var(--sf-duration) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration) var(--sf-ease-out),
+    transform var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  :where(body:not(.admin-area)) .sf-btn:hover:where(:not(:disabled, [aria-disabled="true"])) {
+    border-color: var(--sf-btn-border-hover);
+    background-color: var(--sf-btn-bg-hover);
+    color: var(--sf-btn-fg-hover);
+  }
+}
+
+/* Press: a quiet 0.99 scale; never a lift. */
+:where(body:not(.admin-area)) .sf-btn:active:where(:not(:disabled, [aria-disabled="true"])) {
+  transform: scale(0.99);
+}
+:where(body:not(.admin-area)) .sf-btn:is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: not-allowed; }
+
+:where(body:not(.admin-area)) .sf-btn--primary {
+  --sf-btn-bg: var(--sf-color-primary);
+  --sf-btn-fg: var(--sf-color-primary-contrast);
+  --sf-btn-border: var(--sf-color-primary);
+  --sf-btn-bg-hover: var(--sf-color-primary-hover);
+  --sf-btn-border-hover: var(--sf-color-primary-hover);
+}
+:where(body:not(.admin-area)) .sf-btn--ghost {
+  --sf-btn-fg: var(--sf-color-primary);
+  --sf-btn-border: var(--sf-color-primary);
+  --sf-btn-bg-hover: var(--sf-color-primary-soft);
+}
+/* --paper / --paper-ghost sit on always-dark surfaces (navy bands, footer,
+   photo scrims), so they use the fixed brand and on-dark tokens. */
+:where(body:not(.admin-area)) .sf-btn--paper {
+  --sf-btn-bg: var(--sf-brand-paper);
+  --sf-btn-fg: var(--sf-brand-ink);
+  --sf-btn-border: var(--sf-brand-paper);
+  --sf-btn-bg-hover: var(--sf-color-on-dark-accent);
+  --sf-btn-border-hover: var(--sf-color-on-dark-accent);
+}
+:where(body:not(.admin-area)) .sf-btn--paper-ghost {
+  --sf-btn-fg: var(--sf-color-on-dark);
+  --sf-btn-border: var(--sf-color-on-dark);
+  --sf-btn-bg-hover: var(--sf-color-on-dark-border);
+}
+:where(body:not(.admin-area)) :is(.sf-btn--paper, .sf-btn--paper-ghost) {
+  --sf-btn-focus: 0 0 0 2px var(--sf-color-on-dark-accent), 0 0 0 5px var(--sf-color-focus-halo);
+}
+
+/* Inline text link; the underline turns accent on hover. ::after extends the
+   hit area to 44px without moving the layout. */
+:where(body:not(.admin-area)) .sf-btn--link {
+  --sf-btn-size: 0;
+  --sf-btn-focus: none;
+  --sf-btn-underline: var(--sf-color-accent);
+  position: relative;
+  padding: 0;
+  border: 0;
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-border);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+}
+:where(body:not(.admin-area)) .sf-btn--link::after { content: ""; position: absolute; inset: -14px -6px; }
+
+@media (hover: hover) {
+  :where(body:not(.admin-area)) .sf-btn--link:hover:where(:not(:disabled, [aria-disabled="true"])) {
+    text-decoration-color: var(--sf-btn-underline);
+  }
+}
+
+:where(body:not(.admin-area)) .sf-btn--sm { --sf-btn-size: 36px; padding-inline: var(--sf-space-4); }
+:where(body:not(.admin-area)) .sf-btn--lg {
+  --sf-btn-size: 52px;
+  padding-inline: var(--sf-space-8);
+  font-size: var(--sf-text-base);
+}
+/* Small buttons keep a full 44px target on touch screens. */
+@media (pointer: coarse) {
+  :where(body:not(.admin-area)) .sf-btn--sm { --sf-btn-size: var(--sf-tap-target); }
+}
+:where(body:not(.admin-area)) .sf-btn--block { display: flex; width: 100%; }
+/* Square, icon-only: give it an aria-label. */
+:where(body:not(.admin-area)) .sf-btn--icon { width: var(--sf-btn-size); padding: 0; }
+:where(body:not(.admin-area)) .sf-btn__icon { display: inline-flex; flex: none; font-size: 1.25em; line-height: 0; }
+:where(body:not(.admin-area)) .sf-btn__icon svg { width: 1em; height: 1em; font-size: inherit; }
+
+/* 4. FORM FIELDS -------------------------------------------------------------- */
+:where(body:not(.admin-area)) .sf-field {
+  display: grid;
+  gap: var(--sf-space-2);
+  align-content: start;
+  min-width: 0;
+}
+/* 13px label above the control; a bare <label> child works too. */
+:where(body:not(.admin-area)) .sf-field__label,
+:where(body:not(.admin-area)) .sf-field > :where(label) {
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+:where(body:not(.admin-area)) :is(.sf-field__hint, .sf-field__error) {
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem;
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+/* Errors lead with a circled "!" so colour is never the only signal. */
+:where(body:not(.admin-area)) .sf-field__error {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--sf-color-error);
+}
+:where(body:not(.admin-area)) .sf-field__error::before {
+  content: "!";
+  content: "!" / "";
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: 14px;
+  height: 14px;
+  margin-top: 0.2em;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  font-size: 10px;
+  font-weight: var(--sf-font-semibold);
+  line-height: 1;
+}
+
+:where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea) {
+  display: block;
+  width: 100%;
+  height: var(--sf-tap-target);
+  padding: 0 var(--sf-space-4);
+  border: 1px solid var(--sf-color-border-strong);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-normal);
+  appearance: none;
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out),
+    box-shadow var(--sf-duration-fast) var(--sf-ease-out);
+}
+:where(body:not(.admin-area)) .sf-textarea {
+  height: auto;
+  min-height: 120px;
+  padding-block: var(--sf-space-3);
+  line-height: var(--sf-leading-body);
+  resize: vertical;
+}
+:where(body:not(.admin-area)) :is(.sf-input, .sf-textarea)::placeholder {
+  color: var(--sf-color-text-muted);
+  opacity: 1;
+}
+
+/* Same weight as :focus and [aria-invalid] below, which therefore win. */
+@media (hover: hover) {
+  :where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea):hover:where(:not(:disabled)) {
+    border-color: var(--sf-color-text-muted);
+  }
+}
+
+:where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea):focus {
+  outline: 2px solid transparent;
+  border-color: var(--sf-color-accent);
+  box-shadow: var(--sf-shadow-focus);
+}
+/* After :focus, so an invalid field keeps its error border while focused. */
+:where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea)[aria-invalid="true"] {
+  border-color: var(--sf-color-error);
+}
+:where(body:not(.admin-area)) :is(.sf-input, .sf-textarea)[readonly] { background-color: var(--sf-color-sand); }
+:where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea):disabled {
+  background-color: var(--sf-color-sand);
+  color: var(--sf-color-text-muted);
+  cursor: not-allowed;
+}
+/* Native pickers, scrollbars and the option list follow the theme. */
+:where(body.dark:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea) { color-scheme: dark; }
+/* iOS zooms into fields below 16px, so touch screens get 16px. */
+@media (pointer: coarse) {
+  :where(body:not(.admin-area)) :is(.sf-input, .sf-select, .sf-textarea) { font-size: var(--sf-text-base); }
+}
+
+/* Chevron: two 1.5px strokes drawn in currentColor, so it follows the ink
+   token in both modes (a data-URI SVG cannot inherit currentColor; it would
+   render black and vanish on dark surfaces). */
+:where(body:not(.admin-area)) .sf-select {
+  padding-inline-end: calc(var(--sf-space-8) + var(--sf-space-2));
+  background-image:
+    linear-gradient(45deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px) calc(50% + 0.75px), transparent calc(50% + 0.75px)),
+    linear-gradient(135deg, transparent calc(50% - 0.75px), currentColor calc(50% - 0.75px) calc(50% + 0.75px), transparent calc(50% + 0.75px));
+  background-position: right 21px center, right 16px center;
+  background-size: 6px 6px;
+  background-repeat: no-repeat;
+  cursor: pointer;
+}
+
+/* Checkbox, radio, switch: <label class="sf-check"><input type="checkbox" />
+   Label</label>. The label row is the 44px target. */
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  min-height: var(--sf-tap-target);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input {
+  flex: none;
+  margin: 0;
+  border: 1px solid var(--sf-color-border-strong);
+  background-color: var(--sf-color-surface);
+  cursor: inherit;
+  appearance: none;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio) input {
+  display: inline-grid;
+  place-content: center;
+  width: 20px;
+  height: 20px;
+  color: var(--sf-color-accent-contrast);
+}
+:where(body:not(.admin-area)) .sf-check input { border-radius: var(--sf-radius-sm); }
+:where(body:not(.admin-area)) .sf-radio input { border-radius: 50%; }
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio) input::before {
+  content: "";
+  transform: scale(0);
+  transition: transform var(--sf-duration-fast) var(--sf-ease-out);
+}
+/* The check mark is a clipped square in currentColor (accent-contrast). */
+:where(body:not(.admin-area)) .sf-check input::before {
+  width: 12px;
+  height: 12px;
+  background-color: currentColor;
+  clip-path: polygon(14% 44%, 0 65%, 50% 100%, 100% 16%, 80% 0%, 43% 62%);
+}
+:where(body:not(.admin-area)) .sf-check input:indeterminate::before { clip-path: inset(42% 8%); }
+:where(body:not(.admin-area)) .sf-radio input::before {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background-color: var(--sf-color-accent);
+}
+:where(body:not(.admin-area)) .sf-check input:is(:checked, :indeterminate) {
+  border-color: var(--sf-color-accent);
+  background-color: var(--sf-color-accent);
+}
+:where(body:not(.admin-area)) .sf-radio input:checked { border-color: var(--sf-color-accent); }
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio) input:is(:checked, :indeterminate)::before {
+  transform: scale(1);
+}
+
+/* Switch: a pill that turns ink when on (<input type="checkbox" role="switch">). */
+:where(body:not(.admin-area)) .sf-switch input {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  border-radius: var(--sf-radius-pill);
+}
+:where(body:not(.admin-area)) .sf-switch input::before {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background-color: var(--sf-color-text-muted);
+  transition: transform var(--sf-duration-fast) var(--sf-ease-out),
+    background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+:where(body:not(.admin-area)) .sf-switch input:checked {
+  border-color: var(--sf-color-primary);
+  background-color: var(--sf-color-primary);
+}
+:where(body:not(.admin-area)) .sf-switch input:checked::before {
+  background-color: var(--sf-color-primary-contrast);
+  transform: translateX(16px);
+}
+
+@media (hover: hover) {
+  :where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input:not(:checked, :disabled):hover {
+    border-color: var(--sf-color-text-muted);
+  }
+}
+
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input:disabled { opacity: 0.5; }
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch):has(input:disabled) {
+  color: var(--sf-color-text-muted);
+  cursor: not-allowed;
+}
+
+/* 5. BADGES, CHIPS, COUNTS ---------------------------------------------------- */
+:where(body:not(.admin-area)) .sf-badge {
+  --sf-badge-bg: var(--sf-color-sand);
+  --sf-badge-fg: var(--sf-color-text);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-1);
+  min-height: 22px;
+  padding: 0 var(--sf-space-2);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-badge-bg);
+  color: var(--sf-badge-fg);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-semibold);
+  line-height: 1;
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+/* Soft tints behind matching text (pass in both modes); --paper is fixed for
+   photography and dark surfaces. */
+:where(body:not(.admin-area)) .sf-badge--ink { --sf-badge-bg: var(--sf-color-primary); --sf-badge-fg: var(--sf-color-primary-contrast); }
+:where(body:not(.admin-area)) .sf-badge--paper { --sf-badge-bg: var(--sf-brand-paper); --sf-badge-fg: var(--sf-brand-ink); }
+:where(body:not(.admin-area)) .sf-badge--sand { --sf-badge-bg: var(--sf-color-sand); --sf-badge-fg: var(--sf-color-text); }
+:where(body:not(.admin-area)) .sf-badge--accent { --sf-badge-bg: var(--sf-color-discount-bg); --sf-badge-fg: var(--sf-color-discount); }
+:where(body:not(.admin-area)) .sf-badge--success { --sf-badge-bg: var(--sf-color-success-bg); --sf-badge-fg: var(--sf-color-success); }
+:where(body:not(.admin-area)) .sf-badge--warning { --sf-badge-bg: var(--sf-color-warning-bg); --sf-badge-fg: var(--sf-color-warning); }
+:where(body:not(.admin-area)) .sf-badge--error { --sf-badge-bg: var(--sf-color-error-bg); --sf-badge-fg: var(--sf-color-error); }
+:where(body:not(.admin-area)) .sf-badge--info { --sf-badge-bg: var(--sf-color-info-bg); --sf-badge-fg: var(--sf-color-info); }
+
+/* Filter, tag and toggle chips; aria-pressed / aria-checked select them too. */
+:where(body:not(.admin-area)) .sf-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--sf-space-2);
+  min-height: 32px;
+  padding: 0 var(--sf-space-4);
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration) var(--sf-ease-out),
+    border-color var(--sf-duration) var(--sf-ease-out), color var(--sf-duration) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  :where(body:not(.admin-area)) .sf-chip:hover:where(:not(:disabled, [aria-disabled="true"])) {
+    border-color: var(--sf-color-primary);
+  }
+}
+
+:where(body:not(.admin-area)) :is(.sf-chip--selected, .sf-chip[aria-pressed="true"], .sf-chip[aria-checked="true"]) {
+  border-color: var(--sf-color-primary);
+  background-color: var(--sf-color-primary);
+  color: var(--sf-color-primary-contrast);
+}
+:where(body:not(.admin-area)) .sf-chip:is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: not-allowed; }
+
+/* Cart / wishlist count: a small ink disc with paper digits. */
+:where(body:not(.admin-area)) .sf-count {
+  display: inline-grid;
+  place-items: center;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: var(--sf-radius-pill);
+  background-color: var(--sf-color-primary);
+  color: var(--sf-color-primary-contrast);
+  font-family: var(--sf-font-sans);
+  font-size: 0.625rem;
+  font-weight: var(--sf-font-semibold);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+/* 6. CARDS, PANELS, HAIRLINES --------------------------------------------------
+   --sf-card-padding overrides the fluid 16-24px padding (0 for media cards). */
+:where(body:not(.admin-area)) :is(.sf-card, .sf-panel) {
+  padding: var(--sf-card-padding, clamp(var(--sf-space-4), 4vw, var(--sf-space-6)));
+  border-radius: var(--sf-radius-sm);
+  color: var(--sf-color-text);
+}
+:where(body:not(.admin-area)) .sf-card { background-color: var(--sf-color-surface); }
+:where(body:not(.admin-area)) .sf-panel { background-color: var(--sf-color-sand); }
+:where(body:not(.admin-area)) :is(.sf-card--hairline, .sf-panel--hairline) { border: var(--sf-hairline); }
+:where(body:not(.admin-area)) .sf-hairline { height: 0; margin: 0; border: 0; border-top: var(--sf-hairline); }
+/* Middle-dot separator: <span class="sf-divider--dot" aria-hidden="true"></span> */
+:where(body:not(.admin-area)) .sf-divider--dot {
+  display: inline-block;
+  margin-inline: 0.5em;
+  color: var(--sf-color-text-muted);
+}
+:where(body:not(.admin-area)) .sf-divider--dot:empty::before { content: "\00B7"; }
+
+/* 7. TABS ----------------------------------------------------------------------
+   role="tablist" / "tab" / "tabpanel"; roving focus is the consumer's job.
+   Inset shadows draw the rules, so nothing is clipped when the strip scrolls. */
+:where(body:not(.admin-area)) .sf-tabs {
+  display: flex;
+  gap: var(--sf-space-6);
+  overflow-x: auto;
+  scrollbar-width: none;
+  box-shadow: inset 0 -1px 0 var(--sf-color-border);
+}
+:where(body:not(.admin-area)) .sf-tabs::-webkit-scrollbar { display: none; }
+:where(body:not(.admin-area)) .sf-tab {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sf-tap-target);
+  padding: 0 var(--sf-space-1);
+  border: 0;
+  background: none;
+  color: var(--sf-color-text-muted);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--sf-duration) var(--sf-ease-out), box-shadow var(--sf-duration) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  :where(body:not(.admin-area)) .sf-tab:hover { color: var(--sf-color-text); }
+}
+
+:where(body:not(.admin-area)) .sf-tab[aria-selected="true"] {
+  color: var(--sf-color-text);
+  box-shadow: inset 0 -1px 0 var(--sf-color-primary);
+}
+:where(body:not(.admin-area)) .sf-tabpanel { padding-top: var(--sf-space-6); }
+
+/* 8. SKELETONS -----------------------------------------------------------------
+   Sand blocks with a slow surface-coloured shimmer (2.5 × --sf-duration-slow =
+   1.6s), static under reduced motion. Mark them aria-hidden="true" and set
+   aria-busy="true" on the loading region. */
+:where(body:not(.admin-area)) .sf-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+:where(body:not(.admin-area)) .sf-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: linear-gradient(90deg, transparent, var(--sf-color-surface), transparent);
+  opacity: 0.7;
+  transform: translateX(-100%);
+  animation: sf-skeleton-shimmer calc(var(--sf-duration-slow) * 2.5) var(--sf-ease-in-out) infinite;
+}
+
+@keyframes sf-skeleton-shimmer {
+  to { transform: translateX(100%); }
+}
+
+:where(body:not(.admin-area)) .sf-skeleton--text { width: 100%; height: 0.75em; }
+:where(body:not(.admin-area)) .sf-skeleton--text + .sf-skeleton--text { margin-top: 0.75em; }
+:where(body:not(.admin-area)) .sf-skeleton--text:last-child:not(:first-child) { width: 60%; }
+/* --ratio overrides the 4:5 product-image ratio; --size the 40px circle. */
+:where(body:not(.admin-area)) .sf-skeleton--image { width: 100%; aspect-ratio: var(--ratio, 4 / 5); }
+:where(body:not(.admin-area)) .sf-skeleton--circle {
+  width: var(--size, 40px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(body:not(.admin-area)) .sf-skeleton::after { animation: none; opacity: 0; }
+}
+
+/* 9. ACCESSIBILITY ------------------------------------------------------------- */
+:where(body:not(.admin-area)) .sf-visually-hidden {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  margin: -1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0 0 0 0) !important;
+  clip-path: inset(50%) !important;
+  border: 0 !important;
+  white-space: nowrap !important;
+}
+
+/* "Skip to content": off-screen until focused, then an ink tab top-left. */
+:where(body:not(.admin-area)) .sf-skip-link {
+  position: fixed;
+  top: var(--sf-space-3);
+  left: var(--sf-space-3);
+  z-index: var(--sf-z-modal);
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--sf-tap-target);
+  padding: 0 var(--sf-space-5);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-primary);
+  color: var(--sf-color-primary-contrast);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  text-decoration: none;
+  transform: translateY(calc(-100% - var(--sf-space-6)));
+  transition: transform var(--sf-duration-fast) var(--sf-ease-out);
+}
+:where(body:not(.admin-area)) .sf-skip-link:focus { transform: none; }
+
+/* Focus rings. The transparent outline becomes a real outline in forced-colours
+   mode, where box-shadow is dropped. .sf-focus gives any custom control the ring. */
+:where(body:not(.admin-area)) :is(.sf-btn, .sf-chip, .sf-focus):focus-visible,
+:where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input:focus-visible,
+:where(body:not(.admin-area)) .sf-skip-link:focus {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-btn-focus, var(--sf-shadow-focus));
+}
+/* Inline and scrolling elements use an outline (a box-shadow would wrap or clip). */
+:where(body:not(.admin-area)) :is(.sf-btn--link, .sf-prose a):focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 4px;
+  border-radius: 1px;
+}
+:where(body:not(.admin-area)) .sf-tab:focus-visible { outline: 2px solid var(--sf-color-focus); outline-offset: -2px; }
+:where(body:not(.admin-area)) .sf-tabpanel:focus-visible { outline: 2px solid var(--sf-color-focus); outline-offset: 4px; }
+
+/* 10. FORCED COLOURS (Windows contrast themes) --------------------------------- */
+@media (forced-colors: active) {
+  :where(body:not(.admin-area)) .sf-select { background-image: none; appearance: auto; }
+  :where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input::before {
+    background-color: CanvasText;
+  }
+  :where(body:not(.admin-area)) .sf-skeleton::after { display: none; }
+}
