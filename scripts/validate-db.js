@@ -11,7 +11,8 @@
 //                                             order money math, wallet ledger)
 //   node scripts/validate-db.js path/to/db.json [--catalogue]
 //
-// Exits 1 when any check fails. Prompts 04, 05 and 34 extend COVERAGE and the
+// Exits 1 when any check fails. Prompt 04 added its COVERAGE rows, TREE, BRANDS
+// and leaf checks; Prompts 05 and 34 extend the
 // full-mode checks rather than loosening anything here.
 // =============================================================================
 
@@ -47,7 +48,7 @@ const DEPARTMENTS = [
 ];
 
 // Proof of coverage: exact product count per category slug. Every active
-// product must sit in a slug listed here. Prompt 04 appends its rows.
+// product must sit in a slug listed here.
 const COVERAGE = [
   // Prompt 03 — client-specified ranges (46)
   ["plastic-essentials-armchairs", 3],
@@ -65,11 +66,49 @@ const COVERAGE = [
   ["office-premium-low-back", 2],
   ["office-premium-waiting", 3],
   ["cafe-restaurant-chairs", 10],
+  // Prompt 04 — ranges from the client's existing website (38)
+  ["sofas", 4],
+  ["sofa-cum-beds", 2],
+  ["centre-tables-showcases", 2],
+  ["beds", 3],
+  ["mattresses", 2],
+  ["dressing-tables-mirrors", 4],
+  ["bedside-bed-tables", 3],
+  ["almirahs", 2],
+  ["alna-clothes-stands", 2],
+  ["racks", 2],
+  ["dining-sets", 3],
+  ["office-tables", 2],
+  ["computer-tables", 2],
+  ["reading-tables", 2],
+  ["plastic-dining-sets", 2],
+  ["plastic-sofas", 1],
 ];
+// Leaves may hold a single product only where the reference site lists a
+// single model and the tree in Prompt 04 still gives it its own leaf.
+const SINGLE_PRODUCT_LEAVES = ["plastic-sofas"];
+// Prompt 04 subtrees: slug -> [parent slug, sortOrder].
+const TREE = {
+  "living-room": ["home-furniture", 1], "sofas": ["living-room", 1], "sofa-cum-beds": ["living-room", 2],
+  "centre-tables-showcases": ["living-room", 3], "bedroom": ["home-furniture", 2], "beds": ["bedroom", 1],
+  "mattresses": ["bedroom", 2], "dressing-tables-mirrors": ["bedroom", 3], "bedside-bed-tables": ["bedroom", 4],
+  "almirahs": ["bedroom", 5], "alna-clothes-stands": ["bedroom", 6], "dining-room": ["home-furniture", 3],
+  "dining-sets": ["dining-room", 1], "storage": ["home-furniture", 4], "racks": ["storage", 1],
+  "office-tables": ["office-tables-desks", 1], "computer-tables": ["office-tables-desks", 2],
+  "reading-tables": ["office-tables-desks", 3], "plastic-dining-sets": ["plastic-furniture", 3],
+  "plastic-sofas": ["plastic-furniture", 4],
+};
+// The only brand values allowed on products ("" hides the brand on the card).
+const BRANDS = ["", "A & S Urbanseat", "Nilkamal", "Carlton", "Winsome"];
 // Variant structure required per slug: attribute name and exact values.
 const VARIANT_RULES = {
   "plastic-shoe-racks": { attr: "Shelves", values: ["2 shelves", "3 shelves", "4 shelves", "5 shelves"], perVariantPrice: true },
   "outdoor-furniture": { attr: "Size", values: ["Small", "Large"], perVariantPrice: true },
+  "mattresses": { attr: "Size", values: ["Single", "Double", "Queen", "King"], perVariantPrice: true },
+  "racks": { attr: "Shelves", values: ["3 shelves", "4 shelves", "5 shelves"], perVariantPrice: true },
+  "office-tables": { attr: "Size", values: ["120 × 60 cm", "150 × 75 cm"], perVariantPrice: true },
+  "computer-tables": { attr: "Size", values: ["90 × 60 cm", "120 × 60 cm"], perVariantPrice: true },
+  "reading-tables": { attr: "Size", values: ["75 × 50 cm", "90 × 60 cm"], perVariantPrice: true },
 };
 
 // ---------------------------------------------------------------- helpers
@@ -130,6 +169,13 @@ DEPARTMENTS.forEach(([id, slug], i) => {
     check(c.slug === slug, `department ${id}`, `slug ${c.slug} ≠ ${slug}`);
     check(c.parentId === null && c.isActive && c.showInMainMenu === true && c.menuOrder === i + 1,
       `department ${id}`, "must be active, top-level, in the main menu at its fixed menuOrder");
+  }
+});
+Object.entries(TREE).forEach(([slug, [parentSlug, sortOrder]]) => {
+  const c = categories.find((x) => x.slug === slug);
+  if (check(c, "tree", `category ${slug} missing`)) {
+    check(catById.get(String(c.parentId))?.slug === parentSlug, `category ${c.id} (${slug})`, `parent must be ${parentSlug}`);
+    check(c.sortOrder === sortOrder && c.isActive, `category ${c.id} (${slug})`, `must be active with sortOrder ${sortOrder}`);
   }
 });
 categories.filter((c) => c.showInMainMenu && !DEPARTMENTS.some(([id]) => id === c.id))
@@ -237,6 +283,7 @@ products.forEach((p) => {
   // tags
   check(Array.isArray(p.tags) && p.tags.length > 0, at, "needs tags");
   check((p.tags || []).every((t) => t === String(t).toLowerCase()), at, "tags must be lowercase");
+  check(BRANDS.includes(p.brand), at, `brand "${p.brand}" is not one of ${BRANDS.filter(Boolean).join(", ")} or ""`);
   if (p.brand) check(p.tags.includes(p.brand.toLowerCase()), at, "tags must include the brand");
 
   // relations
@@ -269,6 +316,11 @@ COVERAGE.forEach(([slug, n]) => {
 });
 Object.keys(slugCount).filter((s) => !covered.has(s))
   .forEach((s) => fail("coverage", `${slugCount[s]} product(s) in ${s}, which is not in the coverage table`));
+// every active leaf category holds at least two products (no lonely listing)
+categories.filter((c) => c.isActive && !hasActiveChildren(c.id)).forEach((c) => {
+  const min = SINGLE_PRODUCT_LEAVES.includes(c.slug) ? 1 : 2;
+  check((slugCount[c.slug] || 0) >= min, `category ${c.id} (${c.slug})`, `leaf holds ${slugCount[c.slug] || 0} product(s), needs ${min}+`);
+});
 const expectedTotal = COVERAGE.reduce((a, [, n]) => a + n, 0);
 check(products.length === expectedTotal, "coverage", `expected ${expectedTotal} products, found ${products.length}`);
 Object.entries(VARIANT_RULES).forEach(([slug, rule]) => {
@@ -360,6 +412,7 @@ row("Categories", `${categories.length} (${categories.filter((c) => c.parentId =
 row("Products", `${products.length} (${products.filter((p) => p.isActive).length} active)`);
 row("Variants", products.reduce((a, p) => a + (p.variants || []).length, 0));
 row("Featured / trending / hot", ["featured", "trending", "hot"].map((k) => products.filter((p) => p[k]).length).join(" / "));
+row("Brands", [...new Set(products.map((p) => p.brand).filter(Boolean))].join(", "));
 row("Low-stock / out-of-stock variants", `${lowStockVariants} / ${outOfStockVariants}`);
 DEPARTMENTS.forEach(([id, slug]) => row(`  dept ${id} ${slug}`, `${products.filter((p) => deptOf(p.categoryId) === id).length} products`));
 COVERAGE.forEach(([slug, n]) => row(`  ${slug}`, `${slugCount[slug] || 0}/${n}`));

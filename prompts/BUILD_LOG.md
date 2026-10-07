@@ -331,3 +331,173 @@ Self-test: a copy with seeded faults (wrong price, dangling relation, extra key,
 - **All specifications, dimensions, weights, colours and finishes**, including what the Lobby Set's Small and Large configurations contain.
 - **Brand attribution:** Nilkamal on every plastic product. Office, café and outdoor products have no brand.
 - **Category copy** (descriptions), and the tier labels "Essentials" and "Premium" as the shopper-facing names.
+
+---
+
+## Prompt 04 — Catalogue data II
+
+**Date:** 2026-10-07. **Files:** `db.json` (`categories`, `products`), `scripts/validate-db.js`. No file under `src/`, `public/`, `server.js` or `package.json` changed. No other `db.json` collection changed, which was checked by comparing every top-level key against `HEAD`. Every Prompt 03 record is byte-identical except the `frequentlyBoughtTogetherIds` of the office chairs listed under Relations.
+
+### What was done
+
+- `categories`: 20 records appended (ids 30–49). Departments 1–6 are unchanged in id, slug and menu order, and every new record uses `showInMainMenu: false, menuOrder: 0`. Total: 43 categories.
+- `products`: 38 records appended (ids 47–84). Total: 84 active products. Key sets and key order are the same as Prompt 03: 30 product keys, and variant keys `id, name, price, stock, sku, attributes`, plus `swatchHex` on Colour/Finish variants only. All new products have `rating: 0, totalReviews: 0`.
+- Generated with a throwaway script kept outside the repo. It appends records and never renumbers existing ones. Output is 2-space JSON with no trailing newline, as before.
+
+### Category tree (added)
+
+```
+1  Plastic Furniture                         (existing)
+   48 Dining Sets           plastic-dining-sets       sort 3
+   49 Sofas                 plastic-sofas             sort 4
+5  Home Furniture                            (existing, menu 5)
+   30 Living Room           living-room               sort 1
+      31 Sofas              sofas                     sort 1
+      32 Sofa-cum-Beds      sofa-cum-beds             sort 2
+      33 Centre Tables & Showcases  centre-tables-showcases  sort 3
+   34 Bedroom               bedroom                   sort 2
+      35 Beds               beds                      sort 1
+      36 Mattresses         mattresses                sort 2
+      37 Dressing Tables & Mirrors  dressing-tables-mirrors  sort 3
+      38 Bedside & Bed Tables       bedside-bed-tables       sort 4
+      39 Almirahs           almirahs                  sort 5
+      40 Alna Clothes Stands alna-clothes-stands      sort 6
+   41 Dining Room           dining-room               sort 3
+      42 Dining Sets        dining-sets               sort 1
+   43 Storage               storage                   sort 4
+      44 Racks              racks                     sort 1
+6  Office Tables & Desks                     (existing, menu 6)
+   45 Office Tables         office-tables             sort 1
+   46 Computer Tables       computer-tables           sort 2
+   47 Reading Tables        reading-tables            sort 3
+```
+
+Category images use `https://placehold.co/1600x1000/f1ebe1/686158?text=<Slug+Words>`, and dates match Prompt 03 (created 2026-04-10, updated 2026-10-06). `orderCategoriesHierarchically` lists each department followed by its children in this order. `getMainMenuCategories` still returns exactly the six departments.
+
+**Tree shaping decision:** each leaf holds at least two products, so no listing page shows a single product on its own. The reference site lists only one centre table and one showcase, so they share the leaf "Centre Tables & Showcases". It lists two bedside tables and one bed table, which share "Bedside & Bed Tables". **Deviation:** the prompt's tree and checklist give `plastic-sofas` a leaf of its own with one product, because the site lists a single Nilkamal plastic sofa. The tree and the 38-product count were kept as specified. `plastic-sofas` is the only leaf with one product, and the validator's `SINGLE_PRODUCT_LEAVES` allows it by name. If the client wants no single-product leaves, the alternatives are a second plastic sofa model or a shared "Dining Sets & Sofas" leaf.
+
+### Proof of coverage (38)
+
+| Site range → model | Category (id) | Product (id) | brand | Variants and placeholder price |
+|---|---|---|---|---|
+| Sofa → Wooden | `sofas` (31) | 47 Wooden Sofa Set | A & S Urbanseat | Colour: Sand Beige, Slate Grey, Maroon · ₹32,999, was ₹37,999 |
+| Sofa → L-Shaped | `sofas` (31) | 48 L-Shaped Sofa | A & S Urbanseat | Colour: Slate Grey, Sand Beige, Teal Blue · ₹44,999 |
+| Sofa → 5 Seater | `sofas` (31) | 49 5-Seater Sofa Set | A & S Urbanseat | Colour ×3 · ₹38,999, was ₹44,999 |
+| Sofa → 7 Seater | `sofas` (31) | 50 7-Seater Sofa Set | A & S Urbanseat | Colour ×3 · ₹58,999 |
+| Sofa Cum Bed → Steel | `sofa-cum-beds` (32) | 51 Steel Sofa-cum-Bed | "" | Colour ×3 · ₹15,999 |
+| Sofa Cum Bed → Wooden | `sofa-cum-beds` (32) | 52 Wooden Sofa-cum-Bed | A & S Urbanseat | Colour ×2 · ₹28,999, was ₹32,999 |
+| Center Table → Wooden | `centre-tables-showcases` (33) | 53 Wooden Centre Table | A & S Urbanseat | Finish: Walnut, Natural Oak · ₹7,999 |
+| Showcase → Wooden | `centre-tables-showcases` (33) | 54 Wooden Showcase | A & S Urbanseat | Finish: Walnut, Teak · ₹18,999 |
+| Bed → King | `beds` (35) | 55 King Size Bed | A & S Urbanseat | Finish: Walnut, Wenge · ₹34,999, was ₹39,999 |
+| Bed → Queen | `beds` (35) | 56 Queen Size Bed | A & S Urbanseat | Finish: Walnut, Natural Oak · ₹27,999 |
+| Bed → Single | `beds` (35) | 57 Single Bed | A & S Urbanseat | Finish: Walnut, Natural Oak · ₹13,999, was ₹15,999 |
+| Mattress → Carlton | `mattresses` (36) | 58 Carlton Mattress | Carlton | Size: Single ₹8,999 / Double ₹14,999 / Queen ₹19,999 / King ₹23,999 |
+| Mattress → Nilkamal | `mattresses` (36) | 59 Nilkamal Mattress | Nilkamal | Size: Single ₹5,599 / Double ₹9,499 / Queen ₹12,499 / King ₹14,999 |
+| Dressing → Plain | `dressing-tables-mirrors` (37) | 60 Plain Dressing Table | A & S Urbanseat | Finish: Walnut, Frosty White · ₹7,499 |
+| Dressing → Big Size | `dressing-tables-mirrors` (37) | 61 Large Dressing Table | A & S Urbanseat | Finish: Walnut, Wenge · ₹15,999, was ₹17,999 |
+| Dressing → Standing Mirror | `dressing-tables-mirrors` (37) | 62 Standing Mirror | A & S Urbanseat | Finish: Walnut, Natural Oak · ₹5,499 |
+| Dressing → Wall Mirror | `dressing-tables-mirrors` (37) | 63 Wall Mirror | A & S Urbanseat | Finish: Walnut, Frosty White · ₹2,799 |
+| Bed Set Table → Wooden | `bedside-bed-tables` (38) | 64 Wooden Bedside Table | A & S Urbanseat | Finish ×2 · ₹4,499 |
+| Bed Set Table → Particle Board | `bedside-bed-tables` (38) | 65 Particle-Board Bedside Table | "" | Finish ×2 · ₹2,499, was ₹2,899 |
+| Bed Table → Folding | `bedside-bed-tables` (38) | 66 Folding Bed Table | "" | Colour: Natural Oak, Matte Black · ₹1,899 |
+| Almari → Two Doors | `almirahs` (39) | 67 Two-Door Almirah | A & S Urbanseat | Finish: Walnut, Wenge · ₹12,999 |
+| Almari → 3 Doors | `almirahs` (39) | 68 Three-Door Almirah | A & S Urbanseat | Finish: Walnut, Wenge (out of stock) · ₹21,999, was ₹24,999 |
+| Alna → Iron | `alna-clothes-stands` (40) | 69 Iron Alna (Clothes Stand) | "" | `[]` · ₹1,699 |
+| Alna → Wooden | `alna-clothes-stands` (40) | 70 Wooden Alna (Clothes Stand) | A & S Urbanseat | `[]` · ₹4,299 |
+| Rack → Steel | `racks` (44) | 71 Steel Storage Rack | "" | Shelves: 3 ₹3,199 / 4 ₹3,799 / 5 ₹4,499 |
+| Rack → Wooden | `racks` (44) | 72 Wooden Storage Rack | A & S Urbanseat | Shelves: 3 ₹5,499 / 4 ₹6,999 / 5 ₹8,499 (out of stock) |
+| Dining → 4 Sitter | `dining-sets` (42) | 73 4-Seater Dining Set | A & S Urbanseat | Finish: Walnut, Natural Oak · ₹21,999 |
+| Dining → 6 Sitter | `dining-sets` (42) | 74 6-Seater Dining Set | A & S Urbanseat | Finish: Walnut, Teak · ₹34,999, was ₹39,999 |
+| Dining → Marble | `dining-sets` (42) | 75 Marble-Top Dining Set | A & S Urbanseat | Finish: Walnut, Wenge · ₹54,999 |
+| Office Table → Company Made (Winsome) | `office-tables` (45) | 76 Winsome Office Table | Winsome | Size: 120 × 60 cm ₹12,999 / 150 × 75 cm ₹16,999 |
+| Office Table → Local Made | `office-tables` (45) | 77 Workshop Office Table | A & S Urbanseat | Size: ₹8,999 / ₹11,999 |
+| Computer Table → Company Made (Winsome) | `computer-tables` (46) | 78 Winsome Computer Table | Winsome | Size: 90 × 60 cm ₹8,499 / 120 × 60 cm ₹10,999; was ₹9,499 |
+| Computer Table → Local Made | `computer-tables` (46) | 79 Workshop Computer Table | A & S Urbanseat | Size: ₹5,999 / ₹7,499 |
+| Reading Table → Company Made (Winsome) | `reading-tables` (47) | 80 Winsome Reading Table | Winsome | Size: 75 × 50 cm ₹5,999 / 90 × 60 cm ₹7,499 |
+| Reading Table → Local Made | `reading-tables` (47) | 81 Workshop Reading Table | A & S Urbanseat | Size: ₹4,199 / ₹5,299; was ₹4,799 |
+| Plastic Dining → 4 Seater | `plastic-dining-sets` (48) | 82 4-Seater Plastic Dining Set | Nilkamal | Colour: Marble Beige, Coffee Brown, White · ₹5,999 |
+| Plastic Dining → 6 Seater | `plastic-dining-sets` (48) | 83 6-Seater Plastic Dining Set | Nilkamal | Colour ×2 · ₹9,999, was ₹10,999 |
+| Plastic Sofa → Nilkamal | `plastic-sofas` (49) | 84 Nilkamal Plastic Sofa Set | Nilkamal | Colour: Coffee Brown, Marble Beige, Pearl Grey · ₹12,999, was ₹14,999 |
+
+Total: 4 + 2 + 2 + 3 + 2 + 4 + 3 + 2 + 2 + 2 + 3 + 2 + 2 + 2 + 2 + 1 = 38. Departments after this prompt: Plastic 21, Office Chairs 16, Café 10, Outdoor 2, Home 29, Office Tables & Desks 6, for 84 in total.
+
+### Content conventions (in addition to Prompt 03's)
+
+- **SKUs:** `LIV-` living room, `BED-` bedroom, `DIN-` dining, `STO-` storage, `OFT-` office tables, `PLD-` plastic dining, `PLS-` plastic sofa. Variant suffixes: colour/finish codes (`-WAL`, `-BGE` …), `-SGL/-DBL/-QN/-KG` for mattresses, `-3S/-4S/-5S` for racks, and `-75/-90/-120/-150` (width in cm) for table sizes.
+- **Images:** `https://placehold.co/1200x1500/f1ebe1/686158?text=<Name>`, with `+Detail` and `+In+situ` versions, the same as Prompt 03.
+- **Specifications:** every description ends with a 5–7 pair `Specifications:` paragraph covering material, finish, size, seating or sleeping capacity, weight capacity where it applies, and care. Measurements are marked "approx.". Mattress copy describes construction and feel ("medium-firm", "medium") only, with no orthopaedic, medical or health claims. Product copy makes no warranty or "years in business" claims.
+- **Workshop wording:** "made in our own workshop" appears only where the site marks the item as own manufacturing or Local Made: 47 Wooden Sofa Set, 77, 79 and 81. The site's "Company Made" and "Local Made" labels are expressed through `brand` and the copy, and are not used as product names.
+- **Local terms:** "Almirah" (wardrobe) is glossed in the short descriptions, and "Alna" carries "(Clothes Stand)" in the name.
+- **Sized products:** `dimensions` and `weight` describe the largest option (King mattress, 5-shelf rack, larger table). The specifications paragraph covers every option.
+- **Stock and thresholds:** variants hold 6–22 units. Deliberately low: 7-Seater Sofa Slate Grey 3, Carlton King 4, Marble-Top Walnut 2. Out of stock: Three-Door Almirah Wenge, Wooden Rack 5 shelves. `lowStockThreshold` follows Prompt 03's rule: 8 below ₹3,000, 6 from ₹3,000, 5 from ₹9,000.
+- **Flags:** featured 47, 55, 68, 74, 76, a mix of home and office pieces. Trending 48, 59, 78, 84. Hot 51, 75.
+- **Dates:** created 2026-05-06 to 2026-08-29, updated no later than 2026-10-02.
+
+### Prices used (all placeholders)
+
+Sofas ₹32,999–₹58,999; sofa-cum-beds ₹15,999–₹28,999; centre table ₹7,999 and showcase ₹18,999; beds ₹13,999–₹34,999; mattresses ₹5,599–₹23,999 by size; dressing tables ₹7,499–₹15,999; mirrors ₹2,799–₹5,499; bedside and bed tables ₹1,899–₹4,499; almirahs ₹12,999–₹21,999; alna ₹1,699–₹4,299; racks ₹3,199–₹8,499; dining sets ₹21,999–₹54,999 (marble highest); office, computer and reading tables ₹4,199–₹16,999, with Winsome priced above the workshop pieces of the same type; plastic dining sets ₹5,999–₹9,999; plastic sofa ₹12,999. 13 of the 38 have a `comparePrice` 10–20% above price. `costPrice` is about 65–70% of price.
+
+### Relations
+
+- `relatedProductIds`: 4 ids within the same room or department, ordered same leaf first. Plastic dining sets and the plastic sofa list each other, then plastic chairs, armchairs and centre tables from Prompt 03.
+- `frequentlyBoughtTogetherIds`, natural bundles only:
+  - Each sofa set → Wooden Centre Table; the centre table → two sofa sets.
+  - Each bed → a mattress plus a bedside table; each mattress → two beds; each bedside table → a bed.
+  - Office, computer and reading tables → an office chair (29/31, 21/22, 33, 24, 25).
+  - Plastic sofa → Premium Round Plastic Centre Table (17).
+  - Dining sets, the showcase, dressing tables, mirrors, almirahs, alna, racks, sofa-cum-beds and plastic dining sets have `[]`.
+- **Prompt 03 products extended (chair → table):** 21, 22, 23 → +77 Workshop Office Table; 24, 25 → +79 Workshop Computer Table; 29, 30, 31, 32 → +76 Winsome Office Table; 33 → +78 Winsome Computer Table. None has more than 2 ids.
+
+### Brand mapping
+
+There are now four distinct non-empty brands, which Prompt 12's "Brands we carry" strip will show:
+
+- `A & S Urbanseat`: the own-manufacturing pieces.
+- `Nilkamal`: Prompt 03's plastic products, plus the Nilkamal mattress, the plastic dining sets and the plastic sofa.
+- `Carlton`: the Carlton mattress.
+- `Winsome`: the three Winsome tables.
+
+Unbranded items (`""`) are the steel sofa-cum-bed, the particle-board bedside table, the folding bed table, the iron alna and the steel rack. Each brand is also a lowercase tag, for example `a & s urbanseat`.
+
+### `scripts/validate-db.js` (extended)
+
+- `COVERAGE` has 16 new rows. The expected total is now 84.
+- `TREE` asserts the parent and `sortOrder` of every Prompt 04 category.
+- `BRANDS` limits `product.brand` to the four brands or `""`.
+- A new leaf check requires 2+ products on every active leaf. `SINGLE_PRODUCT_LEAVES` exempts only `plastic-sofas`.
+- `VARIANT_RULES` gained rules for:
+  - mattresses: Single/Double/Queen/King, rising prices
+  - racks: 3/4/5 shelves, rising prices
+  - office, computer and reading tables: their two sizes, rising prices
+- The summary now lists the distinct brands.
+- Self-test: a copy with seeded faults (renamed mattress size, a foreign brand, a product moved to the wrong leaf, a category re-parented) produced 9 failures and exit 1.
+
+### Verification
+
+- `node scripts/validate-db.js --catalogue`: all checks pass. Totals: 43 categories, 84 products, 199 variants, 14 featured / 11 trending / 6 hot, 6 low-stock / 4 out-of-stock variants.
+- `CI=true npm run build` compiled. `CI=true npm test -- --passWithNoTests` exited 0.
+- Chromium (Playwright) against JSON Server and `npm start`:
+  - **Listings:** `/products` shows "1–12 of 84" with pagination. `home-furniture` shows 29, `bedroom` 16 (bedroom pieces only), `living-room` 8, `office-tables-desks` 6, `plastic-furniture` 21. Every new leaf's deep link shows its expected count.
+  - **Search:** `?search=almirah` returns 2 and `?search=table` returns 30.
+  - **Product pages:**
+    - Carlton Mattress: the price changes with the size, ₹8,999 → ₹14,999 → ₹19,999 → ₹23,999.
+    - Wooden Storage Rack: ₹5,499 → ₹6,999, and 5 shelves shows "sold out" and is disabled.
+    - Winsome Office Table: ₹12,999 → ₹16,999.
+    - L-Shaped Sofa: the colour swatches keep the same price.
+  - **Cart:** the Nilkamal Mattress was added and appears in the cart drawer.
+  - **Keyboard:** the variant tiles can be reached with Tab and chosen with Enter.
+  - **Layout:** no horizontal overflow on `?category=home-furniture` at 360, 768, 1024 or 1440 px, and the filter sidebar lists the new categories.
+  - **Admin:** after login, Categories shows the full tree, including Living Room, Alna Clothes Stands, Reading Tables and `plastic-sofas`. Products opens the edit dialog for the Carlton Mattress, showing category Mattresses and the King variant.
+  - No page errors. `db.json` was byte-identical after the run.
+- **Observation (not changed, `src/` out of scope):** ArrowRight inside a variant radiogroup did not move the selection in this run, although Tab and Enter work. Prompt 03's log reports arrow keys working, so Prompt 16 should re-check the roving-focus behaviour of `VariantSelector`.
+
+### Needs client confirmation (placeholders)
+
+- **All 38 product names.** They are our wording of the site's range and model labels. In particular: "Large Dressing Table" for "Big Size", and "Workshop …" for the site's "Local Made" tables.
+- **All prices, compare-at prices, cost prices and stock levels.**
+- **All specifications, dimensions, weights, configurations, colours and finishes.** Examples: 3+1+1 for the wooden sofa, the contents of each dining set, mattress thickness and feel, and table sizes. The site lists none of these.
+- **Own-manufacturing attribution:** `brand: "A & S Urbanseat"` is set on the workshop-made pieces, and the copy says "made in our own workshop" on 47, 77, 79 and 81. The site marks only the wooden sofa and the Local Made tables as own manufacturing. Beds, almirahs, dressing tables, dining sets and the other `A & S Urbanseat` items were attributed by us and need confirming.
+- **Nilkamal attribution on the plastic dining sets (82, 83).** The site names Nilkamal only for the plastic sofa and the mattress.
+- **Unbranded items:** the steel sofa-cum-bed, particle-board bedside table, folding bed table, iron alna and steel rack. Confirm whether any of these carry a brand.
+- **`plastic-sofas` with a single product:** the client can keep it, add a model, or merge the leaf (see the tree shaping decision).
+- **Category copy** for the 20 new categories.
