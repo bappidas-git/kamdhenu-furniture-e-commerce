@@ -1,27 +1,46 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import { Icon } from "@iconify/react";
-import { useTheme } from "../../context/ThemeContext";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
 import { categoryParam } from "../../utils/categories";
 import HeroSection from "../../components/HeroSection/HeroSection";
 import AssuranceStrip from "../../components/storefront/AssuranceStrip";
+import FeaturedProducts from "../../components/FeaturedProducts/FeaturedProducts";
+import { PriceBlock, ProductCard, ProductRail } from "../../components/storefront";
+import { Reveal, SectionHeading, renderAccent, staggerDelay } from "../../components/ui";
+import {
+  COMPLETE_THE_SPACE,
+  HOME_SECTIONS,
+  SPACES,
+  STORY,
+} from "../../content/homeContent";
 import { APP_NAME, WHY_CHOOSE_US } from "../../utils/constants";
 import {
+  buildCartItem,
   formatCurrency,
   getProductMinPrice,
-  truncateText,
-  buildCartItem,
-  productPath,
-  PLACEHOLDER_IMG,
   onImageError,
+  PLACEHOLDER_IMG,
+  productPath,
 } from "../../utils/helpers";
 import styles from "./Home.module.css";
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
+// =============================================================================
+// Home page
+// =============================================================================
+// Hero and assurance strip (Prompt 10), then the discovery sections (Prompt
+// 11), in this order:
+//   Shop by space · story block 1 · Featured Collections · Complete the space
+//   (the one sand band) · story block 2 · Trending · Recently viewed
+// then the sections Prompt 12 owns. Copy and media come from homeContent.js.
+//
+// Data: categories, featured and trending products in one Promise.all (each
+// read falls back to [] on failure); once featured has resolved, the "Complete
+// the space" anchor and its companions. Sections whose data is missing are
+// hidden; nothing is invented to fill them.
+// =============================================================================
 
 // Must match the key written by ProductDetails.js so viewing a product
 // populates this list end-to-end.
@@ -36,236 +55,272 @@ const getRecentlyViewed = () => {
   }
 };
 
-const StarRating = ({ rating = 0, reviewCount = 0 }) => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.5;
+const isProduct = (product) =>
+  Boolean(product) && typeof product === "object" && product.id != null && product.isActive !== false;
 
-  for (let i = 0; i < 5; i++) {
-    if (i < fullStars) {
-      stars.push(
-        <span key={i} className={styles.starFull}>
-          &#9733;
-        </span>
-      );
-    } else if (i === fullStars && hasHalf) {
-      stars.push(
-        <span key={i} className={styles.starHalf}>
-          &#9733;
-        </span>
-      );
-    } else {
-      stars.push(
-        <span key={i} className={styles.starEmpty}>
-          &#9733;
-        </span>
-      );
-    }
+const productList = (value) => (Array.isArray(value) ? value.filter(isProduct) : []);
+
+// Fills "{count} pieces, {total}".
+const fillTemplate = (template, values) =>
+  template.replace(/\{(\w+)\}/g, (match, key) => (key in values ? String(values[key]) : match));
+
+// The "Complete the space" curation: the anchor (by slug, else the first
+// featured product with frequentlyBoughtTogetherIds) and two to four
+// companions (its frequently-bought-together pieces, topped up with related
+// products when those give fewer than two). Null hides the section.
+const loadCompleteTheSpace = async (featured = []) => {
+  const slug = COMPLETE_THE_SPACE.anchorProductSlug;
+  let anchor = slug ? await apiService.products.getBySlug(slug).catch(() => null) : null;
+  if (!isProduct(anchor)) {
+    anchor =
+      featured.find(
+        (product) =>
+          isProduct(product) &&
+          Array.isArray(product.frequentlyBoughtTogetherIds) &&
+          product.frequentlyBoughtTogetherIds.length > 0
+      ) || null;
   }
+  if (!anchor) return null;
+
+  const seen = new Set([String(anchor.id)]);
+  const unique = (product) => {
+    const key = String(product.id);
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  };
+  let companions = productList(
+    await apiService.products.getFrequentlyBoughtTogether(anchor, 4).catch(() => [])
+  ).filter(unique);
+  if (companions.length < 2) {
+    const related = productList(
+      await apiService.products.getRelated(anchor, 4).catch(() => [])
+    ).filter(unique);
+    companions = [...companions, ...related];
+  }
+  companions = companions.slice(0, 4);
+  return companions.length >= 2 ? { anchor, companions } : null;
+};
+
+// ── Shop by space ────────────────────────────────────────────────────────────
+
+const ShopBySpace = ({ categories, loading }) => {
+  const tiles = useMemo(
+    () =>
+      SPACES.map((space) => {
+        const category = categories.find(
+          (c) => c.slug === space.categorySlug && c.isActive !== false
+        );
+        return category ? { ...space, category } : null;
+      }).filter(Boolean),
+    [categories]
+  );
+
+  if (!loading && tiles.length === 0) return null;
+  const copy = HOME_SECTIONS.spaces;
 
   return (
-    <span className={styles.ratingWrap}>
-      <span className={styles.stars}>{stars}</span>
-      {reviewCount > 0 && (
-        <span className={styles.reviewCount}>({reviewCount})</span>
-      )}
-    </span>
+    <section className={`sf-section ${styles.section}`} aria-labelledby="home-spaces-title">
+      <div className="sf-container sf-container--wide">
+        <SectionHeading id="home-spaces-title" eyebrow={copy.eyebrow} title={copy.title} />
+        <ul className={styles.spaces} aria-busy={loading || undefined}>
+          {loading
+            ? SPACES.map((space) => (
+                <li key={space.key} aria-hidden="true">
+                  <span className={`sf-skeleton ${styles.spaceSkeleton}`} />
+                </li>
+              ))
+            : tiles.map((tile, index) => (
+                <Reveal as="li" key={tile.key} delay={staggerDelay(index)}>
+                  <Link
+                    to={`/products?category=${categoryParam(tile.category)}`}
+                    className={`sf-focus ${styles.spaceTile}`}
+                  >
+                    <img
+                      className={styles.spaceImage}
+                      src={tile.category.image || PLACEHOLDER_IMG}
+                      alt={tile.category.name}
+                      loading="lazy"
+                      decoding="async"
+                      onError={onImageError}
+                    />
+                    {/* Read as "Office Chairs, Office, Task, executive…": the
+                        hidden commas separate the alt text, label and line. */}
+                    <span className={styles.spaceText}>
+                      <span className="sf-visually-hidden">, </span>
+                      <span className={styles.spaceLabel}>{tile.label}</span>
+                      <span className="sf-visually-hidden">, </span>
+                      <span className={styles.spaceLine}>{tile.line}</span>
+                    </span>
+                  </Link>
+                </Reveal>
+              ))}
+        </ul>
+      </div>
+    </section>
   );
 };
 
-// ── Product Card ─────────────────────────────────────────────────────────────
+// ── Editorial story block ────────────────────────────────────────────────────
 
-const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted }) => {
-  const navigate = useNavigate();
-  const { sellingPrice, originalPrice, discount } = getProductMinPrice(product);
-  const image = product.images?.[0] || product.image || PLACEHOLDER_IMG;
-  const name = product.name || "Untitled Product";
-
-  const handleCardClick = () => {
-    navigate(productPath(product));
-  };
-
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
-    onAddToCart(product);
-  };
-
-  const handleWishlist = (e) => {
-    e.stopPropagation();
-    onToggleWishlist(product);
-  };
+const StoryBlock = ({ story, number, mirrored = false }) => {
+  if (!story) return null;
+  const titleId = `home-story-${number}-title`;
+  const { image, cta } = story;
 
   return (
-    <motion.div
-      className={styles.productCard}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.25 }}
-      onClick={handleCardClick}
-    >
-      {/* Image container */}
-      <div className={styles.productImageWrap}>
-        <img
-          src={image}
-          alt={name}
-          className={styles.productImage}
-          loading="lazy"
-          onError={onImageError}
-        />
-        <div className={styles.productImageOverlay}>
-          <button
-            className={styles.quickViewBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(productPath(product));
-            }}
-          >
-            Quick View
-          </button>
-        </div>
-        {/* Wishlist heart */}
-        <button
-          className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlisted : ""}`}
-          onClick={handleWishlist}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          {isWishlisted ? "\u2764" : "\u2661"}
-        </button>
-        {/* Discount badge */}
-        {discount > 0 && (
-          <span className={styles.discountBadge}>-{discount}%</span>
-        )}
-      </div>
-
-      {/* Info */}
-      <div className={styles.productInfo}>
-        {product.brand && (
-          <p className={styles.productBrand}>{product.brand}</p>
-        )}
-        <h3 className={styles.productName}>{truncateText(name, 48)}</h3>
-
-        <StarRating
-          rating={product.rating || 0}
-          reviewCount={product.totalReviews || 0}
-        />
-
-        <div className={styles.priceRow}>
-          <span className={styles.salePrice}>{formatCurrency(sellingPrice)}</span>
-          {discount > 0 && (
-            <>
-              <span className={styles.originalPrice}>
-                {formatCurrency(originalPrice)}
-              </span>
-              <span className={styles.discountPercent}>{discount}% off</span>
-            </>
+    <section className={`sf-section ${styles.section}`} aria-labelledby={titleId}>
+      <div className="sf-container sf-container--wide">
+        <div className={`${styles.story} ${mirrored ? styles.storyMirrored : ""}`}>
+          {image?.src && (
+            <Reveal className={styles.storyMedia}>
+              <img
+                className={styles.storyImage}
+                src={image.src}
+                alt={image.alt || ""}
+                width={image.width}
+                height={image.height}
+                loading="lazy"
+                decoding="async"
+                onError={onImageError}
+              />
+            </Reveal>
           )}
+          <Reveal className={styles.storyText} delay={staggerDelay(1)}>
+            {story.eyebrow && <p className="sf-eyebrow sf-eyebrow--rule">{story.eyebrow}</p>}
+            <h2 id={titleId} className={`sf-display-lg ${styles.storyTitle}`}>
+              {renderAccent(story.title)}
+            </h2>
+            {story.body && <p className={styles.storyBody}>{story.body}</p>}
+            {cta?.to && (
+              <Link to={cta.to} className={`sf-btn sf-btn--ghost ${styles.storyCta}`}>
+                {cta.label}
+              </Link>
+            )}
+          </Reveal>
         </div>
-
-        <button className={styles.addToCartBtn} onClick={handleAddToCart}>
-          Add to Cart
-        </button>
       </div>
-    </motion.div>
+    </section>
   );
 };
 
-// ── Horizontal Scroll Buttons ────────────────────────────────────────────────
+// ── Complete the space ───────────────────────────────────────────────────────
 
-const ScrollRow = ({ children, scrollRef }) => {
-  const scroll = (direction) => {
-    if (!scrollRef.current) return;
-    const amount = scrollRef.current.offsetWidth * 0.75;
-    scrollRef.current.scrollBy({
-      left: direction === "left" ? -amount : amount,
-      behavior: "smooth",
-    });
-  };
+const CompleteTheSpace = ({ curation, onAddToCart, onToggleWishlist, isInWishlist, onAddAll }) => {
+  if (!curation) return null;
+  const copy = COMPLETE_THE_SPACE;
+  const { anchor, companions } = curation;
+  const { sellingPrice, originalPrice } = getProductMinPrice(anchor);
+  const pieces = [anchor, ...companions];
+  // Sold-out pieces are left out, as their cards disable quick add.
+  const available = pieces.filter((product) => product.stock !== 0);
+  const total = available.reduce((sum, product) => sum + (buildCartItem(product).price || 0), 0);
+  const href = productPath(anchor);
 
   return (
-    <div className={styles.scrollContainer}>
-      <button
-        className={`${styles.scrollBtn} ${styles.scrollBtnLeft}`}
-        onClick={() => scroll("left")}
-        aria-label="Scroll left"
-      >
-        &#8249;
-      </button>
-      <div className={styles.scrollTrack} ref={scrollRef}>
-        {children}
+    <section
+      className={`sf-section ${styles.section} ${styles.band}`}
+      aria-labelledby="home-complete-title"
+    >
+      <div className="sf-container sf-container--wide">
+        <SectionHeading
+          id="home-complete-title"
+          eyebrow={copy.eyebrow}
+          title={copy.title}
+          intro={copy.intro}
+        />
+        <div className={styles.curation}>
+          {/* The image repeats the "View" link for pointer users; keyboard and
+              screen-reader users get that link once. */}
+          <Reveal className={styles.anchorMedia}>
+            <Link to={href} className={styles.anchorImageLink} tabIndex={-1} aria-hidden="true">
+              <img
+                className={styles.anchorImage}
+                src={anchor.images?.[0] || anchor.image || PLACEHOLDER_IMG}
+                alt={anchor.name}
+                width={1200}
+                height={1500}
+                loading="lazy"
+                decoding="async"
+                onError={onImageError}
+              />
+            </Link>
+          </Reveal>
+
+          <Reveal className={styles.anchorDetails} delay={staggerDelay(1)}>
+            {anchor.brand && <p className="sf-eyebrow">{anchor.brand}</p>}
+            <h3 className={styles.anchorName}>{anchor.name}</h3>
+            {anchor.shortDescription && <p className={styles.anchorText}>{anchor.shortDescription}</p>}
+            <PriceBlock price={sellingPrice} comparePrice={originalPrice} size="md" showSavings={false} />
+            <Link to={href} className="sf-btn sf-btn--link">
+              {copy.viewLabel}
+              <span className="sf-visually-hidden"> {anchor.name}</span>
+            </Link>
+          </Reveal>
+
+          <Reveal className={styles.companions} delay={staggerDelay(2)}>
+            <h3 className={`sf-eyebrow ${styles.companionsTitle}`}>{copy.companionsLabel}</h3>
+            <ul className={styles.companionGrid}>
+              {companions.map((product) => (
+                <li key={product.id}>
+                  <ProductCard
+                    product={product}
+                    onAddToCart={onAddToCart}
+                    onToggleWishlist={onToggleWishlist}
+                    isWishlisted={isInWishlist(product.id)}
+                  />
+                </li>
+              ))}
+            </ul>
+            {available.length > 0 && (
+              <div className={styles.addAll}>
+                <button
+                  type="button"
+                  className="sf-btn sf-btn--ghost"
+                  aria-describedby="home-complete-total"
+                  onClick={() => onAddAll(available)}
+                >
+                  {available.length === pieces.length ? copy.addAllLabel : copy.addAvailableLabel}
+                </button>
+                <p id="home-complete-total" className={styles.addAllTotal}>
+                  {fillTemplate(copy.totalLabel, {
+                    count: available.length,
+                    total: formatCurrency(total),
+                  })}
+                </p>
+              </div>
+            )}
+          </Reveal>
+        </div>
       </div>
-      <button
-        className={`${styles.scrollBtn} ${styles.scrollBtnRight}`}
-        onClick={() => scroll("right")}
-        aria-label="Scroll right"
-      >
-        &#8250;
-      </button>
-    </div>
+    </section>
   );
 };
 
-// ── Countdown Timer ──────────────────────────────────────────────────────────
+// ── Interim: "Why choose us" ─────────────────────────────────────────────────
+// Kept as it was for Prompt 12, which replaces it with the "Our promise"
+// explainer (its claims come from WHY_CHOOSE_US in constants.js); restyled
+// here only so the page carries no colour literals.
 
-const CountdownTimer = () => {
-  const [timeLeft, setTimeLeft] = useState({ hours: 0, minutes: 0, seconds: 0 });
-
-  useEffect(() => {
-    const getEndOfDay = () => {
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
-      return end;
-    };
-
-    const update = () => {
-      const now = new Date();
-      const diff = Math.max(0, getEndOfDay() - now);
-      setTimeLeft({
-        hours: Math.floor(diff / 3600000),
-        minutes: Math.floor((diff % 3600000) / 60000),
-        seconds: Math.floor((diff % 60000) / 1000),
-      });
-    };
-
-    update();
-    const id = setInterval(update, 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  const pad = (n) => String(n).padStart(2, "0");
-
-  return (
-    <div className={styles.countdown}>
-      <span className={styles.countdownBlock}>
-        <strong>{pad(timeLeft.hours)}</strong>
-        <small>Hrs</small>
-      </span>
-      <span className={styles.countdownSep}>:</span>
-      <span className={styles.countdownBlock}>
-        <strong>{pad(timeLeft.minutes)}</strong>
-        <small>Min</small>
-      </span>
-      <span className={styles.countdownSep}>:</span>
-      <span className={styles.countdownBlock}>
-        <strong>{pad(timeLeft.seconds)}</strong>
-        <small>Sec</small>
-      </span>
+const WhyChooseUs = () => (
+  <section className={`sf-section ${styles.section}`} aria-labelledby="home-why-title">
+    <div className="sf-container sf-container--wide">
+      <SectionHeading
+        id="home-why-title"
+        title={`Why Choose ${APP_NAME}`}
+        intro="We put our customers first"
+      />
+      <ul className={styles.whyGrid}>
+        {WHY_CHOOSE_US.map((item, index) => (
+          <Reveal as="li" key={item.id || index} className={styles.whyItem} delay={staggerDelay(index)}>
+            <Icon icon={item.icon} className={styles.whyIcon} aria-hidden="true" />
+            <h3 className={styles.whyTitle}>{item.title}</h3>
+            <p className={styles.whyText}>{item.description}</p>
+          </Reveal>
+        ))}
+      </ul>
     </div>
-  );
-};
-
-// ── Section Header ───────────────────────────────────────────────────────────
-
-const SectionHeader = ({ title, subtitle, linkText, linkTo }) => (
-  <div className={styles.sectionHeader}>
-    <div>
-      <h2 className={styles.sectionTitle}>{title}</h2>
-      {subtitle && <p className={styles.sectionSubtitle}>{subtitle}</p>}
-    </div>
-    {linkText && linkTo && (
-      <Link to={linkTo} className={styles.viewAllLink}>
-        {linkText} &rarr;
-      </Link>
-    )}
-  </div>
+  </section>
 );
 
 // ══════════════════════════════════════════════════════════════════════════════
@@ -273,66 +328,57 @@ const SectionHeader = ({ title, subtitle, linkText, linkTo }) => (
 // ══════════════════════════════════════════════════════════════════════════════
 
 const Home = () => {
-  const { isDarkMode } = useTheme();
-  const { addToCart } = useCart();
+  const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
 
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
   const [trendingProducts, setTrendingProducts] = useState([]);
-  const [flashDeals, setFlashDeals] = useState([]);
-  const [recentlyViewed, setRecentlyViewed] = useState([]);
+  const [curation, setCuration] = useState(null);
   const [loading, setLoading] = useState(true);
-
-  const flashScrollRef = useRef(null);
-  const recentScrollRef = useRef(null);
+  // Read before the first paint, so the rail never appears after the page.
+  const [recentlyViewed] = useState(getRecentlyViewed);
+  const addingAllRef = useRef(false);
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
   useEffect(() => {
+    let active = true;
+
     const fetchData = async () => {
-      setLoading(true);
       try {
         const [cats, featured, trending] = await Promise.all([
           apiService.categories.getAll().catch(() => []),
           apiService.products.getFeatured(8).catch(() => []),
           apiService.products.getTrending(8).catch(() => []),
         ]);
+        if (!active) return;
 
+        const featuredList = Array.isArray(featured) ? featured.slice(0, 8) : [];
         setCategories(Array.isArray(cats) ? cats : []);
-        setFeaturedProducts(Array.isArray(featured) ? featured.slice(0, 8) : []);
+        setFeaturedProducts(featuredList);
         setTrendingProducts(Array.isArray(trending) ? trending.slice(0, 8) : []);
+        setLoading(false);
 
-        // Flash deals: combine and pick products with discounts
-        const allProducts = [...(featured || []), ...(trending || [])];
-        const deals = allProducts
-          .filter((p) => {
-            const { discount } = getProductMinPrice(p);
-            return discount > 0;
-          })
-          .slice(0, 12);
-        setFlashDeals(deals);
+        const result = await loadCompleteTheSpace(featuredList);
+        if (active) setCuration(result);
       } catch (err) {
         console.error("Error fetching home data:", err);
-      } finally {
-        setLoading(false);
+        if (active) setLoading(false);
       }
     };
 
     fetchData();
-    setRecentlyViewed(getRecentlyViewed());
+    return () => {
+      active = false;
+    };
   }, []);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
-  const handleAddToCart = useCallback(
-    (product) => {
-      // Variant-aware line whose id/price match the product page (see
-      // buildCartItem) so quick-adds merge instead of duplicating.
-      addToCart(buildCartItem(product), 1);
-    },
-    [addToCart]
-  );
+  // ProductCard hands over buildCartItem(product): the variant-aware line whose
+  // id and price match the product page, so quick-adds merge with PDP adds.
+  const handleAddToCart = useCallback((cartItem) => addToCart(cartItem, 1), [addToCart]);
 
   // Wishlist works for guests (persisted to localStorage), matching the
   // product detail page — no auth gate / dead-end redirect.
@@ -343,264 +389,116 @@ const Home = () => {
     [toggleWishlist]
   );
 
-  // ── Skeleton loader ──────────────────────────────────────────────────────
-
-  const ProductSkeleton = () => (
-    <div className={styles.productCard}>
-      <div className={`${styles.productImageWrap} ${styles.skeleton}`} />
-      <div className={styles.productInfo}>
-        <div className={`${styles.skeletonLine} ${styles.skeletonW80}`} />
-        <div className={`${styles.skeletonLine} ${styles.skeletonW50}`} />
-        <div className={`${styles.skeletonLine} ${styles.skeletonW60}`} />
-      </div>
-    </div>
+  // "Add all to cart": each piece in turn, without opening the drawer, then
+  // the drawer once at the end.
+  const handleAddAll = useCallback(
+    async (pieces) => {
+      if (addingAllRef.current || pieces.length === 0) return;
+      addingAllRef.current = true;
+      try {
+        for (const product of pieces) {
+          await addToCart(buildCartItem(product), 1, { openDrawer: false });
+        }
+        setIsCartOpen(true);
+      } finally {
+        addingAllRef.current = false;
+      }
+    },
+    [addToCart, setIsCartOpen]
   );
 
-  const renderProductGrid = (products, fallbackCount = 4) => {
-    if (loading) {
-      return (
-        <div className={styles.productGrid}>
-          {Array.from({ length: fallbackCount }).map((_, i) => (
-            <ProductSkeleton key={i} />
-          ))}
-        </div>
-      );
-    }
-
-    if (!products || products.length === 0) return null;
-
-    return (
-      <div className={styles.productGrid}>
-        {products.map((product, i) => (
-          <motion.div
-            key={product.id || i}
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: true }}
-            transition={{ delay: i * 0.05, duration: 0.35 }}
-          >
-            <ProductCard
-              product={product}
-              onAddToCart={handleAddToCart}
-              onToggleWishlist={handleToggleWishlist}
-              isWishlisted={isInWishlist(product.id)}
-            />
-          </motion.div>
-        ))}
-      </div>
-    );
+  const cardHandlers = {
+    onAddToCart: handleAddToCart,
+    onToggleWishlist: handleToggleWishlist,
+    isInWishlist,
   };
+  const { featured: featuredCopy, trending: trendingCopy, recentlyViewed: recentCopy } =
+    HOME_SECTIONS;
+  const hasRecentlyViewed = Array.isArray(recentlyViewed) && recentlyViewed.length > 0;
 
   // ── Render ───────────────────────────────────────────────────────────────
 
   return (
-    <motion.div
-      className={`${styles.homePage} ${isDarkMode ? styles.dark : ""}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: 0.4 }}
-    >
-      {/* 1. Hero and assurance strip */}
+    <div>
+      {/* Hero and assurance strip (Prompt 10) */}
       <HeroSection />
       <AssuranceStrip />
 
-      {/* 2. Flash Deals */}
-      {flashDeals.length > 0 && (
-        <section className={styles.section}>
-          <div className={styles.container}>
-            <div className={styles.flashHeader}>
-              <SectionHeader
-                title="Flash Deals"
-                subtitle="Grab them before they're gone!"
-                linkText="View All"
-                linkTo="/products?sort=sale"
-              />
-              <CountdownTimer />
-            </div>
-            <ScrollRow scrollRef={flashScrollRef}>
-              {flashDeals.map((product, i) => (
-                <div className={styles.scrollCard} key={product.id || i}>
-                  <ProductCard
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                    onToggleWishlist={handleToggleWishlist}
-                    isWishlisted={isInWishlist(product.id)}
-                  />
-                </div>
-              ))}
-            </ScrollRow>
-          </div>
-        </section>
-      )}
+      {/* 1. Shop by space */}
+      <ShopBySpace categories={categories} loading={loading} />
 
-      {/* 3. Shop by Category */}
-      <section className={`${styles.section} ${styles.categorySection}`}>
-        <div className={styles.container}>
-          <SectionHeader
-            title="Shop by Category"
-            subtitle="Browse our wide selection of categories"
-            linkText="All Categories"
-            linkTo="/products"
-          />
-          <div className={styles.categoryGrid}>
-            {loading
-              ? Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className={`${styles.categoryCard} ${styles.skeleton}`} />
-                ))
-              : categories.map((cat, i) => (
-                  <motion.div
-                    key={cat.id || i}
-                    initial={{ opacity: 0, scale: 0.92 }}
-                    whileInView={{ opacity: 1, scale: 1 }}
-                    viewport={{ once: true }}
-                    transition={{ delay: i * 0.06 }}
-                    whileHover={{ y: -4 }}
-                  >
-                    <Link
-                      to={`/products?category=${categoryParam(cat)}`}
-                      className={styles.categoryCard}
-                    >
-                      {cat.image && (
-                        <img
-                          src={cat.image}
-                          alt={cat.name}
-                          className={styles.categoryImage}
-                          loading="lazy"
-                          onError={onImageError}
-                        />
-                      )}
-                      <div className={styles.categoryOverlay}>
-                        <h3 className={styles.categoryName}>{cat.name}</h3>
-                        {cat.productCount !== undefined && (
-                          <span className={styles.categoryCount}>
-                            {cat.productCount} Products
-                          </span>
-                        )}
-                      </div>
-                    </Link>
-                  </motion.div>
-                ))}
-          </div>
-        </div>
-      </section>
+      {/* 2. Story block 1: image left */}
+      <StoryBlock story={STORY[0]} number={1} />
 
-      {/* 4. Featured Products */}
-      <section className={styles.section}>
-        <div className={styles.container}>
-          <SectionHeader
-            title="Featured Products"
-            subtitle="Handpicked just for you"
-            linkText="View All"
-            linkTo="/products?sort=featured"
-          />
-          {renderProductGrid(featuredProducts, 4)}
-        </div>
-      </section>
+      {/* 3. Featured Collections */}
+      <FeaturedProducts
+        className={styles.section}
+        headingId="home-featured-title"
+        products={featuredProducts}
+        loading={loading}
+        eyebrow={featuredCopy.eyebrow}
+        title={featuredCopy.title}
+        viewAllLink={featuredCopy.viewAll.to}
+        viewAllLabel={featuredCopy.viewAll.label}
+        railLabel={featuredCopy.railLabel}
+        {...cardHandlers}
+      />
 
-      {/* 5. Promotional Banner */}
-      <section className={styles.promoBanner}>
-        <div className={styles.container}>
-          <div className={styles.promoBannerInner}>
-            <motion.div
-              className={styles.promoContent}
-              initial={{ opacity: 0, x: -30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5 }}
-            >
-              <span className={styles.promoTag}>Limited Time Offer</span>
-              <h2 className={styles.promoTitle}>
-                Up to 50% Off on Top Brands
-              </h2>
-              <p className={styles.promoText}>
-                Shop the season's best deals on electronics, fashion, home decor
-                and more. Don't miss out on incredible savings!
-              </p>
-              <Link to="/products?sort=sale" className={styles.promoCta}>
-                Shop Now
-              </Link>
-            </motion.div>
-            <motion.div
-              className={styles.promoGraphic}
-              initial={{ opacity: 0, x: 30 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: true }}
-              transition={{ duration: 0.5, delay: 0.15 }}
-            >
-              <div className={styles.promoCircle}>
-                <span className={styles.promoPercent}>50%</span>
-                <span className={styles.promoOff}>OFF</span>
-              </div>
-            </motion.div>
-          </div>
-        </div>
-      </section>
+      {/* 4. Complete the space: the page's one sand band */}
+      <CompleteTheSpace
+        curation={curation}
+        onAddToCart={handleAddToCart}
+        onToggleWishlist={handleToggleWishlist}
+        isInWishlist={isInWishlist}
+        onAddAll={handleAddAll}
+      />
 
-      {/* 6. Trending Products */}
-      <section className={styles.section}>
-        <div className={styles.container}>
-          <SectionHeader
-            title="Trending Now"
-            subtitle="See what everyone is buying"
-            linkText="View All"
-            linkTo="/products?sort=trending"
-          />
-          {renderProductGrid(trendingProducts, 4)}
-        </div>
-      </section>
+      {/* 5. Story block 2: mirrored */}
+      <StoryBlock story={STORY[1]} number={2} mirrored />
 
-      {/* 7. Why Choose Us */}
-      <section className={`${styles.section} ${styles.trustSection}`}>
-        <div className={styles.container}>
-          <SectionHeader
-            title={`Why Choose ${APP_NAME}`}
-            subtitle="We put our customers first"
-          />
-          <div className={styles.trustGrid}>
-            {WHY_CHOOSE_US.map((item, i) => (
-              <motion.div
-                key={item.id || i}
-                className={styles.trustCard}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.1 }}
-              >
-                <div className={styles.trustIcon}>
-                  <Icon icon={item.icon} />
-                </div>
-                <h4 className={styles.trustTitle}>{item.title}</h4>
-                <p className={styles.trustDesc}>{item.description}</p>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* 8. Recently Viewed */}
-      {recentlyViewed.length > 0 && (
-        <section className={styles.section}>
-          <div className={styles.container}>
-            <SectionHeader
-              title="Recently Viewed"
-              subtitle="Continue where you left off"
+      {/* 6. Trending (the admin's trending flag) */}
+      {(loading || trendingProducts.length > 0) && (
+        <section className={`sf-section ${styles.section}`} aria-labelledby="home-trending-title">
+          <Reveal className="sf-container sf-container--wide">
+            <SectionHeading
+              id="home-trending-title"
+              eyebrow={trendingCopy.eyebrow}
+              title={trendingCopy.title}
+              action={trendingCopy.viewAll}
             />
-            <ScrollRow scrollRef={recentScrollRef}>
-              {recentlyViewed.map((product, i) => (
-                <div className={styles.scrollCard} key={product.id || i}>
-                  <ProductCard
-                    product={product}
-                    onAddToCart={handleAddToCart}
-                    onToggleWishlist={handleToggleWishlist}
-                    isWishlisted={isInWishlist(product.id)}
-                  />
-                </div>
-              ))}
-            </ScrollRow>
-          </div>
+            <ProductRail
+              products={trendingProducts}
+              loading={loading}
+              label={trendingCopy.railLabel}
+              {...cardHandlers}
+            />
+          </Reveal>
         </section>
       )}
-    </motion.div>
+
+      {/* 7. Recently viewed (written by ProductDetails.js) */}
+      {hasRecentlyViewed && (
+        <section
+          className={`sf-section sf-section--tight ${styles.section}`}
+          aria-labelledby="home-recent-title"
+        >
+          <Reveal className="sf-container sf-container--wide">
+            <h2 id="home-recent-title" className={`sf-eyebrow ${styles.recentTitle}`}>
+              {recentCopy.eyebrow}
+            </h2>
+            <ProductRail
+              compact
+              products={recentlyViewed}
+              label={recentCopy.railLabel}
+              {...cardHandlers}
+            />
+          </Reveal>
+        </section>
+      )}
+
+      {/* Prompt 12 */}
+      <WhyChooseUs />
+    </div>
   );
 };
 

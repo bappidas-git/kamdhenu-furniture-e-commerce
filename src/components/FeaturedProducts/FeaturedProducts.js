@@ -1,97 +1,72 @@
 import React from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
-import { useCart } from "../../hooks/useCart";
-import { useWishlist } from "../../context/WishlistContext";
-import {
-  formatCurrency,
-  getProductMinPrice,
-  truncateText,
-  buildCartItem,
-  productPath,
-  PLACEHOLDER_IMG,
-  onImageError,
-} from "../../utils/helpers";
+import { Reveal, SectionHeading } from "../ui";
+import ProductRail from "../storefront/ProductRail";
+import { HOME_SECTIONS } from "../../content/homeContent";
 import styles from "./FeaturedProducts.module.css";
 
-const ProductCard = ({ product, onAddToCart, onToggleWishlist, isWishlisted, onClick }) => {
-  const { sellingPrice, originalPrice, discount } = getProductMinPrice(product);
+// =============================================================================
+// FeaturedProducts — the home page's "Featured Collections" rail
+// =============================================================================
+// A section heading (eyebrow, serif title with one *accent* word, "View all")
+// over the shared ProductRail of storefront ProductCards. While `loading` it
+// shows skeleton cards; with no products, once loaded, it renders nothing.
+// The defaults are the home page's copy (HOME_SECTIONS.featured).
+//
+// Props:
+//   products          array   the featured products (products.getFeatured)
+//   title             string  "*word*" sets the italic accent
+//   eyebrow           string
+//   viewAllLink       string  router path for "View all"; "" hides the link
+//   viewAllLabel      string
+//   railLabel         string  the carousel's accessible name
+//   onAddToCart       fn      (cartItem) => void   } passed to every
+//   onToggleWishlist  fn      (product) => void    } ProductCard
+//   isInWishlist      fn      (productId) => boolean
+//   loading           boolean skeleton cards while the products load
+//   headingId         string  id of the h2, which names the section
+//   className         string  extra class on the <section>
+// =============================================================================
+
+const COPY = HOME_SECTIONS.featured;
+
+const FeaturedProducts = ({
+  products = [],
+  title = COPY.title,
+  eyebrow = COPY.eyebrow,
+  viewAllLink = COPY.viewAll.to,
+  viewAllLabel = COPY.viewAll.label,
+  railLabel = COPY.railLabel,
+  onAddToCart,
+  onToggleWishlist,
+  isInWishlist,
+  loading = false,
+  headingId = "featured-products-title",
+  className,
+}) => {
+  const items = Array.isArray(products) ? products : [];
+  if (!loading && items.length === 0) return null;
 
   return (
-    <motion.div
-      className={styles.card}
-      whileHover={{ y: -6 }}
-      transition={{ duration: 0.2 }}
-      onClick={onClick}
+    <section
+      className={["sf-section", styles.section, className].filter(Boolean).join(" ")}
+      aria-labelledby={headingId}
     >
-      <div className={styles.imageWrapper}>
-        <img
-          src={product.images?.[0] || PLACEHOLDER_IMG}
-          alt={product.name}
-          loading="lazy"
-          onError={onImageError}
+      <Reveal className="sf-container sf-container--wide">
+        <SectionHeading
+          id={headingId}
+          eyebrow={eyebrow}
+          title={title}
+          action={viewAllLink ? { label: viewAllLabel, to: viewAllLink } : undefined}
         />
-        {discount > 0 && <span className={styles.discountBadge}>{discount}% OFF</span>}
-        <button
-          className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlisted : ""}`}
-          onClick={(e) => { e.stopPropagation(); onToggleWishlist(product); }}
-          aria-label="Toggle wishlist"
-        >
-          {isWishlisted ? "\u2665" : "\u2661"}
-        </button>
-      </div>
-      <div className={styles.info}>
-        <p className={styles.brand}>{product.brand}</p>
-        <h3 className={styles.name}>{truncateText(product.name, 45)}</h3>
-        <div className={styles.rating}>
-          <span className={styles.stars}>{"★".repeat(Math.floor(product.rating || 0))}{"☆".repeat(5 - Math.floor(product.rating || 0))}</span>
-          <span className={styles.reviewCount}>({product.totalReviews || 0})</span>
-        </div>
-        <div className={styles.price}>
-          <span className={styles.salePrice}>{formatCurrency(sellingPrice)}</span>
-          {discount > 0 && <span className={styles.originalPrice}>{formatCurrency(originalPrice)}</span>}
-        </div>
-        <button
-          className={styles.addToCartBtn}
-          onClick={(e) => {
-            e.stopPropagation();
-            onAddToCart(buildCartItem(product));
-          }}
-        >
-          Add to Cart
-        </button>
-      </div>
-    </motion.div>
-  );
-};
-
-const FeaturedProducts = ({ products = [], title = "Featured Products", viewAllLink = "/products" }) => {
-  const { isDarkMode } = useTheme();
-  const navigate = useNavigate();
-  const { addToCart } = useCart();
-  const { toggleWishlist, isInWishlist } = useWishlist();
-
-  if (products.length === 0) return null;
-
-  return (
-    <section className={`${styles.section} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.sectionHeader}>
-        <h2>{title}</h2>
-        <button className={styles.viewAllBtn} onClick={() => navigate(viewAllLink)}>View All &rarr;</button>
-      </div>
-      <div className={styles.grid}>
-        {products.map((product) => (
-          <ProductCard
-            key={product.id}
-            product={product}
-            onAddToCart={addToCart}
-            onToggleWishlist={toggleWishlist}
-            isWishlisted={isInWishlist(product.id)}
-            onClick={() => navigate(productPath(product))}
-          />
-        ))}
-      </div>
+        <ProductRail
+          products={items}
+          loading={loading}
+          label={railLabel}
+          onAddToCart={onAddToCart}
+          onToggleWishlist={onToggleWishlist}
+          isInWishlist={isInWishlist}
+        />
+      </Reveal>
     </section>
   );
 };

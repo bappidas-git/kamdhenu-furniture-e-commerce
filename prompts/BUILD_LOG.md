@@ -1330,3 +1330,189 @@ export const HERO = {
   - "Secure payment · Encrypted checkout for cards, UPI and net banking" (the gateway and methods are to be confirmed);
   - "Cash on delivery · Pay when your furniture arrives". COD is capped at ₹50,000 in settings: should the strip say so?
 - **Delivery wording:** the strip prints "Above ₹9,999", the footer's wording, rather than the template "Free delivery above {threshold}".
+
+---
+
+## Prompt 11 — Home storytelling and discovery
+
+**Date:** 2026-10-07. **Result:** the middle of the home page is now curated, image-led discovery with generous whitespace. The order is:
+
+1. Shop by space: four category tiles.
+2. Story block 1: an editorial image and text block.
+3. Featured Collections: the revived `FeaturedProducts`.
+4. Complete the space: an anchor piece with its curated companions, on the page's one sand band.
+5. Story block 2: mirrored.
+6. Trending.
+7. Recently viewed.
+
+Every section is driven by catalogue data or `homeContent.js`, and is hidden when its data is missing. The boilerplate's flash deals, midnight countdown and "Up to 50% off on top brands" banner are gone. All three rails run on one new component, `ProductRail`. Reference: `prompts/DESIGN_SYSTEM.md` §21.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/pages/Home/Home.js` | Rewritten (607 → 505 lines). Removed: the private `ProductCard`, `StarRating`, `CountdownTimer`, `SectionHeader` and `ScrollRow`; Flash Deals; the promo banner; Shop by Category (replaced by Shop by space); the page-level opacity fade; `useTheme`. New page-private sections: `ShopBySpace`, `StoryBlock`, `CompleteTheSpace` and its loader, and the interim `WhyChooseUs`. Data is one `Promise.all` (categories, `getFeatured(8)`, `getTrending(8)`, each `.catch(() => [])`), then the curation once featured has resolved. |
+| `src/pages/Home/Home.module.css` | Rewritten (895 → 413 lines): tokens only. Prompt 01 counted 101 colour literals here; none remain. The legacy `.homePage` background and its `.dark` variant are gone (the page inherits `--sf-color-bg` from `.main-content`), and so is the unused `.heroSection`. |
+| `src/components/FeaturedProducts/FeaturedProducts.js` + `.module.css` | Revived as the Featured Collections section: `SectionHeading` over `ProductRail`. Props `products`, `title`, `eyebrow`, `viewAllLink`, `onAddToCart`, `onToggleWishlist`, `isInWishlist`, plus `viewAllLabel`, `railLabel`, `loading`, `headingId` and `className`. Defaults come from `HOME_SECTIONS.featured`. The private card, its contexts and `useNavigate` are gone; the 31 literals are down to 0. |
+| New `src/components/storefront/ProductRail.js` + `.module.css` | The site's one product rail (DESIGN_SYSTEM §21.6). |
+| `src/components/storefront/index.js` | Also exports `ProductRail`. |
+| `src/content/homeContent.js` | `HOME_SECTIONS`, `SPACES`, `STORY` and `COMPLETE_THE_SPACE` added after `HERO`. |
+| New tests | `ProductRail.test.js` (11), `FeaturedProducts.test.js` (6), `Home.test.js` (20). |
+| `prompts/DESIGN_SYSTEM.md` | New §21. |
+
+No change to `HeroSection`, `AssuranceStrip`, `ProductCard` / `PriceBlock` / `StarRating`, `RelatedProducts`, contexts, `api.js`, `db.json` or any admin file. The only API calls are `categories.getAll`, `products.getFeatured`, `getTrending`, `getBySlug`, `getFrequentlyBoughtTogether` and `getRelated`.
+
+### Content module additions (`homeContent.js`)
+
+- **`SPACES`** (all copy proposed). Each tile shows its category's own admin-managed `image`.
+
+  | Space | Category slug | Line |
+  |---|---|---|
+  | Home | `home-furniture` | "Sofas, beds, dining and storage." |
+  | Office | `office-chairs` | "Task, executive and waiting chairs." |
+  | Café & Restaurant | `cafe-restaurant-chairs` | "Hard-wearing chairs for busy service." |
+  | Outdoor | `outdoor-furniture` | "For verandas, lawns and terraces." |
+
+  Each line describes what its listing actually holds. For example, Office → `office-chairs` holds no desks, so the line names only chairs.
+- **`STORY`** (proposed copy; 1200 × 1500 placeholders in the neutral tones; the alt text describes the photograph to come):
+  - `STORY[0]`, "At home" / "Built for the *everyday*.": "Sofas to sink into after work, beds for long nights and dining tables that seat the whole family. We choose each piece for the way it is used day to day, not only for how it looks on the day it arrives." CTA "Shop home furniture" → `/products?category=home-furniture`.
+  - `STORY[1]`, "Our workshop" / "Made by people we *know*.": "Some of our pieces are made in our own workshop; the rest come from makers we know well. Either way, we choose each one to hold up to everyday use." CTA "Read our story" → `/about`.
+  - The copy makes no claim about years, warranties or counts.
+- **`COMPLETE_THE_SPACE`:** `anchorProductSlug: "ergonomic-high-back-chair-with-headrest"`, eyebrow "Complete the space", title "Pieces that belong *together*.", intro "One piece we like, and the pieces we would set beside it.", "Pairs well with", "View", "Add all to cart" / "Add the available pieces", "{count} pieces, {total}". The copy describes a curation, not a co-purchase statistic, since the bundle ids are a merchandising choice.
+- **`HOME_SECTIONS`** (not asked for: it keeps every heading in the module):
+  - Spaces: eyebrow "Shop by space", title "Furniture for every *room*.".
+  - Featured: "Featured", "Pieces we *recommend*.", View all → `/products`.
+  - Trending: "Trending", "What people are *choosing*.", View all → `/products?sort=popular`.
+  - Recently viewed: eyebrow "Recently viewed".
+  - The carousels' names: "Featured pieces", "Trending pieces", "Recently viewed pieces".
+
+### Rail implementation decision
+
+- **One new `ProductRail`.** I did not extend `RelatedProducts`' scroller: Prompt 17 owns that component, and its text already asks for it to become "a thin wrapper" around `ProductRail` once this exists. `RelatedProducts` is untouched, so the product page keeps its own scroller until then.
+- **API:**
+  - `products`, and the name: `label` or `labelledBy`.
+  - `loading` (skeleton cards) and `skeletonCount`.
+  - `compact` (more, smaller cards).
+  - The card handlers (`onAddToCart`, `onToggleWishlist`, `showAddToCart`) and `isInWishlist`.
+  - `previousLabel` / `nextLabel` (default "Previous pieces" / "Next pieces") and `className`.
+- **Behaviour:**
+  - Snap scrolling, with 4 / 3.2 / 2.2 cards per view (6 / 4.3 / 2.6 compact). Below 1024px the track runs to the screen edges.
+  - Hairline square buttons that scroll one page of whole cards, and a decorative hairline progress line.
+  - A `role="group"` with `aria-roledescription="carousel"` around a real list.
+  - `aria-disabled` at the ends, so focus is never dropped. No extra tab stop: the arrow keys scroll the track while a card has focus.
+  - 8px of focus room inside the scroller, so focus rings are not clipped.
+  - The progress line is written straight to the DOM, so scrolling never re-renders the cards.
+
+### Decisions
+
+- **Anchor choice:** an office set (Ergonomic High-Back Chair with Headrest + Cushioned 3-Seater Waiting Bench + Winsome Office Table, ₹45,997 in all). The alternatives failed:
+  - King Size Bed: `buildCartItem` takes the cheapest variant, so "Add all" would add its Carlton mattress in **Single** size.
+  - Sofa sets: only one curated companion each.
+  - The fallback anchor: the first featured product with bundle ids, the Classic Plastic Armchair, whose single curated table is topped up with three related chairs.
+- **Companion rule:** "FBT, falling back to related" is read as: use the curated `frequentlyBoughtTogetherIds`, and only when they give fewer than two, top up from `getRelated` (de-duplicated, up to four).
+  - A curated pair is never diluted with alternatives. Otherwise the default set would gain two more office chairs, and "Add all" would add them too.
+- **Add all:**
+  - Sold-out pieces (`stock === 0`, the card's own rule) are left out, and the label then says so.
+  - A total line ("3 pieces, ₹45,997.00", from the same `buildCartItem` prices) is shown beside the button and is the button's description, so nobody adds ₹46k blind.
+- **Complete the space layout:**
+  - From 768px the anchor's image is on the left (sticky), with its details over the 2 × 2 of companions on the right. With the seeded pair the right column ends 90px below the 804px image at 1440 (134px at 1024, 374px at 768, where the sticky image keeps the anchor in view while the companions scroll past).
+  - The image is a pointer convenience (`tabIndex={-1}`, `aria-hidden`, as in the mega-menu); "View <name>" is the accessible link.
+  - A hairline frame over the image's edge stops a sand photograph (and every placeholder) from dissolving into the sand band.
+- **All sections use `.sf-container--wide`**, the left edge of the header, hero and strip (the strip already does). Mixing in the 1280 container would have shifted every other section's left edge by 80px at 1440.
+- **Hairlines** are full width (like the strip's) and sit between neighbouring sections; the sand band and the section after it have none.
+- **Recently viewed:**
+  - Read in `useState`'s initialiser, so it is in the first render rather than one effect later. The parsing function is unchanged.
+  - Rendered only when the parsed value is a non-empty array.
+  - Its heading is an `h2` set as an eyebrow, so the heading order stays h1 → h2.
+- **Page fade removed:** `Home` no longer fades the whole page from opacity 0 (Prompt 10 flagged it for 11 and 30), so the hero (the LCP image) paints at full opacity. The other pages keep their own fades until Prompt 30.
+- **"Why choose us" kept, as an interim.** The prompt leaves it to Prompt 12 ("turns this into the explainer"), so it stays, moved after Recently viewed (into Prompt 12's half) and restyled with tokens, so `Home.module.css` has no literals. Its copy is unchanged, and it carries unbacked claims (see Notes for Prompt 12).
+- **Space tile names:** alt = the category name, as asked. Visually hidden commas separate it from the label and the line: Chromium reads "Office Chairs , Office , Task, executive and waiting chairs."
+
+### Deviations from the prompt, and why
+
+1. **Space label size:** 22px (`--sf-text-display-sm`) on phones and 28px from 768px. Phone tiles are ~157px wide, and "Restaurant" at 28px would nearly touch the edges.
+2. **Phone tile scrim:** it fades over 40px rather than 64px, with 12px padding. On the small two-column tiles the full fade covered most of the photograph.
+3. **The rail skeleton is the target card box** (4:5 image + three lines, the box Prompt 13's `ProductCardSkeleton` will have), not today's card (1:1 image, bordered body, full-width button). Normal loads measure CLS 0, because the rails are below the fold when their data arrives. But a visitor already looking at a rail while a slow API answers sees it grow when the cards replace the skeletons: 106px at 1440 and 179px at 360 (today's card body, with its full-width button, is much taller), CLS 0.07–0.10 with a 1.5s API delay. Prompt 13's card and a skeleton matched to it remove this.
+4. **`HOME_SECTIONS`** and the copy keys inside `COMPLETE_THE_SPACE` go beyond the three constants the prompt names.
+5. **The Featured "View all" uses `/products`** as specified. `?sort=newest` and `?sort=rating` are valid but unused here.
+
+### Verification
+
+- **Build and tests:**
+  - `npm run build`: "Compiled successfully", no warnings. Gzip against the Prompt 10 baseline: JS 398.38 → 400.30 kB (+1.92: the orphaned `FeaturedProducts` and `ProductRail` are now in the bundle); CSS 55.04 → 54.11 kB (−0.93).
+  - `CI=true npm test -- --passWithNoTests`: 159 tests (122 + 37 new), exit 0, no React warnings.
+  - **Mutation check:** 12 seeded faults, each failed at least one test, and the files were restored byte for byte. The faults: add all opening the drawer per item; add all never opening it; broken tiles for missing categories; related always topping up; the section shown with one companion; sold-out pieces added; trending linking to `?sort=trending`; another recently-viewed key; previous never disabled; a fixed 300px scroll; smooth scrolling under reduced motion; the rail rendering while empty.
+- **Static checks:**
+  - `node scripts/check-contrast.js` passes (no new pairs: DESIGN_SYSTEM §21.7). `node scripts/validate-db.js` passes.
+  - `db.json` is byte-identical: SHA-256 before and after. QA ran on a scratch copy through `JSON_SERVER_DB`.
+  - Literal grep of the three CSS modules and three JS files: no hex, `rgb()`, `hsl()` or font-name literal. The scrim's alpha mask uses `transparent` / `black`, as the hero's does.
+- **Browser QA:** Playwright and Chromium against JSON Server on the scratch copy, on the dev server and on a mock-mode production build. 43 scripted checks pass on both:
+  - **Order and content:** the heading order; four tiles linking to the four slugs, each listing keeping its category (29 / 16 / 10 / 2 products); tiles, story images and the anchor all measure 4:5.
+  - **Motion and focus:** tile hover `scale(1.03)`; the tile focus ring is the caramel `--sf-shadow-focus`.
+  - **Links:** story CTAs; the View all targets.
+  - **Rails:**
+    - Both carousels are named groups of 8, and Previous starts disabled.
+    - Next scrolls exactly one page, so the 5th card leads the view; at the end Next is disabled.
+    - The progress line runs from 0–610 to 614–1224 of 1224px; Previous returns to the start.
+    - Enter and Space work on the buttons, arrow keys scroll while a card has focus, and a focused off-screen card scrolls into view.
+  - **Cards:** a featured card links to its slug; its quick add adds one line, and a companion's quick add merges into its existing line.
+  - **Complete the space:** the anchor and the curated pair; the "View" link's name; the sand band; "3 pieces, ₹45,997.00". Add all put the chair (Black), the bench (Black) and the table (120 × 60 cm) in the cart, and the drawer opened exactly once (counted through the body scroll lock).
+  - **Recently viewed:** after visiting the Wooden Sofa Set and the King Size Bed it lists them latest first; it is absent without history.
+  - **Console:** no warnings or errors.
+- **Widths and themes:** 360, 768, 1024 and 1440px, light and dark: no horizontal overflow; tokens flip in dark mode (the placeholders stay light, as accepted).
+- **Empty trending:** every `trending` flag turned off through JSON Server's API on the scratch copy hides the section, with nothing in the console. Restored, the scratch data parses equal to the repo's `db.json`.
+- **CLS** (production build, `layout-shift` observer, load plus a slow scroll):
+  - 0 at 1440 and 360, and 0 under reduced motion.
+  - 0 while looking at Shop by space during a 1.5s API delay.
+  - Rails viewed during that delay: deviation 3.
+- **Laravel shape:** a non-mock production build against a stub answering `{ success, data, meta }` on the Laravel routes renders the same four tiles, 8 + 8 cards, the anchor, its pair and the total, with a clean console. Its requests were `/categories`, `/products/featured?limit=8`, `/products/trending?limit=8`, `/products/slug/ergonomic-high-back-chair-with-headrest` and `/products`.
+- **Accessibility tree** (Chromium, CDP):
+  - The regions are named by their `h2`s, in order.
+  - The carousels are groups with the "carousel" role description and named buttons, Previous "disabled" (aria-disabled) at the start.
+  - The anchor is a level-3 heading, with "View Ergonomic High-Back Chair with Headrest" and "Add all to cart".
+  - Screen readers (NVDA, VoiceOver) were not available in this environment.
+- **Admin parity:** 24 screenshots (login, dashboard, Products, Categories, Special Offers, Settings; 1440 and 390px; light and dark), comparing a mock-mode build of `HEAD` with this one.
+  - 22 are byte-identical.
+  - 2 differ by at most 1/255 on 24 and 4 pixels inside the remote product thumbnails. Two baseline runs differ from each other in the same places.
+  - No admin file, and nothing the admin imports, changed.
+
+### Pre-existing issues noticed (not changed)
+
+- **Cart drawer** (`CartDrawer.js:213`): `hasDiscount = item.comparePrice && …` is `0` when a line has no compare price, so React prints a stray "0" beside the price. This is visible after "Add all". Prompt 18.
+- **`ProductCard` in the rails:** the 1:1 image, bordered body and full-width button; its body also moves a few pixels as fonts and images settle. Prompt 13.
+- **Production builds:** `npm run build` reads `.env.production`, which points at the placeholder Cloudways API. A mock-mode production build therefore needs `REACT_APP_USE_MOCK_API=true REACT_APP_API_URL=http://localhost:3001` on the command line. A first QA run here hit the placeholder API by mistake, and every home section hid itself rather than showing broken content.
+- **Duplicate reads:** the header and the footer each read categories (as Prompt 10 noted). "Complete the space" adds one full-catalogue read (`products.getAll`, inside `getFrequentlyBoughtTogether`), plus a second only when the fallback reaches `getRelated`. Prompt 32.
+
+### Notes for later prompts
+
+- **12:**
+  - **Remove the interim `WhyChooseUs`:** the component, its `.why*` rules, the `@iconify/react` import and the `WHY_CHOOSE_US` / `APP_NAME` imports in `Home.js`.
+  - **`WHY_CHOOSE_US` claims to correct:** "Same-day and express delivery" (Same Day is inactive in `shipping_methods`), "256-bit SSL encryption", "full refund guarantee" and "24/7 Support". `AboutUs.js` also renders it until Prompt 28.
+  - **Section rhythm:** add `styles.section` to your sections to get the hairline between neighbours.
+  - **Sand conflict:** your brief puts the review carousel on sand, but the page's one sand band (DESIGN_SYSTEM §13) is Complete the space. Either keep the reviews on paper between hairlines, or move the band and note it.
+- **13:**
+  - `ProductRail` renders its own skeleton (`.skeletonText` + `sf-skeleton--image`). When `ProductCardSkeleton` exists, swap it into `ProductRail`'s loading branch, and give its text block the height of the new card's body, so a rail does not grow when its cards arrive (deviation 3: 106px at 1440, 179px at 360 today).
+  - On the sand band, borderless cards with sand image slots will merge into the band; give their media a visible edge there.
+- **17:** `RelatedProducts` can become `SectionHeading` + `<ProductRail products={items} label="Related pieces" {...handlers} />`, keeping its null-when-empty rule.
+- **30 (motion):**
+  - Tile and anchor images scale 1.03 over `--sf-duration-slow` on hover (pointer only, not under reduced motion).
+  - `Reveal` is on the tiles (staggered), both story halves (text +90ms) and each rail section.
+  - Rail buttons scroll smoothly, instantly under reduced motion.
+  - The home page has no page-level fade.
+- **31:** the rails' 8px focus room and edge bleed; the tile names (alt + label + line). `ProductRail` is not tested with NVDA or VoiceOver yet.
+- **32:**
+  - Home's reads: three in parallel, then `getBySlug` and one full catalogue read (two with the fallback).
+  - Candidates: a shared catalogue cache, or starting the curation through `Reveal`'s `onInView`.
+  - Story and tile images are lazy and have reserved boxes.
+
+### Needs client confirmation
+
+- **Spaces:** the mapping (Home → Home Furniture, Office → Office Chairs, Café & Restaurant → Café & Restaurant Chairs, Outdoor → Outdoor Furniture) and the four lines. An "Office" tile could instead go to Office Tables & Desks, or there could be a fifth tile.
+- **Story copy:** both blocks, including "Some of our pieces are made in our own workshop; the rest come from makers we know well". Also the CTAs "Shop home furniture" and "Read our story".
+- **Photography:** a living-room photograph and a workshop photograph (4:5, 1200 × 1500 or larger), and portrait-friendly category photos for the tiles. The tiles crop each category image to 4:5, and their bottom ~35% sits under the scrim.
+- **Complete the space:**
+  - The anchor (Ergonomic High-Back Chair with Headrest) and its curated pair (Cushioned 3-Seater Waiting Bench, Winsome Office Table).
+  - The copy: "Pieces that belong *together*.", "One piece we like, and the pieces we would set beside it.", "Pairs well with".
+  - If the client prefers a bedroom set, the bed's mattress needs a size-free pairing (see Decisions).
+- **Trending:** "What people are *choosing*." describes the admin-curated `trending` flag. If that flag does not reflect real popularity, a neutral title such as "Pieces to *look at*" may be safer.
+- **Headings:** "Furniture for every *room*.", "Pieces we *recommend*.", and the carousel names "Featured pieces" / "Trending pieces" / "Recently viewed pieces".
