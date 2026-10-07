@@ -1,0 +1,507 @@
+# A & S Urbanseat — Design System
+
+The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy") and update a value here whenever they change it in the CSS.
+
+- **Source of truth:** `src/theme/storefront-tokens.css`. If this document and the CSS disagree, the CSS wins; fix the document.
+- **Mirrors:** `src/theme/colors.js` (storefront MUI palette) and `src/theme/tokens.js` (`TOKENS`, the JS mirror for framer-motion and inline styles).
+- **Verification:** `node scripts/check-contrast.js` checks every pairing in section 14 and fails if `colors.js` or `tokens.js` drift from the CSS. Add your component-level pairs to it and re-run before you finish a prompt.
+
+---
+
+## 1. Purpose and how to look up a token
+
+The storefront is a premium, editorial, warm-minimalist boutique: warm paper surfaces, near-black ink, a deep navy taken from the logo's chair and a caramel accent taken from its wordmark; Playfair Display for display type (with a true italic for accent words) and Inter for UI; hairlines, sharp radii, generous whitespace, slow and quiet motion. No gradients (one exception: the photo scrim), no glassmorphism, no neon, no purple.
+
+> **"Primary" is the ink, not a hue.** `--sf-color-primary` is the ink: primary buttons are ink with paper text and turn navy on hover. `--sf-color-secondary` is the navy, `--sf-color-accent` is the caramel. The boilerplate used `primary` for a purple; every consumer of `--sf-color-primary` now renders ink (light) or warm off-white (dark).
+
+**Naming.**
+
+| Prefix | Meaning | Mode-aware? |
+|---|---|---|
+| `--sf-color-*` | colour roles (page, surface, text, primary, accent, semantic…) | yes: light on `:root`, dark on `body.dark` |
+| `--sf-color-surface-dark`, `--sf-color-on-dark*`, `--sf-color-scrim`, `--sf-gradient-scrim` | always-dark surfaces (footer, hero, navy bands) | no, identical in both modes |
+| `--sf-brand-*` | the four fixed brand colours | no |
+| `--sf-font-*`, `--sf-text-*`, `--sf-leading-*`, `--sf-tracking-*`, `--sf-measure` | typography | no |
+| `--sf-space-*`, `--sf-section-y`, `--sf-gutter`, `--sf-container*`, `--sf-tap-target` | spacing and layout | no |
+| `--sf-radius-*`, `--sf-hairline`, `--sf-shadow-*` | shape and depth | shadows and hairline: yes |
+| `--sf-ease-*`, `--sf-duration*`, `--sf-transition*`, `--sf-reveal-distance`, `--sf-stagger` | motion (collapse under reduced motion) | no |
+| `--sf-z-*` | stacking | no |
+
+**How to use.** CSS Modules: `color: var(--sf-color-text)`. JS (framer-motion, inline styles): `import { TOKENS } from "../../theme/tokens"`. MUI (only the header uses MUI on the storefront): `theme.palette.*`, built from `colors.js` in `ThemeContext`.
+
+**How dark mode works.** `ThemeContext` toggles `body.dark` / `body.light` and persists the choice in `localStorage["theme"]`. Colour tokens are overridden in `body.dark`; everything else is mode-invariant. A custom property inherits its *computed* value, so any token that reads another colour token (aliases, `--sf-hairline`, `--sf-shadow-focus`, the flat gradients) is declared in the shared `:root, body.dark` block so it re-resolves in dark mode. If you add such a composite, put it there too.
+
+**I need… → use…**
+
+| Need | Token |
+|---|---|
+| page background | `--sf-color-bg` |
+| card, drawer, menu, input background | `--sf-color-surface` |
+| quiet panel, image placeholder, skeleton | `--sf-color-sand` |
+| body text / secondary / helper text | `--sf-color-text` / `--sf-color-text-secondary` / `--sf-color-text-muted` |
+| hairline rule or card outline | `--sf-hairline` (or `--sf-color-border`) |
+| input, checkbox, select boundary | `--sf-color-border-strong` |
+| primary button | bg `--sf-color-primary`, text `--sf-color-primary-contrast`, hover bg `--sf-color-primary-hover` |
+| caramel text at small size (links, sale price, "Save ₹X") | `--sf-color-accent-text` |
+| caramel at display size, icons, selected borders | `--sf-color-accent` |
+| selected-state fill | `--sf-color-accent-soft` |
+| focus | `box-shadow: var(--sf-shadow-focus)` |
+| navy footer / band | `--sf-color-surface-dark` + `--sf-color-on-dark*` |
+| text over photography | `--sf-gradient-scrim` (or `--sf-color-scrim`) + `--sf-color-on-dark` |
+| drawer / modal backdrop | `--sf-color-overlay` |
+
+---
+
+## 2. Sampled logo colours
+
+Both PNGs were downloaded to a scratch folder outside the repository and their opaque pixels (alpha ≥ 250) sampled with Pillow, grouped by hue family and by region. Both are **1286 × 426 RGBA** (ratio 3.019 : 1).
+
+| Element (light logo) | Sampled value | Notes |
+|---|---|---|
+| "A&S" lettering | `#1c1c1c` | one flat colour, 19,067 px; neutral (0 % saturation) |
+| Tagline "Trusted Comfort for Every Home" | `#1e1e1e` | flat, 2,643 px |
+| Chair silhouette | `#051a3f` median (`#041b40` most frequent) | 34,784 px, HSL 218° 85 % 13 %; 5th–95th percentile `#05132f`–`#09244c` |
+| Chair inner shell | `#e2b380` (left, lightest) → `#ca9359` (right, darkest); median `#d4a06b` | a left-to-right caramel gradient |
+| "Urbanseat" wordmark and the hairline under it | `#ddb185` | one flat colour, HSL 30° 56 % 69 % |
+| **White logo** | `#ffffff` | one flat colour, 93,426 px; its semi-transparent edge pixels carry a faint tan fringe (median `#f2e2d2`) |
+
+Differences from the brief's expectations, recorded as instructed: the lettering is `#1c1c1c` (expected ≈ `#181818`) and the white logo is pure `#ffffff` (expected `#f8f8f8`). Navy and caramel fall inside the expected ranges.
+
+What the logo itself teaches the system: a high-contrast transitional serif ("A&S"), a widely tracked geometric sans (the wordmark and tagline) and a caramel hairline rule. The system reuses all three ideas: a serif display face, tracked uppercase eyebrows and hairline rules.
+
+---
+
+## 3. Palette
+
+### 3.1 Brand constants (identical in both modes)
+
+| Token | Value | Derived from | Use directly only for… |
+|---|---|---|---|
+| `--sf-brand-ink` | `#1c1a17` | lettering `#1c1c1c`, given a warm cast (HSL 36° 10 % 10 %) so it reads as ink beside paper and caramel and stays distinct from navy | fixed pairings, e.g. ink text on a paper button over a photo |
+| `--sf-brand-navy` | `#0b1f3f` | chair `#051a3f`, a touch lighter and calmer (HSL 217° 70 % 15 %) so a large navy surface reads quiet rather than electric | — (use `--sf-color-surface-dark` / `--sf-color-secondary`) |
+| `--sf-brand-caramel` | `#ddb185` | the wordmark, exact | decorative caramel rules (like the logo's own hairline); it is the accent on dark surfaces. **Never text on a light surface (1.84 : 1).** |
+| `--sf-brand-paper` | `#faf7f2` | a warm off-white (HSL 38° 44 % 96 %) | fixed pairings, e.g. a paper button over a photo |
+
+Everything else uses the role tokens below, so it flips with the theme.
+
+### 3.2 Roles
+
+Contrast is against the role's usual background, light / dark (full list in section 14).
+
+| Role | Token | Light | Dark | Contrast |
+|---|---|---|---|---|
+| Page (paper) | `--sf-color-bg` | `#faf7f2` | `#0a1426` (navy-ink) | — |
+| Surface (cards, drawers, menus, inputs) | `--sf-color-surface` | `#ffffff` | `#111d34` (lighter navy) | — |
+| Sand (quiet panels, placeholders, skeletons) | `--sf-color-sand` | `#f1ebe1` | `rgba(243, 238, 230, 0.06)` | panel vs page 1.11 / 1.27 |
+| Surface hover | `--sf-color-surface-hover` | `#f6f2ec` | `rgba(243, 238, 230, 0.08)` | — |
+| Stone (hairlines; decorative) | `--sf-color-stone` | `#d9d0c3` | `rgba(243, 238, 230, 0.14)` | 1.43 / 1.44 vs page (ΔL\* 13.5 in light) |
+| Control boundary | `--sf-color-border-strong` | `#8a8278` | `rgba(243, 238, 230, 0.4)` | 3.54 / 3.45 vs page (WCAG 1.4.11) |
+| Text (ink) | `--sf-color-text` | `#1c1a17` | `#f3eee6` (warm off-white) | 16.25 / 15.94 on page |
+| Secondary text | `--sf-color-text-secondary` | `#4d463e` | `#cfc6b9` | 8.69 / 10.90 on page |
+| Muted text (the lightest text tone) | `--sf-color-text-muted` | `#686158` | `#a39a8e` | 5.71 / 6.63 on page, 5.15 / 5.21 on sand |
+| Primary (ink) | `--sf-color-primary` | `#1c1a17` | `#f3eee6` | — |
+| Primary hover (navy) | `--sf-color-primary-hover` | `#0b1f3f` | `#ffffff` | — |
+| Text on primary | `--sf-color-primary-contrast` | `#faf7f2` | `#0a1426` | 16.25 / 15.94; on hover 15.33 / 18.41 |
+| Primary soft (ink tint: ghost hover, subtle fills) | `--sf-color-primary-soft` | `rgba(28, 26, 23, 0.06)` | `rgba(243, 238, 230, 0.08)` | ink on it 14.44 / 13.24 |
+| Secondary (navy surface) | `--sf-color-secondary` | `#0b1f3f` | `#0b1f3f` | — |
+| Text on secondary | `--sf-color-secondary-contrast` | `#faf7f2` | `#faf7f2` | 15.33 |
+| Accent (caramel) | `--sf-color-accent` | `#ae773d` | `#ddb185` | 3.57 / 9.38 on page, 3.22 / 7.37 on sand |
+| Accent text (small caramel text) | `--sf-color-accent-text` | `#8a5d2e` | `#e8c9a2` | 5.33 / 11.66 on page, 4.81 / 9.16 on sand |
+| Accent soft (selected-state fill) | `--sf-color-accent-soft` | `rgba(174, 119, 61, 0.12)` | `rgba(221, 177, 133, 0.14)` | accent-text on it 4.69 / 9.07 |
+| Text on a solid accent | `--sf-color-accent-contrast` | `#1c1a17` | `#0a1426` | 4.55 / 9.38 |
+| Focus ring | `--sf-color-focus` (= accent) + `--sf-color-focus-halo` | `#ae773d` + `rgba(174, 119, 61, 0.45)` | `#ddb185` + `rgba(221, 177, 133, 0.45)` | ring 3.57 / 9.38 on page, 3.22 / 7.37 on sand |
+| Overlay (drawer and modal backdrop) | `--sf-color-overlay` | `rgba(11, 31, 63, 0.6)` (navy) | `rgba(3, 8, 18, 0.7)` | — |
+
+Why the light accent is `#ae773d` and not the logo's `#ddb185`: no caramel from the logo reaches 3 : 1 on a warm paper (the darkest shell stop `#ca9359` measures 2.6 : 1, the wordmark 1.84 : 1). The accent keeps the logo's hue (31°) and is deepened just enough to clear 3 : 1 on paper, surface and sand, so it can carry display-size italic words, icons, selected borders and the focus ring. `--sf-color-accent-text` (HSL 31° 50 % 36 %) clears 4.5 : 1 for small text. In dark mode the raw logo caramel is the accent (9.38 : 1 on the navy-ink page).
+
+### 3.3 Always-dark surfaces (identical in both modes)
+
+| Token | Value | Contrast on `--sf-color-surface-dark` |
+|---|---|---|
+| `--sf-color-surface-dark` | `#0b1f3f` (navy) | — |
+| `--sf-color-on-dark` | `#faf7f2` | 15.33 |
+| `--sf-color-on-dark-muted` | `rgba(250, 247, 242, 0.72)` | 8.46 |
+| `--sf-color-on-dark-border` | `rgba(250, 247, 242, 0.16)` | hairline, decorative |
+| `--sf-color-on-dark-accent` | `#ddb185` | 8.35 (focus ring on navy too) |
+| `--sf-color-scrim` | `rgba(11, 31, 63, 0.7)` | — |
+| `--sf-gradient-scrim` | `linear-gradient(to top right, rgba(11, 31, 63, 0.72) 0%, rgba(11, 31, 63, 0.7) 35%, rgba(11, 31, 63, 0) 80%)` | — |
+
+- Use them for the footer (always dark, also in dark mode), the hero, and navy bands (`tone="navy"`). Always pair them with the white logo.
+- Text on navy uses `--sf-color-on-dark` (the brand paper rather than the logo's pure white: the warm cast avoids glare and lets the white logo stay the brightest element).
+- **Photography:** text must sit where the scrim is at least `--sf-color-scrim` strength (the bottom-left 35 % of `--sf-gradient-scrim`). Measured over a pure-white photograph: on-dark text 5.77 : 1, the caramel accent 3.14 : 1 (display size only), the focus ring 3.14 : 1. Small text on photography (eyebrows, support lines) uses `--sf-color-on-dark` at full strength; the muted tone drops to 3.88 : 1 there. The scrim gradient is the only gradient the system allows.
+
+### 3.4 Legacy names (kept so existing components keep working)
+
+| Legacy token | Now resolves to | Prefer |
+|---|---|---|
+| `--sf-color-primary-dark` | `--sf-color-primary-hover` | `--sf-color-primary-hover` |
+| `--sf-color-primary-light` | `--sf-color-text-secondary` | `--sf-color-text-secondary` |
+| `--sf-color-surface-2` | `--sf-color-sand` | `--sf-color-sand` |
+| `--sf-color-border` | `--sf-color-stone` | `--sf-hairline` / `--sf-color-border` |
+| `--sf-color-danger`, `--sf-color-danger-bg` | `--sf-color-error`, `--sf-color-error-bg` | the `error` names |
+| `--sf-color-price` / `--sf-color-compare` | `--sf-color-text` / `--sf-color-text-muted` | — |
+| `--sf-color-discount` / `--sf-color-sale` | `--sf-color-accent-text` | — |
+| `--sf-color-badge-bg` | `--sf-color-sand` | — |
+| `--sf-gradient-primary`, `--sf-gradient-primary-hover` | **flat** `linear-gradient(primary, primary)` / `(primary-hover, primary-hover)` | `background: var(--sf-color-primary)` |
+| `--sf-font-family` | `--sf-font-sans` | `--sf-font-sans` |
+| `--sf-transition-fast` / `--sf-transition` / `--sf-transition-slow` | `duration + --sf-ease-out` (160 / 320 / 640 ms) | — |
+
+---
+
+## 4. Semantic and commerce tokens
+
+| Role | Token | Light | Dark | Text on page | Text on its tint |
+|---|---|---|---|---|---|
+| Success (deep green) | `--sf-color-success` / `-bg` | `#2f6b46` / `#e6efe8` | `#7fbf95` / `rgba(127, 191, 149, 0.16)` | 5.93 / 8.58 | 5.40 / 5.77 |
+| Warning (warm amber-brown) | `--sf-color-warning` / `-bg` | `#975f05` / `#f8eedc` | `#e9a94f` / `rgba(233, 169, 79, 0.16)` | 4.97 / 8.99 | 4.62 / 6.10 |
+| Error (brick) | `--sf-color-error` / `-bg` | `#a2382b` / `#f7e5e1` | `#ec9483` / `rgba(236, 148, 131, 0.16)` | 6.26 / 8.00 | 5.50 / 5.55 |
+| Info (slate blue) | `--sf-color-info` / `-bg` | `#3c5a80` / `#e6ecf3` | `#9db4d6` / `rgba(157, 180, 214, 0.16)` | 6.62 / 8.71 | 5.95 / 5.81 |
+
+| Commerce role | Token | Light | Dark | Notes |
+|---|---|---|---|---|
+| Price | `--sf-color-price` | = text | = text | sans; tabular figures recommended (`font-variant-numeric: tabular-nums`) |
+| Compare-at price | `--sf-color-compare` | = muted | = muted | struck through; 6.11 / 6.06 on surface |
+| Sale price | `--sf-color-sale` | = accent-text | = accent-text | **never a loud red** |
+| Discount ("Save 12%", "Save ₹X", "% off") | `--sf-color-discount` | = accent-text | = accent-text | **decision: discount uses accent-text, not success**, so savings and sale read as one caramel voice |
+| Discount chip | `--sf-color-discount-bg` | `#f3e9dc` | `rgba(232, 201, 162, 0.14)` | discount text on it 4.75 / 7.76 |
+| Rating star | `--sf-color-star` | `#b08309` | `#e5c055` | gold, distinct from caramel; a graphic, 3.44 / 9.61 on surface. On sand, show stars in ink |
+| Neutral chip | `--sf-color-badge-bg` | = sand | = sand | — |
+
+Rules:
+- Prefer **soft** status badges (the `-bg` tint behind the matching text colour); they pass in both modes.
+- A **solid** semantic or primary fill takes `--sf-color-primary-contrast` text (paper in light, navy-ink in dark), never `#fff`: the dark-mode semantic colours are light, so white text on them fails. Prompt 01 fixed the six existing occurrences this way.
+
+---
+
+## 5. Typography
+
+### 5.1 Families
+
+| Role | Family | Token | Why |
+|---|---|---|---|
+| Display | **Playfair Display** | `--sf-font-display`: `"Playfair Display", Georgia, "Times New Roman", serif` | The logo's "A&S" is a high-contrast transitional serif with ball terminals; Playfair Display shares that DNA, so headlines sit naturally beside the logo. It has a true italic with cursive forms for accent words, and ships as a variable font (one file per style). |
+| UI and body | **Inter** | `--sf-font-sans`: `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif` | Highly legible at UI sizes, has tabular figures for prices, and was already loaded. The admin hardcodes Inter, and `<CssBaseline />` couples the admin's `<body>` to the storefront theme, so Inter is the only UI sans with zero admin risk. The storefront looks different through the serif display scale, palette, hairlines and layout, not through a different UI sans. |
+
+### 5.2 Files loaded
+
+- One stylesheet, linked in `public/index.html` with `preconnect` to `fonts.googleapis.com` and `fonts.gstatic.com` (the duplicate CSS `@import` and the unused Material Icons stylesheet were removed):
+  `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap`
+- `display=swap` on every face. Google serves one variable `woff2` per face per unicode subset and the browser downloads only the subsets a page uses. Measured on a cold load: Inter latin + latin-ext (the ₹ sign lives in latin-ext) + Playfair roman latin (+ latin-ext when a serif line contains ₹) + Playfair italic latin = **4–5 files**. The hard ceiling for Latin-script content is 6 (3 faces × 2 subsets). Playfair downloads only on pages that render it.
+- **Weights.** Playfair Display: 400, 400 italic, 500. Inter on the storefront: 400, 500, 600 (`--sf-font-bold` is 600). Inter 300 and 700 stay loaded **for the admin**: 300 renders SweetAlert's validation message (Admin → Returns), 700 the admin headings. All weights come from the same variable file, so they cost nothing extra. Storefront CSS must not use 300, 800 or 900; 800/900 in un-migrated modules currently render as 700.
+
+### 5.3 Scale
+
+Display sizes are fluid between 360 px and 1440 px viewports (`clamp()` with a `rem` base, so they also follow the user's font size).
+
+| Token | Size (360 → 768 → 1024 → 1440 px) | Line height | Tracking | Weight | Use |
+|---|---|---|---|---|---|
+| `--sf-text-display-xl` | 56 → 68 → 76 → 88 px | `--sf-leading-display` 1.04 | `--sf-tracking-display` −0.015em | 400 | hero headline |
+| `--sf-text-display-lg` | 40 → 46 → 50 → 56 px | 1.04 | −0.015em | 400 | section titles |
+| `--sf-text-display-md` | 28 → 31 → 33 → 36 px | `--sf-leading-heading` 1.1 | −0.015em | 400 | sub-sections, editorial blocks, `h1` on content pages |
+| `--sf-text-display-sm` | 22 → 23.5 → 24.5 → 26 px | 1.1 | −0.015em | 500 | small serif headings, product names in feature blocks |
+
+| UI token | Size | Typical use |
+|---|---|---|
+| `--sf-text-2xs` | 11px (0.6875rem) | badges |
+| `--sf-text-xs` | 12px | captions, legal |
+| `--sf-text-eyebrow` | 12px | eyebrows (see 5.5) |
+| `--sf-text-sm` | 14px | UI labels, buttons, meta |
+| `--sf-text-base` | 16px | body copy (never smaller for paragraphs) |
+| `--sf-text-md` | 17px | intros and leads |
+| `--sf-text-lg` / `-xl` / `-2xl` / `-3xl` | 20 / 24 / 30 / 36px | sans UI headings and prices |
+
+Line heights: `--sf-leading-tight` 1.25 · `--sf-leading-normal` 1.5 · `--sf-leading-body` 1.6 (body copy, 16px) · `--sf-leading-relaxed` 1.7 (long prose). Measure: `--sf-measure` 66ch. Weights: `--sf-font-normal` 400 · `--sf-font-medium` 500 · `--sf-font-semibold` 600 · `--sf-font-bold` 600. Tracking: `--sf-tracking-display` −0.015em · `--sf-tracking-eyebrow` 0.16em · `--sf-tracking-button` 0.02em.
+
+### 5.4 Usage
+
+- Page and section headings use the display serif (`font-family: var(--sf-font-display)`) at the display scale. UI headings (drawer titles, form legends, filter groups) stay in the sans at 600.
+- Body copy: `--sf-text-base` / `--sf-leading-body`, `max-width: var(--sf-measure)`. The page-level default line-height is still 1.5 (unchanged by Prompt 01 so existing layouts don't shift); primitives and migrated components set `--sf-leading-body` explicitly.
+- Prices and numbers: sans, `font-variant-numeric: tabular-nums` in tables and summaries.
+- MUI (the header): `h1`–`h4` map to the display scale in Playfair; `h5`/`h6` are sans 600; `overline` is the eyebrow; `button` is sans 500 with no text-transform.
+- Give display headings `overflow-wrap: break-word` so a long word can never force horizontal scroll at 360 px (display-xl is 56px there).
+
+### 5.5 The accent-italic rule
+
+One word in a display headline may be the accent, marked in copy as `*word*` and rendered as `<em>` (Prompt 06's `renderAccent`):
+
+```css
+.headline em {
+  font-family: var(--sf-font-display);
+  font-style: italic;            /* the true Playfair italic, weight 400 */
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-accent);
+  text-decoration: none;         /* never underlined */
+}
+```
+
+- The accent colour applies only at **display-md and larger** (≥ 28px, i.e. WCAG large text, where 3 : 1 suffices; the accent measures 3.57 on paper and 3.22 on sand). In `display-sm` (22–26px) and below, the `<em>` stays italic but uses `--sf-color-accent-text` (or simply inherits the ink).
+- On always-dark surfaces and photography use `--sf-color-on-dark-accent`.
+- One accent word per headline; never the whole line; never in body copy.
+
+### 5.6 Eyebrow
+
+Sans, `--sf-text-eyebrow` (12px), weight 500, `text-transform: uppercase`, `letter-spacing: var(--sf-tracking-eyebrow)` (0.16em), colour `--sf-color-text-muted`. A coloured eyebrow uses `--sf-color-accent-text`, never the raw accent. On navy use `--sf-color-on-dark-muted`; on photography `--sf-color-on-dark`. An optional short caramel rule may precede it (24px × 1px, `--sf-color-accent` or `--sf-brand-caramel`; decorative).
+
+---
+
+## 6. Spacing, containers, radius, hairlines
+
+**Spacing** (4px base): `--sf-space-1` 4 · `-2` 8 · `-3` 12 · `-4` 16 · `-5` 20 · `-6` 24 · `-8` 32 · `-10` 40 · `-12` 48 · `-16` 64 · `-20` 80 · `-24` 96 · `-32` 128 (px).
+
+| Token | Value | Measured (360 / 768 / 1024 / 1440) | Use |
+|---|---|---|---|
+| `--sf-section-y` | `clamp(64px, 9vw, 128px)` | 64 / 69 / 92 / 128px | vertical padding of every page section |
+| `--sf-gutter` | `clamp(16px, 4vw, 48px)` | 16 / 31 / 41 / 48px | page side padding |
+
+**Containers:** `--sf-container-max` 1280px (content; `--sf-container` is an alias) · `--sf-container-wide` 1440px (editorial and full-bleed inner) · `--sf-container-narrow` 720px (prose and forms). Pattern: `max-width: var(--sf-container-max); margin-inline: auto; padding-inline: var(--sf-gutter);`.
+
+**Radius** (editorial = sharp; nothing larger exists): `--sf-radius-sm` 2px (buttons, inputs, cards, menus: the default) · `--sf-radius-md` 4px (sheets, modals, tooltips) · `--sf-radius-lg` 8px (large media frames) · `--sf-radius-xl` 12px (rare) · `--sf-radius-pill` 999px (chips, counters, avatars).
+
+**Hairlines:** `--sf-hairline` = `1px solid var(--sf-color-border)`. This is the primary structural device: between sections, under headers, around tables and on card hover. Stone is decorative (1.43 : 1); an interactive boundary uses `--sf-color-border-strong`.
+
+**Tap target:** `--sf-tap-target` 44px minimum on every control.
+
+---
+
+## 7. Shadows
+
+| Token | Light (navy-tinted, soft) | Dark | Use |
+|---|---|---|---|
+| `--sf-shadow-xs` | `0 1px 2px rgba(11, 31, 63, 0.06)` | `0 1px 2px rgba(0, 0, 0, 0.4)` | hairline-level lift (sticky bars) |
+| `--sf-shadow-sm` | `0 2px 8px rgba(11, 31, 63, 0.07)` | `0 2px 8px rgba(0, 0, 0, 0.45)` | menus, popovers, floating buttons |
+| `--sf-shadow-md` | `0 8px 24px rgba(11, 31, 63, 0.1)` | `0 8px 24px rgba(0, 0, 0, 0.5)` | mega-menu panel, toasts |
+| `--sf-shadow-lg` | `0 20px 48px rgba(11, 31, 63, 0.14)` | `0 20px 48px rgba(0, 0, 0, 0.6)` | drawers, modals |
+| `--sf-shadow-focus` | `0 0 0 2px var(--sf-color-focus), 0 0 0 5px var(--sf-color-focus-halo)` | same composite, caramel | keyboard focus |
+
+Cards carry **no** shadow by default (a hairline on hover instead). No coloured glows, no neon. The focus ring is a 2px solid caramel ring (3 : 1 on paper, sand, surface and navy) inside the soft 45 % accent halo the brief asked for: the halo alone would measure ≈ 1.7 : 1, so it can't be the only indicator. Where `box-shadow` is clipped, use `outline: 2px solid var(--sf-color-focus); outline-offset: 2px`.
+
+---
+
+## 8. Motion
+
+| Token | Value | Use |
+|---|---|---|
+| `--sf-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)` | entrances, reveals, hovers |
+| `--sf-ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` | state changes (open/close, toggles) |
+| `--sf-duration-fast` | 160ms | hover, press, colour changes |
+| `--sf-duration` | 320ms | state changes, drawers, menus |
+| `--sf-duration-slow` | 640ms | image crossfades |
+| `--sf-duration-reveal` | 900ms | scroll reveals, hero entrance |
+| `--sf-reveal-distance` | 20px | reveal rise |
+| `--sf-stagger` | 90ms | delay between items in a sequence (cap groups at 8 items) |
+| `--sf-transition-fast` / `--sf-transition` / `--sf-transition-slow` | `160ms` / `320ms` / `640ms` + `--sf-ease-out` | shorthand: `transition: color var(--sf-transition-fast)` |
+
+**Reduced motion.** Under `@media (prefers-reduced-motion: reduce)` every duration becomes `0.01ms`, `--sf-stagger` 0ms and `--sf-reveal-distance` 0, so CSS transitions built from tokens collapse on their own. framer-motion: Prompt 06 wraps the storefront in `<MotionConfig reducedMotion="user">`; components also check `useReducedMotion()` for transforms (parallax, scale). Custom `@keyframes` must be disabled under the media query.
+
+**Language.** Subtle, slow, elegant: fades and short rises, image scale 1.03 on hover, colour-only button hovers, press scale 0.99. No springs, bounces, `translateY` lifts on cards, pulsing or attention-seeking loops. Animate only `opacity` and `transform`.
+
+**Standard reveal recipe (framer-motion).** JS reads the mirror in `TOKENS.motion` (seconds and cubic-bezier arrays):
+
+```jsx
+import { motion, useReducedMotion } from "framer-motion";
+import { TOKENS } from "../../theme/tokens";
+
+const { duration, easeOut, revealDistance } = TOKENS.motion;
+const reduce = useReducedMotion();
+
+<motion.div
+  initial={{ opacity: 0, y: reduce ? 0 : revealDistance }}
+  whileInView={{ opacity: 1, y: 0 }}
+  viewport={{ once: true, margin: "-10% 0px" }}
+  transition={{ duration: duration.reveal, ease: easeOut }}
+/>
+```
+
+Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
+
+---
+
+## 9. z-index
+
+| Token | Value | Layer |
+|---|---|---|
+| `--sf-z-sticky` | 40 | sticky in-page elements (filter rail, section nav) |
+| `--sf-z-header` | 50 | site header |
+| `--sf-z-megamenu` | 55 | mega-menu flyout (desktop) |
+| `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar |
+| `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves |
+| `--sf-z-modal` | 1100 | modals and full-screen overlays (search, auth) |
+| (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
+
+Reserved, defined by their owners if needed: `--sf-z-bottomnav` (Prompt 09; it must sit above content and below `--sf-z-stickybar`; 58 is suggested) and `--sf-z-search` (Prompt 15; only if search must sit above another modal).
+
+---
+
+## 10. Logo usage and `BrandLogo`
+
+**Assets** (`LOGO_URLS` in `src/utils/constants.js`; 1286 × 426 PNG, transparent):
+- `LOGO_URLS.light`: `https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo.png`
+- `LOGO_URLS.white`: `https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo-white.png`
+
+**Rules**
+- The light logo goes on paper, surface and sand. The white logo goes on navy, on dark-mode surfaces, on image scrims and on the dark footer. Never recolour, filter or tint the PNGs; never place the light logo on a dark surface.
+- Minimum rendered height: **28px** (mobile header), **40–48px** (desktop header), **56px** (auth modal, invoice).
+- Clear space on all sides equal to the cap height of the "A": 34 % of the rendered logo height (≈ 10px at 28px, 14px at 40px, 19px at 56px).
+- The artwork already contains "Trusted Comfort for Every Home". Never repeat that line as text beside the logo.
+
+**`<BrandLogo />`** (`src/components/ui/BrandLogo.js`) always renders `alt="A & S Urbanseat"`, explicit `width`/`height` from the 3.019 : 1 ratio (no layout shift) and `decoding="async"`.
+
+| Prop | Type / default | Behaviour |
+|---|---|---|
+| `variant` | `"auto"` \| `"light"` \| `"white"`, default `"auto"` | `"light"` = full-colour artwork, `"white"` = one-colour artwork. `"auto"` follows `onDark`, else the theme (dark mode → white). |
+| `onDark` | boolean, optional | auto mode only: `true` when the logo sits on a dark surface whatever the theme (footer, scrim), `false` on a light one. |
+| `height` | number (px), default 40 | width is derived: 28 → 85, 40 → 121, 48 → 145, 56 → 169. |
+| `priority` | boolean, default `false` | `true` (the header logo only): `loading="eager"` + `fetchpriority="high"`. Otherwise `loading="lazy"`. |
+| `className` | string | appended to the module class (`display: block; max-width: 100%; height: auto`). |
+| other props | — | passed to the `<img>` (e.g. `style`, `data-*`). |
+
+```jsx
+<BrandLogo priority height={44} />                 {/* header: follows the theme */}
+<BrandLogo variant="white" height={40} />          {/* footer: always navy */}
+<BrandLogo onDark height={48} />                   {/* over a photo scrim */}
+```
+
+It also renders outside `ThemeContextProvider` (it falls back to the `body.dark` class), so an error fallback can use it. The admin never imports it (Prompt 33 handles the admin's logos).
+
+---
+
+## 11. Image placeholder tones
+
+| Where | Background | Text | Contrast |
+|---|---|---|---|
+| `PLACEHOLDER_IMG` (inline SVG data URI in `src/utils/helpers.js`, label "Image coming soon") | `#f1ebe1` (sand) | `#686158` (muted) | 5.15 : 1 |
+| Seeded placeholder URLs | `f1ebe1` | `686158` | same |
+
+- These two hex values are the **only colour literals permitted outside the token files** (a data URI cannot read CSS variables). They are the light-mode tokens, so placeholders stay light in dark mode too, which is accepted.
+- Seed pattern: `https://placehold.co/{w}x{h}/f1ebe1/686158?text=Name+With+Plus+Signs`. Sizes: products 1200x1500 (4:5 portrait), categories 1600x1000, hero 2400x1350.
+- While an image loads, its slot shows `--sf-color-sand` and reserves its box with `aspect-ratio`.
+
+---
+
+## 12. Values for files that cannot read tokens
+
+Copy these literally. Prompt 34 verifies they still match.
+
+| Use | Value |
+|---|---|
+| `<meta name="theme-color">` (light) / `media="(prefers-color-scheme: dark)"` | `#faf7f2` / `#0a1426` |
+| `manifest.json` `background_color` / `theme_color` | `#faf7f2` / `#faf7f2` |
+| Pre-paint script `document.body.style.backgroundColor` (= `colors.js` `background.default`) | light `#faf7f2`, dark `#0a1426` |
+| Loading screen | light: `#faf7f2` + light logo + progress hairline `#ae773d`; dark: `#0a1426` + white logo + hairline `#ddb185` |
+| `db.json` `banners[].gradient` (must stay a string) | `#0b1f3f` |
+| `ErrorBoundary` fallbacks | `var(--sf-color-bg, #faf7f2)`, `var(--sf-color-text, #1c1a17)`, `var(--sf-font-display, Georgia, serif)` |
+
+---
+
+## 13. Usage rules
+
+**Tokens only.** No hex, `rgb()` or font-family literals in components. Allowed exceptions: the two `PLACEHOLDER_IMG` values, `var(--token, fallback)` in `ErrorBoundary`, glyph SVGs drawn with `currentColor`, and the static files in section 12.
+
+**Buttons.**
+- Primary: ink background (`--sf-color-primary`), paper text (`--sf-color-primary-contrast`), hover `--sf-color-primary-hover` (navy; white in dark mode).
+- Ghost: transparent with a 1px `--sf-color-primary` border; hover `--sf-color-primary-soft`.
+- On navy or photography: brand paper background with brand ink text (`--sf-brand-paper` / `--sf-brand-ink`).
+- Text link: ink (or accent-text) with an underline in `--sf-color-accent`.
+- All buttons: 44px minimum, radius sm, sans 14px medium, tracking 0.02em; colour-only hover, press scale 0.99. Never a gradient or a lift.
+
+**Links.** Body links are `--sf-color-accent-text` or ink with a 1px `--sf-color-accent` underline (`text-underline-offset: 0.2em`); hover thickens or reveals the underline. Never raw `--sf-color-accent` or `--sf-brand-caramel` for small text on a light surface.
+
+**Inputs.** 44px tall, 1px `--sf-color-border-strong` boundary, radius sm, surface background, 15–16px text. Focus: 1px `--sf-color-accent` border plus `--sf-shadow-focus`. Errors: `--sf-color-error` border and message (with an icon, never colour alone). Placeholder text: `--sf-color-text-muted`. Labels sit above the field and stay visible.
+
+**Cards.** Surface or transparent on the page, no border and no shadow by default; a hairline (`--sf-hairline`) on hover. Media slots use sand. Radius sm.
+
+**Panels and sections.** Quiet panels are sand with no shadow. Every page section uses `padding-block: var(--sf-section-y)`. Separate sections with hairlines or whitespace rather than coloured bands (at most one sand band per page; navy bands use the always-dark tokens).
+
+**Focus.** Every interactive element gets a visible `:focus-visible` style from `--sf-shadow-focus` (or the outline variant). Never `outline: none` without a replacement.
+
+**Dark mode.** Never hand-pick light/dark pairs; the tokens flip. Always-dark surfaces use `--sf-color-surface-dark` + `--sf-color-on-dark*` in both modes. Sand and stone are translucent in dark mode, so they sit correctly on any dark surface.
+
+**Admin coupling. Never break these.**
+1. Scope every new global rule with `body:not(.admin-area)` or `.App`.
+2. In `App.css`, never edit, re-scope, reorder or delete the existing `::-webkit-scrollbar*`, `body.light …`, `body.dark …` or `body.admin-area …` rules. Append storefront rules after them, scoped `body:not(.admin-area)`, as Prompt 01 did for scrollbars.
+3. `<CssBaseline />` is built from the storefront MUI theme but also styles the admin's `<body>`. `buildStorefrontTheme` in `ThemeContext.js` pins the `MuiCssBaseline` `body` rule to its pre-rebrand values (MUI's default body1 in Inter plus `BASELINE_BODY` from `colors.js`). **Keep that override when you edit the storefront MUI theme** (Prompt 06). Without it, admin page titles change colour and admin line-heights shift (verified: 20 of 24 admin screenshots changed).
+4. Keep Inter 300–700 in the Google Fonts URL and the `theme` localStorage key with its `"light"`/`"dark"` values.
+5. `BASELINE_BODY` is not a storefront colour; components never use it.
+
+---
+
+## 14. Contrast results
+
+Output of `node scripts/check-contrast.js --markdown` (WCAG 2.2: 4.5 : 1 text, 3 : 1 display text ≥ 24px and non-text UI; translucent layers are composited onto the background they sit on; dark-mode sand is measured over the dark surface):
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Text (ink) on page (paper) — brief: >= 12:1 | 16.25 ✓ | 15.94 ✓ | 12:1 |
+| Text on surface | 17.36 ✓ | 14.56 ✓ | 4.5:1 |
+| Text on sand | 14.64 ✓ | 12.52 ✓ | 4.5:1 |
+| Secondary text on page | 8.69 ✓ | 10.90 ✓ | 4.5:1 |
+| Secondary text on surface | 9.29 ✓ | 9.95 ✓ | 4.5:1 |
+| Secondary text on sand | 7.83 ✓ | 8.56 ✓ | 4.5:1 |
+| Muted text on page | 5.71 ✓ | 6.63 ✓ | 4.5:1 |
+| Muted text on surface | 6.11 ✓ | 6.06 ✓ | 4.5:1 |
+| Muted text on sand | 5.15 ✓ | 5.21 ✓ | 4.5:1 |
+| Accent-text (links, sale) on page | 5.33 ✓ | 11.66 ✓ | 4.5:1 |
+| Accent-text on surface | 5.70 ✓ | 10.65 ✓ | 4.5:1 |
+| Accent-text on sand | 4.81 ✓ | 9.16 ✓ | 4.5:1 |
+| Accent-text on accent-soft (selected) | 4.69 ✓ | 9.07 ✓ | 4.5:1 |
+| Accent (display italic >= 24px, icons) on page | 3.57 ✓ | 9.38 ✓ | 3:1 |
+| Accent on surface | 3.81 ✓ | 8.57 ✓ | 3:1 |
+| Accent on sand | 3.22 ✓ | 7.37 ✓ | 3:1 |
+| Text on solid accent (accent-contrast) | 4.55 ✓ | 9.38 ✓ | 4.5:1 |
+| Focus ring on page | 3.57 ✓ | 9.38 ✓ | 3:1 |
+| Focus ring on surface | 3.81 ✓ | 8.57 ✓ | 3:1 |
+| Focus ring on sand | 3.22 ✓ | 7.37 ✓ | 3:1 |
+| Control border (border-strong) on page | 3.54 ✓ | 3.45 ✓ | 3:1 |
+| Control border on surface | 3.79 ✓ | 3.41 ✓ | 3:1 |
+| Primary button text (primary-contrast on primary) | 16.25 ✓ | 15.94 ✓ | 4.5:1 |
+| Primary button hover (primary-contrast on primary-hover) | 15.33 ✓ | 18.41 ✓ | 4.5:1 |
+| Ink on primary-soft (ghost hover) | 14.44 ✓ | 13.24 ✓ | 4.5:1 |
+| Secondary (navy) contrast text | 15.33 ✓ | 15.33 ✓ | 4.5:1 |
+| Price on surface | 17.36 ✓ | 14.56 ✓ | 4.5:1 |
+| Compare-at price on surface | 6.11 ✓ | 6.06 ✓ | 4.5:1 |
+| Sale / discount on surface | 5.70 ✓ | 10.65 ✓ | 4.5:1 |
+| Discount on discount-bg | 4.75 ✓ | 7.76 ✓ | 4.5:1 |
+| Rating star on surface (graphic) | 3.44 ✓ | 9.61 ✓ | 3:1 |
+| Rating star on page (graphic) | 3.22 ✓ | 10.52 ✓ | 3:1 |
+| Success text on page | 5.93 ✓ | 8.58 ✓ | 4.5:1 |
+| Success on success-bg | 5.40 ✓ | 5.77 ✓ | 4.5:1 |
+| Warning text on page | 4.97 ✓ | 8.99 ✓ | 4.5:1 |
+| Warning on warning-bg | 4.62 ✓ | 6.10 ✓ | 4.5:1 |
+| Error text on page | 6.26 ✓ | 8.00 ✓ | 4.5:1 |
+| Error on error-bg | 5.50 ✓ | 5.55 ✓ | 4.5:1 |
+| Info text on page | 6.62 ✓ | 8.71 ✓ | 4.5:1 |
+| Info on info-bg | 5.95 ✓ | 5.81 ✓ | 4.5:1 |
+| Badge text on solid error fill (primary-contrast) | 6.26 ✓ | 8.00 ✓ | 4.5:1 |
+| Badge text on solid success fill (primary-contrast) | 5.93 ✓ | 8.58 ✓ | 4.5:1 |
+| On-dark text on navy surface (both modes) | 15.33 ✓ | 15.33 ✓ | 4.5:1 |
+| On-dark muted (translucent) on navy (both modes) | 8.46 ✓ | 8.46 ✓ | 4.5:1 |
+| On-dark accent (caramel) on navy (both modes) | 8.35 ✓ | 8.35 ✓ | 4.5:1 |
+| Focus ring (on-dark accent) on navy (both modes) | 8.35 ✓ | 8.35 ✓ | 3:1 |
+| Paper button text (brand ink on brand paper) (both modes) | 16.25 ✓ | 16.25 ✓ | 4.5:1 |
+| Hero: on-dark text on scrim over white photo (both modes) | 5.77 ✓ | 5.77 ✓ | 4.5:1 |
+| Hero: caramel accent (display) on scrim over white photo (both modes) | 3.14 ✓ | 3.14 ✓ | 3:1 |
+| Hero: focus ring on scrim over white photo (both modes) | 3.14 ✓ | 3.14 ✓ | 3:1 |
+| Placeholder image text (muted on sand) | 5.15 ✓ | n/a | 4.5:1 |
+| Hairline (stone) vs page | 1.43 | 1.44 | info |
+| Hairline vs surface | 1.53 | 1.48 | info |
+| Sand panel vs page | 1.11 | 1.27 | info |
+| Brand caramel vs paper (decorative only, never text) | 1.84 | 1.84 | info |
+| Hero: on-dark muted on scrim over white photo (not for text) | 3.88 | 3.88 | info |
+
+Mirror check: colors.js and tokens.js match storefront-tokens.css ✓ · Contrast: every pairing meets its minimum ✓
+
+---
+
+## 15. Checklist for later prompts
+
+- [ ] Read `00_INDEX.md`, `BUILD_LOG.md` and this document before editing.
+- [ ] Use tokens only (section 13). Grep your files for `#[0-9a-f]{3,8}`, `rgb(`, `font-family:` before you finish; only the listed exceptions may remain.
+- [ ] Primary is ink; caramel text at small sizes is `--sf-color-accent-text`; accent italics only at display-md and up.
+- [ ] Display headings in `--sf-font-display` on the display scale; UI in `--sf-font-sans` at 400/500/600 only.
+- [ ] Sections use `--sf-section-y`, containers `--sf-container-*` with `--sf-gutter`, separations `--sf-hairline`, radii from the scale.
+- [ ] Every control is ≥ 44px and shows `--sf-shadow-focus` on `:focus-visible`, in both modes, including on sand, navy and photography.
+- [ ] Logos only through `<BrandLogo />` with the right variant for the background.
+- [ ] Motion from the motion tokens / `TOKENS.motion`; verify with reduced motion on.
+- [ ] Check light and dark mode, and 360 / 768 / 1024 / 1440px.
+- [ ] Add new component-level colour pairs to `scripts/check-contrast.js` and run it (it must exit 0); if a token value changes, update sections 3–4, 12 and 14 here.
+- [ ] Keep the admin identical: scoped globals, no edits to the shared `App.css` rules, keep the `MuiCssBaseline` pin; compare admin screenshots before and after.

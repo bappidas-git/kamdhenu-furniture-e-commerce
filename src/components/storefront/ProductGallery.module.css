@@ -80,7 +80,7 @@
   left: var(--sf-space-3);
   z-index: 2;
   background: var(--sf-color-danger);
-  color: #fff;
+  color: var(--sf-color-primary-contrast);
   font-size: var(--sf-text-sm);
   font-weight: var(--sf-font-bold);
   padding: 4px 10px;

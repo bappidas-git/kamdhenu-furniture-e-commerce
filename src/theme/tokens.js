@@ -24,12 +24,54 @@
 // =============================================================================
 
 // --- Structural token mirror (keep in sync with storefront-tokens.css) -------
+// `node scripts/check-contrast.js` fails when these drift from the CSS.
 export const TOKENS = {
-  radius: { sm: 6, md: 10, lg: 16, xl: 22, pill: 999 },
-  space: { 1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64 },
+  radius: { sm: 2, md: 4, lg: 8, xl: 12, pill: 999 },
+  space: {
+    1: 4, 2: 8, 3: 12, 4: 16, 5: 20, 6: 24, 8: 32, 10: 40, 12: 48, 16: 64,
+    20: 80, 24: 96, 32: 128,
+  },
   breakpoints: { xs: 480, sm: 768, md: 1024, lg: 1280, xl: 1440 },
   tapTarget: 44,
   containerMax: 1280,
+  container: { max: 1280, wide: 1440, narrow: 720 },
+  type: {
+    fontDisplay: '"Playfair Display", Georgia, "Times New Roman", serif',
+    fontSans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
+    // Keys match the --sf-text-* suffixes
+    size: {
+      "display-xl": "clamp(3.5rem, 2.833rem + 2.963vw, 5.5rem)",
+      "display-lg": "clamp(2.5rem, 2.167rem + 1.481vw, 3.5rem)",
+      "display-md": "clamp(1.75rem, 1.583rem + 0.741vw, 2.25rem)",
+      "display-sm": "clamp(1.375rem, 1.292rem + 0.37vw, 1.625rem)",
+      "2xs": "0.6875rem",
+      xs: "0.75rem",
+      sm: "0.875rem",
+      base: "1rem",
+      md: "1.0625rem",
+      lg: "1.25rem",
+      xl: "1.5rem",
+      "2xl": "1.875rem",
+      "3xl": "2.25rem",
+      eyebrow: "0.75rem",
+    },
+    weight: { normal: 400, medium: 500, semibold: 600, bold: 600 },
+    leading: { display: 1.04, heading: 1.1, tight: 1.25, normal: 1.5, body: 1.6, relaxed: 1.7 },
+    tracking: { display: "-0.015em", eyebrow: "0.16em", button: "0.02em" },
+    measure: "66ch",
+  },
+  // framer-motion takes seconds and cubic-bezier arrays; the *Ms values match
+  // the CSS. Under reduced motion the CSS collapses on its own; JS callers
+  // check useReducedMotion() (or rely on <MotionConfig reducedMotion="user">).
+  motion: {
+    easeOut: [0.22, 1, 0.36, 1],
+    easeInOut: [0.65, 0, 0.35, 1],
+    duration: { fast: 0.16, base: 0.32, slow: 0.64, reveal: 0.9 },
+    durationMs: { fast: 160, base: 320, slow: 640, reveal: 900 },
+    revealDistance: 20,
+    stagger: 0.09,
+    staggerMs: 90,
+  },
 };
 
 // --- Trust-badge catalogue ---------------------------------------------------

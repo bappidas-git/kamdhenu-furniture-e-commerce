@@ -57,7 +57,7 @@
   left: 0;
   right: 0;
   background: var(--sf-color-primary);
-  color: #fff;
+  color: var(--sf-color-primary-contrast);
   font-size: var(--sf-text-xs);
   font-weight: var(--sf-font-medium);
   text-align: center;

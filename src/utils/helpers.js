@@ -1,7 +1,10 @@
 // Inline SVG placeholder (no network) used when an image is missing or its URL
-// fails to load, so image-bearing cards always degrade gracefully.
+// fails to load, so image-bearing cards always degrade gracefully. A data URI
+// cannot read CSS variables, so it carries the light sand (#f1ebe1) and muted
+// text (#686158) token values — the only hex literals allowed outside the
+// token files (see prompts/DESIGN_SYSTEM.md, "Image placeholder tones").
 export const PLACEHOLDER_IMG =
-  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23e2e8f0'/%3E%3Ctext x='50%25' y='50%25' font-family='system-ui,sans-serif' font-size='22' fill='%2394a3b8' text-anchor='middle' dominant-baseline='middle'%3ENo Image%3C/text%3E%3C/svg%3E";
+  "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='400' height='400'%3E%3Crect width='100%25' height='100%25' fill='%23f1ebe1'/%3E%3Ctext x='50%25' y='50%25' font-family='system-ui,sans-serif' font-size='22' fill='%23686158' text-anchor='middle' dominant-baseline='middle'%3EImage coming soon%3C/text%3E%3C/svg%3E";
 
 // <img onError> handler: swap to the placeholder once (guarded against loops).
 export const onImageError = (e) => {

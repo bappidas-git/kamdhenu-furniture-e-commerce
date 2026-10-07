@@ -32,7 +32,7 @@
   align-items: center;
   gap: 3px;
   background: var(--sf-color-success);
-  color: #fff;
+  color: var(--sf-color-primary-contrast);
   font-weight: var(--sf-font-semibold);
   border-radius: var(--sf-radius-sm);
   padding: 2px 8px;

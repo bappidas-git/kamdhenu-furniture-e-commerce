@@ -1,7 +1,6 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap");
-
-/* Storefront design tokens (CSS custom properties). Re-skin a client by editing
-   src/theme/storefront-tokens.css — see STOREFRONT_UX_GUIDELINES.md. */
+/* Fonts (Inter + Playfair Display) load from the single Google Fonts <link> in
+   public/index.html. Storefront design tokens (CSS custom properties) live in
+   src/theme/storefront-tokens.css — see prompts/DESIGN_SYSTEM.md. */
 @import "./theme/storefront-tokens.css";
 
 body {
@@ -11,6 +10,13 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Storefront body: UI sans and ink from the tokens. Scoped so the admin keeps
+   the shared baseline above (and CssBaseline's, pinned in ThemeContext). */
+body:not(.admin-area) {
+  font-family: var(--sf-font-sans);
+  color: var(--sf-color-text);
 }
 
 code {

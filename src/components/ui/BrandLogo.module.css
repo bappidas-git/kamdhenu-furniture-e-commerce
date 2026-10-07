@@ -1,0 +1,8 @@
+/* The width/height attributes size the logo; height: auto keeps the aspect
+   ratio when max-width narrows it inside a tight container. */
+.logo {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  user-select: none;
+}
