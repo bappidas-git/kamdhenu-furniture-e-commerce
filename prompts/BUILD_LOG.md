@@ -1041,3 +1041,131 @@ Deleted from `constants.js`. A grep found no import before or after this prompt,
 - **Payment methods actually accepted:** the marks show Visa, Mastercard and UPI (the checkout's card and UPI options) and COD while it is enabled in settings. RuPay, net banking and wallets are offered at checkout without a mark. Confirm the real list and the gateway; "Secure payment" rests on it (Razorpay and Stripe are disabled in settings today).
 - **Promises:** the 7-day returns window and the ₹9,999 free-delivery threshold (placeholders) now appear in the footer too.
 - **Copy:** `NEWSLETTER_LINE`, "You're on the list.", "Prices in INR", and whether the Laravel side sends a confirmation or double opt-in (the storefront only records the lead).
+
+---
+
+## Prompt 09 — Mobile navigation
+
+**Date:** 2026-10-07. **Result:** phones and tablets now get the same editorial calm as the desktop header:
+
+- `SidebarMenu` is a paper panel with the department accordion (the same grouping as the mega-menu), an account block, Discover, Account and Settings.
+- `BottomNav` is a quiet five-item bar that slides away on scroll but never under an open overlay.
+- `BottomDrawer`, an orphan until now, is the shared, accessible bottom sheet.
+
+All three are built on a new focus-trap helper. Every old link target and behaviour is kept, and the two broken `?filter=` links are gone. Reference: `prompts/DESIGN_SYSTEM.md` §19.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/SidebarMenu/SidebarMenu.js` + `.module.css` | Rewritten; props `open`, `onClose`, `onOpenAuth` unchanged. Layout and behaviour in DESIGN_SYSTEM §19.2. Removed: the keyword→icon mapping (16 category glyphs), the 13 `--sm-*` colours and their gradients, the cart-icon wordmark, the spring, the "HOT" badge, the lazy "Shop by Category" toggle, and the broken `/products?filter=trending` and `?filter=best-sellers` links. 75 colour literals → 0. |
+| `src/components/BottomNav/BottomNav.js` + `.module.css` | Rewritten. Changes: Shop replaces Categories; a guest's Account opens the sign-in dialog; items are real `<Link>`s (they were buttons calling `navigate`); `aria-current` is `"page"` or `"true"`; the wishlist count is a `.sf-count`; z-index is `--sf-z-bottomnav` (was 1200); the blur, shadow and indigo are gone. Behaviour: the overlay guard, and focus returns to Search when its overlay closes. 17 literals → 0. |
+| `src/components/BottomDrawer/BottomDrawer.js` + `.module.css` | Rewritten as the shared sheet. It now has dialog semantics, Escape, focus in and back out, the scroll lock and a body portal. Props: kept `open`, `onClose`, `title`, `children`; added `ariaLabel`, `initialFocusRef`, `maxHeight` (default `80vh`), `footer`, `className`. 8 literals → 0. No page uses it yet (Prompt 14). |
+| New `src/components/ui/useFocusTrap.js` | `useFocusTrap` (default), `useBodyScrollLock`, `useBodyScrollLocked`, `getFocusableElements`. |
+| `src/components/ui/index.js` | Also exports the four helpers and `BottomDrawer`. |
+| `src/theme/storefront-tokens.css` | `--sf-z-bottomnav: 58`. |
+| New tests | `useFocusTrap.test.js` (8), `BottomDrawer.test.js` (8), `SidebarMenu.test.js` (14; one renders the real `db.json` tree), `BottomNav.test.js` (14). |
+| `prompts/DESIGN_SYSTEM.md` | Updated: §9 z-index row, §16.4 barrel note, §18.5 nav height. New: §19 "Mobile navigation and overlays". |
+
+No change to `Header/*` (read only), `SearchModal`, `CartDrawer`, `AuthModal`, pages, contexts, `api.js`, `src/utils/categories.js`, `db.json` or any admin file.
+
+### Decisions
+
+- **Search instance:** BottomNav keeps its own `SearchModal` instance. Routing it through the header's instance would need an `onOpenSearch` prop or lifted state through `Header.js`, which this prompt only reads. Keeping two is cheap:
+  - the modal caches the catalogue at module level, so both instances share one fetch;
+  - a closed instance renders nothing and makes no request;
+  - the two can never be open together, because each overlay covers the other's trigger.
+
+  When the bar's overlay closes, focus returns to its Search button.
+- **`groupCategoryTree`:** reused from `Header/groupCategoryTree.js` (Prompt 07 already extracted it), so `src/utils/categories.js` is unchanged. A test renders the sidebar from the seeded `db.json` categories and checks that each department's links equal the helper's output, in order. The tree checked: Plastic Furniture → Essentials, Premium, Dining Sets, Sofas; Home Furniture → its four rooms, with Bedroom's six leaves.
+- **The focus-trap helper** lives in `src/components/ui/`, where Prompt 18 looks for it, and is exported from the barrel. It moves focus in (`initialFocusRef`, the first focusable element, or the container), cycles Tab and Shift+Tab, handles Escape for the topmost trap only, and returns focus to the opener unless another layer has taken it. It does not forcibly pull focus back, so portalled popovers and SweetAlert dialogs opened from a layer keep working. `useBodyScrollLock` sets the same inline `overflow: hidden` the other overlays already set.
+- **Overlay guard:** BottomNav watches the body lock with a `MutationObserver` (`useBodyScrollLocked`), not only from its scroll handler. While any overlay holds the lock, the bar is shown, ignores scrolling and is `inert`. An overlay that opens while the bar is hidden brings it back, so it is in place when the overlay closes. The acceptance line "hidden while overlays are open" is read as *beneath every overlay and inert*, not slid away: the design requirement and implementation note 3 both say the bar never hides while a sheet or drawer is open.
+- **`--sf-z-bottomnav: 58`** (the value DESIGN_SYSTEM suggested): above page content and the header (they never overlap), below the sticky bar (60), drawers (1000) and modals (1100).
+- **Breakpoint:** the bar shows under `@media (max-width: 768px)`, the footer reserve's own query, and is gone from 769px. At exactly 768px the tablet header and the bar both show, as the prompt specifies (≤ 768px).
+- **Sidebar data:** the categories are read each time the menu opens ("fetched when the panel opens, cached in state"). The cached list renders at once, the read refreshes it, so admin edits appear as they do in the header, and a failed refresh keeps the cached list. The first read shows a skeleton; a failed first read offers "Try again".
+- **Initial focus:** the sidebar's close button, the same as the sheet (the prompt fixes this for the sheet; the old sidebar focused its panel).
+- **Labels** follow the header's account menu: "My account", "My orders", "My wishlist", "Sign out". Guests see "Track order" (the header and footer label) for `/orders`. `/profile` appears only when signed in, because `Profile.js` sends guests home.
+
+### Deviations from the prompt, and why
+
+1. **An "Account" section** (My orders or Track order, My wishlist, Sign out) is not in the prompt's section list. It keeps the old sidebar's `/orders`, `/wishlist` and Logout (guardrail 1). The header also doesn't offer them below 1024px: it has no wishlist at 768–1023px and no account action below 768px.
+2. **"Cookies"** sits beside Terms and Privacy in the legal row, as in the footer's bottom bar.
+3. **Current-location cues** (not asked for):
+   - Opening the menu on a listing expands that listing's department.
+   - `aria-current` marks the current category link, the department holding it and the current page's link.
+4. **`BottomDrawer` additions:** `footer` and `className` props, for Prompt 14's "Show N results" row; and a portal on `<body>`.
+5. **Exit motion:** the prompt specifies the entrances. The sidebar and the sheet leave over `--sf-duration` with `--sf-ease-in-out`, so closing feels quicker than the 640ms entrance.
+6. **Shop glyph:** a chair (`ChairOutlined`) rather than the old grid.
+7. **The bar is `inert` under overlays.** It is covered by the backdrop anyway; this also takes it out of the tab order and the accessibility tree.
+8. **Indentation:** an expanded department's content is indented 16px, so its eyebrow groups never read as the menu's own section titles once the department name has scrolled away.
+
+### Verification
+
+- `npm run build`: "Compiled successfully", no warnings. Gzip against the baseline: JS 399.13 → 395.07 kB (−4.06), CSS 56.24 → 55.46 kB (−0.78). The old sidebar's icon set and CSS are gone.
+- `CI=true npm test -- --passWithNoTests`: 94 tests (50 + 44 new), exit 0, no React warnings.
+- `node scripts/check-contrast.js`: passes. No new pairs: the three surfaces only use page-surface pairings already in §14 (ink, secondary and muted text, accent and focus ring, the border-strong boundary, primary and ghost buttons, the count disc, the switch).
+- `node scripts/validate-db.js`: passes; `db.json` unchanged.
+- Literal grep on the three CSS modules: no hex/rgb/hsl, gradient, blur or font-name literal (`font-family` is only `var(--sf-font-*)` or `inherit`); z-index only from tokens.
+- **Browser QA.** Setup: Playwright and Chromium; JSON Server on a scratch copy of `db.json`, still byte-identical to the repo's afterwards; mock-mode production builds. The sheet was tested on a temporary `/qa-bottom-drawer` route that existed only in a scratch build; `App.js` was restored byte for byte (SHA-256 checked) and the demo file deleted. Results:
+  - 117 scripted checks pass at 320, 360, 768, 1024 and 1440px, in both modes and under reduced motion.
+  - 18 more checks at 768/769px pass, along with a CDP accessibility-tree check.
+  - **Sidebar:**
+    - It is an `aria-modal` dialog named "Menu", 316.8px wide at 360px (88vw), on paper (navy-ink in dark mode) with a hairline edge and square corners, at z 1000.
+    - The logo is light, or white in dark mode, at 28px; the close button is 44px and takes focus on open.
+    - The page is locked and the bar is inert while it is open.
+    - Six departments appear in menu order, in serif 20px on 48px rows; the two flat ones are links.
+    - Plastic Furniture shows Essentials / Premium / Dining Sets / Sofas as 12px uppercase eyebrows, 7 leaves at 15px on 48px rows, and "Shop all"; Home Furniture shows Living Room 3 / Bedroom 6 / Dining Room 1 / Storage 1. Only one department is open at a time.
+    - Every category link is the canonical `?category=<slug>`.
+    - Focus: Shift+Tab from the close button wraps to "Cookies"; 80 Tabs never leave the dialog; the 2px caramel ring shows; Enter toggles a department.
+    - Escape and the backdrop close it, focus returns to the hamburger (`aria-expanded` follows) and the lock is released.
+    - A leaf navigates and closes the menu. Re-opening on that listing expands its department and marks the leaf `aria-current="page"`.
+    - Discover links are valid and no `filter=` link remains. Best sellers lands sorted by popularity.
+    - "Create account" opens the sign-up tab and "Sign in" the login tab; signing in through it at 360 and 768 works. Signed in, the menu shows the name, email and My account / My orders / Sign out. Sign out logs out, goes home and shows the toast.
+    - The Dark mode switch flips the theme and its `aria-checked`.
+    - No horizontal overflow at 320, 360 or 768 with the menu open.
+  - **BottomNav:**
+    - Five items in order; 44px+ targets; 11px uppercase labels that fit at 320px; 24px glyphs. Paper, hairline, no blur or shadow, z 58, 57px tall.
+    - The current item is ink with a 2px caramel mark. `aria-current` is right on `/`, `/products`, `/products/:slug` (`true`), `/wishlist`, `/profile` and `/orders` (`true`).
+    - Every item works at 360 and 768: a guest's Account opens sign-in; signed in, it goes to `/profile`. Search opens the overlay, the bar turns inert under it, and focus comes back to Search afterwards.
+    - It slides away on scroll down and returns on scroll up. Opening the cart drawer while it is hidden brings it back, inert; it does not hide while the drawer is open; it stays put and reachable after.
+    - Hidden from 769px; no hamburger at 1024 or 1440 (the desktop header).
+  - **Sheet (light and dark):**
+    - An `aria-modal` dialog in a body portal: 8px top corners, `max-height` 80vh (592px at 740), serif title, paper (navy-ink in dark mode) surface.
+    - Focus goes to the close button, or to `initialFocusRef`; Tab cycles, including the footer.
+    - Escape and the backdrop close it, focus returns to the trigger and the lock is released.
+    - The `ariaLabel`/`maxHeight` variant works.
+  - **Reduced motion:** the menu and the sheet fade with no transform on any sampled frame, and the bar's transition collapses to 0.01ms.
+  - **Accessibility tree** (Chromium, through CDP):
+    - the dialog "Menu" is modal;
+    - department buttons report `expanded` false or true, and the open panel is a group named by its department;
+    - the switch "Dark mode" reports `checked`;
+    - the bottom nav is absent while the menu is open.
+
+    CDP exposes no `aria-current` property, so the DOM checks above cover that. VoiceOver and NVDA were not available here (as in Prompt 07).
+  - **Dev server:** no console errors or warnings through the menu, search and nav flows.
+- **Two bugs found in browser QA and fixed, each now covered by a test** (reverting either fix fails exactly its test):
+  - In Chromium, a tapped nav link keeps focus, and the "keep the bar while it has focus" rule then stopped the bar from ever hiding. Only `:focus-visible` counts now.
+  - Focus did not return to Search, because the search field was still focused inside the dialog during its exit animation. Focus is now restored when it is on `<body>` or inside the closing dialog.
+- **Admin parity:** 24 screenshots (login, dashboard, Categories, Products, Settings, Special Offers; 1440 and 390px; light and dark), 24/24 byte-identical to the baseline (two baseline runs were identical too). Nothing the admin imports changed.
+
+### Pre-existing issues noticed (not changed)
+
+- `Footer.module.css` still describes the bar as "60–79px tall"; it is now 57px. DESIGN_SYSTEM §18.5 is updated.
+- `AddToCartBar` (1300 on mobile), the Products filter sheet (1300) and the Profile toast (1300) carry z-index values picked to beat the old 1200 bar. They still sit above the new bar (58); their owners can move to tokens (§19.5).
+- `AuthModal` does not take focus when it opens. After "Sign in" from the menu, focus waits on the hamburger behind the modal. Prompt 20 adds focus management, and its focus return will land on the hamburger.
+- An unnamed `<nav>` is exposed on `/products` (the listing page's, Prompt 14).
+
+### Notes for later prompts
+
+- **14:** `BottomDrawer` gives the filter sheet its dialog semantics, Escape, focus on the close button, focus back to the trigger and the scroll lock. Its `footer` slot holds "Clear all" and "Show N results".
+- **15:** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's restore becomes a no-op.
+- **16:** `AddToCartBar` can drop its mobile `z-index: 1300` for `--sf-z-stickybar`.
+- **18, 20:** reuse `useFocusTrap` and `useBodyScrollLock`, and set the lock while open: BottomNav keys off it.
+- **30:** sidebar in 640ms `--sf-ease-out`, out 320ms `--sf-ease-in-out`; sheet in 320ms `--sf-ease-out`, out 320ms `--sf-ease-in-out`; bar 320ms `--sf-ease-out`; plus/minus swaps without animation.
+- **31:** forced colours are handled for the plus/minus glyph, the switch and the bar's current mark; the bar is `inert` under overlays.
+
+### Needs client confirmation
+
+- The guest line "Sign in for faster checkout and order tracking." (the copy given in the prompt).
+- The chair glyph for "Shop" in the bottom nav.
+- Menu wording: the section names Shop / Discover / Account / Settings, "Track order" for guests, and "Help & support".

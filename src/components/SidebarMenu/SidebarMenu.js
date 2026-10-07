@@ -1,618 +1,577 @@
-import React, { useState, useEffect, useMemo, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import {
-  TrendingUp,
-  LocalFireDepartment,
-  AutoAwesome,
-  EmojiEvents,
-  CardGiftcard,
-  GridViewRounded,
-  ShoppingBagOutlined,
-  FavoriteBorder,
-  PersonOutline,
-  Logout as LogoutIcon,
-  HeadsetMicOutlined,
-  DarkModeOutlined,
-  LightModeOutlined,
-  ChevronRight,
-  Close as CloseIcon,
-  ShoppingCartRounded,
-  // Category glyphs
-  DevicesOther,
-  LaptopMac,
-  HeadphonesOutlined,
-  Smartphone,
-  CheckroomOutlined,
-  HomeOutlined,
-  FitnessCenter,
-  MenuBook,
-  SpaOutlined,
-  RestaurantOutlined,
-  Woman,
-  WatchOutlined,
-  ToysOutlined,
-  LocalGroceryStoreOutlined,
-  ChairOutlined,
-  CategoryOutlined,
-} from "@mui/icons-material";
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { CloseOutlined } from "@mui/icons-material";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
+import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
 import apiService from "../../services/api";
-import { categoryParam } from "../../utils/categories";
+import { categoryParam, getCategoryScopeIds, resolveCategory } from "../../utils/categories";
 import { APP_NAME } from "../../utils/constants";
+import { getDepartmentFeature } from "../../content/navigationContent";
+import { groupCategoryTree } from "../Header/groupCategoryTree";
+import BrandLogo from "../ui/BrandLogo";
+import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { TOKENS } from "../../theme/tokens";
 import styles from "./SidebarMenu.module.css";
 
-// Categories are admin-managed, so we map a name to a representative glyph by
-// keyword and fall back to a generic icon — it never breaks on an unseen name.
-// Order matters: more specific rules come first (e.g. "women" before "men").
-const CATEGORY_ICON_RULES = [
-  [/laptop|computer|\bpc\b/i, LaptopMac],
-  [/audio|headphone|speaker|earbud|sound/i, HeadphonesOutlined],
-  [/phone|mobile|tablet/i, Smartphone],
-  [/electronic|gadget|device|camera|gaming|tech/i, DevicesOther],
-  [/book|stationer|magazine/i, MenuBook],
-  [/sport|fitness|gym|outdoor|cycle/i, FitnessCenter],
-  [/kitchen|dining|cookware|appliance/i, RestaurantOutlined],
-  [/home|garden|furnitur|decor|living/i, HomeOutlined],
-  [/chair|sofa|table|bed/i, ChairOutlined],
-  [/beauty|cosmetic|grooming|skincare|fragrance|personal care/i, SpaOutlined],
-  [/saree|kurta|ethnic|women|woman|lehenga/i, Woman],
-  [/cloth|fashion|apparel|wear|shirt|dress|footwear|shoe|\bmen/i, CheckroomOutlined],
-  [/watch|jewel|accessor/i, WatchOutlined],
-  [/toy|kids|baby|child/i, ToysOutlined],
-  [/grocery|food|fresh|snack/i, LocalGroceryStoreOutlined],
-];
+// =============================================================================
+// SidebarMenu — the slide-in menu below 1024px (opened by the header's
+// hamburger; usable at any width)
+// =============================================================================
+//
+// From the top: the logo and a close button; the account block (who is
+// signed in, or a sign-in prompt); Shop, the department accordion; Discover;
+// Account; Settings; the legal links.
+//
+// Shop mirrors the desktop mega-menu exactly: departments are the admin's
+// main-menu categories (getMainMenuCategories), grouped by groupCategoryTree
+// (Header/groupCategoryTree.js), the helper the mega-menu renders from. A
+// department with groups expands (one at a time) into its groups, shown as
+// eyebrow links with their leaves beneath, and a "Shop all" link; a flat
+// department links straight to its listing. Every category link is the
+// canonical /products?category=<slug>.
+//
+// Categories are read from apiService.categories.getAll() each time the menu
+// opens; the last good list stays in state, so a re-open renders at once and
+// a failed refresh keeps it. Each opening starts with the department of the
+// current listing expanded, or none.
+//
+// Dialog behaviour: role="dialog" aria-modal, Tab stays inside, Escape and the
+// backdrop close it, focus starts on the close button and returns to the
+// hamburger, the page behind does not scroll (useFocusTrap). It also closes
+// when the route changes.
+// =============================================================================
 
-const getCategoryIcon = (name = "") => {
-  const rule = CATEGORY_ICON_RULES.find(([re]) => re.test(name));
-  return rule ? rule[1] : CategoryOutlined;
+const { duration, easeOut, easeInOut } = TOKENS.motion;
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+const listingPath = (category) => `/products?category=${categoryParam(category)}`;
+const toList = (data) => (Array.isArray(data) ? data : (data && data.data) || []);
+const countText = (count) => (count > 99 ? "99+" : String(count));
+
+const initialOf = (user) =>
+  (user?.firstName || user?.name || user?.email || "U").trim().charAt(0).toUpperCase() || "U";
+
+const displayNameOf = (user) => {
+  if (!user) return "";
+  if (user.firstName) return `${user.firstName}${user.lastName ? ` ${user.lastName}` : ""}`;
+  return user.name || user.email || "Your account";
 };
 
-// Curated quick links shown above the category tree.
-const QUICK_LINKS = [
-  { label: "Trending Now", icon: TrendingUp, tone: "toneIndigo", to: "/products?filter=trending" },
-  { label: "Today's Deals", icon: LocalFireDepartment, tone: "toneRed", to: "/special-offers", badge: "HOT" },
-  { label: "New Arrivals", icon: AutoAwesome, tone: "toneViolet", to: "/products?sort=newest" },
-  { label: "Best Sellers", icon: EmojiEvents, tone: "toneAmber", to: "/products?filter=best-sellers" },
-  { label: "Special Offers", icon: CardGiftcard, tone: "tonePink", to: "/special-offers" },
-];
+// A plain left click closes the menu as the link navigates; a modified click
+// (new tab or window) leaves it open.
+const isPlainClick = (event) =>
+  !event.defaultPrevented &&
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.altKey &&
+  !event.ctrlKey &&
+  !event.shiftKey;
 
 const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
   const { isDarkMode, toggleTheme } = useTheme();
   const { user, logout } = useAuth();
-  // Drop the deals quick links when the admin disables the Special Offers page.
-  const { enabled: dealsEnabled } = useDealsConfig();
-  const quickLinks = useMemo(
-    () => (dealsEnabled ? QUICK_LINKS : QUICK_LINKS.filter((l) => l.to !== "/special-offers")),
-    [dealsEnabled]
-  );
+  const { getWishlistCount } = useWishlist();
+  // Offers waits for the deals config, so a disabled page never flashes a link.
+  const { enabled: dealsEnabled, loading: dealsLoading } = useDealsConfig();
+
   const panelRef = useRef(null);
+  const closeRef = useRef(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  const [categories, setCategories] = useState([]);
-  const [categoriesExpanded, setCategoriesExpanded] = useState(false);
-  const [categoriesLoading, setCategoriesLoading] = useState(false);
-  const [expandedCat, setExpandedCat] = useState(null); // id of open parent (single-open)
+  useFocusTrap(panelRef, { active: open, onEscape: onClose, initialFocusRef: closeRef });
+  useBodyScrollLock(open);
 
-  // Fetch categories the first time the category section is opened (lazy).
-  useEffect(() => {
-    if (categoriesExpanded && categories.length === 0) {
-      setCategoriesLoading(true);
-      apiService.categories
-        .getAll()
-        .then((data) => {
-          const list = Array.isArray(data) ? data : data?.data ?? [];
-          setCategories(list);
-        })
-        .catch(() => setCategories([]))
-        .finally(() => setCategoriesLoading(false));
-    }
-  }, [categoriesExpanded, categories.length]);
+  // ---- Categories: read on every open, the last good list kept ------------
+  const [categories, setCategories] = useState(null);
+  const [failed, setFailed] = useState(false);
+  const [attempt, setAttempt] = useState(0);
 
-  // Lock body scroll while the sidebar is open.
-  useEffect(() => {
-    document.body.style.overflow = open ? "hidden" : "";
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [open]);
-
-  // Close on Escape and move focus into the panel for keyboard/screen-reader users.
   useEffect(() => {
     if (!open) return undefined;
-    const onKey = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", onKey);
-    const focusTimer = setTimeout(() => panelRef.current?.focus(), 60);
+    let active = true;
+    setFailed(false);
+    apiService.categories.getAll().then(
+      (data) => {
+        if (active) setCategories(toList(data));
+      },
+      () => {
+        if (active) setFailed(true);
+      }
+    );
     return () => {
-      document.removeEventListener("keydown", onKey);
-      clearTimeout(focusTimer);
+      active = false;
     };
-  }, [open, onClose]);
+  }, [open, attempt]);
 
-  const handleNavigate = useCallback(
-    (path) => {
-      navigate(path);
-      onClose();
-    },
-    [navigate, onClose]
-  );
+  const departments = useMemo(() => groupCategoryTree(categories || []), [categories]);
+
+  // ---- The listing's current category, and the department holding it ------
+  const categoryToken =
+    location.pathname === "/products" ? new URLSearchParams(location.search).get("category") : null;
+  const currentCategoryId = useMemo(() => {
+    const current = resolveCategory(categoryToken, categories || []);
+    return current ? String(current.id) : null;
+  }, [categoryToken, categories]);
+  const currentDepartmentId = useMemo(() => {
+    if (!currentCategoryId) return null;
+    const match = departments.find(({ category }) =>
+      getCategoryScopeIds(category.id, categories || []).has(currentCategoryId)
+    );
+    return match ? String(match.category.id) : null;
+  }, [currentCategoryId, departments, categories]);
+
+  // ---- Accordion: one department at a time ---------------------------------
+  // Until the shopper picks one, the department of the current listing is the
+  // open one; each opening of the menu starts from there again.
+  const [expandedChoice, setExpandedChoice] = useState(undefined);
+  const expandedId = expandedChoice === undefined ? currentDepartmentId : expandedChoice;
+  const toggleDepartment = (id) => setExpandedChoice(expandedId === id ? null : id);
+  useEffect(() => {
+    if (!open) setExpandedChoice(undefined);
+  }, [open]);
+
+  // ---- Close when the route changes (links, back/forward) -----------------
+  const routeKey = location.pathname + location.search;
+  const lastRouteKey = useRef(routeKey);
+  useEffect(() => {
+    if (lastRouteKey.current === routeKey) return;
+    lastRouteKey.current = routeKey;
+    if (open) onCloseRef.current();
+  }, [routeKey, open]);
+
+  // ---- Actions ---------------------------------------------------------------
+  const onNavigate = (event) => {
+    if (isPlainClick(event)) onClose();
+  };
 
   const handleSignIn = () => {
     onClose();
     if (onOpenAuth) onOpenAuth();
   };
 
-  const handleLogout = () => {
+  const handleCreateAccount = () => {
+    onClose();
+    if (onOpenAuth) onOpenAuth("signup");
+  };
+
+  const handleSignOut = () => {
     onClose();
     logout();
     navigate("/");
   };
 
-  const getUserInitials = () => {
-    if (!user) return "";
-    const parts = (user.name || "").trim().split(/\s+/).filter(Boolean);
-    const first = user.firstName || parts[0] || "";
-    const last = user.lastName || parts.slice(1).join(" ") || "";
-    const initials = `${first.charAt(0)}${last.charAt(0)}`.toUpperCase();
-    if (initials) return initials;
-    if (user.email) return user.email.charAt(0).toUpperCase();
-    return "U";
-  };
+  const pathCurrent = (to) => (location.pathname === to ? "page" : undefined);
+  const categoryCurrent = (category) =>
+    currentCategoryId && String(category.id) === currentCategoryId ? "page" : undefined;
 
-  const getUserDisplayName = () => {
-    if (!user) return "";
-    if (user.firstName) {
-      return `${user.firstName}${user.lastName ? " " + user.lastName : ""}`;
-    }
-    return user.name || user.email || "User";
-  };
+  const wishlistCount = getWishlistCount ? getWishlistCount() : 0;
+  const showOffers = dealsEnabled && !dealsLoading;
+  const loadingDepartments = categories === null && !failed;
+  const departmentsFailed = categories === null && failed;
 
-  const themeAttr = isDarkMode ? "dark" : "light";
-
-  // Build a parent → children index. The API already returns active categories
-  // sorted by sortOrder, so grouping preserves the intended order per level.
-  // A category is treated as top-level when it has no parent OR its parent isn't
-  // in the (active) list — so an orphan never silently disappears from the menu.
-  const idSet = useMemo(
-    () => new Set(categories.map((c) => String(c.id))),
-    [categories]
-  );
-  const topCategories = useMemo(
-    () => categories.filter((c) => c.parentId == null || !idSet.has(String(c.parentId))),
-    [categories, idSet]
-  );
-  const childrenByParent = useMemo(() => {
-    const map = new Map();
-    categories.forEach((c) => {
-      if (c.parentId != null && idSet.has(String(c.parentId))) {
-        const key = String(c.parentId);
-        if (!map.has(key)) map.set(key, []);
-        map.get(key).push(c);
+  const panelMotion = reduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
       }
-    });
-    return map;
-  }, [categories, idSet]);
-  const getChildren = useCallback(
-    (id) => childrenByParent.get(String(id)) || [],
-    [childrenByParent]
-  );
-
-  const toggleCat = (id) =>
-    setExpandedCat((prev) => (prev === String(id) ? null : String(id)));
-
-  // Render an arbitrarily deep subtree of a parent, indenting by level so the
-  // hierarchy always reads top-down (parent → child → grandchild).
-  const renderDescendants = (parentId, level) =>
-    getChildren(parentId).map((kid) => {
-      const grandKids = getChildren(kid.id);
-      return (
-        <React.Fragment key={kid.id || kid.slug}>
-          <button
-            className={styles.catChild}
-            style={level > 1 ? { paddingLeft: 18 + (level - 1) * 16 } : undefined}
-            onClick={() => handleNavigate(`/products?category=${categoryParam(kid)}`)}
-          >
-            <span className={styles.catChildDot} />
-            <span className={styles.catChildLabel}>{kid.name || kid.title}</span>
-          </button>
-          {grandKids.length > 0 && renderDescendants(kid.id, level + 1)}
-        </React.Fragment>
-      );
-    });
-
-  const backdropVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1 },
-  };
-
-  const panelVariants = {
-    hidden: { x: "-100%" },
-    visible: { x: 0, transition: { type: "spring", damping: 32, stiffness: 320 } },
-    exit: { x: "-100%", transition: { type: "spring", damping: 34, stiffness: 320 } },
-  };
-
-  const contentVariants = {
-    hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { delay: 0.12, duration: 0.3 } },
-  };
-
-  const rowAnim = (i) => ({
-    initial: { opacity: 0, x: -14 },
-    animate: {
-      opacity: 1,
-      x: 0,
-      transition: { delay: 0.1 + i * 0.035, duration: 0.28, ease: "easeOut" },
-    },
-  });
-
-  let rowIndex = 0;
-  const nextRow = () => rowAnim(rowIndex++);
-
-  const renderQuickLink = (item) => {
-    const Icon = item.icon;
-    return (
-      <motion.button
-        key={item.label}
-        className={styles.row}
-        onClick={() => handleNavigate(item.to)}
-        {...nextRow()}
-      >
-        <span className={`${styles.rowIcon} ${styles[item.tone]}`}>
-          <Icon />
-        </span>
-        <span className={styles.rowLabel}>{item.label}</span>
-        {item.badge ? (
-          <span className={styles.badge}>{item.badge}</span>
-        ) : (
-          <ChevronRight className={styles.rowArrow} />
-        )}
-      </motion.button>
-    );
-  };
+    : {
+        initial: { x: "-100%" },
+        animate: { x: 0 },
+        exit: { x: "-100%", transition: { duration: duration.base, ease: easeInOut } },
+      };
 
   return (
     <AnimatePresence>
       {open && (
-        <>
-          {/* Backdrop */}
+        <React.Fragment key="sidebar-menu">
           <motion.div
             className={styles.backdrop}
-            variants={backdropVariants}
-            initial="hidden"
-            animate="visible"
-            exit="hidden"
+            aria-hidden="true"
             onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
+            transition={{ duration: duration.slow, ease: easeOut }}
           />
-
-          {/* Panel */}
-          <motion.aside
+          <motion.div
             ref={panelRef}
             className={styles.panel}
-            data-theme={themeAttr}
-            variants={panelVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
             role="dialog"
             aria-modal="true"
-            aria-label={`${APP_NAME} menu`}
+            aria-label="Menu"
             tabIndex={-1}
+            transition={{ duration: duration.slow, ease: easeOut }}
+            {...panelMotion}
           >
-            {/* ============ Hero ============ */}
-            <div className={styles.hero}>
-              <div className={styles.heroTop}>
-                <div className={styles.brand}>
-                  <span className={styles.brandIcon}>
-                    <ShoppingCartRounded />
-                  </span>
-                  <span className={styles.brandName}>{APP_NAME}</span>
-                </div>
-                <button
-                  className={styles.closeBtn}
-                  onClick={onClose}
-                  aria-label="Close menu"
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-
-              {user ? (
-                <button
-                  className={styles.userCard}
-                  onClick={() => handleNavigate("/profile")}
-                >
-                  <span className={styles.avatar}>
-                    {user.avatar || user.profileImage ? (
-                      <img
-                        src={user.avatar || user.profileImage}
-                        alt={getUserDisplayName()}
-                        className={styles.avatarImg}
-                      />
-                    ) : (
-                      <span className={styles.avatarInitials}>
-                        {getUserInitials()}
-                      </span>
-                    )}
-                  </span>
-                  <span className={styles.userText}>
-                    <span className={styles.userName}>{getUserDisplayName()}</span>
-                    <span className={styles.userMeta}>
-                      {user.email || "View your profile"}
-                    </span>
-                  </span>
-                  <ChevronRight className={styles.userChevron} />
-                </button>
-              ) : (
-                <div className={styles.guest}>
-                  <div className={styles.guestText}>
-                    <span className={styles.guestHi}>Welcome</span>
-                    <span className={styles.guestSub}>
-                      Sign in for orders, offers &amp; more
-                    </span>
-                  </div>
-                  <button className={styles.signInBtn} onClick={handleSignIn}>
-                    Sign in
-                  </button>
-                </div>
-              )}
+            <div className={styles.top}>
+              <BrandLogo height={28} className={styles.logo} />
+              <button
+                ref={closeRef}
+                type="button"
+                className={styles.iconButton}
+                onClick={onClose}
+                aria-label="Close menu"
+              >
+                <CloseOutlined />
+              </button>
             </div>
 
-            {/* ============ Scrollable content ============ */}
-            <motion.nav
-              className={styles.scrollArea}
-              variants={contentVariants}
-              initial="hidden"
-              animate="visible"
-              aria-label="Main"
-            >
-              {/* Quick links */}
-              <div className={styles.section}>
-                <div className={styles.sectionLabel}>Discover</div>
-                {quickLinks.map(renderQuickLink)}
-              </div>
-
-              <div className={styles.divider} />
-
-              {/* Shop by Category */}
-              <div className={styles.section}>
-                <div className={styles.sectionLabel}>Shop</div>
-                <motion.button
-                  className={styles.row}
-                  onClick={() => setCategoriesExpanded((prev) => !prev)}
-                  aria-expanded={categoriesExpanded}
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneBrand}`}>
-                    <GridViewRounded />
+            <div className={styles.scroll}>
+              {/* ===== Account block ===== */}
+              {user ? (
+                <div className={styles.account}>
+                  <span className={styles.avatar} aria-hidden="true">
+                    {user.avatar || user.profileImage ? (
+                      <img src={user.avatar || user.profileImage} alt="" />
+                    ) : (
+                      initialOf(user)
+                    )}
                   </span>
-                  <span className={styles.rowLabel}>Shop by Category</span>
-                  <ChevronRight
-                    className={`${styles.rowChevron} ${
-                      categoriesExpanded ? styles.rowChevronOpen : ""
-                    }`}
-                  />
-                </motion.button>
-
-                <AnimatePresence initial={false}>
-                  {categoriesExpanded && (
-                    <motion.div
-                      className={styles.catPanel}
-                      initial={{ height: 0, opacity: 0 }}
-                      animate={{ height: "auto", opacity: 1 }}
-                      exit={{ height: 0, opacity: 0 }}
-                      transition={{ duration: 0.28, ease: "easeInOut" }}
+                  <div className={styles.identity}>
+                    <p className={styles.name}>{displayNameOf(user)}</p>
+                    {user.email && <p className={styles.email}>{user.email}</p>}
+                    <Link
+                      to="/profile"
+                      className={styles.textLink}
+                      onClick={onNavigate}
+                      aria-current={pathCurrent("/profile")}
                     >
-                      {categoriesLoading ? (
-                        <div className={styles.catNote}>Loading categories…</div>
-                      ) : topCategories.length === 0 ? (
-                        <div className={styles.catNote}>No categories found</div>
-                      ) : (
-                        <div className={styles.catInner}>
-                          {topCategories.map((cat) => {
-                            const kids = getChildren(cat.id);
-                            const hasKids = kids.length > 0;
-                            const isOpen = expandedCat === String(cat.id);
-                            const Icon = getCategoryIcon(cat.name);
-                            return (
-                              <div className={styles.catGroup} key={cat.id || cat.slug}>
-                                <button
-                                  className={styles.catParent}
-                                  onClick={() =>
-                                    hasKids
-                                      ? toggleCat(cat.id)
-                                      : handleNavigate(
-                                          `/products?category=${categoryParam(cat)}`
-                                        )
-                                  }
-                                  aria-expanded={hasKids ? isOpen : undefined}
-                                >
-                                  <span className={styles.catParentIcon}>
-                                    <Icon />
-                                  </span>
-                                  <span className={styles.catParentLabel}>
-                                    {cat.name || cat.title}
-                                  </span>
-                                  {hasKids ? (
-                                    <ChevronRight
-                                      className={`${styles.catParentChevron} ${
-                                        isOpen ? styles.catParentChevronOpen : ""
-                                      }`}
-                                    />
-                                  ) : (
-                                    <ChevronRight className={styles.catParentArrow} />
-                                  )}
-                                </button>
+                      My account
+                    </Link>
+                  </div>
+                </div>
+              ) : (
+                <div className={styles.guest}>
+                  <p className={styles.guestLine}>Sign in for faster checkout and order tracking.</p>
+                  <div className={styles.guestActions}>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn--primary sf-btn--block"
+                      onClick={handleSignIn}
+                      aria-haspopup="dialog"
+                    >
+                      Sign in
+                    </button>
+                    <button
+                      type="button"
+                      className="sf-btn sf-btn--ghost sf-btn--block"
+                      onClick={handleCreateAccount}
+                      aria-haspopup="dialog"
+                    >
+                      Create account
+                    </button>
+                  </div>
+                </div>
+              )}
 
-                                <AnimatePresence initial={false}>
-                                  {hasKids && isOpen && (
-                                    <motion.div
-                                      className={styles.catChildrenWrap}
-                                      initial={{ height: 0, opacity: 0 }}
-                                      animate={{ height: "auto", opacity: 1 }}
-                                      exit={{ height: 0, opacity: 0 }}
-                                      transition={{ duration: 0.24, ease: "easeInOut" }}
-                                    >
-                                      <div className={styles.catChildren}>
-                                        <button
-                                          className={styles.catShopAll}
-                                          onClick={() =>
-                                            handleNavigate(
-                                              `/products?category=${categoryParam(cat)}`
-                                            )
-                                          }
-                                        >
-                                          Shop all {cat.name || cat.title}
-                                        </button>
-                                        {renderDescendants(cat.id, 1)}
-                                      </div>
-                                    </motion.div>
-                                  )}
-                                </AnimatePresence>
-                              </div>
-                            );
-                          })}
+              <nav aria-label="Main">
+                {/* ===== Shop: the department accordion ===== */}
+                <div className={styles.section} aria-busy={loadingDepartments || undefined}>
+                  <h2 className={cx("sf-eyebrow", styles.sectionTitle)}>
+                    Shop
+                  </h2>
 
-                          <button
-                            className={styles.catViewAll}
-                            onClick={() => handleNavigate("/products")}
-                          >
-                            View all products
-                            <ChevronRight />
-                          </button>
-                        </div>
-                      )}
-                    </motion.div>
+                  {loadingDepartments && (
+                    <>
+                      <p className="sf-visually-hidden" role="status">
+                        Loading departments
+                      </p>
+                      <ul className={styles.list} aria-hidden="true">
+                        {[0, 1, 2, 3].map((key) => (
+                          <li key={key} className={styles.skeletonRow}>
+                            <span className="sf-skeleton sf-skeleton--text" />
+                          </li>
+                        ))}
+                      </ul>
+                    </>
                   )}
-                </AnimatePresence>
-              </div>
 
-              <div className={styles.divider} />
+                  {departmentsFailed && (
+                    <div className={styles.notice} role="status">
+                      <p>We couldn't load the departments just now.</p>
+                      <button
+                        type="button"
+                        className="sf-btn sf-btn--link"
+                        onClick={() => setAttempt((count) => count + 1)}
+                      >
+                        Try again
+                      </button>
+                    </div>
+                  )}
 
-              {/* Account */}
-              <div className={styles.section}>
-                <div className={styles.sectionLabel}>My Account</div>
-                <motion.button
-                  className={styles.row}
-                  onClick={() => handleNavigate("/orders")}
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneNeutral}`}>
-                    <ShoppingBagOutlined />
-                  </span>
-                  <span className={styles.rowLabel}>My Orders</span>
-                  <ChevronRight className={styles.rowArrow} />
-                </motion.button>
+                  {categories !== null && departments.length > 0 && (
+                    <ul className={styles.list}>
+                      {departments.map((department) => {
+                        const id = String(department.category.id);
+                        return (
+                          <DepartmentItem
+                            key={id}
+                            department={department}
+                            expanded={expandedId === id}
+                            inCurrent={currentDepartmentId === id}
+                            onToggle={() => toggleDepartment(id)}
+                            onNavigate={onNavigate}
+                            categoryCurrent={categoryCurrent}
+                          />
+                        );
+                      })}
+                    </ul>
+                  )}
 
-                <motion.button
-                  className={styles.row}
-                  onClick={() => handleNavigate("/wishlist")}
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneNeutral}`}>
-                    <FavoriteBorder />
-                  </span>
-                  <span className={styles.rowLabel}>My Wishlist</span>
-                  <ChevronRight className={styles.rowArrow} />
-                </motion.button>
-
-                <motion.button
-                  className={styles.row}
-                  onClick={() => handleNavigate("/profile")}
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneNeutral}`}>
-                    <PersonOutline />
-                  </span>
-                  <span className={styles.rowLabel}>My Profile</span>
-                  <ChevronRight className={styles.rowArrow} />
-                </motion.button>
-
-                {user && (
-                  <motion.button
-                    className={`${styles.row} ${styles.rowDanger}`}
-                    onClick={handleLogout}
-                    {...nextRow()}
-                  >
-                    <span className={`${styles.rowIcon} ${styles.toneRed}`}>
-                      <LogoutIcon />
-                    </span>
-                    <span className={styles.rowLabel}>Logout</span>
-                  </motion.button>
-                )}
-              </div>
-
-              <div className={styles.divider} />
-
-              {/* Preferences */}
-              <div className={styles.section}>
-                <div className={styles.sectionLabel}>Settings</div>
-                <motion.button
-                  className={styles.row}
-                  onClick={() => handleNavigate("/support")}
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneNeutral}`}>
-                    <HeadsetMicOutlined />
-                  </span>
-                  <span className={styles.rowLabel}>Help &amp; Support</span>
-                  <ChevronRight className={styles.rowArrow} />
-                </motion.button>
-
-                <motion.button
-                  className={styles.row}
-                  onClick={toggleTheme}
-                  role="switch"
-                  aria-checked={isDarkMode}
-                  aria-label="Toggle dark mode"
-                  {...nextRow()}
-                >
-                  <span className={`${styles.rowIcon} ${styles.toneNeutral}`}>
-                    {isDarkMode ? <DarkModeOutlined /> : <LightModeOutlined />}
-                  </span>
-                  <span className={styles.rowLabel}>
-                    {isDarkMode ? "Dark Mode" : "Light Mode"}
-                  </span>
-                  <span className={styles.toggleSwitch} aria-hidden="true">
-                    <span
-                      className={`${styles.toggleKnob} ${
-                        isDarkMode ? styles.toggleKnobOn : ""
-                      }`}
-                    />
-                  </span>
-                </motion.button>
-              </div>
-
-              {/* Footer */}
-              <div className={styles.footer}>
-                <div className={styles.footerLinks}>
-                  <button
-                    className={styles.footerLink}
-                    onClick={() => handleNavigate("/terms")}
-                  >
-                    Terms of Service
-                  </button>
-                  <span className={styles.footerDot}>•</span>
-                  <button
-                    className={styles.footerLink}
-                    onClick={() => handleNavigate("/privacy")}
-                  >
-                    Privacy Policy
-                  </button>
+                  <p className={styles.viewAll}>
+                    <Link to="/products" className={styles.textLink} onClick={onNavigate}>
+                      View all products
+                    </Link>
+                  </p>
                 </div>
-                <div className={styles.copyright}>
+
+                {/* ===== Discover ===== */}
+                <div className={styles.section}>
+                  <h2 className={cx("sf-eyebrow", styles.sectionTitle)}>
+                    Discover
+                  </h2>
+                  <ul className={styles.list}>
+                    <li>
+                      <Link to="/products?sort=newest" className={styles.row} onClick={onNavigate}>
+                        New arrivals
+                      </Link>
+                    </li>
+                    <li>
+                      <Link to="/products?sort=popular" className={styles.row} onClick={onNavigate}>
+                        Best sellers
+                      </Link>
+                    </li>
+                    {showOffers && (
+                      <li>
+                        <Link
+                          to="/special-offers"
+                          className={styles.row}
+                          onClick={onNavigate}
+                          aria-current={pathCurrent("/special-offers")}
+                        >
+                          Offers
+                        </Link>
+                      </li>
+                    )}
+                    <li>
+                      <Link
+                        to="/about"
+                        className={styles.row}
+                        onClick={onNavigate}
+                        aria-current={pathCurrent("/about")}
+                      >
+                        Our story
+                      </Link>
+                    </li>
+                  </ul>
+                </div>
+
+                {/* ===== Account ===== */}
+                <div className={styles.section}>
+                  <h2 className={cx("sf-eyebrow", styles.sectionTitle)}>
+                    Account
+                  </h2>
+                  <ul className={styles.list}>
+                    <li>
+                      <Link
+                        to="/orders"
+                        className={styles.row}
+                        onClick={onNavigate}
+                        aria-current={pathCurrent("/orders")}
+                      >
+                        {user ? "My orders" : "Track order"}
+                      </Link>
+                    </li>
+                    <li>
+                      <Link
+                        to="/wishlist"
+                        className={styles.row}
+                        onClick={onNavigate}
+                        aria-current={pathCurrent("/wishlist")}
+                        aria-label={
+                          wishlistCount > 0
+                            ? `My wishlist, ${wishlistCount} ${wishlistCount === 1 ? "item" : "items"}`
+                            : undefined
+                        }
+                      >
+                        <span>My wishlist</span>
+                        {wishlistCount > 0 && (
+                          <span className="sf-count" aria-hidden="true">
+                            {countText(wishlistCount)}
+                          </span>
+                        )}
+                      </Link>
+                    </li>
+                    {user && (
+                      <li>
+                        <button type="button" className={styles.row} onClick={handleSignOut}>
+                          Sign out
+                        </button>
+                      </li>
+                    )}
+                  </ul>
+                </div>
+              </nav>
+
+              {/* ===== Settings ===== */}
+              <div className={styles.section}>
+                <h2 className={cx("sf-eyebrow", styles.sectionTitle)}>
+                  Settings
+                </h2>
+                <ul className={styles.list}>
+                  <li>
+                    <Link
+                      to="/support"
+                      className={styles.row}
+                      onClick={onNavigate}
+                      aria-current={pathCurrent("/support")}
+                    >
+                      Help &amp; support
+                    </Link>
+                  </li>
+                  <li>
+                    <button
+                      type="button"
+                      role="switch"
+                      aria-checked={isDarkMode}
+                      className={styles.row}
+                      onClick={toggleTheme}
+                    >
+                      Dark mode
+                      <span className={styles.switch} aria-hidden="true" />
+                    </button>
+                  </li>
+                </ul>
+              </div>
+
+              {/* ===== Legal ===== */}
+              <div className={styles.legal}>
+                <ul className={styles.legalLinks}>
+                  <li>
+                    <Link to="/terms" onClick={onNavigate} aria-current={pathCurrent("/terms")}>
+                      Terms
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/privacy" onClick={onNavigate} aria-current={pathCurrent("/privacy")}>
+                      Privacy
+                    </Link>
+                  </li>
+                  <li>
+                    <Link to="/cookies" onClick={onNavigate} aria-current={pathCurrent("/cookies")}>
+                      Cookies
+                    </Link>
+                  </li>
+                </ul>
+                <p className={styles.copyright}>
                   © {new Date().getFullYear()} {APP_NAME}
-                </div>
+                </p>
               </div>
-            </motion.nav>
-          </motion.aside>
-        </>
+            </div>
+          </motion.div>
+        </React.Fragment>
       )}
     </AnimatePresence>
   );
 };
+
+// One department: a link when it is flat, otherwise a disclosure button over
+// its groups (eyebrow links with their leaves beneath) and a "Shop all" link.
+function DepartmentItem({ department, expanded, inCurrent, onToggle, onNavigate, categoryCurrent }) {
+  const { category, groups } = department;
+  const slug = categoryParam(category);
+
+  if (groups.length === 0) {
+    return (
+      <li>
+        <Link
+          to={listingPath(category)}
+          className={styles.department}
+          onClick={onNavigate}
+          aria-current={categoryCurrent(category)}
+        >
+          {category.name}
+        </Link>
+      </li>
+    );
+  }
+
+  const buttonId = `sf-sidebar-department-${slug}`;
+  const panelId = `sf-sidebar-panel-${slug}`;
+  const feature = getDepartmentFeature(category);
+
+  return (
+    <li>
+      <button
+        type="button"
+        id={buttonId}
+        className={styles.department}
+        aria-expanded={expanded}
+        aria-controls={panelId}
+        aria-current={inCurrent ? "true" : undefined}
+        onClick={onToggle}
+      >
+        <span>{category.name}</span>
+        <span className={styles.toggleGlyph} aria-hidden="true" />
+      </button>
+      <div
+        id={panelId}
+        role="group"
+        aria-labelledby={buttonId}
+        className={styles.departmentPanel}
+        hidden={!expanded}
+      >
+        <Link
+          to={listingPath(category)}
+          className={styles.shopAll}
+          onClick={onNavigate}
+          aria-current={categoryCurrent(category)}
+        >
+          {feature.ctaLabel || `Shop all ${category.name}`}
+        </Link>
+        {groups.map(({ category: group, links }) => {
+          const groupId = `sf-sidebar-group-${categoryParam(group)}`;
+          return (
+            <div key={group.id} className={styles.group}>
+              <Link
+                id={groupId}
+                to={listingPath(group)}
+                className={styles.groupLink}
+                onClick={onNavigate}
+                aria-current={categoryCurrent(group)}
+              >
+                {group.name}
+              </Link>
+              {links.length > 0 && (
+                <ul className={styles.leaves} aria-labelledby={groupId}>
+                  {links.map(({ category: leaf, depth }) => (
+                    <li key={leaf.id}>
+                      <Link
+                        to={listingPath(leaf)}
+                        className={cx(styles.leaf, depth > 1 && styles.leafNested)}
+                        onClick={onNavigate}
+                        aria-current={categoryCurrent(leaf)}
+                      >
+                        {leaf.name}
+                      </Link>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </li>
+  );
+}
 
 export default SidebarMenu;
