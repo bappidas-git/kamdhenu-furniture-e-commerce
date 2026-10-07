@@ -1,0 +1,52 @@
+/* SectionHeading: eyebrow, display-lg title (sf-display-lg from
+   storefront-base.css), intro, and an optional action. */
+.root {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-5);
+  margin-bottom: clamp(var(--sf-space-8), 4vw, var(--sf-space-12));
+}
+
+.text {
+  min-width: 0;
+}
+
+.eyebrow + .title {
+  margin-top: var(--sf-space-3);
+}
+
+.intro {
+  max-width: 56ch;
+  margin-top: var(--sf-space-4);
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.action {
+  flex: none;
+}
+
+/* Desktop: the action sits on the right, level with the last line of text. */
+@media (min-width: 768px) {
+  .root:not(.center) {
+    flex-direction: row;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: var(--sf-space-8);
+  }
+}
+
+.center {
+  align-items: center;
+  text-align: center;
+}
+
+.center .text {
+  max-width: 640px;
+}
+
+.center .intro {
+  margin-inline: auto;
+}

@@ -1,7 +1,9 @@
 /* Fonts (Inter + Playfair Display) load from the single Google Fonts <link> in
    public/index.html. Storefront design tokens (CSS custom properties) live in
-   src/theme/storefront-tokens.css — see prompts/DESIGN_SYSTEM.md. */
+   src/theme/storefront-tokens.css and the shared .sf-* UI primitives in
+   src/theme/storefront-base.css — see prompts/DESIGN_SYSTEM.md. */
 @import "./theme/storefront-tokens.css";
+@import "./theme/storefront-base.css";
 
 body {
   margin: 0;

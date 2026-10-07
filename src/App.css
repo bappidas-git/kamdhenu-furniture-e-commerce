@@ -278,3 +278,141 @@ body.admin-area.dark .swal2-popup {
 body.admin-area.dark .swal2-html-container {
   color: #94a3b8;
 }
+
+/* =====================================================================
+   SweetAlert2 — storefront theme (A & S Urbanseat)
+   Appended after the shared block above and scoped :not(.admin-area), so
+   the admin keeps exactly the rules above. Everything goes through
+   SweetAlert's own CSS variables, set from the --sf-* tokens: dark mode
+   follows body.dark, and a per-call confirmButtonColor (SweetAlert sets
+   it inline on the button) still wins. SweetAlert 11 has no icon-colour
+   variables, so its icons keep their own colours.
+   ===================================================================== */
+body.light:not(.admin-area) .swal2-container,
+body.dark:not(.admin-area) .swal2-container {
+  --swal2-backdrop: var(--sf-color-overlay);
+}
+
+/* Popup: surface, ink, hairline, radius md. Confirm = ink, cancel = ghost. */
+body.light:not(.admin-area) .swal2-popup,
+body.dark:not(.admin-area) .swal2-popup {
+  --swal2-background: var(--sf-color-surface);
+  --swal2-color: var(--sf-color-text);
+  --swal2-border: var(--sf-hairline);
+  --swal2-border-radius: var(--sf-radius-md);
+  --swal2-icon-zoom: 0.75;
+  --swal2-confirm-button-background-color: var(--sf-color-primary);
+  --swal2-confirm-button-border-radius: var(--sf-radius-sm);
+  --swal2-cancel-button-background-color: transparent;
+  --swal2-cancel-button-color: var(--sf-color-primary);
+  --swal2-cancel-button-border-radius: var(--sf-radius-sm);
+  --swal2-cancel-button-box-shadow: inset 0 0 0 1px var(--sf-color-primary);
+  --swal2-action-button-focus-box-shadow: var(--sf-shadow-focus);
+  --swal2-close-button-color: var(--sf-color-text-muted);
+  --swal2-timer-progress-bar-background: var(--sf-color-accent);
+  --swal2-toast-border: var(--sf-hairline);
+  --swal2-toast-box-shadow: var(--sf-shadow-md);
+}
+
+body.light:not(.admin-area) .swal2-popup:not(.swal2-toast),
+body.dark:not(.admin-area) .swal2-popup:not(.swal2-toast) {
+  box-shadow: var(--sf-shadow-lg);
+}
+
+body.light:not(.admin-area) .swal2-popup:not(.swal2-toast) .swal2-title,
+body.dark:not(.admin-area) .swal2-popup:not(.swal2-toast) .swal2-title {
+  font-family: var(--sf-font-display);
+  font-size: 1.375rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+}
+
+body.light:not(.admin-area) .swal2-html-container,
+body.dark:not(.admin-area) .swal2-html-container {
+  color: var(--sf-color-text-secondary);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-normal);
+}
+
+body.light:not(.admin-area) .swal2-popup .swal2-styled,
+body.dark:not(.admin-area) .swal2-popup .swal2-styled {
+  min-height: var(--sf-tap-target);
+  padding: 0 var(--sf-space-5);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-button);
+  transition: background-color var(--sf-duration) var(--sf-ease-out),
+    box-shadow var(--sf-duration-fast) var(--sf-ease-out),
+    transform var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+body.light:not(.admin-area) .swal2-popup .swal2-styled:active,
+body.dark:not(.admin-area) .swal2-popup .swal2-styled:active {
+  transform: scale(0.99);
+}
+
+/* The default confirm: paper text, navy on hover (white in dark mode). A
+   per-call confirmButtonColor keeps SweetAlert's own text and hover. */
+body.light:not(.admin-area) .swal2-confirm:not([style*="--swal2-confirm-button-background-color"]),
+body.dark:not(.admin-area) .swal2-confirm:not([style*="--swal2-confirm-button-background-color"]) {
+  --swal2-confirm-button-color: var(--sf-color-primary-contrast);
+  --swal2-action-button-hover: var(--sf-color-primary-hover) 100%;
+  --swal2-action-button-active: var(--sf-color-primary-hover) 100%;
+}
+
+/* Ghost cancel: the hover tint equals --sf-color-primary-soft (ink 6% in
+   light, off-white 8% in dark); its hairline stays visible while focused. */
+body.light:not(.admin-area) .swal2-cancel,
+body.dark:not(.admin-area) .swal2-cancel {
+  --swal2-action-button-focus-box-shadow: inset 0 0 0 1px var(--sf-color-primary),
+    var(--sf-shadow-focus);
+}
+
+body.light:not(.admin-area) .swal2-cancel {
+  --swal2-action-button-hover: var(--sf-color-primary) 6%;
+  --swal2-action-button-active: var(--sf-color-primary) 6%;
+}
+
+body.dark:not(.admin-area) .swal2-cancel {
+  --swal2-action-button-hover: var(--sf-color-primary) 8%;
+  --swal2-action-button-active: var(--sf-color-primary) 8%;
+}
+
+/* Toasts (cart, wishlist, auth; bottom-end): surface, hairline, sans
+   type and a 2px accent timer bar. */
+body.light:not(.admin-area) .swal2-popup.swal2-toast,
+body.dark:not(.admin-area) .swal2-popup.swal2-toast {
+  --swal2-border-radius: var(--sf-radius-md);
+}
+
+body.light:not(.admin-area) .swal2-toast .swal2-title,
+body.dark:not(.admin-area) .swal2-toast .swal2-title {
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+}
+
+body.light:not(.admin-area) .swal2-toast .swal2-html-container,
+body.dark:not(.admin-area) .swal2-toast .swal2-html-container {
+  font-size: var(--sf-text-sm);
+}
+
+body.light:not(.admin-area) .swal2-toast .swal2-timer-progress-bar,
+body.dark:not(.admin-area) .swal2-toast .swal2-timer-progress-bar {
+  height: 2px;
+}
+
+/* Reduced motion: no zoom-in, slide or icon animation; popups appear and
+   leave at once (SweetAlert skips its animationend wait when there is no
+   animation). */
+@media (prefers-reduced-motion: reduce) {
+  body.light:not(.admin-area) .swal2-popup,
+  body.dark:not(.admin-area) .swal2-popup {
+    --swal2-show-animation: none;
+    --swal2-hide-animation: none;
+    --swal2-toast-show-animation: none;
+    --swal2-toast-hide-animation: none;
+    --swal2-icon-animations: false;
+  }
+}

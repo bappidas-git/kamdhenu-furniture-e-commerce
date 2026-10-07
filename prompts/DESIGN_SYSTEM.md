@@ -505,3 +505,186 @@ Mirror check: colors.js and tokens.js match storefront-tokens.css ✓ · Contras
 - [ ] Check light and dark mode, and 360 / 768 / 1024 / 1440px.
 - [ ] Add new component-level colour pairs to `scripts/check-contrast.js` and run it (it must exit 0); if a token value changes, update sections 3–4, 12 and 14 here.
 - [ ] Keep the admin identical: scoped globals, no edits to the shared `App.css` rules, keep the `MuiCssBaseline` pin; compare admin screenshots before and after.
+
+---
+
+## 16. Primitives
+
+Written by Prompt 06. The shared building blocks every later prompt composes from: the `.sf-*` classes in `src/theme/storefront-base.css` (imported by `src/index.css` right after the tokens), three React primitives in `src/components/ui/`, the storefront MUI component overrides in `ThemeContext.js`, the storefront SweetAlert2 theme at the end of `App.css`, and `<MotionConfig reducedMotion="user">` around the storefront route.
+
+### 16.1 How the CSS primitives are built
+
+- **Scoped away from the admin.** Every selector starts with `:where(body:not(.admin-area))`. The `:where()` wrapper adds no specificity, so a primitive weighs exactly one class.
+- **Extend, don't fight.** Because of that, a component's CSS Module class (loaded after `storefront-base.css`) overrides a primitive on the same element without `!important`: ``className={`sf-btn sf-btn--primary ${styles.cta}`}`` with `.cta { padding-inline: 32px; }`.
+- **Variants are custom properties.** Buttons read `--sf-btn-bg`, `--sf-btn-fg`, `--sf-btn-border`, `--sf-btn-bg-hover`, `--sf-btn-fg-hover`, `--sf-btn-border-hover`, `--sf-btn-focus`, `--sf-btn-size` (and `--sf-btn-underline` on `--link`); badges read `--sf-badge-bg` / `--sf-badge-fg`. Set them on your own class to restyle one instance.
+- **Tokens only.** No hex or `rgb()` in the file; glyphs (select chevron, check mark, error mark) are drawn in `currentColor`, so they follow the tokens in both modes.
+- **Class-only.** No bare element selectors outside an `.sf-*` container, so nothing can reach the admin even in the first frame before `body.admin-area` is set.
+- **Dark mode and reduced motion are automatic:** colours flip on `body.dark`, transitions use the duration tokens, and the skeleton shimmer is switched off under `prefers-reduced-motion`.
+- **Focus:** interactive primitives show `--sf-shadow-focus` on `:focus-visible` with a transparent 2px outline (it becomes a real outline in Windows contrast themes). Links and tabs use a 2px `--sf-color-focus` outline instead (a box-shadow would wrap across lines or clip in a scrolling strip).
+
+### 16.2 Class inventory
+
+| Group | Class | What it gives you |
+|---|---|---|
+| Layout | `.sf-container` (+ `--wide`, `--narrow`) | `max-width` 1280 / 1440 / 720px, centred, `padding-inline: var(--sf-gutter)` |
+| | `.sf-section`, `.sf-section--tight` | `padding-block: var(--sf-section-y)` / half of it |
+| | `.sf-grid` | `repeat(var(--cols, 4), minmax(0, 1fr))`; `--cols-tablet` (2) at ≤ 768px; `--cols-mobile` (defaults to the tablet count) at ≤ 480px; `--gap` overrides the fluid 16–32px gap. A one-column grid sets `--cols-tablet: 1`. |
+| Type | `.sf-eyebrow` (+ `--accent`, `--rule`) | 12px sans 500, uppercase, 0.16em, muted; `--accent` = accent-text; `--rule` adds the 24px caramel rule before it |
+| | `.sf-display-xl/lg/md/sm` | Playfair on the display scale; inherits its colour (works on navy); `<em>` = the accent italic (accent from md up, accent-text at sm); `text-wrap: balance` |
+| | `.sf-prose` | 66ch measure, 17px / 1.7, secondary text; serif `h2` (display-sm, hairline above) and `h3`/`h4` (20px); lists, `strong`, `hr`; links ink with a 1px accent underline (2px on hover) |
+| | `.sf-muted`, `.sf-price`, `.sf-compare`, `.sf-sale` | muted text; price (sans 500, tabular, no wrap); compare-at (muted, 1px strike: add `<span class="sf-visually-hidden">Was</span>`); sale (accent-text 500) |
+| Buttons | `.sf-btn` | 44px, sans 14px 500, 0.02em, radius sm, `0 20px`; colour-only hover (`--sf-duration`, `--sf-ease-out`), press `scale(0.99)`, focus ring, `:disabled` / `[aria-disabled="true"]` 50% + `not-allowed` |
+| | `--primary` | ink, paper text; hover navy (white in dark mode) |
+| | `--ghost` | transparent, 1px ink border; hover ink 6% tint (`--sf-color-primary-soft`) |
+| | `--paper`, `--paper-ghost` | for navy bands, the footer and photo scrims: brand paper with ink text (hover caramel) / paper border and text (hover paper 16%); on-dark caramel focus ring |
+| | `--link` | inline text link: stone underline at rest, accent on hover; no padding; a 44px invisible hit area |
+| | `--sm` (36px; 44px on touch screens), `--lg` (52px, 16px text), `--block` (full width), `--icon` (square, needs `aria-label`), `.sf-btn__icon` (1.25em icon slot; MUI icons fit) | |
+| Fields | `.sf-field` | grid: label, control, hint, error (8px gap) |
+| | `.sf-field__label` (or a bare `<label>` child), `.sf-field__hint`, `.sf-field__error` | 13px 500 ink label; 13px muted hint; 13px error text with a circled "!" (never colour alone) |
+| | `.sf-input`, `.sf-select`, `.sf-textarea` | 44px (textarea 120px min), 1px `--sf-color-border-strong`, radius sm, surface, 15px (16px on touch screens, so iOS never zooms); hover darkens the border; focus = 1px accent border + ring; `[aria-invalid="true"]` = error border (kept while focused); `[readonly]` / `:disabled` = sand; dark mode sets `color-scheme: dark` for native pickers |
+| | `.sf-select` chevron | two 1.5px strokes in `currentColor` (see 16.8) |
+| | `.sf-check`, `.sf-radio`, `.sf-switch` | on the `<label>`: 44px row, 12px gap; the native `<input>` inside becomes a 20px box / circle (accent when checked, check mark in accent-contrast, `:indeterminate` dash) or a 36 × 20 pill (ink when on) |
+| Badges | `.sf-badge` (+ `--ink`, `--paper`, `--sand`, `--accent`, `--success`, `--warning`, `--error`, `--info`) | 11px uppercase tracked label, radius sm; default = sand; `--accent` = discount tint; semantic = soft tint + matching text; `--paper` is fixed (photos, dark surfaces) |
+| Chips | `.sf-chip` (+ `--selected`) | 32px hairline pill, 14px; hover ink border; `--selected`, `[aria-pressed="true"]` and `[aria-checked="true"]` = ink fill with paper text |
+| Counts | `.sf-count` | 18px ink disc, 10px paper digits, tabular |
+| Surfaces | `.sf-card` (+ `--hairline`), `.sf-panel` (+ `--hairline`) | surface / sand, radius sm, no shadow, fluid 16–24px padding (`--sf-card-padding`, e.g. `0` for media cards) |
+| | `.sf-hairline` | a 1px `--sf-hairline` rule (on `<hr>` or any block) |
+| | `.sf-divider--dot` | inline `·` separator: `<span class="sf-divider--dot" aria-hidden="true"></span>` |
+| Tabs | `.sf-tabs`, `.sf-tab`, `.sf-tabpanel` | hairline strip (scrolls sideways without a scrollbar), 44px eyebrow-style tabs, `[aria-selected="true"]` = ink text + 1px ink underline, 24px panel spacing; roving focus and arrow keys are the consumer's job |
+| Skeletons | `.sf-skeleton` (+ `--text`, `--image`, `--circle`) | sand block with a slow (1.6s) surface shimmer, static under reduced motion; `--text` 0.75em lines (the last of several at 60%), `--image` uses `aspect-ratio: var(--ratio, 4 / 5)`, `--circle` uses `--size` (40px). Mark skeletons `aria-hidden="true"`; set `aria-busy="true"` on the loading region |
+| A11y | `.sf-visually-hidden`, `.sf-skip-link`, `.sf-focus` | screen-reader-only text; the "Skip to content" link (off-screen until focused, then an ink tab top-left above everything; Prompt 31 adds it to `App.js`); the focus ring for custom focusable elements |
+
+### 16.3 Markup patterns
+
+```jsx
+<button className="sf-btn sf-btn--primary sf-btn--lg sf-btn--block">
+  Checkout <span className="sf-btn__icon"><ArrowForward /></span>
+</button>
+<Link className="sf-btn sf-btn--link" to="/products">View all</Link>
+
+<div className="sf-field">
+  <label className="sf-field__label" htmlFor="email">Email address</label>
+  <input className="sf-input" id="email" type="email" autoComplete="email"
+         aria-invalid={!!error} aria-describedby="email-hint email-error" />
+  <p className="sf-field__hint" id="email-hint">We send the receipt here.</p>
+  {error && <p className="sf-field__error" id="email-error">{error}</p>}
+</div>
+
+<label className="sf-check"><input type="checkbox" /> Set as default</label>
+<label className="sf-radio"><input type="radio" name="rating" /> 4★ and up</label>
+<label className="sf-switch"><input type="checkbox" role="switch" /> In stock only</label>
+
+<div className="sf-tabs" role="tablist" aria-label="Product information">
+  <button className="sf-tab" role="tab" aria-selected="true" aria-controls="p-desc" id="t-desc">Description</button>
+</div>
+<div className="sf-tabpanel" role="tabpanel" id="p-desc" aria-labelledby="t-desc" tabIndex={0}>…</div>
+
+<div className="sf-grid" style={{ "--cols": 3, "--cols-mobile": 1 }}>…</div>
+<span className="sf-skeleton sf-skeleton--image" aria-hidden="true" />
+```
+
+### 16.4 React primitives (`src/components/ui`)
+
+Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`).
+
+**`<Reveal>`**: the standard scroll reveal (section 8). Fades in with a 20px rise once the element is 10% inside the viewport (`whileInView`, `viewport={{ once, margin: "-10% 0px" }}`, `TOKENS.motion` duration 0.9s and ease-out). With reduced motion (`useReducedMotion()`, and `MotionConfig` around the storefront) it only fades: no transform.
+
+| Prop | Default | Notes |
+|---|---|---|
+| `as` | `"div"` | any tag (`"section"`, `"li"`…) or component |
+| `delay` | `0` | seconds; use `staggerDelay(index)` for groups |
+| `distance` | `TOKENS.motion.revealDistance` (20) | rise in px (`--sf-reveal-distance`) |
+| `once` | `true` | reveal the first time only |
+| `className`, other props | — | passed through (`id`, `style`, `role`, `aria-*`, `data-*`); the ref is forwarded |
+| `onInView` | — | called with the `IntersectionObserverEntry` when it enters view (e.g. start a lazy fetch) |
+
+`staggerDelay(index, cap = 8)` returns `index × 0.09s` (`--sf-stagger`) for the first `cap` items and `0` after that, so long grids never wait.
+
+```jsx
+{products.slice(0, 6).map((p, i) => (
+  <Reveal key={p.id} as="li" delay={staggerDelay(i)}><ProductCard product={p} /></Reveal>
+))}
+```
+
+**`<SectionHeading>`**: eyebrow, serif `display-lg` title, intro, optional action. Left-aligned with the action on the right from 768px up (below the text on phones); `align="center"` centres everything in a 640px measure. It has a fluid 32–48px bottom margin (override with `className`).
+
+| Prop | Default | Notes |
+|---|---|---|
+| `eyebrow` | — | `.sf-eyebrow` above the title |
+| `title` | — | string with an optional `*accent*` word, or a node |
+| `intro` | — | 17px secondary, 56ch |
+| `align` | `"left"` | `"left"` \| `"center"` |
+| `action` | — | a ready element, or `{ label, to }` (router `<Link>`) / `{ label, href }` (`<a>`), rendered as `.sf-btn--link`; other keys pass through |
+| `as` | `"h2"` | heading level |
+| `id` | — | on the heading, for `aria-labelledby` on the section |
+| `className` | — | on the wrapper |
+
+```jsx
+<section className="sf-section" aria-labelledby="spaces-title">
+  <div className="sf-container">
+    <SectionHeading id="spaces-title" eyebrow="Shop by space" title="Furniture for every *room*."
+      action={{ label: "View all", to: "/products" }} />
+  </div>
+</section>
+```
+
+**`renderAccent(text)`** turns `"Seating for the way you *live*."` into text with the marked word in `<em>` (an array of strings and keyed `<em>`s, ready for JSX). Text without a complete pair, and non-strings, come back unchanged. **`stripAccent(text)`** returns the plain sentence for `aria-label`, document titles and alt text.
+
+### 16.5 Storefront MUI overrides (`ThemeContext.js`)
+
+Only the controls the storefront shell renders (today the header: `IconButton`, `Badge`, `Avatar`, `Menu`, `MenuItem`, `Typography`, `Divider`), plus the few a later prompt might reach for. Every value is a `var(--sf-*)`, so the overrides flip with `body.dark` and collapse with the reduced-motion tokens. The admin has its own `ThemeProvider` and never sees them. The `MuiCssBaseline` body pin (section 13) and `MuiPaper` `backgroundImage: none` stay exactly as Prompt 01 left them.
+
+| Component | Override |
+|---|---|
+| `MuiButtonBase` | ripple off (colour-only feedback); `.Mui-focusVisible` = `--sf-shadow-focus` |
+| `MuiButton` | `.sf-btn` metrics; contained primary = ink → navy hover; outlined primary = ghost; text = link (stone underline, accent on hover); `size` small 36 / large 52; press 0.99; disabled 50%; other `color`s keep their palette colour |
+| `MuiIconButton` | 44px (medium), radius sm, ink unless a `color` is set, sand hover (none on touch); the small-size touch override is kept |
+| `MuiBadge` | 18px ink disc, paper 10px digits, whatever the `color` prop (the header's counts) |
+| `MuiAvatar` | sand, ink serif monogram, hairline |
+| `MuiPopover`, `MuiMenu` | surface, hairline, `--sf-shadow-sm`, radius sm (no blur, no translucency) |
+| `MuiMenuItem` | 44px at every breakpoint, sans 14px, sand hover; keyboard focus = sand + inset ring; selected = accent-soft |
+| `MuiDivider` | `--sf-color-border` |
+| `MuiDrawer` | solid surface, `--sf-shadow-lg`, navy overlay backdrop |
+| `MuiOutlinedInput`, `MuiTextField` | border-strong boundary, radius sm, surface; focus = 1px accent border + ring; error border; disabled sand; label muted → accent-text when focused |
+| `MuiChip` | 32px pill; default filled = sand, outlined = hairline; `color="primary"` = ink (selected) |
+| `MuiSkeleton` | sand, `wave` by default (no pulse), wave off under reduced motion |
+| `MuiTabs`, `MuiTab` | hairline strip, 24px gap, 1px ink indicator; eyebrow-style 44px tabs, muted → ink; focus outline inside |
+| `MuiTooltip` | ink, paper 12px text, radius md |
+
+### 16.6 SweetAlert2 storefront theme (`App.css`)
+
+Appended after the shared SweetAlert block and scoped `body.light:not(.admin-area)` / `body.dark:not(.admin-area)`, so the admin keeps the rules above it. Everything goes through SweetAlert's CSS variables, set from the tokens.
+
+- **Popup:** `--swal2-background` surface, `--swal2-color` ink, `--swal2-border` hairline, `--swal2-border-radius` radius md, `--sf-shadow-lg`; title in Playfair 22px 500; body sans 15px secondary; icons at 75% (`--swal2-icon-zoom`); backdrop `--sf-color-overlay`.
+- **Buttons:** 44px, sans 14px 500. Confirm = ink with paper text, navy on hover (white in dark mode). Cancel = ghost (1px ink inset border, `--sf-color-primary-soft` hover). Focus = `--sf-shadow-focus`. Press 0.99.
+- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`).
+- **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
+- **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
+- **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation).
+
+### 16.7 Reduced motion
+
+- `src/App.js` wraps the storefront route's `<div className="App">` (inside `DealsConfigProvider`) in `<MotionConfig reducedMotion="user">`: with the OS setting on, every storefront framer-motion animation skips transforms and layout animation and keeps opacity. The admin routes are not wrapped.
+- CSS transitions built from the duration tokens collapse on their own; the skeleton keyframes, the MUI skeleton wave and the SweetAlert animations are switched off explicitly.
+- `Reveal` also reads `useReducedMotion()`, so it starts without a transform.
+
+### 16.8 Decisions and exceptions
+
+- **Select chevron without an SVG.** A data-URI SVG cannot inherit `currentColor` from the page (it renders black and disappears on dark surfaces), so the chevron is two 1.5px hard-stop strokes drawn with `linear-gradient(… currentColor …)`. It follows `color` (ink, muted when disabled) with no literal. Forced-colours mode restores the native arrow.
+- **The skeleton shimmer** (`transparent → --sf-color-surface → transparent`) is the second permitted gradient after the photo scrim: transient and functional.
+- **Input, popup and toast backgrounds are `--sf-color-surface`** (the brief's "paper" read as MUI's `background.paper`, as section 1 maps it); only `.sf-btn--paper` and `.sf-badge--paper` use the fixed brand paper.
+- **`.sf-chip` is 32px** as specified (≥ 24px meets WCAG 2.5.8); chip rows need ≥ 8px gaps. `.sf-btn--sm` grows to 44px on touch screens.
+- **The old header** (until Prompt 07): its CSS Module sets most MUI colours with `!important`, so it mostly keeps its look; the new overrides show through where it set nothing (ink count discs on its dark bar, a sand hover square behind its white icons, ring focus). Prompt 07 rebuilds it on these overrides.
+
+New contrast pairs (`node scripts/check-contrast.js`):
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Field error text on surface (.sf-field__error in a card) | 6.69 ✓ | 7.31 ✓ | 4.5:1 |
+| Invalid field border (error) on surface | 6.69 ✓ | 7.31 ✓ | 3:1 |
+| Selected menu item: ink on accent-soft over surface | 15.18 ✓ | 11.10 ✓ | 4.5:1 |
+| Accent badge (.sf-badge--accent): discount on discount-bg over page | 4.75 ✓ | 8.69 ✓ | 4.5:1 |
+| Paper button hover (brand ink on on-dark accent) (both modes) | 8.85 ✓ | 8.85 ✓ | 4.5:1 |
+| Paper-ghost hover (on-dark on on-dark-border over navy) (both modes) | 9.57 ✓ | 9.57 ✓ | 4.5:1 |
+
+Every other primitive pairing is already in section 14 (ink on sand for hover states, primary-contrast on primary for selected chips, counts, tooltips and the skip link, accent-contrast on accent for the check mark, muted on surface for the switch thumb, focus ring and accent on page/surface/sand, on-dark tokens on navy for the paper variants).
