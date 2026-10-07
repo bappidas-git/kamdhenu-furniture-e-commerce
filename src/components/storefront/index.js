@@ -16,6 +16,7 @@ export { default as ProductGallery } from "./ProductGallery";
 export { default as DeliveryReturnsInfo } from "./DeliveryReturnsInfo";
 export { default as AddToCartBar } from "./AddToCartBar";
 export { default as ProductCard } from "./ProductCard";
+export { default as ProductRail } from "./ProductRail";
 export { default as RelatedProducts } from "./RelatedProducts";
 export { default as FrequentlyBoughtTogether } from "./FrequentlyBoughtTogether";
 export { default as ReviewsSection } from "./ReviewsSection";

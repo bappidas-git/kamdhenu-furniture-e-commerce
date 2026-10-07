@@ -966,3 +966,81 @@ The copy is bottom-aligned, so when `font-display: swap` replaces a fallback fac
 | Hero: on-dark text with --sf-color-overlay as the scrim, white photo (not used) | 4.15 | 7.32 | info |
 
 Every other hero and strip pairing is already in section 14 (on-dark text, the caramel accent and the focus ring on the scrim; the paper button and its hover; ink, muted text and the accent on the page in both modes).
+
+---
+
+## 21. Home discovery sections and `ProductRail`
+
+Written by Prompt 11. Files: `src/pages/Home/Home.js` + `.module.css` (the sections), `src/components/FeaturedProducts/*` (Featured Collections), `src/components/storefront/ProductRail.js` + `.module.css` (the site's one product rail), and the content in `src/content/homeContent.js`.
+
+### 21.1 Page rhythm
+
+Order after the assurance strip: Shop by space · story block 1 · Featured Collections · Complete the space · story block 2 · Trending · Recently viewed, then Prompt 12's sections.
+
+- Every section is `.sf-section` (Recently viewed: `.sf-section--tight`) inside `.sf-container .sf-container--wide`, the left edge the header, hero and strip share.
+- Neighbouring sections are separated by a full-width hairline (`.section + .section { border-top: var(--sf-hairline) }`). The one sand band, Complete the space, has none on it or after it. A later home section joins the rhythm by adding the page's `styles.section` class.
+- Every section title is an `h2` (`SectionHeading`, or `.sf-display-lg` in the story blocks); Recently viewed's `h2` is set as an eyebrow. Headings below them are `h3`.
+- Each section's own data decides whether it renders; nothing is shown in place of missing data.
+
+### 21.2 Content (`homeContent.js`)
+
+| Export | Shape | Notes |
+|---|---|---|
+| `HOME_SECTIONS` | `{ spaces, featured, trending, recentlyViewed }`, each `{ eyebrow, title?, viewAll?: { label, to }, railLabel? }` | `viewAll` targets: `/products`, `?sort=newest`, `?sort=popular`, `?sort=rating` only; `railLabel` names the carousel |
+| `SPACES` | `[{ key, label, line, categorySlug }]` ×4 | the tile shows the category's admin-managed `image`; a space whose category is missing or inactive is skipped |
+| `STORY` | `[{ eyebrow, title, body, cta: { label, to }, image: { src, alt, width, height } }]` | `STORY[0]` image left, `STORY[1]` mirrored; images 1200 × 1500 |
+| `COMPLETE_THE_SPACE` | `{ anchorProductSlug, eyebrow, title, intro, companionsLabel, viewLabel, addAllLabel, addAvailableLabel, totalLabel }` | rules in 21.5 |
+
+### 21.3 Shop by space tiles
+
+- Grid: 4 across from 1024px, 2 × 2 below; tiles 4:5 everywhere (the frame's `aspect-ratio` reserves the box). One `<Link>` per tile to `/products?category=<slug>`, with the `sf-focus` ring.
+- Image: `object-fit: cover`, lazy, `onImageError`, alt = the category name; hover scales it to 1.03 over `--sf-duration-slow` (pointer devices, not under reduced motion).
+- Text: the label in the display serif (22px on phones, 28px from 768px) and the line in sans 12/14px, both `--sf-color-on-dark`. Visually hidden commas separate the alt text, label and line for screen readers.
+- Scrim: the hero's construction (§20.2): `--sf-color-scrim` at full strength behind the text block, fading out over 40px (phones) / 64px above it, so the text keeps 5.77 : 1 over a white photograph. `--sf-gradient-scrim` is not used: a caption that spans the tile does not fit its bottom-left 35%.
+
+### 21.4 Story blocks
+
+Image 7 / text 5 from 768px (mirrored: text 5 / image 7), stacked below with the image first; text vertically centred. Eyebrow `.sf-eyebrow--rule`, title `.sf-display-lg` with the accent, body 17px / `--sf-leading-relaxed` / secondary / 48ch, ghost CTA. The image frame is 4:5 on sand. `Reveal` on both halves (the text 90ms later).
+
+### 21.5 Complete the space
+
+- **Anchor:** `products.getBySlug(anchorProductSlug)`. If that is missing or inactive, the first featured product with `frequentlyBoughtTogetherIds` anchors.
+- **Companions:** `products.getFrequentlyBoughtTogether(anchor, 4)`. When that gives fewer than two, `products.getRelated(anchor, 4)` tops it up (de-duplicated, at most four). With no anchor or fewer than two companions the section is hidden.
+- **Layout:** the sand band. Phones: image, details, companions. From 768px: the anchor's image (4:5, a hairline frame over its edge so a sand photograph cannot dissolve into the band) on the left, sticky at `calc(var(--sf-header-height) + 24px)`; on the right its details (name `h3` serif 28 / 32px, short description, `PriceBlock size="md"`, a "View" link whose name includes the product) and "Pairs well with" (`h3` eyebrow) over a 2 × 2 of `ProductCard`s. The image link is `tabIndex={-1}` and `aria-hidden`; the "View" link is its accessible equivalent.
+- **Add all to cart:** a ghost button under the companions with `"{count} pieces, {total}"` beside it (and as its description). It adds the anchor and each companion in turn with `addToCart(buildCartItem(p), 1, { openDrawer: false })`, then calls `setIsCartOpen(true)` once. Sold-out pieces (`stock === 0`) are left out, as their cards disable quick add; the label then reads "Add the available pieces". Each piece is added at its card's price (the cheapest variant), so choose an anchor whose companions do not depend on a size (21.7).
+
+### 21.6 `ProductRail`
+
+```jsx
+import { ProductRail } from "../../components/storefront";
+
+<ProductRail
+  products={items}            // renders nothing when empty and not loading
+  label="Related pieces"      // or labelledBy="<heading id>"
+  loading={loading}           // skeleton cards (4:5 + three lines); skeletonCount
+  compact={false}             // compact: smaller cards, more per view
+  onAddToCart={(cartItem) => addToCart(cartItem, 1)}
+  onToggleWishlist={toggleWishlist}
+  isInWishlist={isInWishlist}
+/>
+```
+
+| Width | Cards per view (compact) |
+|---|---|
+| < 768px | 2.2 (2.6), and the track runs to the screen edges |
+| 768–1023px | 3.2 (4.3), still edge to edge |
+| ≥ 1024px | 4 (6), inside the container |
+
+- **Structure:** a `role="group"` with `aria-roledescription="carousel"` and a name, holding a `<ul>` of cards (list semantics keep the count and positions) and, when the track overflows, a controls row: a decorative hairline progress line (ink thumb, sized and placed by `--rail-visible` / `--rail-progress`) and two 44px hairline buttons, "Previous pieces" and "Next pieces" (`aria-controls` the list).
+- **Scrolling:** `scroll-snap-type: x mandatory`, cards snap to their start, with `scroll-padding` keeping them on the content edge. A button scrolls one page of whole cards (smooth, instant under reduced motion). At either end its button gets `aria-disabled="true"`, so focus is never dropped. The track adds no tab stop: Tab walks the cards, each scrolling into view, and the arrow keys scroll the track while focus is inside it.
+- **Focus room:** the track keeps 8px of padding (cancelled by negative margins) so focus rings are not clipped by its overflow.
+- **Loading:** while `loading`, skeleton cards and an empty `aria-hidden` row of the controls' height hold the rail's place; the group is `aria-busy`.
+- **Measuring:** the scroll position is read in a layout effect, on scroll (one rAF per frame) and on resize (`ResizeObserver`). The progress line is written to the element directly, so scrolling never re-renders the cards.
+
+### 21.7 Decisions to keep
+
+- The anchor is an office set (Ergonomic High-Back Chair with Headrest + Cushioned 3-Seater Waiting Bench + Winsome Office Table). The King Size Bed's companion mattress would be added in Single size, and the sofa sets have a single curated companion.
+- "Trending" lists the admin's `trending` flag; its copy states no numbers.
+- No page-level fade: the hero is the page's entrance, and the sections reveal as they scroll in.
+
+No new colour pairs: the tiles use the hero's on-dark-on-scrim pair, and the sand band uses the ink, secondary, muted, accent, accent-text and focus-ring pairs on sand already in §14.

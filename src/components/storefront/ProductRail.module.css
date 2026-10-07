@@ -1,0 +1,126 @@
+/* =============================================================================
+ * ProductRail — horizontal snap rail of ProductCards (Prompt 11)
+ * =============================================================================
+ * Cards per view come from --rail-per-view; --rail-gaps is the number of whole
+ * gaps inside one view, so a card is (100% − gaps × gap) / per-view wide.
+ * Below 1024px the track bleeds into the page gutter (to the screen edges)
+ * and scroll-padding keeps the first card on the content edge. The track keeps
+ * a little room around the cards (--rail-room) so focus rings are not clipped
+ * by its overflow; matching negative margins cancel it in the layout.
+ * Tokens only.
+ * ========================================================================== */
+
+.rail {
+  --rail-gap: clamp(var(--sf-space-4), 2vw, var(--sf-space-6));
+  --rail-room: var(--sf-space-2);
+  --rail-bleed: var(--sf-gutter);
+  --rail-per-view: 2.2;
+  --rail-gaps: 2;
+  position: relative;
+}
+
+.compact {
+  --rail-per-view: 2.6;
+  --rail-gaps: 2;
+}
+
+@media (min-width: 768px) {
+  .rail {
+    --rail-per-view: 3.2;
+    --rail-gaps: 3;
+  }
+
+  .compact {
+    --rail-per-view: 4.3;
+    --rail-gaps: 4;
+  }
+}
+
+@media (min-width: 1024px) {
+  .rail {
+    --rail-per-view: 4;
+    --rail-gaps: 3;
+    --rail-bleed: var(--rail-room);
+  }
+
+  .compact {
+    --rail-per-view: 6;
+    --rail-gaps: 5;
+  }
+}
+
+.track {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc((100% - var(--rail-gaps) * var(--rail-gap)) / var(--rail-per-view));
+  gap: var(--rail-gap);
+  margin: calc(-1 * var(--rail-room)) calc(-1 * var(--rail-bleed));
+  padding: var(--rail-room) var(--rail-bleed);
+  scroll-padding-inline: var(--rail-bleed);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  min-width: 0;
+  scroll-snap-align: start;
+}
+
+/* Skeleton card: the 4:5 image block and three text lines. */
+.skeletonText {
+  display: block;
+  padding-top: var(--sf-space-3);
+}
+
+/* Progress line and the previous / next buttons, under the cards. The row is
+   as tall as the buttons, so its empty placeholder (while loading) matches. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-6);
+  min-height: var(--sf-tap-target);
+  margin-top: var(--sf-space-6);
+}
+
+/* A hairline track with an ink thumb as wide as the share of the rail in view
+   (--rail-visible), placed by --rail-progress (0–1). Both are set by
+   ProductRail.js as the track scrolls; decorative. */
+.progress {
+  --rail-visible: 1;
+  --rail-progress: 0;
+  position: relative;
+  flex: 1;
+  height: 1px;
+  overflow: hidden;
+  background-color: var(--sf-color-border);
+}
+
+.thumb {
+  position: absolute;
+  inset-block: 0;
+  left: 0;
+  width: calc(var(--rail-visible) * 100%);
+  background-color: var(--sf-color-text);
+  transform: translateX(calc(var(--rail-progress) * (100% / var(--rail-visible) - 100%)));
+}
+
+.buttons {
+  display: flex;
+  flex: none;
+  gap: var(--sf-space-2);
+}
+
+/* Hairline square buttons: ink chevron, stone border that turns ink on hover. */
+.control {
+  --sf-btn-border: var(--sf-color-border);
+  --sf-btn-border-hover: var(--sf-color-text);
+  --sf-btn-fg: var(--sf-color-text);
+  --sf-btn-bg-hover: var(--sf-color-primary-soft);
+}

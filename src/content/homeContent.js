@@ -1,6 +1,7 @@
 // Content and configuration for the home page's editorial slots. Replace
-// values here, never inline copy or media in components. Prompt 10 adds HERO;
-// Prompts 11 and 12 add their sections below it.
+// values here, never inline copy or media in components. Prompt 10 added
+// HERO; Prompt 11 the discovery sections (HOME_SECTIONS, SPACES, STORY,
+// COMPLETE_THE_SPACE); Prompt 12 adds its sections below them.
 //
 // Conventions (shared with brandContent.js):
 // - One accent word per display headline is marked `*word*`; renderAccent()
@@ -44,5 +45,119 @@ export const HERO = {
   },
 };
 
-const homeContent = { HERO };
+// ── Discovery (Prompt 11) ─────────────────────────────────────────────────────
+
+// Section headings for the discovery half of the page. `viewAll` is the
+// heading's link (valid listing targets only: /products, ?sort=newest,
+// ?sort=popular, ?sort=rating); `railLabel` names the carousel for screen
+// readers.
+export const HOME_SECTIONS = {
+  spaces: { eyebrow: "Shop by space", title: "Furniture for every *room*." },
+  featured: {
+    eyebrow: "Featured",
+    title: "Pieces we *recommend*.",
+    viewAll: { label: "View all", to: "/products" },
+    railLabel: "Featured pieces",
+  },
+  // Lists the products the admin flags as trending; the copy claims no
+  // numbers (no views, no "N sold").
+  trending: {
+    eyebrow: "Trending",
+    title: "What people are *choosing*.",
+    viewAll: { label: "View all", to: "/products?sort=popular" },
+    railLabel: "Trending pieces",
+  },
+  recentlyViewed: { eyebrow: "Recently viewed", railLabel: "Recently viewed pieces" },
+};
+
+// "Shop by space": one tile per space, in this order. The tile shows the
+// category's own admin-managed image and links to its listing
+// (/products?category=<slug>); a space whose category is missing or inactive
+// is skipped, never shown as a broken link. `line` must describe what the
+// linked listing holds.
+export const SPACES = [
+  {
+    key: "home",
+    label: "Home",
+    line: "Sofas, beds, dining and storage.",
+    categorySlug: "home-furniture",
+  },
+  {
+    key: "office",
+    label: "Office",
+    line: "Task, executive and waiting chairs.",
+    categorySlug: "office-chairs",
+  },
+  {
+    key: "cafe",
+    label: "Café & Restaurant",
+    line: "Hard-wearing chairs for busy service.",
+    categorySlug: "cafe-restaurant-chairs",
+  },
+  {
+    key: "outdoor",
+    label: "Outdoor",
+    line: "For verandas, lawns and terraces.",
+    categorySlug: "outdoor-furniture",
+  },
+];
+
+// Editorial story blocks, rendered image-and-text in alternation: STORY[0]
+// after "Shop by space" (image left), STORY[1] after "Complete the space"
+// (mirrored). Images are 1200 × 1500 (4:5); replace `src` and describe the
+// real photograph in `alt`. Copy is proposed and pending client approval.
+const storyImage = (text) => `https://placehold.co/1200x1500/f1ebe1/686158?text=${text}`;
+
+export const STORY = [
+  {
+    eyebrow: "At home",
+    title: "Built for the *everyday*.",
+    body: "Sofas to sink into after work, beds for long nights and dining tables that seat the whole family. We choose each piece for the way it is used day to day, not only for how it looks on the day it arrives.",
+    cta: { label: "Shop home furniture", to: "/products?category=home-furniture" },
+    image: {
+      src: storyImage("Living-room+photograph"),
+      alt: "Placeholder for a living-room photograph",
+      width: 1200,
+      height: 1500,
+    },
+  },
+  {
+    eyebrow: "Our workshop",
+    title: "Made by people we *know*.",
+    body: "Some of our pieces are made in our own workshop; the rest come from makers we know well. Either way, we choose each one to hold up to everyday use.",
+    cta: { label: "Read our story", to: "/about" },
+    image: {
+      src: storyImage("Workshop+photograph"),
+      alt: "Placeholder for a photograph of our workshop",
+      width: 1200,
+      height: 1500,
+    },
+  },
+];
+
+// "Complete the space": one product shown large with the pieces that suit it.
+// - anchorProductSlug: the anchor. If it cannot be loaded (renamed, inactive,
+//   removed), the first featured product with frequentlyBoughtTogetherIds
+//   anchors instead.
+// - Companions are the anchor's admin-curated frequentlyBoughtTogetherIds;
+//   when those give fewer than two, related products top them up (to four).
+//   With no anchor, or fewer than two companions, the section is hidden.
+// - "Add all to cart" adds each piece at the price its card shows (the
+//   cheapest variant), so choose an anchor whose companions do not depend on
+//   a size: the King Size Bed's mattress, for example, would be added in
+//   Single size.
+// - totalLabel: {count} and {total} are filled from the pieces being added.
+export const COMPLETE_THE_SPACE = {
+  anchorProductSlug: "ergonomic-high-back-chair-with-headrest",
+  eyebrow: "Complete the space",
+  title: "Pieces that belong *together*.",
+  intro: "One piece we like, and the pieces we would set beside it.",
+  companionsLabel: "Pairs well with",
+  viewLabel: "View",
+  addAllLabel: "Add all to cart",
+  addAvailableLabel: "Add the available pieces",
+  totalLabel: "{count} pieces, {total}",
+};
+
+const homeContent = { HERO, HOME_SECTIONS, SPACES, STORY, COMPLETE_THE_SPACE };
 export default homeContent;
