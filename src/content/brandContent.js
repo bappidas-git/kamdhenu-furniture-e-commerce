@@ -43,6 +43,10 @@ export const ABOUT_INTRO =
 //   {threshold}  lowest shipping_methods[].freeAbove, formatted with formatCurrency
 //   {days}       STOREFRONT_CONFIG.returnsWindowDays (hide when 0)
 // COD shows only when settings.payment.codEnabled is true.
+// The home page's AssuranceStrip prints `label` with the detail beneath it.
+// For delivery it prints resolveTrustBadgeDetail("freeShipping") from
+// src/theme/tokens.js ("Above ₹9,999") rather than the template, so the label
+// is not repeated and the strip, footer and product page show one amount.
 export const ASSURANCE_ITEMS = [
   {
     id: "delivery",

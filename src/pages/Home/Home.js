@@ -8,6 +8,7 @@ import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
 import { categoryParam } from "../../utils/categories";
 import HeroSection from "../../components/HeroSection/HeroSection";
+import AssuranceStrip from "../../components/storefront/AssuranceStrip";
 import { APP_NAME, WHY_CHOOSE_US } from "../../utils/constants";
 import {
   formatCurrency,
@@ -399,10 +400,9 @@ const Home = () => {
       animate={{ opacity: 1 }}
       transition={{ duration: 0.4 }}
     >
-      {/* 1. Hero Section */}
-      <section className={styles.heroSection}>
-        <HeroSection />
-      </section>
+      {/* 1. Hero and assurance strip */}
+      <HeroSection />
+      <AssuranceStrip />
 
       {/* 2. Flash Deals */}
       {flashDeals.length > 0 && (

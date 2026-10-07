@@ -1169,3 +1169,164 @@ No change to `Header/*` (read only), `SearchModal`, `CartDrawer`, `AuthModal`, p
 - The guest line "Sign in for faster checkout and order tracking." (the copy given in the prompt).
 - The chair glyph for "Shop" in the bottom nav.
 - Menu wording: the section names Shop / Discover / Account / Settings, "Track order" for guests, and "Help & support".
+
+---
+
+## Prompt 10 — Home hero and assurance strip
+
+**Date:** 2026-10-07. **Result:** the home page opens on a full-bleed editorial hero: one photograph (or, later, a muted film), the brand eyebrow, the serif headline with its italic caramel accent, one support line and two paper CTAs over a navy scrim. Under it sits a slim assurance strip that states only what the store's data or stated policy backs. Copy and media come from the new `src/content/homeContent.js`. Reference: `prompts/DESIGN_SYSTEM.md` §20.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/HeroSection/HeroSection.js` + `.module.css` | Rewritten (417 → 261 lines of JS). Hero from `HERO`: image/video media, scrim, `h1` via `renderAccent`, paper CTAs, mount entrance, parallax, reduced-motion handling, optional film control, the font wait (§20.4). Tokens only: Prompt 01 counted 37 colour literals in the old CSS and 18 in the JS; none remain. |
+| New `src/content/homeContent.js` | The home page's content/config module; `HERO` (shape below). Prompts 11 and 12 add their entries here. |
+| New `src/components/storefront/AssuranceStrip.js` + `.module.css` | The strip (§20.5). |
+| New `src/components/storefront/trustIcons.js` | The trust-cue outline drawings, moved out of `TrustBadges.js` (verified byte-identical) so the strip reuses them. `TrustBadges.js` now imports them; nothing else in it changed. |
+| `src/pages/Home/Home.js` | One import, and the old `<section className={styles.heroSection}><HeroSection /></section>` replaced by `<HeroSection />` `<AssuranceStrip />`. The rest of the page is untouched (Prompt 11). |
+| `src/content/brandContent.js` | Comment only: how the strip prints the delivery item. |
+| `scripts/check-contrast.js` | One pair (the ghost CTA's border on the scrim) and two informational rows (§20.6). |
+| New tests | `HeroSection.test.js` (16), `AssuranceStrip.test.js` (10), `TrustBadges.test.js` (2). |
+| `prompts/DESIGN_SYSTEM.md` | A note under §3.3 (scrim) and a new §20. |
+
+No change to `src/services/*`, `db.json`, `src/theme/tokens.js`, `Header/*`, the footer, the other home sections, or any admin file.
+
+### Removed, and the `banners` collection
+
+- **The banner carousel:** three hardcoded gradient banners ("Flash Sale / Up to 70% Off on Electronics", "New Arrivals / Discover Latest Fashion Trends", "Ethnic Collection"). It auto-rotated every 5s and had arrows, dots, decorative circles and a "Limited Time Offer" label.
+- **The two promo cards:** "Deal of the Day / Up to 50% Off / Top picks at unbeatable prices" and "Just Launched / New Arrivals / Fresh styles added every day". Both were invented offers, and the first linked to the invalid `?sort=discount`.
+- **The category quick-link bar:** an electronics/clothing icon map in seven hardcoded colours, with its own `categories.getAll()` read. Category discovery moves to Prompt 11's "Shop by Space".
+- **`banners` stays as unused data.** The collection stays in `db.json` (Prompt 05's three brand records) and `apiService.banners.getAll` stays exported and untouched, but nothing calls it now. No admin screen manages banners, so nothing the client edits is lost.
+
+### The content module: `HERO`
+
+```js
+export const HERO = {
+  eyebrow: "A & S Urbanseat",                 // optional
+  headline: HERO_HEADLINES[0],                // imported from brandContent.js
+  support: HERO_SUPPORT_LINES[0],
+  primaryCta: { label: "Shop the collection", to: "/products" },
+  secondaryCta: { label: "Our story", to: "/about" }, // optional (null hides it)
+  media: {
+    image: { src: HERO_IMAGE, alt: "Placeholder for the hero photograph", width: 2400, height: 1350 },
+    // optional on image: srcSet, sizes (for real photography)
+    video: { src: null, poster: HERO_IMAGE },  // src null → image only
+    focalPoint: "50% 60%",                     // object-position
+  },
+};
+```
+
+- `HERO_IMAGE` is `https://placehold.co/2400x1350/f1ebe1/686158?text=Hero+photograph` (the placeholder tones).
+- Replacing the photograph means changing that one constant, plus its alt text; it is also the film's poster.
+
+### Decisions
+
+- **The scrim is built from `--sf-color-scrim` around the copy block, not the whole hero.** DESIGN_SYSTEM §3.3 requires text to sit on at least `--sf-color-scrim`. A 640px column with a display-xl headline does not fit inside the bottom-left 35% of `--sf-gradient-scrim` on a wide hero: at 1440 × 900 the column's top-right corner falls where that gradient has faded to about 0.43 (paper text about 2.5 : 1 over a white photograph).
+  - So `.copy::before` holds full strength behind the copy, 8px clear of it, and out to the bottom and left edges.
+  - It fades out above the copy (a `mask-image` ramp) and, from 1024px, to its right (the background ramp), each eased with a colour hint.
+  - Below 1024px the copy is about as wide as the hero, so the scrim runs edge to edge and only fades upward.
+- **The copy waits up to 1s for its fonts.** The copy is bottom-aligned, so a font swap that changes a line box moved every line above it (0.001–0.018 CLS measured).
+  - The copy and its scrim are laid out but hidden until Playfair (400, italic) and Inter (400, 500) report loaded, for at most 1s. Then the lines enter and the scrim fades in.
+  - Later visits don't wait, and the media never waits, so LCP is unaffected.
+  - A side effect: the headline no longer visibly swaps faces.
+- **Parallax uses the window's `scrollY`** over the hero's measured bottom edge. `useScroll({ target })` measures against `<html>` and logs a dev warning unless `<html>` is positioned, and the admin shares `<html>`.
+- **The strip's loading state** lays the full list out invisibly under one `.sf-skeleton` line, so the strip is already at its loaded height (measured equal at every width). The reads use `Promise.allSettled`; a failed read only drops the items that depend on it.
+- **A Pause/Play control for the film.** A looping background film is moving content, and WCAG 2.2.2 asks for a way to pause it. It is a 44px paper button, bottom right (top right on phones), present only when `video.src` is set.
+- **Shared trust icons.** The strip uses the product page's drawings from `trustIcons.js`, so the set is not copied a third time (the footer still has its own four).
+
+### Deviations from the prompt, and why
+
+1. **Scrim from `--sf-color-scrim`, not `--sf-color-overlay`.** The overlay is the mode-aware drawer backdrop. As a scrim over a white photograph it gives paper text 4.15 : 1 in light mode (fails 4.5) and 7.32 : 1 in dark. `--sf-color-scrim` is the always-dark photography token (5.77 : 1 in both modes), and the design system names it for text over photography. The construction is the copy-anchored one under Decisions.
+2. **The eyebrow uses full `--sf-color-on-dark`, not paper at 80%.** On the scrim over a white photograph, paper at 80% measures 4.37 : 1, below 4.5 for 12px text. DESIGN_SYSTEM §3.3 and §5.6 put small text on photography at full strength. The eyebrow still reads as secondary through its 12px uppercase tracking.
+3. **The hero is 72vh at 1024–1279px**, not 86vh. The header is 212px tall there (its department row wraps), and 86vh put both CTAs below the fold of any screen shorter than about 1000px. At 1024 × 768 they now end at 700px.
+4. **Free delivery's detail is "Above ₹9,999".** That is `resolveTrustBadgeDetail("freeShipping")`'s own string, reused as asked. The brand template "Free delivery above {threshold}" would have repeated the label, and the shared string keeps the strip, footer and product page on one amount. The other three details are the `ASSURANCE_ITEMS` lines, with `{days}` filled.
+5. **Box reservation is by explicit height, not `aspect-ratio`.** The hero's height comes from CSS, and the media layer is absolutely positioned inside it. An `aspect-ratio` on a box sized by its container would do nothing; measured CLS is 0 and the box is identical before and after the image.
+6. **On a read error, only the dependent items drop.** A failed settings read hides only COD; a failed shipping read hides only free delivery. With both failing, only the static items remain, as specified.
+7. **Tablets (768–1023px)** get the full-width copy (headline capped at 640px) and the edge-to-edge scrim. The 640px bottom-left column starts at 1024px, where it leaves room for the scrim to fade.
+8. **Additions:**
+   - the font wait;
+   - the film control;
+   - the optional `srcSet`/`sizes` passthrough for real photography;
+   - `trustIcons.js` (which touches `TrustBadges.js`, owned by Prompt 16, with no visual change: 4/4 element screenshots identical) and its two tests.
+
+### Verification
+
+- **Build and tests.**
+  - `npm run build`: "Compiled successfully", no warnings.
+  - Gzip against the Prompt 09 baseline: JS 395.07 → 398.38 kB (+3.31, mostly framer's scroll tracking for the parallax); CSS 55.46 → 55.04 kB (−0.42).
+  - `CI=true npm test -- --passWithNoTests`: 122 tests (94 + 28), exit 0, no React warnings.
+  - Mutation check: six seeded faults each failed at least one test. The faults were: COD always shown; the label-repeating delivery template; rendering after the first read; autoplay under reduced motion; no `fetchpriority`; the entrance under reduced motion.
+  - `node scripts/check-contrast.js` and `node scripts/validate-db.js` pass; `db.json` is unchanged.
+  - Literal grep of every new or changed source: no hex, `rgb()`, `hsl()` or `font-family` literal. The minifier writes `transparent`/`black` as `#0000`/`#000` in the built CSS. Autoprefixer adds `-webkit-mask-image`.
+- **Browser QA.** Setup: Playwright and Chromium; JSON Server on a scratch copy of `db.json` (the repo file was never written); the dev server, then mock-mode production builds.
+  - **Layout** (320, 360, 390, 768, 1024, 1280, 1440 and 1920px; light and dark):
+    - one `h1`; the headline takes 3 lines at 320–390px and 2 from 768px;
+    - the CTAs stack full width below 768px and sit in a row above;
+    - no horizontal overflow; no console warnings or errors in production;
+    - the strip is one 56px row from 1024px and 2 × 2 below (115px at 768px, 160–175px on phones, where details wrap).
+  - **CTAs:** both are in the first view at 360 × 740, 390 × 844, 1024 × 768, 1280 × 800, 1440 × 900 and 1920 × 1080. They lead to `/products` and `/about`.
+  - **Contrast, worst case:** the photograph was replaced by pure white, and the lightest pixel behind each text box was measured at seven widths in both modes. Eyebrow, headline, support line and ghost CTA measure 5.78 : 1; the caramel accent 3.15 : 1.
+  - **LCP** is the hero `<img>`:
+    - with a high-entropy 2400 × 1350 JPEG, 840ms; with the placeholder SVG, 668ms;
+    - its request starts before first contentful paint (700ms vs 736ms).
+  - **CLS** for the hero and strip is 0 at 360 and 1440px, with and without reduced motion.
+    - With fonts delayed 3s (beyond the 1s wait): 0.002–0.018.
+    - At 1024 × 768 the page shifts 0.034 when Inter arrives, because the header grows from 168 to 212px. The baseline build shows the same value: pre-existing, from the header.
+  - **Slow network** (400ms latency, 500 kbps, photograph held back): the hero box is 774px tall at y 168 before and after the image arrives.
+  - **Motion:**
+    - the media settles from scale 1.04 within about 0.5s; the copy lines rise in sequence and are at rest by 0.8s;
+    - parallax: 10.6px of shift at 200px of scroll and 21.1px at 400px, up to 49.7px (6% of the 828px media) once the hero has scrolled out;
+    - under reduced motion no transform appears at any sample and the parallax stays at none.
+  - **Film:** `video.src` was set temporarily to a local test MP4, then back to `null`. The film was VP9, because Playwright's Chromium has no H.264 decoder; with H.264 the error path removed the film and kept the photograph.
+    - It autoplays muted, looping and inline, with the photograph as the poster.
+    - Pause/Play (44px) works with Enter and Space, and its label follows.
+    - Under reduced motion it does not autoplay; the poster shows and Play is offered.
+    - A 404 removes the film and keeps the photograph.
+  - **Strip data:** done through JSON Server on the scratch copy, then restored to the repo's values.
+    - `codEnabled: false` → Cash on delivery disappears.
+    - `freeAbove: null` → Free delivery disappears.
+    - Restored → four items. The footer trust bar agrees on "Above ₹9,999".
+  - **Laravel shape:** a non-mock production build against a stub API wrapping every response in `{ success, data, meta }` shows the same four items.
+  - **Keyboard and accessibility tree:**
+    - after the header's 49 stops, focus goes "Shop the collection" → "Our story" (caramel ring on the scrim), then to the next section; the strip adds no stops;
+    - CDP accessibility tree: heading level 1 "Seating for the way you live." (no stray space around the `<em>`), a region of the same name, list "Our assurances" with four list items, and the image "Placeholder for the hero photograph".
+- **Admin parity:** 24 screenshots (login, dashboard, Categories, Products, Settings, Special Offers; 1440 and 390px; light and dark), 24/24 byte-identical to the baseline. Two baseline runs were also identical.
+
+### Pre-existing issues noticed (not changed)
+
+- **Header font swap:** at 1024–1279px the header grows from 168 to 212px when Inter arrives (CLS 0.034 on first visits). This is the header's department row (Prompt 07) plus font loading (Prompt 32).
+- **Page fade:** `Home.js` fades the whole page in (`motion.div`, opacity 0 → 1 over 0.4s) inside `AnimatePresence`. The hero's first frames are therefore partly transparent (Prompts 11 and 30).
+- **Legacy background:** below the strip, `.homePage` still paints the legacy `#f5f7fa` / `#0b0f1a` background, and `.heroSection` in `Home.module.css` is now unused (Prompt 11).
+- **Duplicate reads:** the strip and the footer each read settings and shipping methods, and the header and the footer each read categories (Prompt 32).
+- **Footer icons:** the footer keeps its own copy of four trust icons; it could import `trustIcons.js`.
+
+### Notes for later prompts
+
+- **11:**
+  - add `SPACES`/`STORY`/… to `homeContent.js` after `HERO`; titles go through `renderAccent`/`SectionHeading`;
+  - the strip ends with a hairline, so the next section needs no top rule;
+  - `--sf-gradient-scrim` still suits photo tiles whose caption fits its bottom-left 35%;
+  - delete the unused `.heroSection` rule.
+- **12:** `PROMISE_STEPS` can reuse the strip's resolution rules (`resolveTrustBadgeDetail`).
+- **30:** the hero motion values are in DESIGN_SYSTEM §20.3; `will-change` is set on the hero media only, and only while motion is allowed.
+- **31:** the film control is the only focusable element added besides the CTAs, and only when a film is set.
+- **32:**
+  - preload candidate: `HERO_IMAGE`, a single constant, already `fetchpriority="high"`;
+  - size-adjusted fallback faces would remove the swap shift beyond the 1s font wait and the header's;
+  - consolidate the duplicate reads.
+
+### Needs client confirmation
+
+- **Hero copy:**
+  - headline "Seating for the way you *live*." (`HERO_HEADLINES[0]`; two alternatives in `brandContent.js`);
+  - support line "Chairs, sofas and tables for homes, offices, cafés and the open air.";
+  - eyebrow "A & S Urbanseat";
+  - CTAs "Shop the collection" (`/products`) and "Our story" (`/about`).
+- **Hero photograph** (2400 × 1350): on desktop the bottom-left ~45% × 60% sits under the navy scrim, so the subject reads best right of centre (`focalPoint` adjusts the crop). Also: whether a short film is wanted.
+- **Assurance items** (all placeholders, from data or policy):
+  - "Free delivery · Above ₹9,999";
+  - "Easy returns · 7-day returns on eligible pieces";
+  - "Secure payment · Encrypted checkout for cards, UPI and net banking" (the gateway and methods are to be confirmed);
+  - "Cash on delivery · Pay when your furniture arrives". COD is capped at ₹50,000 in settings: should the strip say so?
+- **Delivery wording:** the strip prints "Above ₹9,999", the footer's wording, rather than the template "Free delivery above {threshold}".

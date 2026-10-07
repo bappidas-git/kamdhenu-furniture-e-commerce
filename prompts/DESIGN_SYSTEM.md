@@ -133,6 +133,7 @@ Why the light accent is `#ae773d` and not the logo's `#ddb185`: no caramel from 
 - Use them for the footer (always dark, also in dark mode), the hero, and navy bands (`tone="navy"`). Always pair them with the white logo.
 - Text on navy uses `--sf-color-on-dark` (the brand paper rather than the logo's pure white: the warm cast avoids glare and lets the white logo stay the brightest element).
 - **Photography:** text must sit where the scrim is at least `--sf-color-scrim` strength (the bottom-left 35 % of `--sf-gradient-scrim`). Measured over a pure-white photograph: on-dark text 5.77 : 1, the caramel accent 3.14 : 1 (display size only), the focus ring 3.14 : 1. Small text on photography (eyebrows, support lines) uses `--sf-color-on-dark` at full strength; the muted tone drops to 3.88 : 1 there. The scrim gradient is the only gradient the system allows.
+- `--sf-gradient-scrim` suits photography whose text fits its bottom-left 35 % (a tile with a short caption). A copy block too large for that zone gets a scrim built from `--sf-color-scrim` around the copy itself, as the home hero does (section 20.2).
 
 ### 3.4 Legacy names (kept so existing components keep working)
 
@@ -893,3 +894,75 @@ import { BottomDrawer } from "../../components/ui";
 - **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58).
 - **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`.
 - **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
+
+---
+
+## 20. Home hero and assurance strip
+
+Written by Prompt 10. Files: `src/components/HeroSection/HeroSection.js` + `.module.css`, `src/components/storefront/AssuranceStrip.js` + `.module.css`, `src/components/storefront/trustIcons.js` (the shared trust-icon drawings), and the content in `src/content/homeContent.js`.
+
+### 20.1 Content: `HERO` in `homeContent.js`
+
+| Key | Notes |
+|---|---|
+| `eyebrow` | optional (`""` hides it); today "A & S Urbanseat" |
+| `headline` | `HERO_HEADLINES[0]` from `brandContent.js` (imported, not copied); one `*accent*` word |
+| `support` | `HERO_SUPPORT_LINES[0]`; 14 words or fewer |
+| `primaryCta`, `secondaryCta` | `{ label, to }` router paths; `secondaryCta: null` hides the second button |
+| `media.image` | `{ src, alt, width, height }` plus optional `srcSet`/`sizes` for real photography. The file is 2400 × 1350 (16:9); the URL is the `HERO_IMAGE` constant, so swapping the photograph is one line (and its alt text) |
+| `media.video` | `{ src, poster }`: `src: null` shows the photograph only. A film should be a short, loopable, muted MP4 (H.264); the poster defaults to the photograph |
+| `media.focalPoint` | CSS `object-position` (default `"50% 60%"`): the point that stays in frame as the hero crops the photograph to wide desktops and tall phones |
+
+### 20.2 Hero layout and scrim
+
+| Width | Height (a minimum: taller copy grows the section) | Copy |
+|---|---|---|
+| < 768px | `max(520px, 72vh)` | full width, 24px side insets, bottom-aligned 32px from the edge; CTAs stacked, full width |
+| 768–1023px | `clamp(560px, 86vh, 920px)` | full width (headline capped at 640px), CTAs in a row |
+| 1024–1279px | `clamp(560px, 72vh, 920px)` | bottom-left, 640px column. 72vh because the header is 212px tall at these widths (its department row wraps), and 86vh would push the CTAs below the fold |
+| ≥ 1280px | `clamp(560px, 86vh, 920px)` | bottom-left, 640px column, aligned with the header's `.sf-container--wide` |
+
+- **Type:** eyebrow `.sf-eyebrow` in `--sf-color-on-dark` (full strength, not 80%: section 3.3); `h1` `.sf-display-xl` in `--sf-color-on-dark` with the `<em>` in `--sf-color-on-dark-accent`; support line sans 18px (1.125rem), `--sf-leading-normal`, `--sf-color-on-dark`, max 34em.
+- **CTAs:** router `Link`s, `.sf-btn--paper` (primary) and `.sf-btn--paper-ghost`, 48px tall (`--sf-btn-size`), 32px side padding; the on-dark caramel focus ring.
+- **Media:** an `<img>` with `width`/`height`, `loading="eager"`, `fetchpriority="high"` (lowercase: React 18 passes it through), `decoding="async"`, `onError={onImageError}`; `object-fit: cover` around `focalPoint`. The media layer is absolutely positioned and 7% taller than the hero (overflowing upward, for the parallax), so the image arriving can never move anything; the sand behind it shows while it loads. With a film, the `<video autoPlay muted loop playsInline preload="metadata">` sits over the photograph (which stays as its fallback; a load error removes the film) with a 44px paper Pause/Play button (bottom right; top right on phones), as WCAG 2.2.2 asks of moving content.
+- **The scrim** is drawn by `.copy::before`, built from `--sf-color-scrim`: full strength behind the copy block and out to the hero's bottom and left edges, with each ramp starting 8px clear of the copy; it fades out over `--hero-scrim-fade-y` above the copy (a `mask-image` ramp) and, from 1024px, over `--hero-scrim-fade-x` to its right (the background ramp). A colour hint at 60% of each ramp eases its outer end so the fade has no visible edge. Below 1024px the copy is about as wide as the hero, so the scrim runs edge to edge and only fades upward. `--sf-gradient-scrim` is not used here: at 1440 × 900 the 640px column's top-right corner sits about halfway along its diagonal, where it has faded to about 0.43 strength (paper text about 2.5 : 1 over a white photograph).
+- **Measured** (Chromium, the hero photograph replaced by pure white, the lightest pixel behind each text box, 320–1920px, both modes): eyebrow, headline, support line and ghost CTA 5.78 : 1; the caramel accent 3.15 : 1. The hero is identical in light and dark mode.
+
+### 20.3 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| Media entrance | scale 1.04 → 1 on mount, `TOKENS.motion.duration.reveal` (0.9s), ease-out | none |
+| Copy entrance | eyebrow, `h1`, support line, CTA row: opacity 0 → 1 with a 20px rise, 0.9s ease-out, `--sf-stagger` (90ms) apart; on mount (not on scroll), once the copy's fonts have loaded (20.4) | shown at once |
+| Parallax | `translateY` 0 → 6% of the media's height as the page scrolls from the top to the hero's bottom edge (window `scrollY` over the hero's measured bottom); transform only; `will-change: transform` on the media only while motion is allowed | none |
+| Film | autoplays muted and looping | does not autoplay; the poster shows, Play is offered |
+
+`useScroll({ target })` is not used: framer measures it against `<html>` and warns unless `<html>` is positioned, which the admin shares.
+
+### 20.4 Font wait: no layout shift from the hero
+
+The copy is bottom-aligned, so when `font-display: swap` replaces a fallback face and a line box changes, every line above it would move (measured 0.001–0.018 CLS before this rule). The copy and its scrim are therefore laid out but `visibility: hidden` until the faces they use (Playfair Display 400 and italic, Inter 400 and 500) report loaded through `document.fonts`, for at most 1s; then the copy enters and the scrim fades in (`--sf-duration-slow`). Fonts already loaded (any later visit) mean no wait. The media never waits, so LCP is unaffected. Fonts slower than 1s still swap in view (0.002–0.018 measured with fonts delayed 3s); size-adjusted fallback faces would remove that (Prompt 32).
+
+### 20.5 Assurance strip
+
+| Item (from `ASSURANCE_ITEMS`) | Shown when | Detail |
+|---|---|---|
+| Free delivery | `resolveTrustBadgeDetail("freeShipping", { shipping })` is not null | that string ("Above ₹9,999"), the footer's and the product page's |
+| Easy returns | `STOREFRONT_CONFIG.returnsWindowDays` > 0 | `{days}-day returns on eligible pieces` |
+| Secure payment | always (a stated policy) | the static line from `ASSURANCE_ITEMS` |
+| Cash on delivery | `settings.payment.codEnabled` | the static line from `ASSURANCE_ITEMS` |
+
+- **Data:** `apiService.settings.get()` and `apiService.shipping.getMethods()`, once each on mount (`Promise.allSettled`). A failed read counts as no data, so it only drops the items that depend on it; with both failing, Easy returns and Secure payment remain.
+- **Layout:** paper (`--sf-color-bg`) between two hairlines, inside `.sf-container--wide`. From 1024px one 56px row (hairlines included), content-sized columns spread from the left content edge to the right; below 1024px a 2 × 2 grid (the details wrap on phones). Each item: a 16px outline icon (stroke 1.5) in `--sf-color-accent`, the label in sans 13px 500 ink, the detail in 12px `--sf-color-text-muted`, with a visually hidden comma between them for screen readers. `ul aria-label="Our assurances"`; no focusable elements.
+- **Loading:** until both reads settle, the full list is laid out invisibly (`visibility: hidden`, `aria-hidden`) under one `.sf-skeleton` line, and the strip carries `aria-busy`. The strip is therefore already at its loaded height (measured equal at 320–1440px), then the items fade in over `--sf-duration-slow` (no animation under reduced motion).
+- **Icons:** `trustIcons.js` holds the outline drawings `TrustBadges` used, keyed by the `TRUST_BADGE_CATALOG` icon names; `TrustBadges` and the strip import it. The footer still has its own copy of four of them.
+
+### 20.6 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Hero: paper-ghost CTA border (on-dark) on scrim over white photo (both modes) | 5.77 ✓ | 5.77 ✓ | 3:1 |
+| Hero: paper at 80% on scrim over white photo (not for text) | 4.37 | 4.37 | info |
+| Hero: on-dark text with --sf-color-overlay as the scrim, white photo (not used) | 4.15 | 7.32 | info |
+
+Every other hero and strip pairing is already in section 14 (on-dark text, the caramel accent and the focus ring on the scrim; the paper button and its hover; ink, muted text and the accent on the page in both modes).
