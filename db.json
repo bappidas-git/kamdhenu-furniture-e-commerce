@@ -2,27 +2,27 @@
   "banners": [
     {
       "id": 1,
-      "title": "Flash Sale",
-      "subtitle": "Up to 70% Off on Electronics",
-      "cta": "Shop Now",
-      "link": "/products?category=electronics",
-      "gradient": "linear-gradient(135deg, #667eea 0%, #764ba2 100%)"
+      "title": "Plastic furniture",
+      "subtitle": "Light, sturdy chairs and tables for every corner of the home",
+      "cta": "Shop plastic furniture",
+      "link": "/products?category=plastic-furniture",
+      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
     },
     {
       "id": 2,
-      "title": "New Arrivals",
-      "subtitle": "Discover Latest Fashion Trends",
-      "cta": "Explore",
-      "link": "/products?category=clothing",
-      "gradient": "linear-gradient(135deg, #f093fb 0%, #f5576c 100%)"
+      "title": "Office chairs",
+      "subtitle": "Seating that keeps up with long working days",
+      "cta": "Shop office chairs",
+      "link": "/products?category=office-chairs",
+      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
     },
     {
       "id": 3,
-      "title": "Ethnic Collection",
-      "subtitle": "Traditional Meets Modern",
-      "cta": "Shop Collection",
-      "link": "/products?category=womens-ethnic-wear",
-      "gradient": "linear-gradient(135deg, #4facfe 0%, #00f2fe 100%)"
+      "title": "Home furniture",
+      "subtitle": "Sofas, beds and storage made to be lived with",
+      "cta": "Shop home furniture",
+      "link": "/products?category=home-furniture",
+      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
     }
   ],
   "users": [
@@ -96,7 +96,7 @@
       "isActive": true,
       "createdAt": "2025-06-01T10:00:00.000Z",
       "updatedAt": "2026-06-14T14:22:33.376Z",
-      "storeCredit": 2918
+      "storeCredit": 2302
     }
   ],
   "admins": [
@@ -889,8 +889,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 2,
       "metaTitle": "Ribbed-Back Plastic Armchair | A & S Urbanseat",
       "metaDescription": "An everyday plastic armchair whose ribbed back lets air through on warm afternoons. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-10T14:00:00.000Z",
@@ -1702,8 +1702,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 1,
       "metaTitle": "Covered Plastic Shoe Rack | A & S Urbanseat",
       "metaDescription": "A shoe rack with a hinged front cover in two to five shelves that keeps dust off every pair. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-21T17:00:00.000Z",
@@ -1789,8 +1789,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 1,
       "metaTitle": "Cushioned Plastic Armchair | A & S Urbanseat",
       "metaDescription": "A heavier plastic armchair with a fitted seat cushion for longer, softer sitting. Shop online at A & S Urbanseat.",
       "createdAt": "2026-04-18T11:00:00.000Z",
@@ -2380,8 +2380,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 1,
       "metaTitle": "Lobby Set | A & S Urbanseat",
       "metaDescription": "An outdoor seating set for verandas and lawns, in a small and a large configuration. Shop online at A & S Urbanseat.",
       "createdAt": "2026-05-19T10:00:00.000Z",
@@ -2539,8 +2539,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4.5,
+      "totalReviews": 2,
       "metaTitle": "Mesh High-Back Office Chair | A & S Urbanseat",
       "metaDescription": "A breathable mesh high-back chair with height adjustment and tilt for long desk hours. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-06T12:00:00.000Z",
@@ -3444,8 +3444,8 @@
       "trending": false,
       "hot": true,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 1,
       "metaTitle": "Ergonomic Mesh Low-Back Chair | A & S Urbanseat",
       "metaDescription": "A low-back ergonomic mesh chair with adjustable lumbar support and a synchro tilt. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-03T11:00:00.000Z",
@@ -3742,8 +3742,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4.5,
+      "totalReviews": 2,
       "metaTitle": "Bentwood-Style Café Chair | A & S Urbanseat",
       "metaDescription": "A bentwood-style café chair with a looped back, light to move and easy to love. Shop online at A & S Urbanseat.",
       "createdAt": "2026-04-30T12:00:00.000Z",
@@ -4472,8 +4472,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 3,
+      "totalReviews": 1,
       "metaTitle": "Shell Café Chair | A & S Urbanseat",
       "metaDescription": "A moulded shell chair on wooden legs, a modern and easy-care café staple. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-31T15:00:00.000Z",
@@ -4559,8 +4559,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4.7,
+      "totalReviews": 3,
       "metaTitle": "Wooden Sofa Set | A & S Urbanseat",
       "metaDescription": "A solid-wood 3+1+1 sofa set with cushioned seats, made in our own workshop. Shop online at A & S Urbanseat.",
       "createdAt": "2026-05-14T09:00:00.000Z",
@@ -5215,8 +5215,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 5,
+      "totalReviews": 1,
       "metaTitle": "King Size Bed | A & S Urbanseat",
       "metaDescription": "A wooden king size bed with a panelled headboard, sized for a 72 × 78 inch mattress. Shop online at A & S Urbanseat.",
       "createdAt": "2026-05-06T11:00:00.000Z",
@@ -5465,8 +5465,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4.5,
+      "totalReviews": 2,
       "metaTitle": "Carlton Mattress | A & S Urbanseat",
       "metaDescription": "A Carlton foam mattress with a quilted cover, in single, double, queen and king sizes. Shop online at A & S Urbanseat.",
       "createdAt": "2026-05-20T14:00:00.000Z",
@@ -5933,8 +5933,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 5,
+      "totalReviews": 1,
       "metaTitle": "Wooden Bedside Table | A & S Urbanseat",
       "metaDescription": "A wooden bedside table with a drawer and an open shelf, at mattress height. Shop online at A & S Urbanseat.",
       "createdAt": "2026-05-30T14:00:00.000Z",
@@ -6652,8 +6652,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 4,
+      "totalReviews": 1,
       "metaTitle": "6-Seater Dining Set | A & S Urbanseat",
       "metaDescription": "A wooden dining table with six cushioned chairs, for families who eat together. Shop online at A & S Urbanseat.",
       "createdAt": "2026-06-01T12:00:00.000Z",
@@ -6799,8 +6799,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 5,
+      "totalReviews": 1,
       "metaTitle": "Winsome Office Table | A & S Urbanseat",
       "metaDescription": "A Winsome office table with a pedestal of drawers and a cable-managed top. Shop online at A & S Urbanseat.",
       "createdAt": "2026-07-09T14:00:00.000Z",
@@ -7171,8 +7171,8 @@
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 0,
-      "totalReviews": 0,
+      "rating": 5,
+      "totalReviews": 1,
       "metaTitle": "Workshop Reading Table | A & S Urbanseat",
       "metaDescription": "A simple wooden reading table with a drawer, made in our own workshop. Shop online at A & S Urbanseat.",
       "createdAt": "2026-08-29T13:00:00.000Z",
@@ -7442,14 +7442,14 @@
       "userId": 1,
       "items": [
         {
-          "productId": 2,
+          "productId": 29,
           "variantId": "v1",
-          "name": "SoundWave Pro Wireless Earbuds - Midnight Black",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=SoundWave+Earbuds",
-          "sku": "AUD-SWP-TWS-BLK",
-          "price": 8999,
+          "name": "Executive Mesh High-Back Chair - Black",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Mesh+High-Back+Chair",
+          "sku": "OFP-HBK-01-BLK",
+          "price": 13999,
           "quantity": 1,
-          "subtotal": 8999
+          "subtotal": 13999
         }
       ],
       "billingAddress": {
@@ -7474,12 +7474,12 @@
         "postalCode": "400001",
         "country": "India"
       },
-      "subtotal": 8999,
+      "subtotal": 13999,
       "discountAmount": 0,
       "couponCode": null,
       "shippingAmount": 0,
-      "taxAmount": 1440,
-      "total": 10439,
+      "taxAmount": 2520,
+      "total": 16519,
       "paymentStatus": "refunded",
       "paymentMethod": "upi",
       "fulfillmentStatus": "fulfilled",
@@ -7512,7 +7512,7 @@
           "at": "2026-01-22T14:30:00.000Z",
           "by": "Admin User",
           "action": "Return refund processed (RET-20260120-0001)",
-          "note": "₹10,439 refunded"
+          "note": "₹16,519 refunded"
         }
       ]
     },
@@ -7522,24 +7522,24 @@
       "userId": 1,
       "items": [
         {
-          "productId": 1,
+          "productId": 76,
           "variantId": "v2",
-          "name": "ProBook Ultra Laptop 15\" - 16GB RAM / 512GB SSD",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=ProBook+Laptop",
-          "sku": "LAP-PBU-15-16-512",
-          "price": 74999,
+          "name": "Winsome Office Table - 150 × 75 cm",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Winsome+Office+Table",
+          "sku": "OFT-OFF-01-150",
+          "price": 16999,
           "quantity": 1,
-          "subtotal": 74999
+          "subtotal": 16999
         },
         {
-          "productId": 6,
+          "productId": 33,
           "variantId": "v1",
-          "name": "ZenPro USB-C 7-in-1 Hub - Space Gray",
-          "image": "https://placehold.co/600x400/2196f3/FFFFFF?text=ZenPro+Hub",
-          "sku": "ELC-ZPH-7C1-GRY",
-          "price": 3499,
+          "name": "Ergonomic Mesh Low-Back Chair - Black",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+Mesh+Low-Back+Chair",
+          "sku": "OFP-LBK-02-BLK",
+          "price": 11999,
           "quantity": 1,
-          "subtotal": 3499
+          "subtotal": 11999
         }
       ],
       "billingAddress": {
@@ -7564,12 +7564,12 @@
         "postalCode": "400001",
         "country": "India"
       },
-      "subtotal": 78498,
-      "discountAmount": 5000,
+      "subtotal": 28998,
+      "discountAmount": 500,
       "couponCode": "WELCOME500",
       "shippingAmount": 0,
-      "taxAmount": 11759,
-      "total": 85257,
+      "taxAmount": 5130,
+      "total": 33628,
       "paymentStatus": "paid",
       "paymentMethod": "card",
       "fulfillmentStatus": "fulfilled",
@@ -7606,14 +7606,14 @@
       "userId": 2,
       "items": [
         {
-          "productId": 3,
-          "variantId": "v2",
-          "name": "FitPulse Smartwatch Series 5 - Silver / Metal Band",
-          "image": "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-          "sku": "ELC-FPS-SW5-SLV-M",
-          "price": 16999,
-          "quantity": 1,
-          "subtotal": 16999
+          "productId": 40,
+          "variantId": "v1",
+          "name": "Cane-Look Café Chair - Natural Cane",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Cane-Look+Caf%C3%A9+Chair",
+          "sku": "CAF-CHR-04-CNE",
+          "price": 3999,
+          "quantity": 2,
+          "subtotal": 7998
         }
       ],
       "billingAddress": {
@@ -7636,12 +7636,12 @@
         "postalCode": "110001",
         "country": "India"
       },
-      "subtotal": 16999,
+      "subtotal": 7998,
       "discountAmount": 0,
       "couponCode": null,
-      "shippingAmount": 99,
-      "taxAmount": 2720,
-      "total": 19818,
+      "shippingAmount": 499,
+      "taxAmount": 1440,
+      "total": 9937,
       "paymentStatus": "refunded",
       "paymentMethod": "card",
       "fulfillmentStatus": "unfulfilled",
@@ -7666,7 +7666,7 @@
         {
           "at": "2026-06-13T06:13:05.821Z",
           "by": "Admin User",
-          "action": "Refund issued (₹19,818)",
+          "action": "Refund issued (₹9,937)",
           "note": "Refunded from order"
         }
       ]
@@ -7677,14 +7677,14 @@
       "userId": 1,
       "items": [
         {
-          "productId": 5,
-          "variantId": "v2",
-          "name": "Urban Classic Cotton T-Shirt - M / White",
-          "image": "https://placehold.co/600x400/764ba2/FFFFFF?text=Urban+T-Shirt",
-          "sku": "CLT-UCT-CRW-M-WHT",
-          "price": 899,
-          "quantity": 3,
-          "subtotal": 2697
+          "productId": 6,
+          "variantId": "v1",
+          "name": "Stackable Plastic Chair - White",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Plastic+Chair",
+          "sku": "PLE-CHR-03-WHT",
+          "price": 799,
+          "quantity": 4,
+          "subtotal": 3196
         }
       ],
       "billingAddress": {
@@ -7707,12 +7707,12 @@
         "postalCode": "400001",
         "country": "India"
       },
-      "subtotal": 2697,
-      "discountAmount": 270,
+      "subtotal": 3196,
+      "discountAmount": 320,
       "couponCode": "FLAT10",
-      "shippingAmount": 49,
-      "taxAmount": 398,
-      "total": 2874,
+      "shippingAmount": 499,
+      "taxAmount": 518,
+      "total": 3893,
       "paymentStatus": "pending",
       "paymentMethod": "cod",
       "fulfillmentStatus": "fulfilled",
@@ -7739,14 +7739,14 @@
     {
       "items": [
         {
-          "productId": 3,
+          "productId": 20,
           "variantId": "v1",
-          "name": "FitPulse Smartwatch Series 5 - Black / Rubber Band",
-          "image": "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-          "sku": "",
-          "price": 14999,
+          "name": "Jhula (Garden Swing) - Small",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Jhula+(Garden+Swing)",
+          "sku": "OUT-JHL-01-SM",
+          "price": 11999,
           "quantity": 1,
-          "subtotal": 14999
+          "subtotal": 11999
         }
       ],
       "shippingAddress": {
@@ -7771,12 +7771,12 @@
         "postalCode": "781316",
         "country": "India"
       },
-      "subtotal": 14999,
+      "subtotal": 11999,
       "discountAmount": 0,
       "couponCode": null,
       "shippingAmount": 0,
-      "taxAmount": 2700,
-      "total": 17699,
+      "taxAmount": 2160,
+      "total": 14159,
       "paymentMethod": "cod",
       "paymentStatus": "pending",
       "fulfillmentStatus": "cancelled",
@@ -7808,14 +7808,14 @@
     {
       "items": [
         {
-          "productId": 3,
-          "variantId": "v1",
-          "name": "FitPulse Smartwatch Series 5 - Black / Rubber Band",
-          "image": "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-          "sku": "",
-          "price": 14999,
+          "productId": 23,
+          "variantId": "v3",
+          "name": "Leatherette High-Back Office Chair - Tan",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Leatherette+High-Back+Office+Chair",
+          "sku": "OFE-HBK-03-TAN",
+          "price": 6999,
           "quantity": 1,
-          "subtotal": 14999
+          "subtotal": 6999
         }
       ],
       "shippingAddress": {
@@ -7840,12 +7840,12 @@
         "postalCode": "781316",
         "country": "India"
       },
-      "subtotal": 14999,
+      "subtotal": 6999,
       "discountAmount": 0,
       "couponCode": null,
-      "shippingAmount": 0,
-      "taxAmount": 2700,
-      "total": 17699,
+      "shippingAmount": 499,
+      "taxAmount": 1260,
+      "total": 8758,
       "paymentMethod": "cod",
       "paymentStatus": "paid",
       "fulfillmentStatus": "fulfilled",
@@ -7882,14 +7882,14 @@
     {
       "items": [
         {
-          "productId": 2,
+          "productId": 64,
           "variantId": "v1",
-          "name": "SoundWave Pro Wireless Earbuds - Midnight Black",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=SoundWave+Earbuds",
-          "sku": "",
-          "price": 8999,
-          "quantity": 1,
-          "subtotal": 8999
+          "name": "Wooden Bedside Table - Walnut",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Bedside+Table",
+          "sku": "BED-BST-01-WAL",
+          "price": 4499,
+          "quantity": 2,
+          "subtotal": 8998
         }
       ],
       "shippingAddress": {
@@ -7914,12 +7914,12 @@
         "postalCode": "781316",
         "country": "India"
       },
-      "subtotal": 8999,
+      "subtotal": 8998,
       "discountAmount": 500,
       "couponCode": "WELCOME500",
-      "shippingAmount": 0,
+      "shippingAmount": 499,
       "taxAmount": 1530,
-      "total": 10029,
+      "total": 10527,
       "paymentMethod": "cod",
       "paymentStatus": "paid",
       "fulfillmentStatus": "fulfilled",
@@ -7971,14 +7971,14 @@
     {
       "items": [
         {
-          "productId": 9,
+          "productId": 63,
           "variantId": "v1",
-          "name": "AirStride Running Shoes - UK 7 - Black",
-          "image": "https://placehold.co/600x400/607d8b/FFFFFF?text=Running+Shoes",
-          "sku": "",
-          "price": 3999,
+          "name": "Wall Mirror - Walnut",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Wall+Mirror",
+          "sku": "BED-MIR-02-WAL",
+          "price": 2799,
           "quantity": 1,
-          "subtotal": 3999
+          "subtotal": 2799
         }
       ],
       "shippingAddress": {
@@ -8003,12 +8003,12 @@
         "postalCode": "781316",
         "country": "India"
       },
-      "subtotal": 3999,
+      "subtotal": 2799,
       "discountAmount": 0,
       "couponCode": null,
-      "shippingAmount": 199,
-      "taxAmount": 720,
-      "total": 4918,
+      "shippingAmount": 999,
+      "taxAmount": 504,
+      "total": 4302,
       "paymentMethod": "cod",
       "paymentStatus": "refunded",
       "fulfillmentStatus": "fulfilled",
@@ -8052,13 +8052,13 @@
           "at": "2026-06-13T12:55:11.832Z",
           "by": "Admin User",
           "action": "Refund initiated",
-          "note": "₹4,918 via store credit · ref ORDER ID - ORD-MQC1HWSZ-CAN8 — settlement pending"
+          "note": "₹4,302 via store credit · ref ORDER ID - ORD-MQC1HWSZ-CAN8 — settlement pending"
         },
         {
           "at": "2026-06-13T12:57:28.351Z",
           "by": "Admin User",
           "action": "Refund completed",
-          "note": "₹4,918 via store credit settled to customer"
+          "note": "₹4,302 via store credit settled to customer"
         }
       ],
       "id": 8,
@@ -8067,20 +8067,20 @@
       "refundStatus": "completed",
       "refundMethod": "store_credit",
       "pendingRefund": null,
-      "refundedAmount": 4918,
+      "refundedAmount": 4302,
       "refundCompletedAt": "2026-06-13T12:57:28.282Z"
     },
     {
       "items": [
         {
-          "productId": 1,
+          "productId": 47,
           "variantId": "v1",
-          "name": "ProBook Ultra Laptop 15\" - 8GB RAM / 256GB SSD",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=ProBook+Laptop",
-          "sku": "",
-          "price": 64999,
+          "name": "Wooden Sofa Set - Sand Beige",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Wooden+Sofa+Set",
+          "sku": "LIV-SOF-01-BGE",
+          "price": 32999,
           "quantity": 1,
-          "subtotal": 64999
+          "subtotal": 32999
         }
       ],
       "shippingAddress": {
@@ -8105,14 +8105,14 @@
         "postalCode": "781316",
         "country": "India"
       },
-      "subtotal": 64999,
+      "subtotal": 32999,
       "discountAmount": 0,
       "couponCode": null,
       "shippingAmount": 0,
-      "taxAmount": 11700,
-      "total": 76699,
+      "taxAmount": 5940,
+      "total": 38939,
       "storeCreditUsed": 1000,
-      "amountPayable": 75699,
+      "amountPayable": 37939,
       "paymentMethod": "upi",
       "paymentStatus": "paid",
       "fulfillmentStatus": "unfulfilled",
@@ -8136,24 +8136,24 @@
     {
       "items": [
         {
-          "productId": 1,
+          "productId": 56,
           "variantId": "v1",
-          "name": "ProBook Ultra Laptop 15\" - 8GB RAM / 256GB SSD",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=ProBook+Laptop",
-          "sku": "",
-          "price": 64999,
+          "name": "Queen Size Bed - Walnut",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Queen+Size+Bed",
+          "sku": "BED-BED-02-WAL",
+          "price": 27999,
           "quantity": 1,
-          "subtotal": 64999
+          "subtotal": 27999
         },
         {
-          "productId": 3,
-          "variantId": "v1",
-          "name": "FitPulse Smartwatch Series 5 - Black / Rubber Band",
-          "image": "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-          "sku": "",
-          "price": 14999,
+          "productId": 58,
+          "variantId": "v3",
+          "name": "Carlton Mattress - Queen",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Carlton+Mattress",
+          "sku": "BED-MAT-01-QN",
+          "price": 19999,
           "quantity": 1,
-          "subtotal": 14999
+          "subtotal": 19999
         }
       ],
       "shippingAddress": {
@@ -8184,14 +8184,14 @@
         "country": "India",
         "isDefault": true
       },
-      "subtotal": 79998,
+      "subtotal": 47998,
       "discountAmount": 0,
       "couponCode": null,
       "shippingAmount": 0,
-      "taxAmount": 14400,
-      "total": 94398,
+      "taxAmount": 8640,
+      "total": 56638,
       "storeCreditUsed": 0,
-      "amountPayable": 94398,
+      "amountPayable": 56638,
       "paymentMethod": "upi",
       "paymentStatus": "paid",
       "fulfillmentStatus": "unfulfilled",
@@ -8215,14 +8215,24 @@
     {
       "items": [
         {
-          "productId": 2,
+          "productId": 82,
           "variantId": "v1",
-          "name": "SoundWave Pro Wireless Earbuds - Midnight Black",
-          "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=SoundWave+Earbuds",
-          "sku": "",
-          "price": 8999,
+          "name": "4-Seater Plastic Dining Set - Marble Beige",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Plastic+Dining+Set",
+          "sku": "PLD-DIN-01-BGE",
+          "price": 5999,
           "quantity": 1,
-          "subtotal": 8999
+          "subtotal": 5999
+        },
+        {
+          "productId": 9,
+          "variantId": "v3",
+          "name": "Slim Plastic Shoe Rack - 4 shelves",
+          "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Slim+Plastic+Shoe+Rack",
+          "sku": "PLE-SHR-01-4S",
+          "price": 1899,
+          "quantity": 1,
+          "subtotal": 1899
         }
       ],
       "shippingAddress": {
@@ -8253,14 +8263,14 @@
         "country": "India",
         "isDefault": true
       },
-      "subtotal": 8999,
+      "subtotal": 7898,
       "discountAmount": 0,
       "couponCode": null,
-      "shippingAmount": 0,
-      "taxAmount": 1620,
-      "total": 10619,
+      "shippingAmount": 499,
+      "taxAmount": 1422,
+      "total": 9819,
       "storeCreditUsed": 1000,
-      "amountPayable": 9619,
+      "amountPayable": 8819,
       "paymentMethod": "upi",
       "paymentStatus": "paid",
       "fulfillmentStatus": "fulfilled",
@@ -8304,19 +8314,19 @@
       "userId": 1,
       "items": [
         {
-          "productId": 2,
+          "productId": 29,
           "variantId": "v1",
-          "name": "SoundWave Pro Wireless Earbuds - Midnight Black",
-          "sku": "AUD-SWP-TWS-BLK",
-          "price": 8999,
+          "name": "Executive Mesh High-Back Chair - Black",
+          "sku": "OFP-HBK-01-BLK",
+          "price": 13999,
           "quantity": 1,
-          "subtotal": 8999
+          "subtotal": 13999
         }
       ],
       "reason": "defective",
-      "reasonDetails": "Left earbud has no sound",
+      "reasonDetails": "The recline lock slips back after a few minutes.",
       "status": "approved",
-      "refundAmount": 8999,
+      "refundAmount": 16519,
       "refundStatus": "processed",
       "refundMethod": "original_payment",
       "images": [],
@@ -8343,7 +8353,7 @@
         {
           "at": "2026-01-22T14:30:00.000Z",
           "by": "Admin User",
-          "action": "Refund processed (₹10,439)",
+          "action": "Refund processed (₹16,519)",
           "note": "Refund processed to original UPI account"
         }
       ],
@@ -8362,19 +8372,19 @@
       "userId": 3,
       "items": [
         {
-          "productId": 3,
-          "variantId": "v1",
-          "name": "FitPulse Smartwatch Series 5 - Black / Rubber Band",
-          "sku": "ELC-FPS-SW5-BLK-R",
-          "price": 14999,
+          "productId": 23,
+          "variantId": "v3",
+          "name": "Leatherette High-Back Office Chair - Tan",
+          "sku": "OFE-HBK-03-TAN",
+          "price": 6999,
           "quantity": 1,
-          "subtotal": 14999
+          "subtotal": 6999
         }
       ],
       "reason": "not_as_described",
-      "reasonDetails": "Strap quality is not as shown in the product photos.",
+      "reasonDetails": "The tan leatherette is much more orange than in the product photos.",
       "status": "requested",
-      "refundAmount": 14999,
+      "refundAmount": 8259,
       "refundStatus": "pending",
       "refundMethod": "original_payment",
       "deductionAmount": 0,
@@ -8403,7 +8413,7 @@
       "orderId": 1,
       "orderNumber": "ORD-20250310-0001",
       "userId": 1,
-      "amount": 10439,
+      "amount": 16519,
       "currency": "INR",
       "paymentMethod": "upi",
       "gateway": "razorpay",
@@ -8417,12 +8427,12 @@
       },
       "createdAt": "2026-01-15T10:31:00.000Z",
       "updatedAt": "2026-06-12T07:12:56.342Z",
-      "refundAmount": 10439,
+      "refundAmount": 16519,
       "refundReason": "Return RET-20260120-0001",
       "refunds": [
         {
           "id": "ref_seed0001",
-          "amount": 10439,
+          "amount": 16519,
           "reason": "Return RET-20260120-0001",
           "at": "2026-01-22T14:30:00.000Z",
           "by": "Admin User"
@@ -8434,7 +8444,7 @@
       "orderId": 2,
       "orderNumber": "ORD-20250318-0002",
       "userId": 1,
-      "amount": 85257,
+      "amount": 33628,
       "currency": "INR",
       "paymentMethod": "card",
       "gateway": "razorpay",
@@ -8454,7 +8464,7 @@
       "orderId": 3,
       "orderNumber": "ORD-20260310-0003",
       "userId": 2,
-      "amount": 19818,
+      "amount": 9937,
       "currency": "INR",
       "paymentMethod": "card",
       "gateway": "razorpay",
@@ -8468,12 +8478,12 @@
       },
       "createdAt": "2026-03-10T08:46:00.000Z",
       "updatedAt": "2026-06-13T06:13:05.674Z",
-      "refundAmount": 19818,
+      "refundAmount": 9937,
       "refundReason": "Refunded from order",
       "refunds": [
         {
           "id": "ref_mqbylfkanpi6",
-          "amount": 19818,
+          "amount": 9937,
           "reason": "Refunded from order",
           "at": "2026-06-13T06:13:05.674Z",
           "by": "Admin User"
@@ -8485,7 +8495,7 @@
       "orderId": 6,
       "orderNumber": "ORD-MQA9I6E7-0IR2",
       "userId": 3,
-      "amount": 17699,
+      "amount": 8758,
       "currency": "INR",
       "paymentMethod": "cod",
       "gateway": "cod",
@@ -8504,7 +8514,7 @@
       "orderId": 7,
       "orderNumber": "ORD-MQB0JHUB-9KL6",
       "userId": 3,
-      "amount": 10029,
+      "amount": 10527,
       "currency": "INR",
       "paymentMethod": "cod",
       "gateway": "cod",
@@ -8522,7 +8532,7 @@
       "orderId": 8,
       "orderNumber": "ORD-MQC1HWSZ-CAN8",
       "userId": 3,
-      "amount": 4918,
+      "amount": 4302,
       "currency": "INR",
       "paymentMethod": "cod",
       "gateway": "cod",
@@ -8533,13 +8543,13 @@
       "createdAt": "2026-06-13T07:34:20.277Z",
       "updatedAt": "2026-06-13T12:57:28.314Z",
       "id": 6,
-      "refundAmount": 4918,
-      "refundReason": "AirStride Running Shoes - UK 7 - Black is returned",
+      "refundAmount": 4302,
+      "refundReason": "Wall Mirror - Walnut is returned",
       "refunds": [
         {
           "id": "ref_mqcd1gqipep7",
-          "amount": 4918,
-          "reason": "AirStride Running Shoes - UK 7 - Black is returned",
+          "amount": 4302,
+          "reason": "Wall Mirror - Walnut is returned",
           "at": "2026-06-13T12:57:28.314Z",
           "by": "Admin User"
         }
@@ -8550,7 +8560,7 @@
       "orderId": 9,
       "orderNumber": "ORD-MQCGV6OM-Z965",
       "userId": 3,
-      "amount": 75699,
+      "amount": 37939,
       "currency": "INR",
       "paymentMethod": "upi",
       "gateway": "razorpay",
@@ -8567,7 +8577,7 @@
       "orderId": 10,
       "orderNumber": "ORD-MQDUWC74-RUVY",
       "userId": 3,
-      "amount": 94398,
+      "amount": 56638,
       "currency": "INR",
       "paymentMethod": "upi",
       "gateway": "razorpay",
@@ -8584,7 +8594,7 @@
       "orderId": 11,
       "orderNumber": "ORD-MQDVIQCV-30A9",
       "userId": 3,
-      "amount": 9619,
+      "amount": 8819,
       "currency": "INR",
       "paymentMethod": "upi",
       "gateway": "razorpay",
@@ -8608,7 +8618,7 @@
       "returnId": 1,
       "returnNumber": "RET-20260120-0001",
       "paymentId": 1,
-      "amount": 10439,
+      "amount": 16519,
       "method": "original_payment",
       "reason": "Return RET-20260120-0001",
       "status": "completed",
@@ -8628,7 +8638,7 @@
       "returnId": null,
       "returnNumber": null,
       "paymentId": 3,
-      "amount": 19818,
+      "amount": 9937,
       "method": "original_payment",
       "reason": "Refunded from order",
       "status": "completed",
@@ -8647,9 +8657,9 @@
       "returnId": null,
       "returnNumber": null,
       "paymentId": null,
-      "amount": 4918,
+      "amount": 4302,
       "method": "store_credit",
-      "reason": "AirStride Running Shoes - UK 7 - Black is returned",
+      "reason": "Wall Mirror - Walnut is returned",
       "reference": "ORDER ID - ORD-MQC1HWSZ-CAN8",
       "status": "completed",
       "couponRestored": false,
@@ -8666,11 +8676,11 @@
       "id": 1,
       "name": "Standard Delivery",
       "carrier": "Shiprocket",
-      "description": "Delivered in 5-7 business days",
+      "description": "Delivered in 7–10 business days",
       "rateType": "flat",
-      "flatRate": 99,
-      "freeAbove": 999,
-      "estimatedDays": "5-7",
+      "flatRate": 499,
+      "freeAbove": 9999,
+      "estimatedDays": "7-10",
       "isActive": true,
       "createdAt": "2025-01-01T00:00:00.000Z"
     },
@@ -8678,35 +8688,35 @@
       "id": 2,
       "name": "Express Delivery",
       "carrier": "Shiprocket",
-      "description": "Delivered in 2-3 business days",
+      "description": "Delivered in 3–5 business days",
       "rateType": "flat",
-      "flatRate": 199,
-      "freeAbove": 4999,
-      "estimatedDays": "2-3",
+      "flatRate": 999,
+      "freeAbove": null,
+      "estimatedDays": "3-5",
       "isActive": true,
       "createdAt": "2025-01-01T00:00:00.000Z"
     },
     {
       "id": 3,
       "name": "Same Day Delivery",
-      "carrier": "Dunzo",
-      "description": "Delivered today (select cities)",
+      "carrier": "Local delivery partner",
+      "description": "Delivered the same day (select areas, to be confirmed)",
       "rateType": "flat",
-      "flatRate": 499,
+      "flatRate": 1499,
       "freeAbove": null,
       "estimatedDays": "0",
-      "isActive": true,
+      "isActive": false,
       "createdAt": "2025-01-01T00:00:00.000Z"
     },
     {
       "id": 4,
       "name": "Free Shipping",
       "carrier": "Shiprocket",
-      "description": "Free standard shipping on all orders",
+      "description": "Free standard delivery on every order",
       "rateType": "free",
       "flatRate": 0,
       "freeAbove": 0,
-      "estimatedDays": "5-7",
+      "estimatedDays": "7-10",
       "isActive": false,
       "createdAt": "2025-01-01T00:00:00.000Z"
     }
@@ -8715,80 +8725,80 @@
     {
       "id": 1,
       "code": "WELCOME500",
-      "description": "Welcome discount for new customers",
+      "description": "₹500 off your first order above ₹5,000",
       "type": "fixed",
       "value": 500,
-      "minOrderAmount": 2000,
+      "minOrderAmount": 5000,
       "maxDiscount": 500,
-      "usageLimit": 1000,
-      "usedCount": 48,
+      "usageLimit": 500,
+      "usedCount": 14,
       "perUserLimit": 1,
       "isActive": true,
-      "expiresAt": "2026-12-31T23:59:59.000Z",
+      "expiresAt": "2027-03-31T23:59:59.000Z",
       "createdAt": "2025-01-01T00:00:00.000Z",
       "updatedAt": "2026-06-12T14:19:48.456Z"
     },
     {
       "id": 2,
       "code": "FLAT10",
-      "description": "Flat 10% off on all orders",
+      "description": "10% off orders above ₹2,000, up to ₹2,000",
       "type": "percentage",
       "value": 10,
-      "minOrderAmount": 500,
-      "maxDiscount": 1000,
+      "minOrderAmount": 2000,
+      "maxDiscount": 2000,
       "usageLimit": null,
-      "usedCount": 213,
+      "usedCount": 37,
       "perUserLimit": null,
       "isActive": true,
-      "expiresAt": "2026-06-30T23:59:59.000Z",
+      "expiresAt": "2027-06-30T23:59:59.000Z",
       "createdAt": "2025-02-01T00:00:00.000Z",
-      "updatedAt": "2026-03-15T00:00:00.000Z"
+      "updatedAt": "2026-06-12T14:17:08.244Z"
     },
     {
       "id": 3,
-      "code": "SUMMER25",
-      "description": "Summer sale - 25% off",
+      "code": "FESTIVE25",
+      "description": "Festive season: 25% off, up to ₹3,000",
       "type": "percentage",
       "value": 25,
-      "minOrderAmount": 1500,
-      "maxDiscount": 2500,
-      "usageLimit": 500,
-      "usedCount": 500,
-      "perUserLimit": 2,
+      "minOrderAmount": 5000,
+      "maxDiscount": 3000,
+      "usageLimit": 150,
+      "usedCount": 150,
+      "perUserLimit": 1,
       "isActive": false,
-      "expiresAt": "2025-08-31T23:59:59.000Z",
-      "createdAt": "2025-06-01T00:00:00.000Z",
-      "updatedAt": "2025-09-01T00:00:00.000Z"
+      "expiresAt": "2025-11-15T23:59:59.000Z",
+      "createdAt": "2025-10-01T00:00:00.000Z",
+      "updatedAt": "2025-11-16T00:00:00.000Z"
     },
     {
       "id": 4,
-      "code": "NEWUSER20",
-      "description": "20% off for new users on first order",
+      "code": "NEWHOME20",
+      "description": "20% off your first order, up to ₹3,000",
       "type": "percentage",
       "value": 20,
-      "minOrderAmount": 1000,
-      "maxDiscount": 2000,
+      "minOrderAmount": 3000,
+      "maxDiscount": 3000,
       "usageLimit": null,
-      "usedCount": 89,
+      "usedCount": 9,
       "perUserLimit": 1,
       "isActive": true,
-      "expiresAt": "2026-12-31T23:59:59.000Z",
+      "expiresAt": "2027-03-31T23:59:59.000Z",
       "createdAt": "2025-03-01T00:00:00.000Z",
       "updatedAt": "2026-03-15T00:00:00.000Z"
     },
     {
       "id": 5,
-      "code": "ELECTRONICS15",
-      "description": "15% off on all electronics",
+      "code": "WORKSPACE15",
+      "description": "15% off orders above ₹15,000, up to ₹4,000",
       "type": "percentage",
       "value": 15,
-      "minOrderAmount": 3000,
-      "maxDiscount": 5000,
-      "usageLimit": 200,
-      "usedCount": 34,
+      "minOrderAmount": 15000,
+      "maxDiscount": 4000,
+      "usageLimit": 100,
+      "usedCount": 6,
       "perUserLimit": 2,
       "isActive": true,
-      "expiresAt": "2026-09-30T23:59:59.000Z",
+      "expiresAt": "2027-06-30T23:59:59.000Z",
       "createdAt": "2025-03-10T00:00:00.000Z",
       "updatedAt": "2026-03-18T00:00:00.000Z"
     }
@@ -8796,171 +8806,417 @@
   "reviews": [
     {
       "id": 1,
-      "productId": 2,
-      "userId": 1,
-      "userName": "John D.",
+      "productId": 64,
+      "userId": 3,
+      "userName": "Bappi D.",
       "rating": 5,
-      "title": "Absolutely love these earbuds!",
-      "body": "The sound quality is incredible for the price. ANC works great in noisy environments like cafes and trains. Battery easily lasts 2 days with my usage. The fit is secure and comfortable. Highly recommended!",
-      "status": "rejected",
+      "title": "Solid and the drawer runs smoothly",
+      "body": "Ordered two for either side of the bed. They feel solid, the walnut finish matches our bed well and the drawer slides without catching.",
+      "status": "approved",
       "isVerifiedPurchase": true,
-      "helpfulCount": 24,
-      "createdAt": "2026-01-25T09:00:00.000Z",
-      "updatedAt": "2026-04-17T14:32:19.189Z"
+      "helpfulCount": 3,
+      "createdAt": "2026-06-16T10:20:00.000Z",
+      "updatedAt": "2026-06-17T09:00:00.000Z"
     },
     {
       "id": 2,
-      "productId": 1,
-      "userId": 1,
-      "userName": "John D.",
+      "productId": 9,
+      "userId": 3,
+      "userName": "Bappi D.",
       "rating": 4,
-      "title": "Great laptop, minor nitpicks",
-      "body": "Build quality is excellent - feels premium and solid. Performance is snappy for work tasks, programming, and light video editing. Battery lasts about 8 hours on mixed use. Only wish the webcam was better for video calls. Overall very satisfied with the purchase.",
-      "status": "approved",
+      "title": "Fits our narrow hallway",
+      "body": "Took about ten minutes to put together. Holds all our everyday shoes and it is light enough to move when we clean.",
+      "status": "pending",
       "isVerifiedPurchase": true,
-      "helpfulCount": 18,
-      "createdAt": "2026-02-15T11:00:00.000Z",
-      "updatedAt": "2026-02-16T08:00:00.000Z"
+      "helpfulCount": 0,
+      "createdAt": "2026-06-24T08:40:00.000Z",
+      "updatedAt": "2026-06-24T08:40:00.000Z"
     },
     {
       "id": 3,
-      "productId": 4,
-      "userId": 2,
-      "userName": "Jane S.",
-      "rating": 5,
-      "title": "Best mechanical keyboard under 7k",
-      "body": "Typing feel is satisfying and the RGB is gorgeous. Build feels very solid with the aluminum frame. No lag or missed keystrokes even during intense gaming. Highly recommend the brown switches for a balance between gaming and typing.",
-      "status": "rejected",
-      "isVerifiedPurchase": false,
-      "helpfulCount": 0,
-      "createdAt": "2026-03-12T15:00:00.000Z",
-      "updatedAt": "2026-06-12T03:45:30.100Z"
-    },
-    {
-      "productId": 1,
-      "userId": null,
-      "userName": "Aarav Sharma",
-      "rating": 2,
-      "title": "Price is too high",
-      "body": "Price is high compared to other stores",
-      "status": "approved",
-      "isVerifiedPurchase": true,
-      "helpfulCount": 0,
-      "source": "admin",
-      "createdAt": "2026-06-14T03:47:30.056Z",
-      "updatedAt": "2026-06-14T03:48:35.812Z",
-      "id": 4
-    },
-    {
-      "id": 5,
-      "status": "approved",
-      "isVerifiedPurchase": true,
-      "helpfulCount": 9,
-      "productId": 1,
-      "userId": 2,
-      "userName": "Priya M.",
-      "rating": 5,
-      "title": "Fantastic for work and study",
-      "body": "Switched from an old laptop and the difference is night and day. The screen is crisp, it stays cool, and battery comfortably lasts a full work day. Setup was painless.",
-      "photos": [
-        "https://placehold.co/300x300/667eea/FFFFFF?text=Setup",
-        "https://placehold.co/300x300/4c5ed0/FFFFFF?text=Display"
-      ],
-      "createdAt": "2026-04-02T10:15:00.000Z",
-      "updatedAt": "2026-04-02T10:15:00.000Z"
-    },
-    {
-      "id": 6,
-      "status": "approved",
-      "isVerifiedPurchase": true,
-      "helpfulCount": 4,
-      "productId": 1,
-      "userId": 3,
-      "userName": "Rahul K.",
+      "productId": 33,
+      "userId": 1,
+      "userName": "John D.",
       "rating": 4,
-      "title": "Great value, solid build",
-      "body": "Handles multiple browser tabs and light photo editing without breaking a sweat. Keyboard is comfortable. Knocked one star because the speakers are just average.",
-      "createdAt": "2026-04-20T16:40:00.000Z",
-      "updatedAt": "2026-04-20T16:40:00.000Z"
-    },
-    {
-      "id": 7,
+      "title": "Comfortable for a full workday",
+      "body": "The mesh back stays cool even in the afternoon. I would have liked a little more lumbar support, but for the price it is a good chair.",
       "status": "approved",
       "isVerifiedPurchase": true,
       "helpfulCount": 6,
-      "productId": 5,
+      "createdAt": "2026-02-20T11:00:00.000Z",
+      "updatedAt": "2026-02-21T08:00:00.000Z"
+    },
+    {
+      "id": 4,
+      "productId": 76,
       "userId": 1,
       "userName": "John D.",
       "rating": 5,
-      "title": "Soft, true to size",
-      "body": "Lovely cotton, holds shape after washing and the fit is exactly as described. Bought two more.",
-      "photos": [
-        "https://placehold.co/300x300/1a1a2e/FFFFFF?text=Fit"
-      ],
-      "createdAt": "2026-05-05T09:00:00.000Z",
-      "updatedAt": "2026-05-05T09:00:00.000Z"
-    },
-    {
-      "productId": 2,
-      "userId": null,
-      "userName": "Deepak",
-      "rating": 4,
-      "title": "My Honest Revew",
-      "body": "dfvdfsvdsvdsv sdvsdvsssdfsdf dsfdsf sdfssdf ",
+      "title": "Plenty of room for two screens",
+      "body": "We went with the larger size and it takes two monitors and a printer comfortably. Sturdy, no wobble.",
       "status": "approved",
       "isVerifiedPurchase": true,
+      "helpfulCount": 4,
+      "createdAt": "2026-02-21T15:30:00.000Z",
+      "updatedAt": "2026-02-22T08:00:00.000Z"
+    },
+    {
+      "id": 5,
+      "productId": 6,
+      "userId": 1,
+      "userName": "John D.",
+      "rating": 3,
+      "title": "Chairs are fine, delivery was not",
+      "body": "The chairs themselves are what we expected. Most of this review is about the courier, who kept calling at odd hours.",
+      "status": "rejected",
+      "isVerifiedPurchase": true,
       "helpfulCount": 0,
-      "source": "admin",
-      "createdAt": "2026-06-20T06:27:59.227Z",
-      "updatedAt": "2026-06-20T06:28:23.146Z",
-      "id": 8
+      "createdAt": "2026-06-18T19:10:00.000Z",
+      "updatedAt": "2026-06-19T10:00:00.000Z"
+    },
+    {
+      "id": 6,
+      "productId": 47,
+      "userId": null,
+      "userName": "Rituparna B.",
+      "rating": 5,
+      "title": "Our living room finally feels finished",
+      "body": "The cushions are firm in a good way and the wood has a nice even polish. Delivery took nine days and the team set it up for us.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 9,
+      "createdAt": "2026-06-28T12:00:00.000Z",
+      "updatedAt": "2026-06-29T08:00:00.000Z"
+    },
+    {
+      "id": 7,
+      "productId": 47,
+      "userId": null,
+      "userName": "Ankur S.",
+      "rating": 4,
+      "title": "Good build, cushions need a week",
+      "body": "Frame is strong and the beige fabric looks better in person. The seat cushions felt stiff at first and softened after a week or so.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 5,
+      "createdAt": "2026-07-14T09:30:00.000Z",
+      "updatedAt": "2026-07-15T08:00:00.000Z"
+    },
+    {
+      "id": 8,
+      "productId": 47,
+      "userId": null,
+      "userName": "Meghna D.",
+      "rating": 5,
+      "title": "Worth the wait",
+      "body": "We compared a few shops in Guwahati before ordering. The finish is clean and nothing creaks.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 2,
+      "createdAt": "2026-08-22T17:45:00.000Z",
+      "updatedAt": "2026-08-23T08:00:00.000Z"
+    },
+    {
+      "id": 9,
+      "productId": 47,
+      "userId": null,
+      "userName": "Pranjal K.",
+      "rating": 4,
+      "title": "Happy so far",
+      "body": "Delivered last week. Looks good and sits well, I will update after a few months of use.",
+      "status": "pending",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 0,
+      "createdAt": "2026-09-30T13:00:00.000Z",
+      "updatedAt": "2026-09-30T13:00:00.000Z"
+    },
+    {
+      "id": 10,
+      "productId": 21,
+      "userId": null,
+      "userName": "Nikita R.",
+      "rating": 4,
+      "title": "Good chair for home office",
+      "body": "Easy to assemble and the height adjustment works well. The armrests are a bit hard for long calls.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 7,
+      "createdAt": "2026-08-25T10:00:00.000Z",
+      "updatedAt": "2026-08-26T08:00:00.000Z"
+    },
+    {
+      "id": 11,
+      "productId": 21,
+      "userId": null,
+      "userName": "Debojit H.",
+      "rating": 5,
+      "title": "Back pain is better",
+      "body": "I sit eight or nine hours a day and this has been much easier on my lower back than my old chair.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 4,
+      "createdAt": "2026-09-12T18:20:00.000Z",
+      "updatedAt": "2026-09-13T08:00:00.000Z"
+    },
+    {
+      "id": 12,
+      "productId": 2,
+      "userId": null,
+      "userName": "Sangeeta P.",
+      "rating": 4,
+      "title": "Sturdy for everyday use",
+      "body": "We use these on the verandah. They stack neatly and have held up well in the rain.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 3,
+      "createdAt": "2026-08-30T08:15:00.000Z",
+      "updatedAt": "2026-08-31T08:00:00.000Z"
+    },
+    {
+      "id": 13,
+      "productId": 2,
+      "userId": null,
+      "userName": "Ramen T.",
+      "rating": 4,
+      "title": "Comfortable armrests",
+      "body": "Wider than our old plastic chairs, and the ribbed back is comfortable. The beige shows dust a little.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 1,
+      "createdAt": "2026-09-18T16:40:00.000Z",
+      "updatedAt": "2026-09-19T08:00:00.000Z"
+    },
+    {
+      "id": 14,
+      "productId": 37,
+      "userId": null,
+      "userName": "Farhan A.",
+      "rating": 5,
+      "title": "Customers keep asking about them",
+      "body": "We bought twelve for our café. They are light to move, easy to wipe and look warmer than metal chairs.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 11,
+      "createdAt": "2026-06-10T11:10:00.000Z",
+      "updatedAt": "2026-06-11T08:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "productId": 37,
+      "userId": null,
+      "userName": "Juri G.",
+      "rating": 4,
+      "title": "Nice finish, check the seat height",
+      "body": "Lovely walnut colour. The seat is a little low for our counter-height tables, so measure first.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 4,
+      "createdAt": "2026-07-27T14:00:00.000Z",
+      "updatedAt": "2026-07-28T08:00:00.000Z"
+    },
+    {
+      "id": 16,
+      "productId": 58,
+      "userId": null,
+      "userName": "Hemanta B.",
+      "rating": 4,
+      "title": "Firm and supportive",
+      "body": "We picked the queen size. It is on the firmer side, which suits us, and there was no strong smell after unpacking.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 6,
+      "createdAt": "2026-07-03T20:00:00.000Z",
+      "updatedAt": "2026-07-04T08:00:00.000Z"
+    },
+    {
+      "id": 17,
+      "productId": 58,
+      "userId": null,
+      "userName": "Poonam S.",
+      "rating": 5,
+      "title": "Sleeping much better",
+      "body": "Replaced a ten-year-old mattress with this one. My shoulder aches have eased within two weeks.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 3,
+      "createdAt": "2026-08-11T07:30:00.000Z",
+      "updatedAt": "2026-08-12T08:00:00.000Z"
+    },
+    {
+      "id": 18,
+      "productId": 58,
+      "userId": null,
+      "userName": "Pallavi M.",
+      "rating": 3,
+      "title": "Review for a different item",
+      "body": "This is actually about the pillows I bought elsewhere. They went flat in a month.",
+      "status": "rejected",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 0,
+      "createdAt": "2026-08-19T09:00:00.000Z",
+      "updatedAt": "2026-08-20T10:00:00.000Z"
+    },
+    {
+      "id": 19,
+      "productId": 55,
+      "userId": null,
+      "userName": "Kaushik M.",
+      "rating": 5,
+      "title": "Heavy, solid bed",
+      "body": "The bed is very solid and the headboard looks just like the photos. Assembly needed two people.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 5,
+      "createdAt": "2026-06-05T15:00:00.000Z",
+      "updatedAt": "2026-06-06T08:00:00.000Z"
+    },
+    {
+      "id": 20,
+      "productId": 12,
+      "userId": null,
+      "userName": "Anamika C.",
+      "rating": 4,
+      "title": "Comfortable for long evenings",
+      "body": "The cushion makes a real difference compared with a plain plastic chair. The cover comes off for washing.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 2,
+      "createdAt": "2026-05-24T18:30:00.000Z",
+      "updatedAt": "2026-05-25T08:00:00.000Z"
+    },
+    {
+      "id": 21,
+      "productId": 12,
+      "userId": null,
+      "userName": "Rahul N.",
+      "rating": 5,
+      "title": "Bought four for the balcony",
+      "body": "Good quality and the coffee brown colour looks rich. Delivery was on time.",
+      "status": "pending",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 0,
+      "createdAt": "2026-10-02T10:00:00.000Z",
+      "updatedAt": "2026-10-02T10:00:00.000Z"
+    },
+    {
+      "id": 22,
+      "productId": 19,
+      "userId": null,
+      "userName": "Bikash D.",
+      "rating": 4,
+      "title": "Good set for our hotel lobby",
+      "body": "We took the large set. Guests use it all day and it still looks new after two months.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 3,
+      "createdAt": "2026-07-21T12:30:00.000Z",
+      "updatedAt": "2026-07-22T08:00:00.000Z"
+    },
+    {
+      "id": 23,
+      "productId": 81,
+      "userId": null,
+      "userName": "Mitali S.",
+      "rating": 5,
+      "title": "Right size for a study corner",
+      "body": "My daughter uses it for school work. Compact, sturdy, and the edges are nicely rounded.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 2,
+      "createdAt": "2026-09-15T17:00:00.000Z",
+      "updatedAt": "2026-09-16T08:00:00.000Z"
+    },
+    {
+      "id": 24,
+      "productId": 74,
+      "userId": null,
+      "userName": "Arup K.",
+      "rating": 4,
+      "title": "Dinner for six, no squeeze",
+      "body": "The table seats six without elbows clashing. One chair had a loose screw that was easy to tighten.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 4,
+      "createdAt": "2026-07-08T21:00:00.000Z",
+      "updatedAt": "2026-07-09T08:00:00.000Z"
+    },
+    {
+      "id": 25,
+      "productId": 46,
+      "userId": null,
+      "userName": "Ishita L.",
+      "rating": 3,
+      "title": "Looks good, a bit small",
+      "body": "Stylish and easy to clean. The seat is narrower than I expected, so it suits a small café table better.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 1,
+      "createdAt": "2026-09-20T13:15:00.000Z",
+      "updatedAt": "2026-09-21T08:00:00.000Z"
+    },
+    {
+      "id": 26,
+      "productId": 11,
+      "userId": null,
+      "userName": "Sanjib R.",
+      "rating": 4,
+      "title": "Keeps the dust off",
+      "body": "The cover keeps shoes out of sight and dust free. The door hinge is plastic but feels fine so far.",
+      "status": "approved",
+      "isVerifiedPurchase": false,
+      "helpfulCount": 2,
+      "createdAt": "2026-09-25T09:45:00.000Z",
+      "updatedAt": "2026-09-26T08:00:00.000Z"
     }
   ],
   "wishlist": [
     {
-      "productId": 1,
-      "slug": "probook-ultra-laptop-15",
-      "name": "ProBook Ultra Laptop 15\"",
-      "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=ProBook+Laptop",
-      "brand": "ProBook",
-      "price": 74999,
-      "comparePrice": 89999,
-      "rating": 4.6,
-      "totalReviews": 128,
-      "shortDescription": "Powerful 15-inch laptop with Intel Core i7 processor and 16GB RAM",
+      "productId": 48,
+      "slug": "l-shaped-sofa",
+      "name": "L-Shaped Sofa",
+      "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=L-Shaped+Sofa",
+      "brand": "A & S Urbanseat",
+      "price": 44999,
+      "comparePrice": 0,
+      "rating": 0,
+      "totalReviews": 0,
+      "shortDescription": "A five-seat L-shaped sofa with a long chaise end that fits neatly into a corner.",
       "variants": [
         {
           "id": "v1",
-          "name": "8GB RAM / 256GB SSD",
-          "price": 64999,
-          "stock": 20,
-          "sku": "LAP-PBU-15-8-256",
+          "name": "Slate Grey",
+          "price": 44999,
+          "stock": 7,
+          "sku": "LIV-SOF-02-GRY",
           "attributes": {
-            "Configuration": "8GB · 256GB SSD"
-          }
+            "Colour": "Slate Grey"
+          },
+          "swatchHex": "#6f7378"
         },
         {
           "id": "v2",
-          "name": "16GB RAM / 512GB SSD",
-          "price": 74999,
-          "stock": 15,
-          "sku": "LAP-PBU-15-16-512",
+          "name": "Sand Beige",
+          "price": 44999,
+          "stock": 8,
+          "sku": "LIV-SOF-02-BGE",
           "attributes": {
-            "Configuration": "16GB · 512GB SSD"
-          }
+            "Colour": "Sand Beige"
+          },
+          "swatchHex": "#cbb994"
         },
         {
           "id": "v3",
-          "name": "32GB RAM / 1TB SSD",
-          "price": 94999,
-          "stock": 10,
-          "sku": "LAP-PBU-15-32-1TB",
+          "name": "Teal Blue",
+          "price": 44999,
+          "stock": 6,
+          "sku": "LIV-SOF-02-TEL",
           "attributes": {
-            "Configuration": "32GB · 1TB SSD"
-          }
+            "Colour": "Teal Blue"
+          },
+          "swatchHex": "#2f5d62"
         }
       ],
-      "stock": 45,
+      "stock": 21,
       "trending": true,
       "hot": false,
       "addedAt": "2026-06-14T13:57:44.901Z",
@@ -8968,82 +9224,95 @@
       "id": 1
     },
     {
-      "productId": 3,
-      "slug": "fitpulse-smartwatch-series-5",
-      "name": "FitPulse Smartwatch Series 5",
-      "image": "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-      "brand": "FitPulse",
-      "price": 14999,
-      "comparePrice": 19999,
-      "rating": 4.5,
-      "totalReviews": 215,
-      "shortDescription": "Advanced health tracking smartwatch with GPS and AMOLED display",
+      "productId": 31,
+      "slug": "ergonomic-high-back-chair-with-headrest",
+      "name": "Ergonomic High-Back Chair with Headrest",
+      "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+High-Back+Chair+with+Headrest",
+      "brand": "",
+      "price": 19999,
+      "comparePrice": 0,
+      "rating": 0,
+      "totalReviews": 0,
+      "shortDescription": "A fully adjustable ergonomic chair with headrest, lumbar support, 3D arms and seat slide.",
       "variants": [
         {
           "id": "v1",
-          "name": "Black / Rubber Band",
-          "price": 14999,
-          "stock": 30,
-          "sku": "ELC-FPS-SW5-BLK-R"
+          "name": "Black",
+          "price": 19999,
+          "stock": 35,
+          "sku": "OFP-HBK-03-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
         },
         {
           "id": "v2",
-          "name": "Silver / Metal Band",
-          "price": 16999,
-          "stock": 25,
-          "sku": "ELC-FPS-SW5-SLV-M"
-        },
-        {
-          "id": "v3",
-          "name": "Gold / Leather Band",
-          "price": 18999,
-          "stock": 20,
-          "sku": "ELC-FPS-SW5-GLD-L"
+          "name": "Grey",
+          "price": 19999,
+          "stock": 15,
+          "sku": "OFP-HBK-03-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
         }
       ],
-      "stock": 75,
+      "stock": 50,
       "trending": false,
-      "hot": true,
+      "hot": false,
       "addedAt": "2026-06-14T13:57:57.354Z",
       "userId": 3,
       "id": 2
     },
     {
-      "productId": 7,
-      "slug": "banarasi-silk-saree",
-      "name": "Banarasi Silk Saree",
-      "image": "https://placehold.co/600x400/c2185b/FFFFFF?text=Banarasi+Saree",
-      "brand": "WeaveKraft",
-      "price": 5999,
-      "comparePrice": 8999,
-      "rating": 4.8,
-      "totalReviews": 215,
-      "shortDescription": "Handwoven Banarasi silk saree with rich zari work",
+      "productId": 37,
+      "slug": "bentwood-style-cafe-chair",
+      "name": "Bentwood-Style Café Chair",
+      "image": "https://placehold.co/1200x1500/f1ebe1/686158?text=Bentwood-Style+Caf%C3%A9+Chair",
+      "brand": "",
+      "price": 3499,
+      "comparePrice": 3999,
+      "rating": 4.5,
+      "totalReviews": 2,
+      "shortDescription": "A bentwood-style café chair with a looped back, light to move and easy to love.",
       "variants": [
         {
           "id": "v1",
-          "name": "Maroon & Gold",
-          "price": 5999,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-MRN"
+          "name": "Walnut",
+          "price": 3499,
+          "stock": 27,
+          "sku": "CAF-CHR-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
         },
         {
           "id": "v2",
-          "name": "Royal Blue & Gold",
-          "price": 5999,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-BLU"
+          "name": "Matte Black",
+          "price": 3499,
+          "stock": 31,
+          "sku": "CAF-CHR-01-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
         },
         {
           "id": "v3",
-          "name": "Green & Gold",
-          "price": 6499,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-GRN"
+          "name": "Natural Oak",
+          "price": 3499,
+          "stock": 45,
+          "sku": "CAF-CHR-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
         }
       ],
-      "stock": 30,
-      "trending": true,
+      "stock": 103,
+      "trending": false,
       "hot": false,
       "addedAt": "2026-06-14T13:57:59.358Z",
       "userId": 3,
@@ -9114,11 +9383,11 @@
   ],
   "settings": {
     "store": {
-      "name": "My E-Commerce Store",
-      "tagline": "Quality products, great prices",
-      "email": "hello@mystore.com",
-      "phone": "+91 9999999999",
-      "address": "123 Business Park, Mumbai, Maharashtra 400001",
+      "name": "A & S Urbanseat",
+      "tagline": "Trusted Comfort for Every Home",
+      "email": "info@kamdhenufurniture.com",
+      "phone": "+91 84729 18653",
+      "address": "Assam, India",
       "currency": "INR",
       "currencySymbol": "₹",
       "timezone": "Asia/Kolkata",
@@ -9131,11 +9400,11 @@
       "shiprocketEnabled": false,
       "shiprocketEmail": "",
       "shiprocketPassword": "",
-      "defaultWeight": 0.5,
+      "defaultWeight": 8,
       "defaultDimensions": {
-        "length": 15,
-        "width": 12,
-        "height": 8
+        "length": 65,
+        "width": 60,
+        "height": 75
       }
     },
     "payment": {
@@ -9152,13 +9421,13 @@
       "orderConfirmationEmail": true,
       "shippingUpdateEmail": true,
       "adminNewOrderEmail": true,
-      "adminEmail": "admin@mystore.com",
+      "adminEmail": "info@kamdhenufurniture.com",
       "lowStockAlert": true,
-      "lowStockEmail": "admin@mystore.com"
+      "lowStockEmail": "info@kamdhenufurniture.com"
     },
     "seo": {
-      "metaTitle": "My E-Commerce Store - Quality Products Online",
-      "metaDescription": "Shop the best products online with fast delivery, secure payments and easy returns.",
+      "metaTitle": "A & S Urbanseat | Furniture & Seating for Home, Office, Café and Outdoor",
+      "metaDescription": "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust.",
       "googleAnalyticsId": "",
       "facebookPixelId": ""
     },
@@ -9167,7 +9436,7 @@
       "instagram": "",
       "twitter": "",
       "youtube": "",
-      "whatsapp": ""
+      "whatsapp": "https://wa.me/918472919541"
     }
   },
   "walletTransactions": [
@@ -9175,14 +9444,14 @@
       "id": 1,
       "userId": 3,
       "type": "credit",
-      "amount": 4918,
+      "amount": 4302,
       "reason": "Refund for order ORD-MQC1HWSZ-CAN8",
       "orderId": 8,
       "orderNumber": "ORD-MQC1HWSZ-CAN8",
       "refundId": 3,
       "refundNumber": "REF-20260613-JQ3L",
       "balanceBefore": 0,
-      "balanceAfter": 4918,
+      "balanceAfter": 4302,
       "createdAt": "2026-06-13T12:57:28.419Z"
     },
     {
@@ -9194,8 +9463,8 @@
       "orderNumber": "ORD-MQCGV6OM-Z965",
       "refundId": null,
       "refundNumber": null,
-      "balanceBefore": 4918,
-      "balanceAfter": 3918,
+      "balanceBefore": 4302,
+      "balanceAfter": 3302,
       "createdAt": "2026-06-13T14:44:33.927Z",
       "id": 2
     },
@@ -9208,8 +9477,8 @@
       "orderNumber": "ORD-MQDVIQCV-30A9",
       "refundId": null,
       "refundNumber": null,
-      "balanceBefore": 3918,
-      "balanceAfter": 2918,
+      "balanceBefore": 3302,
+      "balanceAfter": 2302,
       "createdAt": "2026-06-14T14:22:33.343Z",
       "id": 3
     }
@@ -9217,18 +9486,34 @@
   "dealsConfig": {
     "enabled": true,
     "hero": {
-      "tag": "Limited Time",
-      "title": "Special Offers & Deals",
-      "subtitle": "Discover unbeatable prices on top products. New deals drop daily — don't miss out!"
+      "tag": "This week",
+      "title": "Offers on pieces we love",
+      "subtitle": "A short list of chairs, tables and sofas at a lower price for now, plus codes you can use at checkout."
     },
     "timer": {
       "enabled": true,
       "endAt": "",
       "onExpiry": "endOfDay"
     },
-    "featuredCouponIds": [],
-    "dealOfTheDayIds": [],
-    "featuredProductIds": [],
-    "updatedAt": "2026-06-14T07:28:09.336Z"
+    "featuredCouponIds": [
+      1,
+      2
+    ],
+    "dealOfTheDayIds": [
+      47,
+      21,
+      12
+    ],
+    "featuredProductIds": [
+      19,
+      29,
+      40,
+      55,
+      74,
+      78,
+      81,
+      84
+    ],
+    "updatedAt": "2026-10-07T09:00:00.000Z"
   }
 }

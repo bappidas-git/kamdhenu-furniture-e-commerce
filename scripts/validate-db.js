@@ -12,8 +12,10 @@
 //   node scripts/validate-db.js path/to/db.json [--catalogue]
 //
 // Exits 1 when any check fails. Prompt 04 added its COVERAGE rows, TREE, BRANDS
-// and leaf checks; Prompts 05 and 34 extend the
-// full-mode checks rather than loosening anything here.
+// and leaf checks; Prompt 05 added the supporting-data checks (settings,
+// shipping and FREE_SHIPPING_THRESHOLD, coupons, order money math, payments,
+// refunds, returns, reviews, wishlist, deals, banners, leads). Prompt 34
+// extends the full-mode checks rather than loosening anything here.
 // =============================================================================
 
 const fs = require("fs");
@@ -403,6 +405,215 @@ if (!CATALOGUE_ONLY) {
     check(near(u.storeCredit || 0, bal), `user ${u.id}`, `storeCredit ${u.storeCredit} ≠ ledger balance ${bal}`);
   });
   Object.keys(txByUser).forEach((uid) => check(users.some((u) => String(u.id) === uid), "walletTransactions", `user ${uid} does not exist`));
+
+  // ---- Prompt 05: supporting data ------------------------------------------
+  const orders = db.orders || [];
+  const orderById = new Map(orders.map((o) => [String(o.id), o]));
+  const userIds = new Set(users.map((u) => String(u.id)));
+  const coupons = db.coupons || [];
+  const couponByCode = new Map(coupons.map((c) => [c.code, c]));
+  const methods = db.shipping_methods || [];
+  const settings = db.settings || {};
+  const taxRate = settings.store?.taxRate;
+  const payments = db.payments || [];
+  const refunds = db.refunds || [];
+  const returns = db.returns || [];
+  const charged = (o) => (o.amountPayable != null ? o.amountPayable : o.total);
+  const nowIso = new Date().toISOString();
+
+  // key sets for collections whose records all share one shape
+  const SHAPES = {
+    reviews: ["id", "productId", "userId", "userName", "rating", "title", "body", "status", "isVerifiedPurchase", "helpfulCount", "createdAt", "updatedAt"],
+    coupons: ["id", "code", "description", "type", "value", "minOrderAmount", "maxDiscount", "usageLimit", "usedCount", "perUserLimit", "isActive", "expiresAt", "createdAt", "updatedAt"],
+    shipping_methods: ["id", "name", "carrier", "description", "rateType", "flatRate", "freeAbove", "estimatedDays", "isActive", "createdAt"],
+    banners: ["id", "title", "subtitle", "cta", "link", "gradient"],
+    wishlist: ["productId", "slug", "name", "image", "brand", "price", "comparePrice", "rating", "totalReviews", "shortDescription", "variants", "stock", "trending", "hot", "addedAt", "userId", "id"],
+  };
+  Object.entries(SHAPES).forEach(([coll, keys]) => (db[coll] || []).forEach((r) => {
+    check(JSON.stringify(Object.keys(r).sort()) === JSON.stringify([...keys].sort()), `${coll} ${r.id}`, `keys differ: ${Object.keys(r).join(",")}`);
+  }));
+  check(Array.isArray(db.cart) && db.cart.length === 0, "cart", "must stay []");
+  check(!/electronic|smartwatch|earbud|laptop|t-shirt|running shoe/i.test(JSON.stringify({
+    o: orders, r: returns, p: payments, f: refunds, w: db.wishlist, b: db.banners, c: coupons, d: db.dealsConfig, v: db.reviews,
+  })), "supporting data", "still mentions the boilerplate's electronics/fashion catalogue");
+
+  // settings
+  check(settings.store?.name === "A & S Urbanseat", "settings", "store.name must be A & S Urbanseat");
+  check(isNum(taxRate) && taxRate >= 0, "settings", "store.taxRate must be a number");
+  const sp = settings.payment || {};
+  check(isNum(sp.codFee) && isNum(sp.codMinOrder) && isNum(sp.codMaxOrder) && sp.codMinOrder <= sp.codMaxOrder, "settings", "COD limits must be numbers with min ≤ max");
+
+  // shipping methods and the storefront constant
+  const standard = methods.find((m) => m.name === "Standard Delivery");
+  if (check(standard && standard.isActive, "shipping_methods", "an active Standard Delivery method is required")) {
+    const constSrc = fs.readFileSync(path.join(__dirname, "..", "src", "utils", "constants.js"), "utf8");
+    const m = constSrc.match(/export const FREE_SHIPPING_THRESHOLD\s*=\s*([\d_]+)\s*;/);
+    const threshold = m ? Number(m[1].replace(/_/g, "")) : NaN;
+    check(threshold === standard.freeAbove, "constants.js", `FREE_SHIPPING_THRESHOLD ${m ? m[1] : "(not found)"} ≠ Standard freeAbove ${standard.freeAbove}`);
+  }
+  methods.forEach((m) => {
+    check(isNum(m.flatRate) && m.flatRate >= 0, `shipping_method ${m.id}`, "flatRate must be a number ≥ 0");
+    check(m.freeAbove === null || isNum(m.freeAbove), `shipping_method ${m.id}`, "freeAbove must be a number or null");
+  });
+
+  // coupons
+  dupes(coupons.map((c) => c.code)).forEach((c) => fail("coupons", `duplicate code ${c}`));
+  coupons.forEach((c) => {
+    const at = `coupon ${c.id} (${c.code})`;
+    check(c.code === c.code.toUpperCase() && /^[A-Z0-9]+$/.test(c.code), at, "code must be uppercase letters and digits");
+    check(["fixed", "percentage"].includes(c.type), at, "type must be fixed or percentage");
+    check(isNum(c.value) && c.value > 0 && (c.type !== "percentage" || c.value <= 100), at, "value out of range");
+    check(c.type !== "percentage" || (isNum(c.maxDiscount) && c.maxDiscount > 0), at, "percentage coupon needs a maxDiscount");
+    check(c.usageLimit === null || c.usedCount <= c.usageLimit, at, "usedCount exceeds usageLimit");
+    if (c.isActive) {
+      check(c.expiresAt > nowIso, at, "active coupon has expired");
+      check(c.usageLimit === null || c.usedCount < c.usageLimit, at, "active coupon is exhausted");
+      check(c.type !== "fixed" || c.value < c.minOrderAmount, at, "fixed discount must be below its minimum order");
+    }
+  });
+  check(coupons.some((c) => !c.isActive && c.expiresAt < nowIso && c.usageLimit !== null && c.usedCount >= c.usageLimit),
+    "coupons", "keep one inactive, expired, exhausted coupon so the admin states stay testable");
+
+  // orders: snapshots and the checkout's money rules
+  const discountFor = (c, amount) => {
+    const raw = c.type === "percentage" ? Math.round((amount * c.value) / 100) : c.value;
+    return Math.max(0, Math.min(raw, c.maxDiscount || Infinity, amount));
+  };
+  dupes(orders.map((o) => o.orderNumber)).forEach((n) => fail("orders", `duplicate orderNumber ${n}`));
+  orders.forEach((o) => {
+    const at = `order ${o.id} (${o.orderNumber})`;
+    check(userIds.has(String(o.userId)), at, `user ${o.userId} does not exist`);
+    (o.items || []).forEach((it, i) => {
+      const p = prodById.get(String(it.productId));
+      if (!p) return;
+      const v = (p.variants || []).find((x) => x.id === it.variantId);
+      const name = v ? `${p.name} - ${v.name}` : p.name;
+      check(it.name === name, `${at} item ${i}`, `name "${it.name}" ≠ "${name}"`);
+      check(it.image === p.images[0], `${at} item ${i}`, "image is not the product's first image");
+      check(it.sku === (v ? v.sku : p.sku), `${at} item ${i}`, "sku does not match the variant");
+    });
+    if (o.couponCode) {
+      const c = couponByCode.get(o.couponCode);
+      if (check(c, at, `coupon ${o.couponCode} does not exist`)) {
+        check(near(o.discountAmount, discountFor(c, o.subtotal)), at, `discountAmount ${o.discountAmount} ≠ ${discountFor(c, o.subtotal)} for ${c.code}`);
+      }
+    } else {
+      check(near(o.discountAmount, 0), at, "discountAmount without a coupon");
+    }
+    const shipOk = methods.some((m) => (m.rateType === "free" || (m.freeAbove && o.subtotal >= m.freeAbove) ? 0 : m.flatRate) === o.shippingAmount);
+    check(shipOk, at, `shippingAmount ${o.shippingAmount} matches no shipping method at subtotal ${o.subtotal}`);
+    const tax = Math.round(Math.max(0, o.subtotal - o.discountAmount) * (taxRate / 100));
+    check(near(o.taxAmount, tax), at, `taxAmount ${o.taxAmount} ≠ ${tax}`);
+    // amounts quoted in refund timeline entries match a booked refund
+    const booked = refunds.filter((r) => String(r.orderId) === String(o.id)).map((r) => r.amount);
+    (o.statusHistory || []).filter((h) => /refund/i.test(h.action)).forEach((h) => {
+      const quoted = `${h.action} ${h.note || ""}`.match(/₹([\d,]+)/g) || [];
+      quoted.forEach((q) => check(booked.includes(Number(q.slice(1).replace(/,/g, ""))), at, `timeline quotes ${q}, which matches no refund`));
+    });
+  });
+
+  // payments
+  payments.forEach((p) => {
+    const at = `payment ${p.id}`;
+    const o = orderById.get(String(p.orderId));
+    if (!check(o, at, `order ${p.orderId} does not exist`)) return;
+    check(p.orderNumber === o.orderNumber && String(p.userId) === String(o.userId), at, "orderNumber/userId differ from the order");
+    check(near(p.amount, charged(o)), at, `amount ${p.amount} ≠ order amount payable ${charged(o)}`);
+    if (p.storeCreditApplied !== undefined) check(near(p.storeCreditApplied, o.storeCreditUsed || 0), at, "storeCreditApplied ≠ order storeCreditUsed");
+    const refunded = (p.refunds || []).reduce((a, r) => a + r.amount, 0);
+    if (p.refundAmount !== undefined) check(near(p.refundAmount, refunded), at, `refundAmount ${p.refundAmount} ≠ sum of refunds[] ${refunded}`);
+    check(refunded <= p.amount + 0.01, at, "refunded more than the amount");
+    if (p.status === "refunded") check(near(refunded, p.amount), at, "status refunded but not fully refunded");
+  });
+  dupes(payments.map((p) => p.orderId)).forEach((id) => fail("payments", `two payments for order ${id}`));
+
+  // returns
+  returns.forEach((r) => {
+    const at = `return ${r.id} (${r.returnNumber})`;
+    const o = orderById.get(String(r.orderId));
+    if (!o) return;
+    check(r.orderNumber === o.orderNumber && String(r.userId) === String(o.userId), at, "orderNumber/userId differ from the order");
+    (r.items || []).forEach((it, i) => {
+      const oi = o.items.find((x) => x.productId === it.productId && x.variantId === it.variantId);
+      if (check(oi, `${at} item ${i}`, "not on the linked order")) {
+        check(it.name === oi.name && it.sku === oi.sku && it.price === oi.price && it.quantity <= oi.quantity && near(it.subtotal, it.price * it.quantity),
+          `${at} item ${i}`, "snapshot differs from the order item");
+      }
+    });
+    // rule: returned item subtotals + their proportional share of the order's tax
+    const sub = (r.items || []).reduce((a, it) => a + it.subtotal, 0);
+    const expected = sub + Math.round(o.taxAmount * (sub / o.subtotal));
+    check(near(r.refundAmount, expected), at, `refundAmount ${r.refundAmount} ≠ items + proportional tax ${expected}`);
+  });
+
+  // refunds ledger
+  refunds.forEach((f) => {
+    const at = `refund ${f.id} (${f.refundNumber})`;
+    const o = orderById.get(String(f.orderId));
+    check(o && o.orderNumber === f.orderNumber, at, `order ${f.orderId} missing or orderNumber differs`);
+    if (f.returnId != null) {
+      const r = returns.find((x) => String(x.id) === String(f.returnId));
+      if (check(r, at, `return ${f.returnId} does not exist`)) check(near(f.amount, r.refundAmount - (r.deductionAmount || 0)), at, "amount ≠ return refund payable");
+    }
+    if (f.paymentId != null) {
+      const p = payments.find((x) => String(x.id) === String(f.paymentId));
+      if (check(p, at, `payment ${f.paymentId} does not exist`)) check((p.refunds || []).some((x) => near(x.amount, f.amount)), at, "no matching entry in the payment's refunds[]");
+    } else if (f.method === "store_credit") {
+      check(o && near(o.refundedAmount, f.amount), at, "store-credit refund ≠ order refundedAmount");
+      check((db.walletTransactions || []).some((t) => t.type === "credit" && String(t.refundId) === String(f.id) && near(t.amount, f.amount)), at, "no matching wallet credit");
+    }
+  });
+  (db.walletTransactions || []).filter((t) => t.type === "debit" && t.orderId != null).forEach((t) => {
+    const o = orderById.get(String(t.orderId));
+    check(o && near(o.storeCreditUsed, t.amount), `walletTransaction ${t.id}`, "debit ≠ order storeCreditUsed");
+  });
+
+  // reviews
+  const ownsProduct = (uid, pid) => orders.filter((o) => String(o.userId) === String(uid) && o.items.some((i) => String(i.productId) === String(pid)));
+  (db.reviews || []).forEach((r) => {
+    const at = `review ${r.id}`;
+    check(["approved", "pending", "rejected"].includes(r.status), at, `unknown status ${r.status}`);
+    check(Number.isInteger(r.rating) && r.rating >= 1 && r.rating <= 5, at, "rating must be an integer 1–5");
+    check(typeof r.title === "string" && r.title.length > 0 && r.title.length <= 60, at, "title must be 1–60 characters");
+    check(Number.isInteger(r.helpfulCount) && r.helpfulCount >= 0 && r.helpfulCount <= 12, at, "helpfulCount must be 0–12");
+    check(r.userId === null || userIds.has(String(r.userId)), at, `user ${r.userId} does not exist`);
+    const owned = r.userId === null ? [] : ownsProduct(r.userId, r.productId);
+    check(r.isVerifiedPurchase === owned.length > 0, at, `isVerifiedPurchase must be ${owned.length > 0}`);
+    if (owned.length) check(owned.some((o) => o.createdAt < r.createdAt), at, "review predates the order");
+    check(ISO.test(r.createdAt) && ISO.test(r.updatedAt) && r.updatedAt >= r.createdAt && r.createdAt <= nowIso, at, "dates must be ISO, past, updatedAt ≥ createdAt");
+  });
+  check(products.some((p) => p.isActive && p.totalReviews === 0), "reviews", "keep some products without reviews (honest empty state)");
+
+  // wishlist snapshots
+  (db.wishlist || []).forEach((w) => {
+    const at = `wishlist ${w.id}`;
+    check(userIds.has(String(w.userId)), at, `user ${w.userId} does not exist`);
+    const p = prodById.get(String(w.productId));
+    if (!p) return;
+    ["slug", "name", "brand", "price", "comparePrice", "rating", "totalReviews", "shortDescription", "stock", "trending", "hot"]
+      .forEach((k) => check(JSON.stringify(w[k]) === JSON.stringify(p[k]), at, `${k} differs from product ${p.id}`));
+    check(w.image === p.images[0], at, "image is not the product's first image");
+    check(JSON.stringify(w.variants) === JSON.stringify(p.variants), at, "variants differ from the product");
+  });
+
+  // deals config
+  (d.featuredCouponIds || []).forEach((id) => {
+    const c = coupons.find((x) => String(x.id) === String(id));
+    check(c && c.isActive && c.expiresAt > nowIso, "dealsConfig", `featured coupon ${id} is not active`);
+  });
+  (d.dealOfTheDayIds || []).forEach((id) => check(prodById.get(String(id))?.comparePrice > 0, "dealsConfig", `deal of the day ${id} has no comparePrice`));
+  (d.featuredProductIds || []).forEach((id) => check(prodById.get(String(id))?.comparePrice > 0, "dealsConfig", `featured product ${id} is not discounted`));
+
+  // banners and leads
+  (db.banners || []).forEach((b) => {
+    const slug = (String(b.link).match(/[?&]category=([^&]+)/) || [])[1];
+    check(slug && categories.some((c) => c.slug === slug && c.isActive), `banner ${b.id}`, `link ${b.link} is not an active category`);
+    check(typeof b.gradient === "string", `banner ${b.id}`, "gradient must be a string");
+  });
+  (db.leads || []).filter((l) => l.orderNumber).forEach((l) => {
+    check(orders.some((o) => o.orderNumber === l.orderNumber), `lead ${l.id}`, `orderNumber ${l.orderNumber} matches no order`);
+  });
+
 }
 
 // ---------------------------------------------------------------- summary
@@ -416,6 +627,12 @@ row("Brands", [...new Set(products.map((p) => p.brand).filter(Boolean))].join(",
 row("Low-stock / out-of-stock variants", `${lowStockVariants} / ${outOfStockVariants}`);
 DEPARTMENTS.forEach(([id, slug]) => row(`  dept ${id} ${slug}`, `${products.filter((p) => deptOf(p.categoryId) === id).length} products`));
 COVERAGE.forEach(([slug, n]) => row(`  ${slug}`, `${slugCount[slug] || 0}/${n}`));
+if (!CATALOGUE_ONLY) {
+  row("Orders / payments / refunds / returns", ["orders", "payments", "refunds", "returns"].map((k) => (db[k] || []).length).join(" / "));
+  row("Reviews (approved / pending / rejected)", ["approved", "pending", "rejected"].map((st) => (db.reviews || []).filter((r) => r.status === st).length).join(" / "));
+  row("Products with reviews / without", `${products.filter((p) => p.totalReviews > 0).length} / ${products.filter((p) => p.totalReviews === 0).length}`);
+  row("Store credit (users[].storeCredit)", (db.users || []).map((u) => `user ${u.id}: ${u.storeCredit || 0}`).join(", "));
+}
 const w = Math.max(...summary.map(([l]) => l.length));
 console.log(`\nvalidate-db: ${path.relative(process.cwd(), file) || file}`);
 console.log("-".repeat(w + 14));
