@@ -256,6 +256,8 @@ const PAIRS_FIXED = [
   ["Hero: on-dark text on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], AA],
   ["Hero: caramel accent (display) on scrim over white photo", "--sf-color-on-dark-accent", ["--sf-color-scrim", "#ffffff"], LARGE],
   ["Hero: focus ring on scrim over white photo", "--sf-color-on-dark-accent", ["--sf-color-scrim", "#ffffff"], LARGE],
+  // Home hero (Prompt 10): the paper-ghost CTA's 1px border is its boundary.
+  ["Hero: paper-ghost CTA border (on-dark) on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], LARGE],
 ];
 
 // Light mode only: the inline PLACEHOLDER_IMG SVG cannot read CSS variables.
@@ -271,6 +273,10 @@ const INFO = [
   ["Brand caramel vs paper (decorative only, never text)", "--sf-brand-caramel", "--sf-brand-paper"],
   // Why small text on photography uses full --sf-color-on-dark, never the muted tone
   ["Hero: on-dark muted on scrim over white photo (not for text)", ["--sf-color-on-dark-muted", "--sf-color-scrim", "#ffffff"], ["--sf-color-scrim", "#ffffff"]],
+  // Prompt 10: why the hero eyebrow is full on-dark rather than paper at 80%,
+  // and why the hero scrim is --sf-color-scrim, not the backdrop token
+  ["Hero: paper at 80% on scrim over white photo (not for text)", ["rgba(250, 247, 242, 0.8)", "--sf-color-scrim", "#ffffff"], ["--sf-color-scrim", "#ffffff"]],
+  ["Hero: on-dark text with --sf-color-overlay as the scrim, white photo (not used)", "--sf-color-on-dark", ["--sf-color-overlay", "#ffffff"]],
 ];
 
 // ---------------------------------------------------------------------------
