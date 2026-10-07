@@ -114,1553 +114,4085 @@
   "categories": [
     {
       "id": 1,
-      "name": "Electronics",
-      "slug": "electronics",
-      "description": "Gadgets, devices and electronic accessories",
-      "image": "https://placehold.co/400x300/667eea/FFFFFF?text=Electronics",
+      "name": "Plastic Furniture",
+      "slug": "plastic-furniture",
+      "description": "Light, weather-ready plastic chairs, tables and storage that clean in a moment and stack away neatly.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Furniture",
       "parentId": null,
       "isActive": true,
       "sortOrder": 1,
       "showInMainMenu": true,
       "menuOrder": 1,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 2,
-      "name": "Clothing",
-      "slug": "clothing",
-      "description": "Men, women and kids apparel",
-      "image": "https://placehold.co/400x300/764ba2/FFFFFF?text=Clothing",
+      "name": "Office Chairs",
+      "slug": "office-chairs",
+      "description": "Supportive task, executive and waiting chairs for workspaces that are used all day.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Chairs",
       "parentId": null,
       "isActive": true,
       "sortOrder": 2,
       "showInMainMenu": true,
       "menuOrder": 2,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 3,
-      "name": "Home & Garden",
-      "slug": "home-garden",
-      "description": "Furniture, decor and garden essentials",
-      "image": "https://placehold.co/400x300/4caf50/FFFFFF?text=Home+%26+Garden",
+      "name": "Café & Restaurant Chairs",
+      "slug": "cafe-restaurant-chairs",
+      "description": "Hard-wearing chairs for cafés and dining rooms, chosen to look good through every service.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Caf%C3%A9+%26+Restaurant+Chairs",
       "parentId": null,
       "isActive": true,
       "sortOrder": 3,
       "showInMainMenu": true,
       "menuOrder": 3,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 4,
-      "name": "Sports & Fitness",
-      "slug": "sports-fitness",
-      "description": "Equipment and gear for sports and fitness",
-      "image": "https://placehold.co/400x300/ff9800/FFFFFF?text=Sports",
+      "name": "Outdoor Furniture",
+      "slug": "outdoor-furniture",
+      "description": "Lobby sets and garden swings for verandas, lawns and terraces, made for slow evenings outside.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Outdoor+Furniture",
       "parentId": null,
       "isActive": true,
       "sortOrder": 4,
       "showInMainMenu": true,
       "menuOrder": 4,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 5,
-      "name": "Books",
-      "slug": "books",
-      "description": "Bestsellers, textbooks and more",
-      "image": "https://placehold.co/400x300/e91e63/FFFFFF?text=Books",
+      "name": "Home Furniture",
+      "slug": "home-furniture",
+      "description": "Sofas, beds, storage and dining pieces for the rooms you live in every day.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Home+Furniture",
       "parentId": null,
       "isActive": true,
       "sortOrder": 5,
       "showInMainMenu": true,
       "menuOrder": 5,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 6,
-      "name": "Laptops",
-      "slug": "laptops",
-      "description": "Laptops and accessories",
-      "image": "https://placehold.co/400x300/2196f3/FFFFFF?text=Laptops",
-      "parentId": 1,
-      "isActive": true,
-      "sortOrder": 1,
-      "showInMainMenu": false,
-      "menuOrder": 0,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 7,
-      "name": "Audio",
-      "slug": "audio",
-      "description": "Headphones, speakers and audio gear",
-      "image": "https://placehold.co/400x300/9c27b0/FFFFFF?text=Audio",
-      "parentId": 1,
-      "isActive": true,
-      "sortOrder": 2,
-      "showInMainMenu": false,
-      "menuOrder": 0,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 8,
-      "name": "Women's Ethnic Wear",
-      "slug": "womens-ethnic-wear",
-      "description": "Sarees, kurtas, lehengas and traditional wear",
-      "image": "https://placehold.co/400x300/e91e63/FFFFFF?text=Ethnic+Wear",
+      "name": "Office Tables & Desks",
+      "slug": "office-tables-desks",
+      "description": "Work, computer and reading tables that keep a desk orderly and a day productive.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Tables+%26+Desks",
       "parentId": null,
       "isActive": true,
       "sortOrder": 6,
       "showInMainMenu": true,
       "menuOrder": 6,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 9,
-      "name": "Men's Fashion",
-      "slug": "mens-fashion",
-      "description": "Shirts, trousers, suits and accessories",
-      "image": "https://placehold.co/400x300/3f51b5/FFFFFF?text=Men+Fashion",
-      "parentId": null,
-      "isActive": true,
-      "sortOrder": 7,
-      "showInMainMenu": true,
-      "menuOrder": 7,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2026-06-12T01:38:32.822Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
       "id": 10,
-      "name": "Beauty & Personal Care",
-      "slug": "beauty-personal-care",
-      "description": "Skincare, haircare, fragrances and grooming",
-      "image": "https://placehold.co/400x300/ff4081/FFFFFF?text=Beauty",
-      "parentId": null,
-      "isActive": true,
-      "sortOrder": 8,
-      "showInMainMenu": true,
-      "menuOrder": 8,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 11,
-      "name": "Kitchen & Dining",
-      "slug": "kitchen-dining",
-      "description": "Cookware, dinnerware, appliances and accessories",
-      "image": "https://placehold.co/400x300/795548/FFFFFF?text=Kitchen",
-      "parentId": null,
-      "isActive": true,
-      "sortOrder": 9,
-      "showInMainMenu": false,
-      "menuOrder": 9,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2026-06-14T14:28:04.495Z"
-    },
-    {
-      "id": 12,
-      "name": "Footwear",
-      "slug": "footwear",
-      "description": "Shoes, sneakers, sandals and boots",
-      "image": "https://placehold.co/400x300/607d8b/FFFFFF?text=Footwear",
-      "parentId": null,
-      "isActive": true,
-      "sortOrder": 10,
-      "showInMainMenu": false,
-      "menuOrder": 10,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2026-06-14T14:28:05.635Z"
-    },
-    {
-      "id": 13,
-      "name": "Smartphones",
-      "slug": "smartphones",
-      "description": "Latest smartphones and mobile accessories",
-      "image": "https://placehold.co/400x300/00bcd4/FFFFFF?text=Smartphones",
+      "name": "Essentials",
+      "slug": "plastic-essentials",
+      "description": "Dependable everyday value in sturdy, easy-care plastic, made for daily use at home and outdoors.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Essentials",
       "parentId": 1,
-      "isActive": true,
-      "sortOrder": 3,
-      "showInMainMenu": false,
-      "menuOrder": 0,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
-    },
-    {
-      "id": 14,
-      "name": "Sarees",
-      "slug": "sarees",
-      "description": "Silk, cotton, chiffon and designer sarees",
-      "image": "https://placehold.co/400x300/c2185b/FFFFFF?text=Sarees",
-      "parentId": 8,
       "isActive": true,
       "sortOrder": 1,
       "showInMainMenu": false,
       "menuOrder": 0,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
-      "id": 15,
-      "name": "Kurtas",
-      "slug": "kurtas",
-      "description": "Anarkali, straight, A-line kurtas and sets",
-      "image": "https://placehold.co/400x300/ad1457/FFFFFF?text=Kurtas",
-      "parentId": 8,
+      "id": 11,
+      "name": "Chairs with Arms",
+      "slug": "plastic-essentials-armchairs",
+      "description": "Everyday plastic armchairs with a comfortable seat and arms to rest on, ready to stack after use.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Essentials+Armchairs",
+      "parentId": 10,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 12,
+      "name": "Chairs without Arms",
+      "slug": "plastic-essentials-chairs",
+      "description": "Armless plastic chairs that tuck under a table, stack high and wipe clean in seconds.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Essentials+Chairs",
+      "parentId": 10,
       "isActive": true,
       "sortOrder": 2,
       "showInMainMenu": false,
       "menuOrder": 0,
-      "createdAt": "2025-01-01T00:00:00.000Z",
-      "updatedAt": "2025-01-01T00:00:00.000Z"
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     },
     {
-      "name": "Test",
-      "slug": "test",
-      "description": "jdsb jkdbdsk kjdbds kjsksdjc",
-      "image": "https://placehold.co/600x400/1a1a2e/FFFFFF?text=Maharathi+Books",
-      "parentId": null,
+      "id": 13,
+      "name": "Centre Tables",
+      "slug": "plastic-essentials-centre-tables",
+      "description": "Compact plastic centre tables in square and round forms for tea, books and everyday living.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Essentials+Centre+Tables",
+      "parentId": 10,
       "isActive": true,
-      "sortOrder": 11,
-      "createdAt": "2026-06-14T05:11:13.803Z",
-      "updatedAt": "2026-06-14T08:01:05.804Z",
-      "id": 16,
+      "sortOrder": 3,
       "showInMainMenu": false,
-      "menuOrder": 11
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 14,
+      "name": "Shoe Racks",
+      "slug": "plastic-shoe-racks",
+      "description": "Plastic shoe racks in two to five shelves, so the entrance stays tidy as the family grows.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Shoe+Racks",
+      "parentId": 10,
+      "isActive": true,
+      "sortOrder": 4,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 15,
+      "name": "Premium",
+      "slug": "plastic-premium",
+      "description": "A heavier build and a finer finish, with fuller seats and richer textures for rooms that host often.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Premium",
+      "parentId": 1,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 16,
+      "name": "Chairs with Arms",
+      "slug": "plastic-premium-armchairs",
+      "description": "Premium plastic armchairs with a heavier frame, finer texture and a more generous seat.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Premium+Armchairs",
+      "parentId": 15,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 17,
+      "name": "Chairs without Arms",
+      "slug": "plastic-premium-chairs",
+      "description": "Armless premium plastic chairs with higher backs and a finer finish for the dining table.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Premium+Chairs",
+      "parentId": 15,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 18,
+      "name": "Centre Tables",
+      "slug": "plastic-premium-centre-tables",
+      "description": "Premium plastic centre tables with a heavier top and a finish that holds its colour.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Plastic+Premium+Centre+Tables",
+      "parentId": 15,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 20,
+      "name": "Essentials",
+      "slug": "office-chairs-essentials",
+      "description": "Dependable everyday value for the workday: supportive office chairs that do the job well.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Chairs+Essentials",
+      "parentId": 2,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 21,
+      "name": "High-Back Chairs",
+      "slug": "office-essentials-high-back",
+      "description": "High-back office chairs with adjustable height and full back support for long desk hours.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Essentials+High+Back",
+      "parentId": 20,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 22,
+      "name": "Low-Back Chairs",
+      "slug": "office-essentials-low-back",
+      "description": "Compact low-back office chairs for workstations, reception desks and study tables.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Essentials+Low+Back",
+      "parentId": 20,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 23,
+      "name": "Waiting Chairs",
+      "slug": "office-essentials-waiting",
+      "description": "Steel waiting chairs in two, three and four seats for lobbies, clinics and offices.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Essentials+Waiting",
+      "parentId": 20,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 24,
+      "name": "Premium",
+      "slug": "office-chairs-premium",
+      "description": "A heavier build and a finer finish: executive and ergonomic chairs for the people who sit longest.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Chairs+Premium",
+      "parentId": 2,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 25,
+      "name": "High-Back Chairs",
+      "slug": "office-premium-high-back",
+      "description": "Executive and ergonomic high-back chairs with finer upholstery and fuller adjustment.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Premium+High+Back",
+      "parentId": 24,
+      "isActive": true,
+      "sortOrder": 1,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 26,
+      "name": "Low-Back Chairs",
+      "slug": "office-premium-low-back",
+      "description": "Premium low-back chairs with a refined finish for meeting rooms and managers' desks.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Premium+Low+Back",
+      "parentId": 24,
+      "isActive": true,
+      "sortOrder": 2,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
+    },
+    {
+      "id": 27,
+      "name": "Waiting Chairs",
+      "slug": "office-premium-waiting",
+      "description": "Cushioned and heavy-gauge steel waiting seating that sets a calm first impression.",
+      "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Office+Premium+Waiting",
+      "parentId": 24,
+      "isActive": true,
+      "sortOrder": 3,
+      "showInMainMenu": false,
+      "menuOrder": 0,
+      "createdAt": "2026-04-10T09:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z"
     }
   ],
   "products": [
     {
       "id": 1,
-      "name": "ProBook Ultra Laptop 15\"",
-      "slug": "probook-ultra-laptop-15",
-      "sku": "LAP-PBU-15-001",
-      "shortDescription": "Powerful 15-inch laptop with Intel Core i7 processor and 16GB RAM",
-      "description": "The ProBook Ultra Laptop 15\" is engineered for professionals who demand performance. Equipped with the latest Intel Core i7 processor, 16GB DDR5 RAM, and a 512GB NVMe SSD, this laptop handles everything from intensive multitasking to creative workloads with ease. The stunning 15.6-inch FHD IPS display delivers vivid colors and sharp details for an immersive visual experience.",
-      "categoryId": 6,
-      "brand": "ProBook",
+      "name": "Classic Plastic Armchair",
+      "slug": "classic-plastic-armchair",
+      "sku": "PLE-ARM-01",
+      "shortDescription": "A sturdy everyday plastic armchair with a curved back and broad arms that stacks neatly.",
+      "description": "The armchair most homes reach for first: a gently curved back, broad arms and a seat that sits well for a long conversation on the veranda or an extra guest at the table.\n\nMoulded in one piece, it has no joints to loosen and nothing to rust. When the gathering is over, the chairs stack into a compact column against the wall.\n\nSpecifications: Material: Virgin polypropylene; Finish: Matte; Seat height: approx. 43 cm; Overall size: approx. 57 × 54 × 80 cm; Weight capacity: approx. 100 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 11,
+      "brand": "Nilkamal",
       "images": [
-        "https://placehold.co/600x400/1a1a2e/FFFFFF?text=ProBook+Laptop",
-        "https://placehold.co/600x400/16213e/FFFFFF?text=ProBook+Side",
-        "https://placehold.co/600x400/0f3460/FFFFFF?text=ProBook+Open"
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Armchair+In+situ"
       ],
-      "price": 74999,
-      "comparePrice": 89999,
-      "costPrice": 55000,
-      "stock": 45,
-      "lowStockThreshold": 10,
-      "weight": 1.8,
+      "price": 899,
+      "comparePrice": 0,
+      "costPrice": 620,
+      "stock": 90,
+      "lowStockThreshold": 8,
+      "weight": 3.2,
       "dimensions": {
-        "length": 35.7,
-        "width": 23.5,
-        "height": 1.9
+        "length": 57,
+        "width": 54,
+        "height": 80
       },
       "variants": [
         {
           "id": "v1",
-          "name": "8GB RAM / 256GB SSD",
-          "price": 64999,
-          "stock": 20,
-          "sku": "LAP-PBU-15-8-256",
+          "name": "White",
+          "price": 899,
+          "stock": 28,
+          "sku": "PLE-ARM-01-WHT",
           "attributes": {
-            "Configuration": "8GB · 256GB SSD"
-          }
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
         },
         {
           "id": "v2",
-          "name": "16GB RAM / 512GB SSD",
-          "price": 74999,
-          "stock": 15,
-          "sku": "LAP-PBU-15-16-512",
+          "name": "Marble Beige",
+          "price": 899,
+          "stock": 31,
+          "sku": "PLE-ARM-01-BGE",
           "attributes": {
-            "Configuration": "16GB · 512GB SSD"
-          }
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
         },
         {
           "id": "v3",
-          "name": "32GB RAM / 1TB SSD",
-          "price": 94999,
-          "stock": 10,
-          "sku": "LAP-PBU-15-32-1TB",
+          "name": "Coffee Brown",
+          "price": 899,
+          "stock": 13,
+          "sku": "PLE-ARM-01-BRN",
           "attributes": {
-            "Configuration": "32GB · 1TB SSD"
-          }
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v4",
+          "name": "Brick Red",
+          "price": 899,
+          "stock": 18,
+          "sku": "PLE-ARM-01-RED",
+          "attributes": {
+            "Colour": "Brick Red"
+          },
+          "swatchHex": "#9e3b2c"
         }
       ],
       "tags": [
-        "laptop",
-        "intel",
-        "i7",
-        "ultrabook",
-        "work",
-        "productivity"
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "stackable",
+        "outdoor"
       ],
       "featured": true,
-      "trending": true,
+      "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 4.6,
-      "totalReviews": 128,
-      "metaTitle": "ProBook Ultra Laptop 15\" - Intel Core i7 | Best Price",
-      "metaDescription": "Buy ProBook Ultra Laptop 15\" with Intel Core i7, 16GB RAM, 512GB SSD. Free shipping available.",
-      "createdAt": "2025-01-10T00:00:00.000Z",
-      "updatedAt": "2025-03-01T00:00:00.000Z",
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Classic Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "A sturdy everyday plastic armchair with a curved back and broad arms that stacks neatly. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-20T13:00:00.000Z",
+      "updatedAt": "2026-06-25T13:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        4,
-        6
+        8
       ],
       "relatedProductIds": [
-        13,
+        2,
         3,
-        16,
         4,
-        6
+        5
       ]
     },
     {
       "id": 2,
-      "name": "SoundWave Pro Wireless Earbuds",
-      "slug": "soundwave-pro-wireless-earbuds",
-      "sku": "AUD-SWP-TWS-001",
-      "shortDescription": "Premium true wireless earbuds with active noise cancellation",
-      "description": "Experience audio like never before with SoundWave Pro Wireless Earbuds. Featuring advanced Active Noise Cancellation (ANC) technology, 30-hour total battery life, and premium sound quality. The ergonomic design ensures a secure, comfortable fit for all-day wear. IPX5 water resistance makes them perfect for workouts and outdoor activities.",
-      "categoryId": 7,
-      "brand": "SoundWave",
+      "name": "Ribbed-Back Plastic Armchair",
+      "slug": "ribbed-back-plastic-armchair",
+      "sku": "PLE-ARM-02",
+      "shortDescription": "An everyday plastic armchair whose ribbed back lets air through on warm afternoons.",
+      "description": "Vertical ribs run the height of the back, letting air move through on warm afternoons and giving the chair a crisp, tailored line.\n\nThe arms are wide enough to rest a cup on, and the seat has a slight scoop so it holds you comfortably without cushions.\n\nSpecifications: Material: Virgin polypropylene; Finish: Matte; Seat height: approx. 43 cm; Overall size: approx. 57 × 54 × 80 cm; Weight capacity: approx. 100 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 11,
+      "brand": "Nilkamal",
       "images": [
-        "https://placehold.co/600x400/1a1a2e/FFFFFF?text=SoundWave+Earbuds",
-        "https://placehold.co/600x400/16213e/FFFFFF?text=SoundWave+Case"
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair+In+situ"
       ],
-      "price": 8999,
-      "comparePrice": 12999,
-      "costPrice": 5500,
-      "stock": 120,
-      "lowStockThreshold": 20,
-      "weight": 0.065,
+      "price": 999,
+      "comparePrice": 1149,
+      "costPrice": 650,
+      "stock": 77,
+      "lowStockThreshold": 8,
+      "weight": 3.3,
       "dimensions": {
-        "length": 6.5,
-        "width": 4.2,
-        "height": 2.8
+        "length": 57,
+        "width": 54,
+        "height": 81
       },
       "variants": [
         {
           "id": "v1",
-          "name": "Midnight Black",
-          "price": 8999,
-          "stock": 50,
-          "sku": "AUD-SWP-TWS-BLK",
+          "name": "White",
+          "price": 999,
+          "stock": 32,
+          "sku": "PLE-ARM-02-WHT",
           "attributes": {
-            "Color": "Midnight Black"
+            "Colour": "White"
           },
-          "swatchHex": "#1a1a2e"
+          "swatchHex": "#f4f2ee"
         },
         {
           "id": "v2",
-          "name": "Pearl White",
-          "price": 8999,
-          "stock": 40,
-          "sku": "AUD-SWP-TWS-WHT",
+          "name": "Marble Beige",
+          "price": 999,
+          "stock": 25,
+          "sku": "PLE-ARM-02-BGE",
           "attributes": {
-            "Color": "Pearl White"
+            "Colour": "Marble Beige"
           },
-          "swatchHex": "#f3f1ea"
+          "swatchHex": "#d9cbb2"
         },
         {
           "id": "v3",
-          "name": "Navy Blue",
-          "price": 8999,
-          "stock": 30,
-          "sku": "AUD-SWP-TWS-NVY",
+          "name": "Iron Black",
+          "price": 999,
+          "stock": 20,
+          "sku": "PLE-ARM-02-BLK",
           "attributes": {
-            "Color": "Navy Blue"
+            "Colour": "Iron Black"
           },
-          "swatchHex": "#1e3a5f"
+          "swatchHex": "#2b2b2b"
         }
       ],
       "tags": [
-        "earbuds",
-        "wireless",
-        "anc",
-        "bluetooth",
-        "audio",
-        "tws"
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "stackable",
+        "ribbed"
       ],
-      "featured": true,
-      "trending": true,
-      "hot": true,
+      "featured": false,
+      "trending": false,
+      "hot": false,
       "isActive": true,
-      "rating": 4.8,
-      "totalReviews": 342,
-      "metaTitle": "SoundWave Pro Wireless Earbuds - ANC | True Wireless",
-      "metaDescription": "Shop SoundWave Pro Wireless Earbuds with Active Noise Cancellation, 30hr battery, IPX5 rating.",
-      "createdAt": "2025-01-15T00:00:00.000Z",
-      "updatedAt": "2025-02-20T00:00:00.000Z",
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Ribbed-Back Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "An everyday plastic armchair whose ribbed back lets air through on warm afternoons. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-10T14:00:00.000Z",
+      "updatedAt": "2026-08-15T14:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        8
+      ],
       "relatedProductIds": [
-        10,
+        1,
+        3,
         4,
-        3
+        5
       ]
     },
     {
       "id": 3,
-      "name": "FitPulse Smartwatch Series 5",
-      "slug": "fitpulse-smartwatch-series-5",
-      "sku": "ELC-FPS-SW5-001",
-      "shortDescription": "Advanced health tracking smartwatch with GPS and AMOLED display",
-      "description": "The FitPulse Smartwatch Series 5 is your ultimate health and fitness companion. Track your heart rate, SpO2, sleep quality, and stress levels with clinical-grade accuracy. Built-in GPS for precise route tracking, 7-day battery life, and 100+ workout modes. The always-on AMOLED display looks stunning in any lighting condition.",
-      "categoryId": 1,
-      "brand": "FitPulse",
+      "name": "Slat-Back Plastic Armchair",
+      "slug": "slat-back-plastic-armchair",
+      "sku": "PLE-ARM-03",
+      "shortDescription": "A slat-back plastic armchair with the look of a garden chair and the ease of plastic.",
+      "description": "Horizontal slats give this armchair the easy charm of a garden chair, with none of the oiling and upkeep that timber asks for.\n\nThe Teak colour reads warm against brick and greenery, while White keeps a terrace light and bright. All three colours share the same sturdy frame.\n\nSpecifications: Material: Virgin polypropylene; Finish: Wood-grain texture; Seat height: approx. 43 cm; Overall size: approx. 57 × 54 × 80 cm; Weight capacity: approx. 100 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 11,
+      "brand": "Nilkamal",
       "images": [
-        "https://placehold.co/600x400/0f3460/FFFFFF?text=FitPulse+Watch",
-        "https://placehold.co/600x400/533483/FFFFFF?text=FitPulse+Side"
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slat-Back+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slat-Back+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slat-Back+Plastic+Armchair+In+situ"
       ],
-      "price": 14999,
-      "comparePrice": 19999,
-      "costPrice": 9000,
-      "stock": 75,
-      "lowStockThreshold": 15,
-      "weight": 0.045,
-      "dimensions": {
-        "length": 4.5,
-        "width": 3.8,
-        "height": 1
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Black / Rubber Band",
-          "price": 14999,
-          "stock": 30,
-          "sku": "ELC-FPS-SW5-BLK-R"
-        },
-        {
-          "id": "v2",
-          "name": "Silver / Metal Band",
-          "price": 16999,
-          "stock": 25,
-          "sku": "ELC-FPS-SW5-SLV-M"
-        },
-        {
-          "id": "v3",
-          "name": "Gold / Leather Band",
-          "price": 18999,
-          "stock": 20,
-          "sku": "ELC-FPS-SW5-GLD-L"
-        }
-      ],
-      "tags": [
-        "smartwatch",
-        "fitness",
-        "gps",
-        "health",
-        "amoled",
-        "wearable"
-      ],
-      "featured": true,
-      "trending": false,
-      "hot": true,
-      "isActive": true,
-      "rating": 4.5,
-      "totalReviews": 215,
-      "metaTitle": "FitPulse Smartwatch Series 5 - Health & Fitness Tracker",
-      "metaDescription": "Buy FitPulse Smartwatch Series 5 with GPS, heart rate monitor, SpO2 tracking and 7-day battery.",
-      "createdAt": "2025-01-20T00:00:00.000Z",
-      "updatedAt": "2025-02-15T00:00:00.000Z"
-    },
-    {
-      "id": 4,
-      "name": "MechKey RGB Gaming Keyboard",
-      "slug": "mechkey-rgb-gaming-keyboard",
-      "sku": "ELC-MKB-RGB-001",
-      "shortDescription": "Mechanical gaming keyboard with per-key RGB backlight and tactile switches",
-      "description": "Dominate your game with the MechKey RGB Gaming Keyboard. Features genuine mechanical switches rated for 100 million keystrokes, full per-key RGB customization with 16 million colors, and a durable aircraft-grade aluminum frame. Anti-ghosting with N-key rollover ensures every keystroke is registered, even in the most intense gaming sessions.",
-      "categoryId": 1,
-      "brand": "MechKey",
-      "images": [
-        "https://placehold.co/600x400/1a1a2e/FFFFFF?text=MechKey+Keyboard",
-        "https://placehold.co/600x400/16213e/FFFFFF?text=MechKey+RGB"
-      ],
-      "price": 6499,
-      "comparePrice": 8999,
-      "costPrice": 3800,
-      "stock": 60,
-      "lowStockThreshold": 12,
-      "weight": 1.2,
-      "dimensions": {
-        "length": 44,
-        "width": 13.5,
-        "height": 3.8
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Blue Switches (Clicky)",
-          "price": 6499,
-          "stock": 25,
-          "sku": "ELC-MKB-RGB-BLU"
-        },
-        {
-          "id": "v2",
-          "name": "Red Switches (Linear)",
-          "price": 6499,
-          "stock": 20,
-          "sku": "ELC-MKB-RGB-RED"
-        },
-        {
-          "id": "v3",
-          "name": "Brown Switches (Tactile)",
-          "price": 6499,
-          "stock": 15,
-          "sku": "ELC-MKB-RGB-BRN"
-        }
-      ],
-      "tags": [
-        "keyboard",
-        "mechanical",
-        "gaming",
-        "rgb",
-        "tactile"
-      ],
-      "featured": false,
-      "trending": true,
-      "hot": true,
-      "isActive": true,
-      "rating": 4.7,
-      "totalReviews": 189,
-      "metaTitle": "MechKey RGB Gaming Keyboard - Mechanical Switches",
-      "metaDescription": "Buy MechKey RGB Mechanical Gaming Keyboard with per-key RGB, aluminum frame, N-key rollover.",
-      "createdAt": "2025-02-01T00:00:00.000Z",
-      "updatedAt": "2025-02-28T00:00:00.000Z",
-      "frequentlyBoughtTogetherIds": [
-        1,
-        6
-      ],
-      "relatedProductIds": [
-        3,
-        16,
-        13
-      ]
-    },
-    {
-      "id": 5,
-      "name": "Urban Classic Cotton T-Shirt",
-      "slug": "urban-classic-cotton-t-shirt",
-      "sku": "CLT-UCT-CRW-001",
-      "shortDescription": "Premium 100% organic cotton crew neck t-shirt",
-      "description": "Made from 100% GOTS-certified organic cotton, the Urban Classic T-Shirt is the foundation of any wardrobe. The relaxed, slightly oversized fit offers comfort without compromising style. Pre-shrunk fabric ensures it maintains its shape wash after wash. Available in a range of versatile colors.",
-      "categoryId": 2,
-      "brand": "Urban Threads",
-      "images": [
-        "https://placehold.co/600x400/764ba2/FFFFFF?text=Urban+T-Shirt",
-        "https://placehold.co/600x400/533483/FFFFFF?text=Urban+Back"
-      ],
-      "price": 899,
-      "comparePrice": 1299,
-      "costPrice": 400,
-      "stock": 250,
-      "lowStockThreshold": 30,
-      "weight": 0.18,
-      "dimensions": {
-        "length": 30,
-        "width": 25,
-        "height": 0.5
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "S / White",
-          "price": 899,
-          "stock": 50,
-          "sku": "CLT-UCT-CRW-S-WHT",
-          "attributes": {
-            "Size": "S",
-            "Color": "White"
-          },
-          "swatchHex": "#ffffff"
-        },
-        {
-          "id": "v2",
-          "name": "M / White",
-          "price": 899,
-          "stock": 60,
-          "sku": "CLT-UCT-CRW-M-WHT",
-          "attributes": {
-            "Size": "M",
-            "Color": "White"
-          },
-          "swatchHex": "#ffffff"
-        },
-        {
-          "id": "v3",
-          "name": "L / White",
-          "price": 899,
-          "stock": 55,
-          "sku": "CLT-UCT-CRW-L-WHT",
-          "attributes": {
-            "Size": "L",
-            "Color": "White"
-          },
-          "swatchHex": "#ffffff"
-        },
-        {
-          "id": "v4",
-          "name": "XL / White",
-          "price": 899,
-          "stock": 40,
-          "sku": "CLT-UCT-CRW-XL-WHT",
-          "attributes": {
-            "Size": "XL",
-            "Color": "White"
-          },
-          "swatchHex": "#ffffff"
-        },
-        {
-          "id": "v5",
-          "name": "S / Black",
-          "price": 899,
-          "stock": 45,
-          "sku": "CLT-UCT-CRW-S-BLK",
-          "attributes": {
-            "Size": "S",
-            "Color": "Black"
-          },
-          "swatchHex": "#1a1a1a"
-        }
-      ],
-      "tags": [
-        "tshirt",
-        "cotton",
-        "organic",
-        "casual",
-        "unisex",
-        "basics"
-      ],
-      "featured": false,
-      "trending": false,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.3,
-      "totalReviews": 567,
-      "metaTitle": "Urban Classic Cotton T-Shirt - Organic | Sustainable Fashion",
-      "metaDescription": "Shop Urban Classic 100% organic cotton t-shirts. Comfortable, sustainable and stylish.",
-      "createdAt": "2025-02-10T00:00:00.000Z",
-      "updatedAt": "2025-03-05T00:00:00.000Z"
-    },
-    {
-      "id": 6,
-      "name": "ZenPro USB-C 7-in-1 Hub",
-      "slug": "zenpro-usb-c-7-in-1-hub",
-      "sku": "ELC-ZPH-7C1-001",
-      "shortDescription": "Compact 7-in-1 USB-C hub with 4K HDMI, 100W PD charging and SD card reader",
-      "description": "The ZenPro USB-C 7-in-1 Hub transforms your single USB-C port into a productivity powerhouse. Connects up to 7 devices simultaneously: 4K@60Hz HDMI, 100W Power Delivery pass-through, 2x USB-A 3.0, USB-C data, SD and microSD card readers. The slim, pocket-friendly design makes it perfect for on-the-go professionals.",
-      "categoryId": 1,
-      "brand": "ZenPro",
-      "images": [
-        "https://placehold.co/600x400/2196f3/FFFFFF?text=ZenPro+Hub",
-        "https://placehold.co/600x400/1976d2/FFFFFF?text=ZenPro+Ports"
-      ],
-      "price": 3499,
-      "comparePrice": 4999,
-      "costPrice": 1800,
-      "stock": 90,
-      "lowStockThreshold": 15,
-      "weight": 0.095,
-      "dimensions": {
-        "length": 11.5,
-        "width": 3.5,
-        "height": 1.4
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Space Gray",
-          "price": 3499,
-          "stock": 50,
-          "sku": "ELC-ZPH-7C1-GRY"
-        },
-        {
-          "id": "v2",
-          "name": "Silver",
-          "price": 3499,
-          "stock": 40,
-          "sku": "ELC-ZPH-7C1-SLV"
-        }
-      ],
-      "tags": [
-        "usb-c",
-        "hub",
-        "docking",
-        "4k",
-        "hdmi",
-        "productivity"
-      ],
-      "featured": false,
-      "trending": true,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.5,
-      "totalReviews": 98,
-      "metaTitle": "ZenPro USB-C 7-in-1 Hub - 4K HDMI, 100W PD | Best Dock",
-      "metaDescription": "Buy ZenPro 7-in-1 USB-C Hub with 4K HDMI, 100W Power Delivery, USB 3.0 and SD card readers.",
-      "createdAt": "2025-02-20T00:00:00.000Z",
-      "updatedAt": "2025-03-10T00:00:00.000Z"
-    },
-    {
-      "id": 7,
-      "name": "Banarasi Silk Saree",
-      "slug": "banarasi-silk-saree",
-      "sku": "SAR-BNR-SLK-001",
-      "shortDescription": "Handwoven Banarasi silk saree with rich zari work",
-      "description": "This exquisite Banarasi silk saree is handwoven by master artisans of Varanasi. Featuring intricate gold zari work with traditional motifs, it comes with an unstitched blouse piece. The rich texture and luxurious feel make it perfect for weddings, festivals, and special occasions.",
-      "categoryId": 14,
-      "brand": "WeaveKraft",
-      "images": [
-        "https://placehold.co/600x400/c2185b/FFFFFF?text=Banarasi+Saree",
-        "https://placehold.co/600x400/d81b60/FFFFFF?text=Saree+Detail",
-        "https://placehold.co/600x400/e91e63/FFFFFF?text=Saree+Pallu"
-      ],
-      "price": 5999,
-      "comparePrice": 8999,
-      "costPrice": 3500,
-      "stock": 30,
-      "lowStockThreshold": 5,
-      "weight": 0.6,
-      "dimensions": {
-        "length": 30,
-        "width": 25,
-        "height": 5
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Maroon & Gold",
-          "price": 5999,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-MRN"
-        },
-        {
-          "id": "v2",
-          "name": "Royal Blue & Gold",
-          "price": 5999,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-BLU"
-        },
-        {
-          "id": "v3",
-          "name": "Green & Gold",
-          "price": 6499,
-          "stock": 10,
-          "sku": "SAR-BNR-SLK-GRN"
-        }
-      ],
-      "tags": [
-        "saree",
-        "silk",
-        "banarasi",
-        "wedding",
-        "ethnic",
-        "traditional"
-      ],
-      "featured": true,
-      "trending": true,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.8,
-      "totalReviews": 215,
-      "metaTitle": "Banarasi Silk Saree - Handwoven Zari Work | Best Price",
-      "metaDescription": "Buy authentic Banarasi silk saree with intricate zari work. Perfect for weddings and festivals.",
-      "createdAt": "2025-01-15T00:00:00.000Z",
-      "updatedAt": "2025-03-01T00:00:00.000Z"
-    },
-    {
-      "id": 8,
-      "name": "Designer Anarkali Kurta Set",
-      "slug": "designer-anarkali-kurta-set",
-      "sku": "KRT-ANK-DSG-001",
-      "shortDescription": "Embroidered Anarkali kurta with dupatta and palazzo",
-      "description": "Stunning designer Anarkali kurta set featuring delicate chikankari embroidery on premium georgette fabric. Comes with matching palazzo pants and a net dupatta with lace border. Flattering flared silhouette suitable for festivities and celebrations.",
-      "categoryId": 15,
-      "brand": "EthnicVogue",
-      "images": [
-        "https://placehold.co/600x400/ad1457/FFFFFF?text=Anarkali+Kurta",
-        "https://placehold.co/600x400/c2185b/FFFFFF?text=Kurta+Back",
-        "https://placehold.co/600x400/d81b60/FFFFFF?text=Kurta+Detail"
-      ],
-      "price": 3499,
-      "comparePrice": 4999,
-      "costPrice": 2000,
-      "stock": 50,
+      "price": 1149,
+      "comparePrice": 0,
+      "costPrice": 700,
+      "stock": 68,
       "lowStockThreshold": 8,
-      "weight": 0.5,
+      "weight": 3.5,
       "dimensions": {
-        "length": 28,
-        "width": 22,
-        "height": 4
+        "length": 58,
+        "width": 55,
+        "height": 82
       },
       "variants": [
         {
           "id": "v1",
-          "name": "S",
-          "price": 3499,
-          "stock": 12,
-          "sku": "KRT-ANK-DSG-S"
+          "name": "White",
+          "price": 1149,
+          "stock": 18,
+          "sku": "PLE-ARM-03-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
         },
         {
           "id": "v2",
-          "name": "M",
-          "price": 3499,
-          "stock": 15,
-          "sku": "KRT-ANK-DSG-M"
-        },
-        {
-          "id": "v3",
-          "name": "L",
-          "price": 3499,
-          "stock": 13,
-          "sku": "KRT-ANK-DSG-L"
-        },
-        {
-          "id": "v4",
-          "name": "XL",
-          "price": 3499,
-          "stock": 10,
-          "sku": "KRT-ANK-DSG-XL"
-        }
-      ],
-      "tags": [
-        "kurta",
-        "anarkali",
-        "ethnic",
-        "embroidery",
-        "festive",
-        "women"
-      ],
-      "featured": true,
-      "trending": false,
-      "hot": true,
-      "isActive": true,
-      "rating": 4.5,
-      "totalReviews": 143,
-      "metaTitle": "Designer Anarkali Kurta Set - Chikankari Embroidery",
-      "metaDescription": "Buy designer Anarkali kurta set with chikankari embroidery. Includes palazzo and dupatta.",
-      "createdAt": "2025-01-20T00:00:00.000Z",
-      "updatedAt": "2025-03-05T00:00:00.000Z"
-    },
-    {
-      "id": 9,
-      "name": "AirStride Running Shoes",
-      "slug": "airstride-running-shoes",
-      "sku": "FTW-ASR-RUN-001",
-      "shortDescription": "Lightweight running shoes with responsive cushioning",
-      "description": "AirStride running shoes are engineered for performance. Featuring a breathable knit upper, responsive foam midsole, and durable rubber outsole with multi-directional grip. Perfect for daily runs, gym workouts, and casual wear. Ultra-lightweight at just 250g per shoe.",
-      "categoryId": 12,
-      "brand": "AirStride",
-      "images": [
-        "https://placehold.co/600x400/607d8b/FFFFFF?text=Running+Shoes",
-        "https://placehold.co/600x400/546e7a/FFFFFF?text=Shoes+Side",
-        "https://placehold.co/600x400/455a64/FFFFFF?text=Shoes+Sole"
-      ],
-      "price": 3999,
-      "comparePrice": 5999,
-      "costPrice": 2200,
-      "stock": 80,
-      "lowStockThreshold": 15,
-      "weight": 0.5,
-      "dimensions": {
-        "length": 32,
-        "width": 12,
-        "height": 12
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "UK 7 - Black",
-          "price": 3999,
-          "stock": 20,
-          "sku": "FTW-ASR-7-BLK",
+          "name": "Teak",
+          "price": 1149,
+          "stock": 35,
+          "sku": "PLE-ARM-03-TEK",
           "attributes": {
-            "Size": "UK 7",
-            "Color": "Black"
+            "Colour": "Teak"
           },
-          "swatchHex": "#1a1a1a"
-        },
-        {
-          "id": "v2",
-          "name": "UK 8 - Black",
-          "price": 3999,
-          "stock": 20,
-          "sku": "FTW-ASR-8-BLK",
-          "attributes": {
-            "Size": "UK 8",
-            "Color": "Black"
-          },
-          "swatchHex": "#1a1a1a"
-        },
-        {
-          "id": "v3",
-          "name": "UK 9 - Blue",
-          "price": 3999,
-          "stock": 20,
-          "sku": "FTW-ASR-9-BLU",
-          "attributes": {
-            "Size": "UK 9",
-            "Color": "Blue"
-          },
-          "swatchHex": "#1e3a5f"
-        },
-        {
-          "id": "v4",
-          "name": "UK 10 - Blue",
-          "price": 3999,
-          "stock": 20,
-          "sku": "FTW-ASR-10-BLU",
-          "attributes": {
-            "Size": "UK 10",
-            "Color": "Blue"
-          },
-          "swatchHex": "#1e3a5f"
-        }
-      ],
-      "tags": [
-        "shoes",
-        "running",
-        "sports",
-        "fitness",
-        "lightweight",
-        "sneakers"
-      ],
-      "featured": true,
-      "trending": true,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.4,
-      "totalReviews": 312,
-      "metaTitle": "AirStride Running Shoes - Lightweight & Responsive",
-      "metaDescription": "Buy AirStride running shoes with responsive cushioning. Breathable, lightweight, and durable.",
-      "createdAt": "2025-02-01T00:00:00.000Z",
-      "updatedAt": "2025-03-10T00:00:00.000Z",
-      "relatedProductIds": [
-        12,
-        19
-      ]
-    },
-    {
-      "id": 10,
-      "name": "BassBox Bluetooth Speaker",
-      "slug": "bassbox-bluetooth-speaker",
-      "sku": "AUD-BBX-SPK-001",
-      "shortDescription": "Portable waterproof Bluetooth speaker with deep bass",
-      "description": "BassBox delivers room-filling sound in a compact, portable design. IPX7 waterproof rating means it can handle rain, pool splashes, and showers. 24-hour battery life, built-in microphone for calls, and TWS pairing to connect two speakers for stereo sound.",
-      "categoryId": 7,
-      "brand": "BassBox",
-      "images": [
-        "https://placehold.co/600x400/9c27b0/FFFFFF?text=Bluetooth+Speaker",
-        "https://placehold.co/600x400/7b1fa2/FFFFFF?text=Speaker+Side"
-      ],
-      "price": 2999,
-      "comparePrice": 4499,
-      "costPrice": 1500,
-      "stock": 100,
-      "lowStockThreshold": 20,
-      "weight": 0.45,
-      "dimensions": {
-        "length": 18,
-        "width": 7,
-        "height": 7
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Midnight Black",
-          "price": 2999,
-          "stock": 40,
-          "sku": "AUD-BBX-SPK-BLK"
-        },
-        {
-          "id": "v2",
-          "name": "Ocean Blue",
-          "price": 2999,
-          "stock": 30,
-          "sku": "AUD-BBX-SPK-BLU"
+          "swatchHex": "#8a5a35"
         },
         {
           "id": "v3",
           "name": "Olive Green",
-          "price": 2999,
-          "stock": 30,
-          "sku": "AUD-BBX-SPK-GRN"
-        }
-      ],
-      "tags": [
-        "speaker",
-        "bluetooth",
-        "portable",
-        "waterproof",
-        "bass",
-        "wireless"
-      ],
-      "featured": false,
-      "trending": true,
-      "hot": true,
-      "isActive": true,
-      "rating": 4.3,
-      "totalReviews": 189,
-      "metaTitle": "BassBox Bluetooth Speaker - IPX7 Waterproof, 24hr Battery",
-      "metaDescription": "Buy BassBox portable Bluetooth speaker with deep bass and IPX7 waterproof rating.",
-      "createdAt": "2025-01-25T00:00:00.000Z",
-      "updatedAt": "2025-03-08T00:00:00.000Z"
-    },
-    {
-      "id": 11,
-      "name": "Ceramic Dinner Set - 24 Piece",
-      "slug": "ceramic-dinner-set-24-piece",
-      "sku": "KIT-CDS-24P-001",
-      "shortDescription": "Premium bone china dinner set with elegant floral design",
-      "description": "Elevate your dining experience with this 24-piece premium bone china dinner set. Includes 6 dinner plates, 6 quarter plates, 6 bowls, 2 serving bowls, 2 serving plates, and 2 spoons. Microwave and dishwasher safe with chip-resistant design and lead-free glaze.",
-      "categoryId": 11,
-      "brand": "CeraHome",
-      "images": [
-        "https://placehold.co/600x400/795548/FFFFFF?text=Dinner+Set",
-        "https://placehold.co/600x400/6d4c41/FFFFFF?text=Plate+Detail",
-        "https://placehold.co/600x400/5d4037/FFFFFF?text=Full+Set"
-      ],
-      "price": 4999,
-      "comparePrice": 7499,
-      "costPrice": 2800,
-      "stock": 25,
-      "lowStockThreshold": 5,
-      "weight": 8.5,
-      "dimensions": {
-        "length": 45,
-        "width": 40,
-        "height": 25
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Royal Floral",
-          "price": 4999,
-          "stock": 10,
-          "sku": "KIT-CDS-24P-FLR"
-        },
-        {
-          "id": "v2",
-          "name": "Classic White",
-          "price": 4499,
+          "price": 1149,
           "stock": 15,
-          "sku": "KIT-CDS-24P-WHT"
+          "sku": "PLE-ARM-03-OLV",
+          "attributes": {
+            "Colour": "Olive Green"
+          },
+          "swatchHex": "#6b7044"
         }
       ],
       "tags": [
-        "dinner set",
-        "bone china",
-        "kitchen",
-        "dining",
-        "crockery",
-        "housewarming"
-      ],
-      "featured": true,
-      "trending": false,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.6,
-      "totalReviews": 87,
-      "metaTitle": "24-Piece Ceramic Dinner Set - Premium Bone China",
-      "metaDescription": "Buy premium 24-piece bone china dinner set. Microwave safe, dishwasher safe, elegant design.",
-      "createdAt": "2025-02-10T00:00:00.000Z",
-      "updatedAt": "2025-03-05T00:00:00.000Z"
-    },
-    {
-      "id": 12,
-      "name": "ProFlex Yoga Mat",
-      "slug": "proflex-yoga-mat",
-      "sku": "SPT-PFX-YGA-001",
-      "shortDescription": "Extra thick non-slip yoga mat with alignment lines",
-      "description": "ProFlex yoga mat is designed for all levels of practice. 6mm thick TPE material provides excellent cushioning for joints while maintaining stability. Laser-etched alignment lines help perfect your form. Comes with a carrying strap. Eco-friendly, non-toxic, and free from PVC, latex, and heavy metals.",
-      "categoryId": 4,
-      "brand": "ProFlex",
-      "images": [
-        "https://placehold.co/600x400/ff9800/FFFFFF?text=Yoga+Mat",
-        "https://placehold.co/600x400/f57c00/FFFFFF?text=Mat+Rolled"
-      ],
-      "price": 1499,
-      "comparePrice": 2499,
-      "costPrice": 700,
-      "stock": 60,
-      "lowStockThreshold": 10,
-      "weight": 1.2,
-      "dimensions": {
-        "length": 183,
-        "width": 61,
-        "height": 0.6
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Purple",
-          "price": 1499,
-          "stock": 20,
-          "sku": "SPT-PFX-YGA-PRP"
-        },
-        {
-          "id": "v2",
-          "name": "Teal",
-          "price": 1499,
-          "stock": 20,
-          "sku": "SPT-PFX-YGA-TEL"
-        },
-        {
-          "id": "v3",
-          "name": "Grey",
-          "price": 1499,
-          "stock": 20,
-          "sku": "SPT-PFX-YGA-GRY"
-        }
-      ],
-      "tags": [
-        "yoga",
-        "mat",
-        "fitness",
-        "exercise",
-        "non-slip",
-        "eco-friendly"
-      ],
-      "featured": false,
-      "trending": true,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.7,
-      "totalReviews": 256,
-      "metaTitle": "ProFlex Yoga Mat - 6mm Thick, Non-Slip with Alignment Lines",
-      "metaDescription": "Buy ProFlex eco-friendly yoga mat with alignment lines. Extra thick, non-slip, with carrying strap.",
-      "createdAt": "2025-02-15T00:00:00.000Z",
-      "updatedAt": "2025-03-12T00:00:00.000Z"
-    },
-    {
-      "id": 13,
-      "name": "VisionX 55\" Smart LED TV",
-      "slug": "visionx-55-smart-led-tv",
-      "sku": "ELC-VXN-55-001",
-      "shortDescription": "55-inch 4K Ultra HD Smart LED TV with Dolby Vision",
-      "description": "VisionX 55\" Smart LED TV delivers breathtaking picture quality with 4K Ultra HD resolution and Dolby Vision HDR. Built-in smart OS gives you access to all major streaming apps. Features 20W stereo speakers with Dolby Atmos, 3 HDMI ports, and screen mirroring. Ultra-slim bezel design.",
-      "categoryId": 1,
-      "brand": "VisionX",
-      "images": [
-        "https://placehold.co/600x400/1a1a2e/FFFFFF?text=Smart+TV+55",
-        "https://placehold.co/600x400/16213e/FFFFFF?text=TV+Side+View",
-        "https://placehold.co/600x400/0f3460/FFFFFF?text=TV+Remote"
-      ],
-      "price": 34999,
-      "comparePrice": 49999,
-      "costPrice": 24000,
-      "stock": 15,
-      "lowStockThreshold": 3,
-      "weight": 12.5,
-      "dimensions": {
-        "length": 124,
-        "width": 72,
-        "height": 8
-      },
-      "variants": [],
-      "tags": [
-        "tv",
-        "smart tv",
-        "4k",
-        "led",
-        "dolby",
-        "entertainment",
-        "electronics"
-      ],
-      "featured": true,
-      "trending": true,
-      "hot": true,
-      "isActive": true,
-      "rating": 4.5,
-      "totalReviews": 174,
-      "metaTitle": "VisionX 55\" 4K Smart LED TV - Dolby Vision & Atmos",
-      "metaDescription": "Buy VisionX 55\" 4K Smart LED TV with Dolby Vision HDR and Dolby Atmos sound.",
-      "createdAt": "2025-01-05T00:00:00.000Z",
-      "updatedAt": "2025-03-15T00:00:00.000Z"
-    },
-    {
-      "id": 14,
-      "name": "Cotton Bedsheet Set - King Size",
-      "slug": "cotton-bedsheet-set-king-size",
-      "sku": "HOM-CBS-KNG-001",
-      "shortDescription": "300 TC pure cotton bedsheet with 2 pillow covers",
-      "description": "Luxuriously soft 300 thread count pure cotton bedsheet set in king size. Includes one bedsheet (108x108 inches) and 2 pillow covers (18x28 inches). Reactive printed with vibrant colors that won't fade. Pre-shrunk fabric ensures long-lasting fit. Machine washable.",
-      "categoryId": 3,
-      "brand": "SleepNest",
-      "images": [
-        "https://placehold.co/600x400/4caf50/FFFFFF?text=Bedsheet+Set",
-        "https://placehold.co/600x400/388e3c/FFFFFF?text=Bedsheet+Pattern"
-      ],
-      "price": 1299,
-      "comparePrice": 1999,
-      "costPrice": 650,
-      "stock": 70,
-      "lowStockThreshold": 15,
-      "weight": 1,
-      "dimensions": {
-        "length": 35,
-        "width": 30,
-        "height": 8
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Floral Blue",
-          "price": 1299,
-          "stock": 25,
-          "sku": "HOM-CBS-KNG-FBL"
-        },
-        {
-          "id": "v2",
-          "name": "Geometric Grey",
-          "price": 1299,
-          "stock": 25,
-          "sku": "HOM-CBS-KNG-GGR"
-        },
-        {
-          "id": "v3",
-          "name": "Paisley Maroon",
-          "price": 1399,
-          "stock": 20,
-          "sku": "HOM-CBS-KNG-PMR"
-        }
-      ],
-      "tags": [
-        "bedsheet",
-        "cotton",
-        "king size",
-        "bedroom",
-        "home",
-        "pillow cover"
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "stackable",
+        "garden"
       ],
       "featured": false,
       "trending": false,
       "hot": false,
       "isActive": true,
-      "rating": 4.3,
-      "totalReviews": 198,
-      "metaTitle": "King Size Cotton Bedsheet Set - 300 TC with Pillow Covers",
-      "metaDescription": "Buy premium 300 TC cotton bedsheet with 2 pillow covers. Reactive printed, pre-shrunk, machine washable.",
-      "createdAt": "2025-02-05T00:00:00.000Z",
-      "updatedAt": "2025-03-08T00:00:00.000Z"
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Slat-Back Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "A slat-back plastic armchair with the look of a garden chair and the ease of plastic. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-08T12:00:00.000Z",
+      "updatedAt": "2026-07-17T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        8
+      ],
+      "relatedProductIds": [
+        2,
+        1,
+        4,
+        5
+      ]
     },
     {
-      "id": 15,
-      "name": "ProStrike Cricket Bat - English Willow",
-      "slug": "prostrike-cricket-bat-english-willow",
-      "sku": "SPT-PSK-CKT-001",
-      "shortDescription": "Grade A English willow cricket bat with premium grip",
-      "description": "ProStrike cricket bat crafted from Grade A English willow for superior stroke play. Features a thick edge profile for maximum power and a mid-to-low sweet spot ideal for front-foot play. Comes with premium octopus grip and padded toe guard. Full size (SH). Knocked-in and ready to play.",
-      "categoryId": 4,
-      "brand": "ProStrike",
+      "id": 4,
+      "name": "Classic Plastic Chair",
+      "slug": "classic-plastic-chair",
+      "sku": "PLE-CHR-01",
+      "shortDescription": "A dependable armless plastic chair that tucks under a table and stacks high.",
+      "description": "Simple, upright and endlessly useful: the armless chair for dining tables, study corners, functions and the extra seat every home needs.\n\nWithout arms it slides fully under a table edge, and a dozen stack into the footprint of one. A quick wipe is all the care it needs.\n\nSpecifications: Material: Virgin polypropylene; Finish: Matte; Seat height: approx. 44 cm; Overall size: approx. 46 × 50 × 82 cm; Weight capacity: approx. 90 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 12,
+      "brand": "Nilkamal",
       "images": [
-        "https://placehold.co/600x400/ff9800/FFFFFF?text=Cricket+Bat",
-        "https://placehold.co/600x400/f57c00/FFFFFF?text=Bat+Profile"
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Classic+Plastic+Chair+In+situ"
       ],
-      "price": 6999,
-      "comparePrice": 9999,
-      "costPrice": 4200,
-      "stock": 20,
-      "lowStockThreshold": 5,
-      "weight": 1.2,
+      "price": 699,
+      "comparePrice": 0,
+      "costPrice": 460,
+      "stock": 132,
+      "lowStockThreshold": 8,
+      "weight": 2.6,
       "dimensions": {
-        "length": 86,
-        "width": 11,
-        "height": 6
-      },
-      "variants": [],
-      "tags": [
-        "cricket",
-        "bat",
-        "english willow",
-        "sports",
-        "outdoor",
-        "game"
-      ],
-      "featured": false,
-      "trending": true,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.6,
-      "totalReviews": 92,
-      "metaTitle": "ProStrike Cricket Bat - Grade A English Willow",
-      "metaDescription": "Buy ProStrike English willow cricket bat. Grade A, thick edge, ready to play.",
-      "createdAt": "2025-01-30T00:00:00.000Z",
-      "updatedAt": "2025-03-10T00:00:00.000Z"
-    },
-    {
-      "id": 17,
-      "name": "Men's Premium Formal Shirt",
-      "slug": "mens-premium-formal-shirt",
-      "sku": "CLT-MFS-PRM-001",
-      "shortDescription": "Slim fit cotton formal shirt with wrinkle-free finish",
-      "description": "Elevate your professional wardrobe with this premium formal shirt. Made from 100% Egyptian cotton with a wrinkle-free finish that keeps you looking sharp all day. Features a semi-spread collar, single-button barrel cuffs, and a tailored slim fit. Available in classic solid colors.",
-      "categoryId": 9,
-      "brand": "UrbanEdge",
-      "images": [
-        "https://placehold.co/600x400/3f51b5/FFFFFF?text=Formal+Shirt",
-        "https://placehold.co/600x400/303f9f/FFFFFF?text=Shirt+Detail"
-      ],
-      "price": 1999,
-      "comparePrice": 2999,
-      "costPrice": 900,
-      "stock": 90,
-      "lowStockThreshold": 15,
-      "weight": 0.3,
-      "dimensions": {
-        "length": 30,
-        "width": 22,
-        "height": 3
+        "length": 46,
+        "width": 50,
+        "height": 82
       },
       "variants": [
         {
           "id": "v1",
-          "name": "S - White",
-          "price": 1999,
-          "stock": 20,
-          "sku": "CLT-MFS-S-WHT",
+          "name": "White",
+          "price": 699,
+          "stock": 46,
+          "sku": "PLE-CHR-01-WHT",
           "attributes": {
-            "Size": "S",
-            "Color": "White"
+            "Colour": "White"
           },
-          "swatchHex": "#ffffff"
+          "swatchHex": "#f4f2ee"
         },
         {
           "id": "v2",
-          "name": "M - White",
-          "price": 1999,
-          "stock": 25,
-          "sku": "CLT-MFS-M-WHT",
+          "name": "Marble Beige",
+          "price": 699,
+          "stock": 47,
+          "sku": "PLE-CHR-01-BGE",
           "attributes": {
-            "Size": "M",
-            "Color": "White"
+            "Colour": "Marble Beige"
           },
-          "swatchHex": "#ffffff"
+          "swatchHex": "#d9cbb2"
         },
         {
           "id": "v3",
-          "name": "L - Light Blue",
-          "price": 1999,
-          "stock": 25,
-          "sku": "CLT-MFS-L-BLU",
+          "name": "Coffee Brown",
+          "price": 699,
+          "stock": 13,
+          "sku": "PLE-CHR-01-BRN",
           "attributes": {
-            "Size": "L",
-            "Color": "Light Blue"
+            "Colour": "Coffee Brown"
           },
-          "swatchHex": "#cfe2f3"
+          "swatchHex": "#6b4a33"
         },
         {
           "id": "v4",
-          "name": "XL - Light Blue",
-          "price": 1999,
-          "stock": 20,
-          "sku": "CLT-MFS-XL-BLU",
+          "name": "Brick Red",
+          "price": 699,
+          "stock": 26,
+          "sku": "PLE-CHR-01-RED",
           "attributes": {
-            "Size": "XL",
-            "Color": "Light Blue"
+            "Colour": "Brick Red"
           },
-          "swatchHex": "#cfe2f3"
+          "swatchHex": "#9e3b2c"
         }
       ],
       "tags": [
-        "shirt",
-        "formal",
-        "cotton",
-        "slim fit",
-        "men",
-        "office",
-        "professional"
-      ],
-      "featured": true,
-      "trending": false,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.4,
-      "totalReviews": 167,
-      "metaTitle": "Men's Premium Formal Shirt - Egyptian Cotton, Slim Fit",
-      "metaDescription": "Buy premium slim fit formal shirt. 100% Egyptian cotton, wrinkle-free finish.",
-      "createdAt": "2025-02-12T00:00:00.000Z",
-      "updatedAt": "2025-03-10T00:00:00.000Z"
-    },
-    {
-      "id": 18,
-      "name": "Abstract Wall Art Canvas - Set of 3",
-      "slug": "abstract-wall-art-canvas-set-3",
-      "sku": "HOM-WAC-ABS-001",
-      "shortDescription": "Modern abstract art canvas prints for living room decor",
-      "description": "Transform your living space with this set of 3 abstract canvas prints. Gallery-quality giclée printing on premium cotton canvas, stretched over solid wood frames. Ready to hang with pre-installed hardware. Each panel: 16x24 inches. UV-resistant inks ensure vibrant colors for years.",
-      "categoryId": 3,
-      "brand": "ArtNova",
-      "images": [
-        "https://placehold.co/600x400/4caf50/FFFFFF?text=Wall+Art+Set",
-        "https://placehold.co/600x400/388e3c/FFFFFF?text=Art+Detail"
-      ],
-      "price": 2499,
-      "comparePrice": 3999,
-      "costPrice": 1200,
-      "stock": 35,
-      "lowStockThreshold": 5,
-      "weight": 3,
-      "dimensions": {
-        "length": 62,
-        "width": 42,
-        "height": 4
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Blue & Gold",
-          "price": 2499,
-          "stock": 15,
-          "sku": "HOM-WAC-ABS-BGD"
-        },
-        {
-          "id": "v2",
-          "name": "Earthy Tones",
-          "price": 2499,
-          "stock": 20,
-          "sku": "HOM-WAC-ABS-ETH"
-        }
-      ],
-      "tags": [
-        "wall art",
-        "canvas",
-        "abstract",
-        "decor",
-        "living room",
-        "modern art"
-      ],
-      "featured": false,
-      "trending": false,
-      "hot": false,
-      "isActive": true,
-      "rating": 4.5,
-      "totalReviews": 73,
-      "metaTitle": "Abstract Wall Art Canvas Set of 3 - Modern Decor",
-      "metaDescription": "Buy set of 3 abstract canvas prints for living room. Gallery-quality, ready to hang.",
-      "createdAt": "2025-02-08T00:00:00.000Z",
-      "updatedAt": "2025-03-05T00:00:00.000Z"
-    },
-    {
-      "id": 19,
-      "name": "HydroFlask Insulated Water Bottle",
-      "slug": "hydroflask-insulated-water-bottle",
-      "sku": "SPT-HFL-WTR-001",
-      "shortDescription": "1L stainless steel vacuum insulated bottle - keeps cold 24hrs",
-      "description": "HydroFlask double-wall vacuum insulated water bottle keeps drinks ice cold for 24 hours or hot for 12 hours. Made from 18/8 food-grade stainless steel with BPA-free lid. Wide mouth opening fits ice cubes easily. Powder-coated finish for a secure grip. Leak-proof and sweat-free design.",
-      "categoryId": 4,
-      "brand": "HydroFlask",
-      "images": [
-        "https://placehold.co/600x400/ff9800/FFFFFF?text=Water+Bottle",
-        "https://placehold.co/600x400/f57c00/FFFFFF?text=Bottle+Open"
-      ],
-      "price": 1299,
-      "comparePrice": 1899,
-      "costPrice": 550,
-      "stock": 150,
-      "lowStockThreshold": 25,
-      "weight": 0.4,
-      "dimensions": {
-        "length": 28,
-        "width": 8,
-        "height": 8
-      },
-      "variants": [
-        {
-          "id": "v1",
-          "name": "Pacific Blue",
-          "price": 1299,
-          "stock": 50,
-          "sku": "SPT-HFL-WTR-BLU"
-        },
-        {
-          "id": "v2",
-          "name": "Charcoal Black",
-          "price": 1299,
-          "stock": 50,
-          "sku": "SPT-HFL-WTR-BLK"
-        },
-        {
-          "id": "v3",
-          "name": "Coral Pink",
-          "price": 1299,
-          "stock": 50,
-          "sku": "SPT-HFL-WTR-PNK"
-        }
-      ],
-      "tags": [
-        "water bottle",
-        "insulated",
-        "stainless steel",
-        "sports",
-        "gym",
-        "hydration"
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "chair",
+        "chair without arms",
+        "armless",
+        "stackable",
+        "dining"
       ],
       "featured": false,
       "trending": true,
       "hot": false,
       "isActive": true,
-      "rating": 4.6,
-      "totalReviews": 328,
-      "metaTitle": "HydroFlask 1L Insulated Water Bottle - 24hr Cold",
-      "metaDescription": "Buy HydroFlask vacuum insulated water bottle. Keeps cold 24hrs, hot 12hrs. BPA-free.",
-      "createdAt": "2025-01-18T00:00:00.000Z",
-      "updatedAt": "2025-03-12T00:00:00.000Z"
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Classic Plastic Chair | A & S Urbanseat",
+      "metaDescription": "A dependable armless plastic chair that tucks under a table and stacks high. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-09-05T09:00:00.000Z",
+      "updatedAt": "2026-09-23T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        7
+      ],
+      "relatedProductIds": [
+        5,
+        6,
+        3,
+        2
+      ]
     },
     {
-      "id": 20,
-      "name": "Creative Kids Building Blocks - 500 Pieces",
-      "slug": "creative-kids-building-blocks-500",
-      "sku": "TOY-CKB-500-001",
-      "shortDescription": "STEM learning building blocks set with storage box",
-      "description": "Spark creativity and learning with this 500-piece building blocks set. Compatible with all major brands. Includes bricks, wheels, doors, windows, trees, and minifigures. Comes in a sturdy storage box with sorting compartments. Made from non-toxic ABS plastic, safe for children 3+ years. Great for developing motor skills and imagination.",
-      "categoryId": 5,
-      "brand": "BrainBrix",
+      "id": 5,
+      "name": "Ribbed-Back Plastic Chair",
+      "slug": "ribbed-back-plastic-chair",
+      "sku": "PLE-CHR-02",
+      "shortDescription": "An armless plastic chair with an airy ribbed back, at home in kitchens and on verandas.",
+      "description": "The ribbed back keeps air moving and gives a plain chair a little more character, whether it sits at a kitchen table or on a shaded veranda.\n\nA firm, lightly contoured seat and splayed legs make it steady on tiled and uneven floors alike.\n\nSpecifications: Material: Virgin polypropylene; Finish: Matte; Seat height: approx. 44 cm; Overall size: approx. 46 × 50 × 82 cm; Weight capacity: approx. 90 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 12,
+      "brand": "Nilkamal",
       "images": [
-        "https://placehold.co/600x400/e91e63/FFFFFF?text=Building+Blocks",
-        "https://placehold.co/600x400/c2185b/FFFFFF?text=Blocks+Castle"
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Chair+In+situ"
       ],
-      "price": 1999,
-      "comparePrice": 2999,
-      "costPrice": 900,
-      "stock": 5,
+      "price": 749,
+      "comparePrice": 849,
+      "costPrice": 490,
+      "stock": 70,
       "lowStockThreshold": 8,
-      "weight": 2.5,
+      "weight": 2.7,
       "dimensions": {
-        "length": 40,
-        "width": 30,
-        "height": 15
+        "length": 46,
+        "width": 50,
+        "height": 83
       },
-      "variants": [],
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 749,
+          "stock": 35,
+          "sku": "PLE-CHR-02-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Marble Beige",
+          "price": 749,
+          "stock": 20,
+          "sku": "PLE-CHR-02-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v3",
+          "name": "Iron Black",
+          "price": 749,
+          "stock": 15,
+          "sku": "PLE-CHR-02-BLK",
+          "attributes": {
+            "Colour": "Iron Black"
+          },
+          "swatchHex": "#2b2b2b"
+        }
+      ],
       "tags": [
-        "building blocks",
-        "kids",
-        "toys",
-        "STEM",
-        "educational",
-        "creative"
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "chair",
+        "chair without arms",
+        "armless",
+        "stackable",
+        "ribbed"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Ribbed-Back Plastic Chair | A & S Urbanseat",
+      "metaDescription": "An armless plastic chair with an airy ribbed back, at home in kitchens and on verandas. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-09-09T12:00:00.000Z",
+      "updatedAt": "2026-09-20T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        7
+      ],
+      "relatedProductIds": [
+        4,
+        6,
+        3,
+        7
+      ]
+    },
+    {
+      "id": 6,
+      "name": "Stackable Plastic Chair",
+      "slug": "stackable-plastic-chair",
+      "sku": "PLE-CHR-03",
+      "shortDescription": "A lightweight armless chair designed to stack tall for events, classrooms and storage.",
+      "description": "Made for the days you need many seats at once: functions, classrooms, prayer meetings and family gatherings, then neatly out of the way again.\n\nThe legs are angled so the chairs nest closely, and the rolled seat edge stops one from sticking to the next.\n\nSpecifications: Material: Virgin polypropylene; Finish: Matte; Seat height: approx. 44 cm; Overall size: approx. 46 × 50 × 82 cm; Weight capacity: approx. 90 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 12,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Plastic+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Plastic+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Plastic+Chair+In+situ"
+      ],
+      "price": 799,
+      "comparePrice": 0,
+      "costPrice": 550,
+      "stock": 76,
+      "lowStockThreshold": 8,
+      "weight": 2.4,
+      "dimensions": {
+        "length": 45,
+        "width": 49,
+        "height": 80
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 799,
+          "stock": 22,
+          "sku": "PLE-CHR-03-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Pearl Grey",
+          "price": 799,
+          "stock": 15,
+          "sku": "PLE-CHR-03-GRY",
+          "attributes": {
+            "Colour": "Pearl Grey"
+          },
+          "swatchHex": "#b9b6b0"
+        },
+        {
+          "id": "v3",
+          "name": "Brick Red",
+          "price": 799,
+          "stock": 39,
+          "sku": "PLE-CHR-03-RED",
+          "attributes": {
+            "Colour": "Brick Red"
+          },
+          "swatchHex": "#9e3b2c"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "chair",
+        "chair without arms",
+        "armless",
+        "stackable",
+        "events"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Stackable Plastic Chair | A & S Urbanseat",
+      "metaDescription": "A lightweight armless chair designed to stack tall for events, classrooms and storage. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-06T11:00:00.000Z",
+      "updatedAt": "2026-06-12T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        7
+      ],
+      "relatedProductIds": [
+        5,
+        4,
+        7,
+        8
+      ]
+    },
+    {
+      "id": 7,
+      "name": "Square Plastic Centre Table",
+      "slug": "square-plastic-centre-table",
+      "sku": "PLE-TBL-01",
+      "shortDescription": "A square plastic centre table for tea, newspapers and everyday living-room use.",
+      "description": "A tidy square table that sits at the centre of a seating group, with room for the tea tray, the newspaper and a bowl of something to share.\n\nIt pairs naturally with our plastic armchairs, and the legs fit firmly into the top so it can be carried indoors when the weather turns.\n\nSpecifications: Material: Polypropylene; Top: Square, textured; Overall size: approx. 60 × 60 × 42 cm; Assembly: Legs fix in place without tools; Use: Indoor and covered outdoor areas; Care: Wipe clean with a damp cloth",
+      "categoryId": 13,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Square+Plastic+Centre+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Square+Plastic+Centre+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Square+Plastic+Centre+Table+In+situ"
+      ],
+      "price": 1249,
+      "comparePrice": 1449,
+      "costPrice": 800,
+      "stock": 62,
+      "lowStockThreshold": 8,
+      "weight": 4.2,
+      "dimensions": {
+        "length": 60,
+        "width": 60,
+        "height": 42
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 1249,
+          "stock": 18,
+          "sku": "PLE-TBL-01-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 1249,
+          "stock": 44,
+          "sku": "PLE-TBL-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "centre table",
+        "table",
+        "square",
+        "living room"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Square Plastic Centre Table | A & S Urbanseat",
+      "metaDescription": "A square plastic centre table for tea, newspapers and everyday living-room use. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-24T10:00:00.000Z",
+      "updatedAt": "2026-07-19T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        1,
+        2
+      ],
+      "relatedProductIds": [
+        8,
+        6,
+        5,
+        9
+      ]
+    },
+    {
+      "id": 8,
+      "name": "Round Plastic Centre Table",
+      "slug": "round-plastic-centre-table",
+      "sku": "PLE-TBL-02",
+      "shortDescription": "A round plastic centre table that fits easily between chairs on a veranda or lawn.",
+      "description": "A round top keeps corners out of the way, so this table slips easily between chairs on a veranda, a lawn or a compact living room.\n\nLight enough to lift with one hand, steady enough for a full tray of cups.\n\nSpecifications: Material: Polypropylene; Top: Round, textured; Overall size: approx. 60 cm diameter × 42 cm high; Assembly: Legs fix in place without tools; Use: Indoor and covered outdoor areas; Care: Wipe clean with a damp cloth",
+      "categoryId": 13,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Round+Plastic+Centre+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Round+Plastic+Centre+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Round+Plastic+Centre+Table+In+situ"
+      ],
+      "price": 1199,
+      "comparePrice": 0,
+      "costPrice": 730,
+      "stock": 74,
+      "lowStockThreshold": 8,
+      "weight": 3.9,
+      "dimensions": {
+        "length": 60,
+        "width": 60,
+        "height": 42
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 1199,
+          "stock": 39,
+          "sku": "PLE-TBL-02-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 1199,
+          "stock": 35,
+          "sku": "PLE-TBL-02-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "centre table",
+        "table",
+        "round",
+        "outdoor"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Round Plastic Centre Table | A & S Urbanseat",
+      "metaDescription": "A round plastic centre table that fits easily between chairs on a veranda or lawn. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-05T10:00:00.000Z",
+      "updatedAt": "2026-05-25T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        1,
+        3
+      ],
+      "relatedProductIds": [
+        7,
+        9,
+        6,
+        10
+      ]
+    },
+    {
+      "id": 9,
+      "name": "Slim Plastic Shoe Rack",
+      "slug": "slim-plastic-shoe-rack",
+      "sku": "PLE-SHR-01",
+      "shortDescription": "A narrow plastic shoe rack in two to five shelves for tight entrances and corridors.",
+      "description": "Built for the narrow strip of wall beside the door, this slim rack keeps everyday pairs off the floor without crowding the entrance.\n\nChoose from two to five shelves; the price, height and capacity change with the shelf count. Open sides let shoes air between wears.\n\nSpecifications: Material: Polypropylene panels with steel connecting rods; Shelves: 2, 3, 4 or 5; Width: approx. 50 cm; Height: approx. 42 / 60 / 78 / 96 cm (2 / 3 / 4 / 5 shelves); Pairs per shelf: approx. 3; Assembly: Interlocking, no tools needed; Care: Wipe clean, keep out of direct sun",
+      "categoryId": 14,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slim+Plastic+Shoe+Rack",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slim+Plastic+Shoe+Rack+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slim+Plastic+Shoe+Rack+In+situ"
+      ],
+      "price": 1249,
+      "comparePrice": 0,
+      "costPrice": 810,
+      "stock": 85,
+      "lowStockThreshold": 8,
+      "weight": 3.6,
+      "dimensions": {
+        "length": 50,
+        "width": 30,
+        "height": 96
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "2 shelves",
+          "price": 1249,
+          "stock": 10,
+          "sku": "PLE-SHR-01-2S",
+          "attributes": {
+            "Shelves": "2 shelves"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "3 shelves",
+          "price": 1599,
+          "stock": 20,
+          "sku": "PLE-SHR-01-3S",
+          "attributes": {
+            "Shelves": "3 shelves"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "4 shelves",
+          "price": 1899,
+          "stock": 28,
+          "sku": "PLE-SHR-01-4S",
+          "attributes": {
+            "Shelves": "4 shelves"
+          }
+        },
+        {
+          "id": "v4",
+          "name": "5 shelves",
+          "price": 2249,
+          "stock": 27,
+          "sku": "PLE-SHR-01-5S",
+          "attributes": {
+            "Shelves": "5 shelves"
+          }
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "shoe rack",
+        "storage",
+        "entrance",
+        "slim"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Slim Plastic Shoe Rack | A & S Urbanseat",
+      "metaDescription": "A narrow plastic shoe rack in two to five shelves for tight entrances and corridors. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-09-05T11:00:00.000Z",
+      "updatedAt": "2026-09-24T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        10,
+        11,
+        8,
+        7
+      ]
+    },
+    {
+      "id": 10,
+      "name": "Wide Plastic Shoe Rack",
+      "slug": "wide-plastic-shoe-rack",
+      "sku": "PLE-SHR-02",
+      "shortDescription": "A wide plastic shoe rack in two to five shelves, with room for the whole family's pairs.",
+      "description": "A broad rack for a busy household, holding school shoes, office pairs and sandals side by side on deep, sturdy shelves.\n\nPick the shelf count that suits your family; each step up adds a shelf of storage and a little to the price.\n\nSpecifications: Material: Polypropylene panels with steel connecting rods; Shelves: 2, 3, 4 or 5; Width: approx. 78 cm; Height: approx. 42 / 60 / 78 / 96 cm (2 / 3 / 4 / 5 shelves); Pairs per shelf: approx. 5; Assembly: Interlocking, no tools needed; Care: Wipe clean, keep out of direct sun",
+      "categoryId": 14,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wide+Plastic+Shoe+Rack",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wide+Plastic+Shoe+Rack+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wide+Plastic+Shoe+Rack+In+situ"
+      ],
+      "price": 1599,
+      "comparePrice": 0,
+      "costPrice": 1080,
+      "stock": 74,
+      "lowStockThreshold": 8,
+      "weight": 5.1,
+      "dimensions": {
+        "length": 78,
+        "width": 32,
+        "height": 96
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "2 shelves",
+          "price": 1599,
+          "stock": 21,
+          "sku": "PLE-SHR-02-2S",
+          "attributes": {
+            "Shelves": "2 shelves"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "3 shelves",
+          "price": 1999,
+          "stock": 32,
+          "sku": "PLE-SHR-02-3S",
+          "attributes": {
+            "Shelves": "3 shelves"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "4 shelves",
+          "price": 2449,
+          "stock": 21,
+          "sku": "PLE-SHR-02-4S",
+          "attributes": {
+            "Shelves": "4 shelves"
+          }
+        },
+        {
+          "id": "v4",
+          "name": "5 shelves",
+          "price": 2849,
+          "stock": 0,
+          "sku": "PLE-SHR-02-5S",
+          "attributes": {
+            "Shelves": "5 shelves"
+          }
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "shoe rack",
+        "storage",
+        "entrance",
+        "wide"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wide Plastic Shoe Rack | A & S Urbanseat",
+      "metaDescription": "A wide plastic shoe rack in two to five shelves, with room for the whole family's pairs. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-19T10:00:00.000Z",
+      "updatedAt": "2026-06-30T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        9,
+        11,
+        8,
+        7
+      ]
+    },
+    {
+      "id": 11,
+      "name": "Covered Plastic Shoe Rack",
+      "slug": "covered-plastic-shoe-rack",
+      "sku": "PLE-SHR-03",
+      "shortDescription": "A shoe rack with a hinged front cover in two to five shelves that keeps dust off every pair.",
+      "description": "A hinged front cover closes over the shelves, keeping dust off good shoes and giving the entrance a calm, uncluttered face.\n\nVents in the cover let air through. Choose two to five shelves; price and height rise with the shelf count.\n\nSpecifications: Material: Polypropylene panels with a hinged front cover; Shelves: 2, 3, 4 or 5; Width: approx. 62 cm; Height: approx. 42 / 60 / 78 / 96 cm (2 / 3 / 4 / 5 shelves); Pairs per shelf: approx. 4; Assembly: Interlocking, no tools needed; Care: Wipe clean, keep out of direct sun",
+      "categoryId": 14,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Covered+Plastic+Shoe+Rack",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Covered+Plastic+Shoe+Rack+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Covered+Plastic+Shoe+Rack+In+situ"
+      ],
+      "price": 1899,
+      "comparePrice": 2199,
+      "costPrice": 1300,
+      "stock": 62,
+      "lowStockThreshold": 8,
+      "weight": 6.8,
+      "dimensions": {
+        "length": 62,
+        "width": 33,
+        "height": 98
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "2 shelves",
+          "price": 1899,
+          "stock": 12,
+          "sku": "PLE-SHR-03-2S",
+          "attributes": {
+            "Shelves": "2 shelves"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "3 shelves",
+          "price": 2349,
+          "stock": 16,
+          "sku": "PLE-SHR-03-3S",
+          "attributes": {
+            "Shelves": "3 shelves"
+          }
+        },
+        {
+          "id": "v3",
+          "name": "4 shelves",
+          "price": 2899,
+          "stock": 30,
+          "sku": "PLE-SHR-03-4S",
+          "attributes": {
+            "Shelves": "4 shelves"
+          }
+        },
+        {
+          "id": "v4",
+          "name": "5 shelves",
+          "price": 3449,
+          "stock": 4,
+          "sku": "PLE-SHR-03-5S",
+          "attributes": {
+            "Shelves": "5 shelves"
+          }
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "essentials",
+        "plastic",
+        "shoe rack",
+        "storage",
+        "entrance",
+        "covered",
+        "cabinet"
       ],
       "featured": true,
       "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Covered Plastic Shoe Rack | A & S Urbanseat",
+      "metaDescription": "A shoe rack with a hinged front cover in two to five shelves that keeps dust off every pair. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-21T17:00:00.000Z",
+      "updatedAt": "2026-09-28T17:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        10,
+        9,
+        8,
+        7
+      ]
+    },
+    {
+      "id": 12,
+      "name": "Cushioned Plastic Armchair",
+      "slug": "cushioned-plastic-armchair",
+      "sku": "PPR-ARM-01",
+      "shortDescription": "A heavier plastic armchair with a fitted seat cushion for longer, softer sitting.",
+      "description": "A heavier frame, a finer finish and a fitted seat cushion that turns an easy plastic chair into one you will happily sit in all evening.\n\nThe cushion cover is removable for washing, and the frame beneath is moulded thick enough to feel solid and steady.\n\nSpecifications: Material: Heavy-gauge polypropylene; Finish: Fine matte, fitted seat cushion; Seat height: approx. 44 cm; Overall size: approx. 60 × 57 × 84 cm; Weight capacity: approx. 120 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 16,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Armchair+In+situ"
+      ],
+      "price": 2499,
+      "comparePrice": 2899,
+      "costPrice": 1550,
+      "stock": 103,
+      "lowStockThreshold": 8,
+      "weight": 5.2,
+      "dimensions": {
+        "length": 60,
+        "width": 57,
+        "height": 84
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Marble Beige",
+          "price": 2499,
+          "stock": 38,
+          "sku": "PPR-ARM-01-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 2499,
+          "stock": 34,
+          "sku": "PPR-ARM-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v3",
+          "name": "Pearl Grey",
+          "price": 2499,
+          "stock": 31,
+          "sku": "PPR-ARM-01-GRY",
+          "attributes": {
+            "Colour": "Pearl Grey"
+          },
+          "swatchHex": "#b9b6b0"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "cushioned",
+        "living room"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cushioned Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "A heavier plastic armchair with a fitted seat cushion for longer, softer sitting. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-04-18T11:00:00.000Z",
+      "updatedAt": "2026-05-04T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        17
+      ],
+      "relatedProductIds": [
+        13,
+        14,
+        15,
+        16
+      ]
+    },
+    {
+      "id": 13,
+      "name": "High-Back Plastic Armchair",
+      "slug": "high-back-plastic-armchair",
+      "sku": "PPR-ARM-02",
+      "shortDescription": "A tall-backed premium plastic armchair that supports the shoulders as well as the back.",
+      "description": "The back rises to shoulder height, so you can lean in and settle, which makes this the armchair for long lunches and lazy afternoons.\n\nA thicker moulding and a smooth, fine finish set it apart from everyday chairs, and it still stacks for storage.\n\nSpecifications: Material: Heavy-gauge polypropylene; Finish: Smooth fine matte; Seat height: approx. 44 cm; Overall size: approx. 59 × 56 × 96 cm; Weight capacity: approx. 120 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 16,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Armchair+In+situ"
+      ],
+      "price": 1999,
+      "comparePrice": 0,
+      "costPrice": 1270,
+      "stock": 98,
+      "lowStockThreshold": 8,
+      "weight": 4.8,
+      "dimensions": {
+        "length": 59,
+        "width": 56,
+        "height": 96
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 1999,
+          "stock": 24,
+          "sku": "PPR-ARM-02-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 1999,
+          "stock": 36,
+          "sku": "PPR-ARM-02-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v3",
+          "name": "Iron Black",
+          "price": 1999,
+          "stock": 38,
+          "sku": "PPR-ARM-02-BLK",
+          "attributes": {
+            "Colour": "Iron Black"
+          },
+          "swatchHex": "#2b2b2b"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "high back",
+        "stackable"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "High-Back Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "A tall-backed premium plastic armchair that supports the shoulders as well as the back. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-25T17:00:00.000Z",
+      "updatedAt": "2026-05-28T17:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        17
+      ],
+      "relatedProductIds": [
+        12,
+        14,
+        15,
+        16
+      ]
+    },
+    {
+      "id": 14,
+      "name": "Woven-Texture Plastic Armchair",
+      "slug": "woven-texture-plastic-armchair",
+      "sku": "PPR-ARM-03",
+      "shortDescription": "A premium plastic armchair moulded with a woven, rattan-like texture on back and seat.",
+      "description": "A woven pattern moulded into back and seat gives this armchair the warmth of rattan, with the easy care and weather tolerance of plastic.\n\nIt suits a veranda as readily as a sitting room and keeps its colour well in bright light.\n\nSpecifications: Material: Heavy-gauge polypropylene; Finish: Woven rattan-look texture; Seat height: approx. 44 cm; Overall size: approx. 60 × 56 × 86 cm; Weight capacity: approx. 120 kg; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 16,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Woven-Texture+Plastic+Armchair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Woven-Texture+Plastic+Armchair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Woven-Texture+Plastic+Armchair+In+situ"
+      ],
+      "price": 2249,
+      "comparePrice": 0,
+      "costPrice": 1480,
+      "stock": 70,
+      "lowStockThreshold": 8,
+      "weight": 5,
+      "dimensions": {
+        "length": 60,
+        "width": 56,
+        "height": 86
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Natural Cane",
+          "price": 2249,
+          "stock": 32,
+          "sku": "PPR-ARM-03-CNE",
+          "attributes": {
+            "Colour": "Natural Cane"
+          },
+          "swatchHex": "#cfae7a"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 2249,
+          "stock": 26,
+          "sku": "PPR-ARM-03-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v3",
+          "name": "White",
+          "price": 2249,
+          "stock": 12,
+          "sku": "PPR-ARM-03-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "armchair",
+        "chair with arms",
+        "woven",
+        "rattan look"
+      ],
+      "featured": false,
+      "trending": false,
       "hot": true,
       "isActive": true,
-      "rating": 4.7,
-      "totalReviews": 156,
-      "metaTitle": "500-Piece Building Blocks Set - STEM Learning for Kids",
-      "metaDescription": "Buy 500-piece building blocks set with storage box. Safe, non-toxic, compatible with major brands.",
-      "createdAt": "2025-02-22T00:00:00.000Z",
-      "updatedAt": "2026-06-12T06:57:43.733Z"
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Woven-Texture Plastic Armchair | A & S Urbanseat",
+      "metaDescription": "A premium plastic armchair moulded with a woven, rattan-like texture on back and seat. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-09-10T12:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        17
+      ],
+      "relatedProductIds": [
+        13,
+        12,
+        15,
+        16
+      ]
+    },
+    {
+      "id": 15,
+      "name": "High-Back Plastic Chair",
+      "slug": "high-back-plastic-chair",
+      "sku": "PPR-CHR-01",
+      "shortDescription": "A tall, armless premium plastic chair that gives a dining table a more formal line.",
+      "description": "A tall back and clean, straight lines give this armless chair a quietly formal presence around a dining table.\n\nThe heavier moulding feels solid underneath, and the fine finish resists scuffs from daily use.\n\nSpecifications: Material: Heavy-gauge polypropylene; Finish: Smooth fine matte; Seat height: approx. 45 cm; Overall size: approx. 47 × 52 × 95 cm; Weight capacity: approx. 110 kg; Care: Wipe clean with a damp cloth",
+      "categoryId": 17,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=High-Back+Plastic+Chair+In+situ"
+      ],
+      "price": 1599,
+      "comparePrice": 0,
+      "costPrice": 980,
+      "stock": 81,
+      "lowStockThreshold": 8,
+      "weight": 3.8,
+      "dimensions": {
+        "length": 47,
+        "width": 52,
+        "height": 95
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 1599,
+          "stock": 27,
+          "sku": "PPR-CHR-01-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 1599,
+          "stock": 14,
+          "sku": "PPR-CHR-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        },
+        {
+          "id": "v3",
+          "name": "Iron Black",
+          "price": 1599,
+          "stock": 40,
+          "sku": "PPR-CHR-01-BLK",
+          "attributes": {
+            "Colour": "Iron Black"
+          },
+          "swatchHex": "#2b2b2b"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "chair",
+        "chair without arms",
+        "armless",
+        "high back",
+        "dining"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "High-Back Plastic Chair | A & S Urbanseat",
+      "metaDescription": "A tall, armless premium plastic chair that gives a dining table a more formal line. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-27T10:00:00.000Z",
+      "updatedAt": "2026-08-30T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        18
+      ],
+      "relatedProductIds": [
+        16,
+        14,
+        13,
+        17
+      ]
+    },
+    {
+      "id": 16,
+      "name": "Cushioned Plastic Chair",
+      "slug": "cushioned-plastic-chair",
+      "sku": "PPR-CHR-02",
+      "shortDescription": "An armless premium plastic chair with a fitted cushion for comfortable dining.",
+      "description": "A fitted seat cushion makes this armless chair comfortable through a long family meal, and its heavier frame keeps it steady.\n\nThe cushion cover comes off for washing; the frame wipes clean.\n\nSpecifications: Material: Heavy-gauge polypropylene; Finish: Fine matte, fitted seat cushion; Seat height: approx. 45 cm; Overall size: approx. 47 × 52 × 88 cm; Weight capacity: approx. 110 kg; Care: Wipe clean with a damp cloth",
+      "categoryId": 17,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+Plastic+Chair+In+situ"
+      ],
+      "price": 1899,
+      "comparePrice": 0,
+      "costPrice": 1170,
+      "stock": 108,
+      "lowStockThreshold": 8,
+      "weight": 4.1,
+      "dimensions": {
+        "length": 47,
+        "width": 52,
+        "height": 88
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Marble Beige",
+          "price": 1899,
+          "stock": 37,
+          "sku": "PPR-CHR-02-BGE",
+          "attributes": {
+            "Colour": "Marble Beige"
+          },
+          "swatchHex": "#d9cbb2"
+        },
+        {
+          "id": "v2",
+          "name": "Pearl Grey",
+          "price": 1899,
+          "stock": 36,
+          "sku": "PPR-CHR-02-GRY",
+          "attributes": {
+            "Colour": "Pearl Grey"
+          },
+          "swatchHex": "#b9b6b0"
+        },
+        {
+          "id": "v3",
+          "name": "Coffee Brown",
+          "price": 1899,
+          "stock": 35,
+          "sku": "PPR-CHR-02-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "chair",
+        "chair without arms",
+        "armless",
+        "cushioned",
+        "dining"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cushioned Plastic Chair | A & S Urbanseat",
+      "metaDescription": "An armless premium plastic chair with a fitted cushion for comfortable dining. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-23T10:00:00.000Z",
+      "updatedAt": "2026-09-26T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        18
+      ],
+      "relatedProductIds": [
+        15,
+        17,
+        14,
+        18
+      ]
+    },
+    {
+      "id": 17,
+      "name": "Premium Round Plastic Centre Table",
+      "slug": "premium-round-plastic-centre-table",
+      "sku": "PPR-TBL-01",
+      "shortDescription": "A heavier round plastic centre table with a fine-grain top that holds its colour.",
+      "description": "A round centre table with a heavier top and a fine-grain finish, made to anchor a premium seating group indoors or on a covered veranda.\n\nIt sits lower and broader than our everyday tables, with room for a tray and a vase.\n\nSpecifications: Material: Heavy-gauge polypropylene; Top: Round, fine-grain; Overall size: approx. 70 cm diameter × 44 cm high; Finish: Fine-grain texture; Use: Indoor and covered outdoor areas; Care: Wipe clean with a damp cloth",
+      "categoryId": 18,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Round+Plastic+Centre+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Round+Plastic+Centre+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Round+Plastic+Centre+Table+In+situ"
+      ],
+      "price": 2299,
+      "comparePrice": 0,
+      "costPrice": 1570,
+      "stock": 22,
+      "lowStockThreshold": 8,
+      "weight": 6.1,
+      "dimensions": {
+        "length": 70,
+        "width": 70,
+        "height": 44
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 2299,
+          "stock": 10,
+          "sku": "PPR-TBL-01-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 2299,
+          "stock": 12,
+          "sku": "PPR-TBL-01-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "centre table",
+        "table",
+        "round",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Premium Round Plastic Centre Table | A & S Urbanseat",
+      "metaDescription": "A heavier round plastic centre table with a fine-grain top that holds its colour. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-04-18T13:00:00.000Z",
+      "updatedAt": "2026-05-22T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        12,
+        14
+      ],
+      "relatedProductIds": [
+        18,
+        16,
+        15,
+        14
+      ]
+    },
+    {
+      "id": 18,
+      "name": "Premium Square Plastic Centre Table",
+      "slug": "premium-square-plastic-centre-table",
+      "sku": "PPR-TBL-02",
+      "shortDescription": "A heavier square plastic centre table with a fine-grain top for a premium seating group.",
+      "description": "A square table with a thick, fine-grain top and sturdy legs, sized to sit comfortably between a pair of premium armchairs.\n\nIts clean edges and heavier build make it feel closer to furniture than to a garden table.\n\nSpecifications: Material: Heavy-gauge polypropylene; Top: Square, fine-grain; Overall size: approx. 70 × 70 × 44 cm; Finish: Fine-grain texture; Use: Indoor and covered outdoor areas; Care: Wipe clean with a damp cloth",
+      "categoryId": 18,
+      "brand": "Nilkamal",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Square+Plastic+Centre+Table",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Square+Plastic+Centre+Table+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Premium+Square+Plastic+Centre+Table+In+situ"
+      ],
+      "price": 2499,
+      "comparePrice": 2849,
+      "costPrice": 1520,
+      "stock": 42,
+      "lowStockThreshold": 8,
+      "weight": 6.6,
+      "dimensions": {
+        "length": 70,
+        "width": 70,
+        "height": 44
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "White",
+          "price": 2499,
+          "stock": 14,
+          "sku": "PPR-TBL-02-WHT",
+          "attributes": {
+            "Colour": "White"
+          },
+          "swatchHex": "#f4f2ee"
+        },
+        {
+          "id": "v2",
+          "name": "Coffee Brown",
+          "price": 2499,
+          "stock": 28,
+          "sku": "PPR-TBL-02-BRN",
+          "attributes": {
+            "Colour": "Coffee Brown"
+          },
+          "swatchHex": "#6b4a33"
+        }
+      ],
+      "tags": [
+        "nilkamal",
+        "premium",
+        "plastic",
+        "centre table",
+        "table",
+        "square",
+        "living room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": true,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Premium Square Plastic Centre Table | A & S Urbanseat",
+      "metaDescription": "A heavier square plastic centre table with a fine-grain top for a premium seating group. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-04-22T10:00:00.000Z",
+      "updatedAt": "2026-05-13T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        12,
+        15
+      ],
+      "relatedProductIds": [
+        17,
+        16,
+        15,
+        14
+      ]
+    },
+    {
+      "id": 19,
+      "name": "Lobby Set",
+      "slug": "lobby-set",
+      "sku": "OUT-LBY-01",
+      "shortDescription": "An outdoor seating set for verandas and lawns, in a small and a large configuration.",
+      "description": "A complete seating group for the veranda, lobby or lawn: chairs and a table designed together so the set always looks considered.\n\nThe Small set seats a couple comfortably; the Large set adds seating for a family gathering. Both are finished to sit outdoors under cover.\n\nSpecifications: Configuration: Small (2 chairs and a centre table) or Large (a 3-seater, 2 chairs and a centre table); Frame: Powder-coated metal; Seating: Weather-resistant woven panels with cushions; Table top: Toughened glass; Use: Covered outdoor areas and lobbies; Care: Bring cushions indoors in heavy rain",
+      "categoryId": 4,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Lobby+Set",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Lobby+Set+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Lobby+Set+In+situ"
+      ],
+      "price": 22999,
+      "comparePrice": 26499,
+      "costPrice": 14110,
+      "stock": 22,
+      "lowStockThreshold": 5,
+      "weight": 38,
+      "dimensions": {
+        "length": 150,
+        "width": 70,
+        "height": 80
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Small",
+          "price": 22999,
+          "stock": 18,
+          "sku": "OUT-LBY-01-SM",
+          "attributes": {
+            "Size": "Small"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "Large",
+          "price": 38999,
+          "stock": 4,
+          "sku": "OUT-LBY-01-LG",
+          "attributes": {
+            "Size": "Large"
+          }
+        }
+      ],
+      "tags": [
+        "outdoor",
+        "lobby set",
+        "garden",
+        "veranda",
+        "seating set",
+        "metal"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Lobby Set | A & S Urbanseat",
+      "metaDescription": "An outdoor seating set for verandas and lawns, in a small and a large configuration. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-19T10:00:00.000Z",
+      "updatedAt": "2026-06-21T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        20,
+        3,
+        14,
+        8
+      ]
+    },
+    {
+      "id": 20,
+      "name": "Jhula (Garden Swing)",
+      "slug": "jhula-garden-swing",
+      "sku": "OUT-JHL-01",
+      "shortDescription": "A free-standing garden swing in small and large sizes, for slow evenings outdoors.",
+      "description": "A free-standing jhula that brings the gentle rhythm of a swing to a lawn, terrace or covered veranda, no beam or hook needed.\n\nThe Small size seats one or two; the Large swing has a wider seat and a canopy. Both come with seat cushions.\n\nSpecifications: Configuration: Small (1–2 seats) or Large (2–3 seats, with canopy); Frame: Powder-coated steel stand; Seat: Woven basket with cushion; Assembly: Bolt-together, instructions included; Use: Gardens, terraces and covered verandas; Care: Wipe the frame dry, store cushions indoors",
+      "categoryId": 4,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Jhula+(Garden+Swing)",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Jhula+(Garden+Swing)+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Jhula+(Garden+Swing)+In+situ"
+      ],
+      "price": 11999,
+      "comparePrice": 0,
+      "costPrice": 7330,
+      "stock": 22,
+      "lowStockThreshold": 5,
+      "weight": 32,
+      "dimensions": {
+        "length": 190,
+        "width": 110,
+        "height": 195
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Small",
+          "price": 11999,
+          "stock": 13,
+          "sku": "OUT-JHL-01-SM",
+          "attributes": {
+            "Size": "Small"
+          }
+        },
+        {
+          "id": "v2",
+          "name": "Large",
+          "price": 21999,
+          "stock": 9,
+          "sku": "OUT-JHL-01-LG",
+          "attributes": {
+            "Size": "Large"
+          }
+        }
+      ],
+      "tags": [
+        "outdoor",
+        "jhula",
+        "swing",
+        "garden",
+        "terrace",
+        "steel"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Jhula (Garden Swing) | A & S Urbanseat",
+      "metaDescription": "A free-standing garden swing in small and large sizes, for slow evenings outdoors. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-17T08:00:00.000Z",
+      "updatedAt": "2026-08-04T08:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        19,
+        3,
+        14,
+        8
+      ]
+    },
+    {
+      "id": 21,
+      "name": "Mesh High-Back Office Chair",
+      "slug": "mesh-high-back-office-chair",
+      "sku": "OFE-HBK-01",
+      "shortDescription": "A breathable mesh high-back chair with height adjustment and tilt for long desk hours.",
+      "description": "A breathable mesh back keeps you cool through long working days, while the high back supports the shoulders as you lean back to think.\n\nGas-lift height adjustment, a tilt mechanism and smooth castors cover the essentials of a good task chair.\n\nSpecifications: Upholstery: Breathable mesh back, foam seat; Base: Nylon five-star base with castors; Mechanism: Gas-lift height adjustment, tilt with tension knob; Seat height: approx. 44–54 cm; Overall size: approx. 62 × 62 × 112–122 cm; Weight capacity: approx. 100 kg; Care: Vacuum the mesh, wipe the frame",
+      "categoryId": 21,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+High-Back+Office+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+High-Back+Office+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+High-Back+Office+Chair+In+situ"
+      ],
+      "price": 5999,
+      "comparePrice": 6999,
+      "costPrice": 3800,
+      "stock": 62,
+      "lowStockThreshold": 6,
+      "weight": 13,
+      "dimensions": {
+        "length": 62,
+        "width": 62,
+        "height": 122
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 5999,
+          "stock": 28,
+          "sku": "OFE-HBK-01-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 5999,
+          "stock": 25,
+          "sku": "OFE-HBK-01-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        },
+        {
+          "id": "v3",
+          "name": "Navy Blue",
+          "price": 5999,
+          "stock": 9,
+          "sku": "OFE-HBK-01-NVY",
+          "attributes": {
+            "Colour": "Navy Blue"
+          },
+          "swatchHex": "#2c3a57"
+        }
+      ],
+      "tags": [
+        "essentials",
+        "office chair",
+        "high back",
+        "mesh",
+        "task chair",
+        "revolving"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Mesh High-Back Office Chair | A & S Urbanseat",
+      "metaDescription": "A breathable mesh high-back chair with height adjustment and tilt for long desk hours. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-06T12:00:00.000Z",
+      "updatedAt": "2026-09-06T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        27
+      ],
+      "relatedProductIds": [
+        22,
+        23,
+        24,
+        25
+      ]
+    },
+    {
+      "id": 22,
+      "name": "Fabric High-Back Office Chair",
+      "slug": "fabric-high-back-office-chair",
+      "sku": "OFE-HBK-02",
+      "shortDescription": "A cushioned fabric high-back chair with a padded seat and adjustable height.",
+      "description": "Soft fabric upholstery and generous padding make this high-back chair a comfortable everyday seat for the office or a home study.\n\nThe seat height adjusts with a lever and the back tilts with you, locking upright when you want to focus.\n\nSpecifications: Upholstery: Woven fabric over moulded foam; Base: Nylon five-star base with castors; Mechanism: Gas-lift height adjustment, tilt lock; Seat height: approx. 45–55 cm; Overall size: approx. 63 × 63 × 112–122 cm; Weight capacity: approx. 100 kg; Care: Vacuum regularly, spot-clean with mild soap",
+      "categoryId": 21,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+High-Back+Office+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+High-Back+Office+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+High-Back+Office+Chair+In+situ"
+      ],
+      "price": 5499,
+      "comparePrice": 0,
+      "costPrice": 3340,
+      "stock": 83,
+      "lowStockThreshold": 6,
+      "weight": 14,
+      "dimensions": {
+        "length": 63,
+        "width": 63,
+        "height": 122
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 5499,
+          "stock": 46,
+          "sku": "OFE-HBK-02-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 5499,
+          "stock": 37,
+          "sku": "OFE-HBK-02-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        }
+      ],
+      "tags": [
+        "essentials",
+        "office chair",
+        "high back",
+        "fabric",
+        "task chair",
+        "revolving"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Fabric High-Back Office Chair | A & S Urbanseat",
+      "metaDescription": "A cushioned fabric high-back chair with a padded seat and adjustable height. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-19T10:00:00.000Z",
+      "updatedAt": "2026-08-04T10:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        27
+      ],
+      "relatedProductIds": [
+        21,
+        23,
+        24,
+        25
+      ]
+    },
+    {
+      "id": 23,
+      "name": "Leatherette High-Back Office Chair",
+      "slug": "leatherette-high-back-office-chair",
+      "sku": "OFE-HBK-03",
+      "shortDescription": "A padded leatherette high-back chair with a smart finish that wipes clean easily.",
+      "description": "Padded leatherette gives this high-back chair a smart, executive look at an everyday price, and it wipes clean with a damp cloth.\n\nPadded arms, a tilt mechanism and gas-lift height adjustment make it comfortable from the first meeting to the last email.\n\nSpecifications: Upholstery: Leatherette over moulded foam; Base: Nylon five-star base with castors; Mechanism: Gas-lift height adjustment, tilt with tension knob; Seat height: approx. 45–55 cm; Overall size: approx. 64 × 66 × 114–124 cm; Weight capacity: approx. 110 kg; Care: Wipe with a damp cloth, avoid harsh cleaners",
+      "categoryId": 21,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Leatherette+High-Back+Office+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Leatherette+High-Back+Office+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Leatherette+High-Back+Office+Chair+In+situ"
+      ],
+      "price": 6999,
+      "comparePrice": 0,
+      "costPrice": 4620,
+      "stock": 67,
+      "lowStockThreshold": 6,
+      "weight": 15,
+      "dimensions": {
+        "length": 64,
+        "width": 66,
+        "height": 124
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 6999,
+          "stock": 44,
+          "sku": "OFE-HBK-03-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Brown",
+          "price": 6999,
+          "stock": 12,
+          "sku": "OFE-HBK-03-BRN",
+          "attributes": {
+            "Colour": "Brown"
+          },
+          "swatchHex": "#5a3b2a"
+        },
+        {
+          "id": "v3",
+          "name": "Tan",
+          "price": 6999,
+          "stock": 11,
+          "sku": "OFE-HBK-03-TAN",
+          "attributes": {
+            "Colour": "Tan"
+          },
+          "swatchHex": "#a0714a"
+        }
+      ],
+      "tags": [
+        "essentials",
+        "office chair",
+        "high back",
+        "leatherette",
+        "revolving"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Leatherette High-Back Office Chair | A & S Urbanseat",
+      "metaDescription": "A padded leatherette high-back chair with a smart finish that wipes clean easily. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-12T11:00:00.000Z",
+      "updatedAt": "2026-05-16T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        27
+      ],
+      "relatedProductIds": [
+        22,
+        21,
+        24,
+        25
+      ]
+    },
+    {
+      "id": 24,
+      "name": "Mesh Low-Back Office Chair",
+      "slug": "mesh-low-back-office-chair",
+      "sku": "OFE-LBK-01",
+      "shortDescription": "A compact mesh low-back chair for workstations, reception desks and study tables.",
+      "description": "A compact mesh chair that fits neatly at workstations and reception desks, supporting the lower back without crowding a small room.\n\nThe seat height adjusts with a lever and the castors glide easily across tiled floors.\n\nSpecifications: Upholstery: Breathable mesh back, foam seat; Base: Nylon five-star base with castors; Mechanism: Gas-lift height adjustment; Seat height: approx. 44–54 cm; Overall size: approx. 58 × 58 × 86–96 cm; Weight capacity: approx. 100 kg; Care: Vacuum the mesh, wipe the frame",
+      "categoryId": 22,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+Low-Back+Office+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+Low-Back+Office+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Mesh+Low-Back+Office+Chair+In+situ"
+      ],
+      "price": 4299,
+      "comparePrice": 0,
+      "costPrice": 2630,
+      "stock": 80,
+      "lowStockThreshold": 6,
+      "weight": 9.5,
+      "dimensions": {
+        "length": 58,
+        "width": 58,
+        "height": 96
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 4299,
+          "stock": 26,
+          "sku": "OFE-LBK-01-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 4299,
+          "stock": 24,
+          "sku": "OFE-LBK-01-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        },
+        {
+          "id": "v3",
+          "name": "Navy Blue",
+          "price": 4299,
+          "stock": 30,
+          "sku": "OFE-LBK-01-NVY",
+          "attributes": {
+            "Colour": "Navy Blue"
+          },
+          "swatchHex": "#2c3a57"
+        }
+      ],
+      "tags": [
+        "essentials",
+        "office chair",
+        "low back",
+        "mesh",
+        "workstation",
+        "revolving"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Mesh Low-Back Office Chair | A & S Urbanseat",
+      "metaDescription": "A compact mesh low-back chair for workstations, reception desks and study tables. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-28T13:00:00.000Z",
+      "updatedAt": "2026-09-16T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        21
+      ],
+      "relatedProductIds": [
+        25,
+        23,
+        22,
+        26
+      ]
+    },
+    {
+      "id": 25,
+      "name": "Fabric Low-Back Office Chair",
+      "slug": "fabric-low-back-office-chair",
+      "sku": "OFE-LBK-02",
+      "shortDescription": "A padded fabric low-back chair, a simple and comfortable seat for desks and counters.",
+      "description": "A simple, well-padded low-back chair for desks, counters and study tables, with fabric that stays comfortable in warm weather.\n\nGas-lift height adjustment and a sturdy base make it a dependable everyday seat.\n\nSpecifications: Upholstery: Woven fabric over moulded foam; Base: Nylon five-star base with castors; Mechanism: Gas-lift height adjustment; Seat height: approx. 45–55 cm; Overall size: approx. 57 × 57 × 84–94 cm; Weight capacity: approx. 100 kg; Care: Vacuum regularly, spot-clean with mild soap",
+      "categoryId": 22,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+Low-Back+Office+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+Low-Back+Office+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Fabric+Low-Back+Office+Chair+In+situ"
+      ],
+      "price": 3799,
+      "comparePrice": 4399,
+      "costPrice": 2450,
+      "stock": 79,
+      "lowStockThreshold": 6,
+      "weight": 9,
+      "dimensions": {
+        "length": 57,
+        "width": 57,
+        "height": 94
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 3799,
+          "stock": 44,
+          "sku": "OFE-LBK-02-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Navy Blue",
+          "price": 3799,
+          "stock": 35,
+          "sku": "OFE-LBK-02-NVY",
+          "attributes": {
+            "Colour": "Navy Blue"
+          },
+          "swatchHex": "#2c3a57"
+        }
+      ],
+      "tags": [
+        "essentials",
+        "office chair",
+        "low back",
+        "fabric",
+        "study chair",
+        "revolving"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Fabric Low-Back Office Chair | A & S Urbanseat",
+      "metaDescription": "A padded fabric low-back chair, a simple and comfortable seat for desks and counters. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-28T17:00:00.000Z",
+      "updatedAt": "2026-07-26T17:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        24,
+        26,
+        23,
+        27
+      ]
+    },
+    {
+      "id": 26,
+      "name": "2-Seater Waiting Chair",
+      "slug": "2-seater-waiting-chair",
+      "sku": "OFE-WTG-02",
+      "shortDescription": "A two-seat perforated steel waiting chair for compact reception areas and clinics.",
+      "description": "Two perforated steel seats on a shared beam, sized for compact reception areas, clinic corridors and cabin entrances.\n\nThe powder-coated finish stands up to daily use, and the beam can be fixed to the floor for a tidy, permanent layout.\n\nSpecifications: Frame: Powder-coated steel beam and legs; Seats: 2; Seat: Perforated steel seat and back; Overall size: approx. 110 × 60 × 78 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 23,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=2-Seater+Waiting+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=2-Seater+Waiting+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=2-Seater+Waiting+Chair+In+situ"
+      ],
+      "price": 4999,
+      "comparePrice": 0,
+      "costPrice": 3350,
+      "stock": 40,
+      "lowStockThreshold": 6,
+      "weight": 16,
+      "dimensions": {
+        "length": 110,
+        "width": 60,
+        "height": 78
+      },
+      "variants": [],
+      "tags": [
+        "essentials",
+        "waiting chair",
+        "reception",
+        "lobby",
+        "steel",
+        "2 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "2-Seater Waiting Chair | A & S Urbanseat",
+      "metaDescription": "A two-seat perforated steel waiting chair for compact reception areas and clinics. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-25T12:00:00.000Z",
+      "updatedAt": "2026-09-15T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        21
+      ],
+      "relatedProductIds": [
+        27,
+        28,
+        25,
+        24
+      ]
+    },
+    {
+      "id": 27,
+      "name": "3-Seater Waiting Chair",
+      "slug": "3-seater-waiting-chair",
+      "sku": "OFE-WTG-03",
+      "shortDescription": "A three-seat perforated steel waiting chair for lobbies, banks and hospital corridors.",
+      "description": "The most versatile size for a lobby: three perforated steel seats on one beam, easy to line up along a wall or back to back.\n\nPerforations keep the seats cool and quick to dry, and there is nothing to tear or stain.\n\nSpecifications: Frame: Powder-coated steel beam and legs; Seats: 3; Seat: Perforated steel seat and back; Overall size: approx. 165 × 60 × 78 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 23,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=3-Seater+Waiting+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=3-Seater+Waiting+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=3-Seater+Waiting+Chair+In+situ"
+      ],
+      "price": 6499,
+      "comparePrice": 7499,
+      "costPrice": 4310,
+      "stock": 34,
+      "lowStockThreshold": 6,
+      "weight": 22,
+      "dimensions": {
+        "length": 165,
+        "width": 60,
+        "height": 78
+      },
+      "variants": [],
+      "tags": [
+        "essentials",
+        "waiting chair",
+        "reception",
+        "lobby",
+        "steel",
+        "3 seater"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "3-Seater Waiting Chair | A & S Urbanseat",
+      "metaDescription": "A three-seat perforated steel waiting chair for lobbies, banks and hospital corridors. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-30T13:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        21,
+        24
+      ],
+      "relatedProductIds": [
+        26,
+        28,
+        25,
+        24
+      ]
+    },
+    {
+      "id": 28,
+      "name": "4-Seater Waiting Chair",
+      "slug": "4-seater-waiting-chair",
+      "sku": "OFE-WTG-04",
+      "shortDescription": "A four-seat perforated steel waiting chair for busy halls, stations and large lobbies.",
+      "description": "Four seats on a single steel beam for busy halls, admission desks and larger waiting areas where seating needs to be orderly.\n\nIts long, steady frame stays put once placed, and the powder-coated finish keeps its look under heavy use.\n\nSpecifications: Frame: Powder-coated steel beam and legs; Seats: 4; Seat: Perforated steel seat and back; Overall size: approx. 220 × 60 × 78 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 23,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Waiting+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Waiting+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=4-Seater+Waiting+Chair+In+situ"
+      ],
+      "price": 7999,
+      "comparePrice": 0,
+      "costPrice": 5240,
+      "stock": 36,
+      "lowStockThreshold": 6,
+      "weight": 28,
+      "dimensions": {
+        "length": 220,
+        "width": 60,
+        "height": 78
+      },
+      "variants": [],
+      "tags": [
+        "essentials",
+        "waiting chair",
+        "reception",
+        "lobby",
+        "steel",
+        "4 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "4-Seater Waiting Chair | A & S Urbanseat",
+      "metaDescription": "A four-seat perforated steel waiting chair for busy halls, stations and large lobbies. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-20T08:00:00.000Z",
+      "updatedAt": "2026-07-29T08:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        22
+      ],
+      "relatedProductIds": [
+        27,
+        26,
+        25,
+        24
+      ]
+    },
+    {
+      "id": 29,
+      "name": "Executive Mesh High-Back Chair",
+      "slug": "executive-mesh-high-back-chair",
+      "sku": "OFP-HBK-01",
+      "shortDescription": "An executive mesh chair with adjustable lumbar support, 2D arms and a synchro tilt.",
+      "description": "A heavier build and a finer finish for the people who sit longest: a tensioned mesh back, adjustable lumbar support and a seat that moves with you.\n\nThe synchro mechanism tilts seat and back together, and the arms adjust in height and width to suit the desk.\n\nSpecifications: Upholstery: Tensioned mesh back, moulded foam seat; Base: Polished aluminium five-star base with castors; Mechanism: Synchro tilt with multi-position lock, adjustable lumbar, 2D arms; Seat height: approx. 45–55 cm; Overall size: approx. 66 × 66 × 116–126 cm; Weight capacity: approx. 120 kg; Care: Vacuum the mesh, wipe the frame",
+      "categoryId": 25,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Mesh+High-Back+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Mesh+High-Back+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Mesh+High-Back+Chair+In+situ"
+      ],
+      "price": 13999,
+      "comparePrice": 15999,
+      "costPrice": 9020,
+      "stock": 59,
+      "lowStockThreshold": 5,
+      "weight": 17,
+      "dimensions": {
+        "length": 66,
+        "width": 66,
+        "height": 126
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 13999,
+          "stock": 35,
+          "sku": "OFP-HBK-01-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 13999,
+          "stock": 24,
+          "sku": "OFP-HBK-01-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        }
+      ],
+      "tags": [
+        "premium",
+        "office chair",
+        "high back",
+        "mesh",
+        "executive",
+        "ergonomic"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Executive Mesh High-Back Chair | A & S Urbanseat",
+      "metaDescription": "An executive mesh chair with adjustable lumbar support, 2D arms and a synchro tilt. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-05T15:00:00.000Z",
+      "updatedAt": "2026-08-27T15:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        35
+      ],
+      "relatedProductIds": [
+        30,
+        31,
+        32,
+        33
+      ]
+    },
+    {
+      "id": 30,
+      "name": "Executive Leatherette High-Back Chair",
+      "slug": "executive-leatherette-high-back-chair",
+      "sku": "OFP-HBK-02",
+      "shortDescription": "A deeply padded executive chair in fine leatherette with a polished base and tilt lock.",
+      "description": "Deep padding, stitched leatherette and a polished base give this executive chair the presence a cabin deserves.\n\nIts tilt mechanism locks in several positions, and the padded arms are wide enough to rest on through a long call.\n\nSpecifications: Upholstery: Stitched fine leatherette over high-density foam; Base: Polished aluminium five-star base with castors; Mechanism: Knee-tilt with multi-position lock, gas-lift height; Seat height: approx. 46–56 cm; Overall size: approx. 68 × 72 × 118–128 cm; Weight capacity: approx. 120 kg; Care: Wipe with a damp cloth, condition occasionally",
+      "categoryId": 25,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+High-Back+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+High-Back+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+High-Back+Chair+In+situ"
+      ],
+      "price": 16499,
+      "comparePrice": 0,
+      "costPrice": 11530,
+      "stock": 86,
+      "lowStockThreshold": 5,
+      "weight": 19,
+      "dimensions": {
+        "length": 68,
+        "width": 72,
+        "height": 128
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 16499,
+          "stock": 44,
+          "sku": "OFP-HBK-02-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Brown",
+          "price": 16499,
+          "stock": 37,
+          "sku": "OFP-HBK-02-BRN",
+          "attributes": {
+            "Colour": "Brown"
+          },
+          "swatchHex": "#5a3b2a"
+        },
+        {
+          "id": "v3",
+          "name": "Tan",
+          "price": 16499,
+          "stock": 5,
+          "sku": "OFP-HBK-02-TAN",
+          "attributes": {
+            "Colour": "Tan"
+          },
+          "swatchHex": "#a0714a"
+        }
+      ],
+      "tags": [
+        "premium",
+        "office chair",
+        "high back",
+        "leatherette",
+        "executive"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Executive Leatherette High-Back Chair | A & S Urbanseat",
+      "metaDescription": "A deeply padded executive chair in fine leatherette with a polished base and tilt lock. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-04-22T11:00:00.000Z",
+      "updatedAt": "2026-05-12T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        35
+      ],
+      "relatedProductIds": [
+        29,
+        31,
+        32,
+        33
+      ]
+    },
+    {
+      "id": 31,
+      "name": "Ergonomic High-Back Chair with Headrest",
+      "slug": "ergonomic-high-back-chair-with-headrest",
+      "sku": "OFP-HBK-03",
+      "shortDescription": "A fully adjustable ergonomic chair with headrest, lumbar support, 3D arms and seat slide.",
+      "description": "Every adjustment that matters in one chair: headrest, lumbar support, 3D arms and a sliding seat, so it can be set exactly to the person using it.\n\nThe headrest supports the neck as you lean back, and the synchro mechanism keeps the posture balanced through the day.\n\nSpecifications: Upholstery: Tensioned mesh back and headrest, moulded foam seat; Base: Polished aluminium five-star base with castors; Mechanism: Synchro tilt with lock, seat slide, adjustable lumbar and headrest, 3D arms; Seat height: approx. 45–55 cm; Overall size: approx. 67 × 67 × 120–135 cm; Weight capacity: approx. 120 kg; Care: Vacuum the mesh, wipe the frame",
+      "categoryId": 25,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+High-Back+Chair+with+Headrest",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+High-Back+Chair+with+Headrest+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+High-Back+Chair+with+Headrest+In+situ"
+      ],
+      "price": 19999,
+      "comparePrice": 0,
+      "costPrice": 13050,
+      "stock": 50,
+      "lowStockThreshold": 5,
+      "weight": 20,
+      "dimensions": {
+        "length": 67,
+        "width": 67,
+        "height": 135
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 19999,
+          "stock": 35,
+          "sku": "OFP-HBK-03-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 19999,
+          "stock": 15,
+          "sku": "OFP-HBK-03-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        }
+      ],
+      "tags": [
+        "premium",
+        "office chair",
+        "high back",
+        "mesh",
+        "ergonomic",
+        "headrest"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Ergonomic High-Back Chair with Headrest | A & S Urbanseat",
+      "metaDescription": "A fully adjustable ergonomic chair with headrest, lumbar support, 3D arms and seat slide. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-25T09:00:00.000Z",
+      "updatedAt": "2026-08-04T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        35
+      ],
+      "relatedProductIds": [
+        30,
+        29,
+        32,
+        33
+      ]
+    },
+    {
+      "id": 32,
+      "name": "Executive Leatherette Low-Back Chair",
+      "slug": "executive-leatherette-low-back-chair",
+      "sku": "OFP-LBK-01",
+      "shortDescription": "A low-back executive chair in fine leatherette for meeting rooms and visitor seating.",
+      "description": "A refined low-back chair in fine leatherette, the right height for meeting tables and the visitor side of a desk.\n\nIt shares the stitched upholstery and polished base of our executive high-back chair, in a more compact form.\n\nSpecifications: Upholstery: Stitched fine leatherette over high-density foam; Base: Polished aluminium five-star base with castors; Mechanism: Tilt with lock, gas-lift height; Seat height: approx. 45–55 cm; Overall size: approx. 62 × 64 × 92–102 cm; Weight capacity: approx. 110 kg; Care: Wipe with a damp cloth, condition occasionally",
+      "categoryId": 26,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+Low-Back+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+Low-Back+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Executive+Leatherette+Low-Back+Chair+In+situ"
+      ],
+      "price": 10499,
+      "comparePrice": 0,
+      "costPrice": 6710,
+      "stock": 30,
+      "lowStockThreshold": 5,
+      "weight": 14,
+      "dimensions": {
+        "length": 62,
+        "width": 64,
+        "height": 102
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 10499,
+          "stock": 21,
+          "sku": "OFP-LBK-01-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Tan",
+          "price": 10499,
+          "stock": 9,
+          "sku": "OFP-LBK-01-TAN",
+          "attributes": {
+            "Colour": "Tan"
+          },
+          "swatchHex": "#a0714a"
+        }
+      ],
+      "tags": [
+        "premium",
+        "office chair",
+        "low back",
+        "leatherette",
+        "executive",
+        "meeting room"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Executive Leatherette Low-Back Chair | A & S Urbanseat",
+      "metaDescription": "A low-back executive chair in fine leatherette for meeting rooms and visitor seating. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-09-05T13:00:00.000Z",
+      "updatedAt": "2026-09-09T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        30
+      ],
+      "relatedProductIds": [
+        33,
+        31,
+        30,
+        34
+      ]
+    },
+    {
+      "id": 33,
+      "name": "Ergonomic Mesh Low-Back Chair",
+      "slug": "ergonomic-mesh-low-back-chair",
+      "sku": "OFP-LBK-02",
+      "shortDescription": "A low-back ergonomic mesh chair with adjustable lumbar support and a synchro tilt.",
+      "description": "Ergonomic support in a compact chair: an adjustable lumbar pad, a synchro tilt and a tensioned mesh back that breathes.\n\nA good fit for shared desks and meeting rooms where several people use the same chair through the week.\n\nSpecifications: Upholstery: Tensioned mesh back, moulded foam seat; Base: Reinforced nylon five-star base with castors; Mechanism: Synchro tilt with lock, adjustable lumbar, height-adjustable arms; Seat height: approx. 44–54 cm; Overall size: approx. 62 × 62 × 92–102 cm; Weight capacity: approx. 120 kg; Care: Vacuum the mesh, wipe the frame",
+      "categoryId": 26,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+Mesh+Low-Back+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+Mesh+Low-Back+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Ergonomic+Mesh+Low-Back+Chair+In+situ"
+      ],
+      "price": 11999,
+      "comparePrice": 13499,
+      "costPrice": 7920,
+      "stock": 69,
+      "lowStockThreshold": 5,
+      "weight": 13,
+      "dimensions": {
+        "length": 62,
+        "width": 62,
+        "height": 102
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 11999,
+          "stock": 16,
+          "sku": "OFP-LBK-02-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Grey",
+          "price": 11999,
+          "stock": 35,
+          "sku": "OFP-LBK-02-GRY",
+          "attributes": {
+            "Colour": "Grey"
+          },
+          "swatchHex": "#7c7f84"
+        },
+        {
+          "id": "v3",
+          "name": "Navy Blue",
+          "price": 11999,
+          "stock": 18,
+          "sku": "OFP-LBK-02-NVY",
+          "attributes": {
+            "Colour": "Navy Blue"
+          },
+          "swatchHex": "#2c3a57"
+        }
+      ],
+      "tags": [
+        "premium",
+        "office chair",
+        "low back",
+        "mesh",
+        "ergonomic"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": true,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Ergonomic Mesh Low-Back Chair | A & S Urbanseat",
+      "metaDescription": "A low-back ergonomic mesh chair with adjustable lumbar support and a synchro tilt. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-03T11:00:00.000Z",
+      "updatedAt": "2026-09-09T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        32,
+        34,
+        31,
+        35
+      ]
+    },
+    {
+      "id": 34,
+      "name": "Cushioned 2-Seater Waiting Bench",
+      "slug": "cushioned-2-seater-waiting-bench",
+      "sku": "OFP-WTG-02",
+      "shortDescription": "A cushioned two-seat waiting bench in leatherette for cabins and boutique receptions.",
+      "description": "Two cushioned seats in leatherette on a polished steel frame, giving a small reception or cabin entrance a softer, more welcoming feel.\n\nThe cushions are firm enough to stay smart and soft enough for a long wait.\n\nSpecifications: Frame: Polished steel beam and legs; Seats: 2; Seat: Cushioned leatherette seat and back; Overall size: approx. 115 × 62 × 80 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 27,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+2-Seater+Waiting+Bench",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+2-Seater+Waiting+Bench+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+2-Seater+Waiting+Bench+In+situ"
+      ],
+      "price": 9499,
+      "comparePrice": 0,
+      "costPrice": 6550,
+      "stock": 66,
+      "lowStockThreshold": 5,
+      "weight": 20,
+      "dimensions": {
+        "length": 115,
+        "width": 62,
+        "height": 80
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 9499,
+          "stock": 24,
+          "sku": "OFP-WTG-02-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Tan",
+          "price": 9499,
+          "stock": 42,
+          "sku": "OFP-WTG-02-TAN",
+          "attributes": {
+            "Colour": "Tan"
+          },
+          "swatchHex": "#a0714a"
+        }
+      ],
+      "tags": [
+        "premium",
+        "waiting chair",
+        "waiting bench",
+        "reception",
+        "cushioned",
+        "leatherette",
+        "2 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cushioned 2-Seater Waiting Bench | A & S Urbanseat",
+      "metaDescription": "A cushioned two-seat waiting bench in leatherette for cabins and boutique receptions. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-11T11:00:00.000Z",
+      "updatedAt": "2026-05-29T11:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        30
+      ],
+      "relatedProductIds": [
+        35,
+        36,
+        33,
+        32
+      ]
+    },
+    {
+      "id": 35,
+      "name": "Cushioned 3-Seater Waiting Bench",
+      "slug": "cushioned-3-seater-waiting-bench",
+      "sku": "OFP-WTG-03",
+      "shortDescription": "A cushioned three-seat waiting bench in leatherette for reception areas and lounges.",
+      "description": "Three cushioned leatherette seats on a polished frame: comfortable, composed seating for reception areas, lounges and clinics.\n\nIts upholstery wipes clean, and the frame can be fixed to the floor for an orderly layout.\n\nSpecifications: Frame: Polished steel beam and legs; Seats: 3; Seat: Cushioned leatherette seat and back; Overall size: approx. 170 × 62 × 80 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 27,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+3-Seater+Waiting+Bench",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+3-Seater+Waiting+Bench+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cushioned+3-Seater+Waiting+Bench+In+situ"
+      ],
+      "price": 12999,
+      "comparePrice": 14999,
+      "costPrice": 8320,
+      "stock": 43,
+      "lowStockThreshold": 5,
+      "weight": 27,
+      "dimensions": {
+        "length": 170,
+        "width": 62,
+        "height": 80
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Black",
+          "price": 12999,
+          "stock": 31,
+          "sku": "OFP-WTG-03-BLK",
+          "attributes": {
+            "Colour": "Black"
+          },
+          "swatchHex": "#1f1f1f"
+        },
+        {
+          "id": "v2",
+          "name": "Tan",
+          "price": 12999,
+          "stock": 12,
+          "sku": "OFP-WTG-03-TAN",
+          "attributes": {
+            "Colour": "Tan"
+          },
+          "swatchHex": "#a0714a"
+        }
+      ],
+      "tags": [
+        "premium",
+        "waiting chair",
+        "waiting bench",
+        "reception",
+        "cushioned",
+        "leatherette",
+        "3 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cushioned 3-Seater Waiting Bench | A & S Urbanseat",
+      "metaDescription": "A cushioned three-seat waiting bench in leatherette for reception areas and lounges. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-09T12:00:00.000Z",
+      "updatedAt": "2026-05-21T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        29,
+        32
+      ],
+      "relatedProductIds": [
+        34,
+        36,
+        33,
+        32
+      ]
+    },
+    {
+      "id": 36,
+      "name": "Steel 3-Seater Waiting Chair",
+      "slug": "steel-3-seater-waiting-chair",
+      "sku": "OFP-WTG-13",
+      "shortDescription": "A heavy-gauge steel three-seat waiting chair with a brushed finish and armrests.",
+      "description": "Heavy-gauge steel, a brushed finish and armrests between the seats give this waiting chair a solid, architectural presence.\n\nBuilt to take heavy daily use in offices, banks and hospitals, it needs nothing more than a wipe to look its best.\n\nSpecifications: Frame: Heavy-gauge steel beam with armrests; Seats: 3; Seat: Perforated brushed-steel seat and back; Overall size: approx. 175 × 64 × 80 cm; Assembly: Bolt-together, floor-fixing holes provided; Care: Wipe clean with a dry cloth",
+      "categoryId": 27,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+3-Seater+Waiting+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+3-Seater+Waiting+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Steel+3-Seater+Waiting+Chair+In+situ"
+      ],
+      "price": 10999,
+      "comparePrice": 0,
+      "costPrice": 7420,
+      "stock": 26,
+      "lowStockThreshold": 5,
+      "weight": 30,
+      "dimensions": {
+        "length": 175,
+        "width": 64,
+        "height": 80
+      },
+      "variants": [],
+      "tags": [
+        "premium",
+        "waiting chair",
+        "reception",
+        "lobby",
+        "steel",
+        "3 seater"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Steel 3-Seater Waiting Chair | A & S Urbanseat",
+      "metaDescription": "A heavy-gauge steel three-seat waiting chair with a brushed finish and armrests. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-03T08:00:00.000Z",
+      "updatedAt": "2026-06-08T08:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [
+        29
+      ],
+      "relatedProductIds": [
+        35,
+        34,
+        33,
+        32
+      ]
+    },
+    {
+      "id": 37,
+      "name": "Bentwood-Style Café Chair",
+      "slug": "bentwood-style-cafe-chair",
+      "sku": "CAF-CHR-01",
+      "shortDescription": "A bentwood-style café chair with a looped back, light to move and easy to love.",
+      "description": "The curved, looped back of a classic bentwood chair, made for cafés that want warmth and a little nostalgia at every table.\n\nLight enough for staff to move quickly between services, and sturdy at the joints where café chairs work hardest.\n\nSpecifications: Frame: Steam-bent beech-look hardwood; Seat: Solid wood seat; Seat height: approx. 45 cm; Overall size: approx. 43 × 50 × 85 cm; Stackable: No; Care: Wipe with a dry cloth, avoid standing water",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Bentwood-Style+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Bentwood-Style+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Bentwood-Style+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 3499,
+      "comparePrice": 3999,
+      "costPrice": 2240,
+      "stock": 103,
+      "lowStockThreshold": 6,
+      "weight": 4.5,
+      "dimensions": {
+        "length": 43,
+        "width": 50,
+        "height": 85
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 3499,
+          "stock": 27,
+          "sku": "CAF-CHR-01-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Matte Black",
+          "price": 3499,
+          "stock": 31,
+          "sku": "CAF-CHR-01-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        },
+        {
+          "id": "v3",
+          "name": "Natural Oak",
+          "price": 3499,
+          "stock": 45,
+          "sku": "CAF-CHR-01-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "bentwood",
+        "wood"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Bentwood-Style Café Chair | A & S Urbanseat",
+      "metaDescription": "A bentwood-style café chair with a looped back, light to move and easy to love. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-04-30T12:00:00.000Z",
+      "updatedAt": "2026-05-11T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        38,
+        39,
+        40,
+        41
+      ]
+    },
+    {
+      "id": 38,
+      "name": "Metal Bistro Chair",
+      "slug": "metal-bistro-chair",
+      "sku": "CAF-CHR-02",
+      "shortDescription": "A slim metal bistro chair for pavement cafés, counters and compact dining spaces.",
+      "description": "A slim metal chair with the easy elegance of a pavement bistro, ideal where space is tight and turnover is quick.\n\nIts powder-coated finish handles daily cleaning, and the chairs stack between services.\n\nSpecifications: Frame: Powder-coated steel; Seat: Steel seat with drainage holes; Seat height: approx. 46 cm; Overall size: approx. 44 × 50 × 84 cm; Stackable: Yes; Care: Wipe clean, dry after outdoor use",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Metal+Bistro+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Metal+Bistro+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Metal+Bistro+Chair+In+situ"
+      ],
+      "price": 2499,
+      "comparePrice": 0,
+      "costPrice": 1630,
+      "stock": 24,
+      "lowStockThreshold": 8,
+      "weight": 4.2,
+      "dimensions": {
+        "length": 44,
+        "width": 50,
+        "height": 84
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Matte Black",
+          "price": 2499,
+          "stock": 10,
+          "sku": "CAF-CHR-02-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        },
+        {
+          "id": "v2",
+          "name": "Antique Brass",
+          "price": 2499,
+          "stock": 0,
+          "sku": "CAF-CHR-02-BRS",
+          "attributes": {
+            "Finish": "Antique Brass"
+          },
+          "swatchHex": "#9c7c45"
+        },
+        {
+          "id": "v3",
+          "name": "Sage",
+          "price": 2499,
+          "stock": 14,
+          "sku": "CAF-CHR-02-SGE",
+          "attributes": {
+            "Finish": "Sage"
+          },
+          "swatchHex": "#9aa48a"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "bistro",
+        "metal",
+        "stackable",
+        "outdoor"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Metal Bistro Chair | A & S Urbanseat",
+      "metaDescription": "A slim metal bistro chair for pavement cafés, counters and compact dining spaces. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-02T16:00:00.000Z",
+      "updatedAt": "2026-08-06T16:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        37,
+        39,
+        40,
+        41
+      ]
+    },
+    {
+      "id": 39,
+      "name": "Upholstered Restaurant Chair",
+      "slug": "upholstered-restaurant-chair",
+      "sku": "CAF-CHR-03",
+      "shortDescription": "A softly upholstered dining chair for restaurants where guests linger over the meal.",
+      "description": "A padded seat and back in hard-wearing fabric, for restaurants where guests settle in and stay for dessert.\n\nIts upholstery is chosen for commercial use, and the solid frame holds its shape through years of service.\n\nSpecifications: Frame: Solid hardwood legs; Seat: Upholstered seat and back in commercial fabric; Seat height: approx. 47 cm; Overall size: approx. 48 × 56 × 88 cm; Stackable: No; Care: Vacuum and spot-clean with mild soap",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Upholstered+Restaurant+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Upholstered+Restaurant+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Upholstered+Restaurant+Chair+In+situ"
+      ],
+      "price": 4999,
+      "comparePrice": 0,
+      "costPrice": 3310,
+      "stock": 60,
+      "lowStockThreshold": 6,
+      "weight": 6.5,
+      "dimensions": {
+        "length": 48,
+        "width": 56,
+        "height": 88
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Ivory",
+          "price": 4999,
+          "stock": 20,
+          "sku": "CAF-CHR-03-IVR",
+          "attributes": {
+            "Finish": "Ivory"
+          },
+          "swatchHex": "#e9e1d0"
+        },
+        {
+          "id": "v2",
+          "name": "Rust",
+          "price": 4999,
+          "stock": 22,
+          "sku": "CAF-CHR-03-RST",
+          "attributes": {
+            "Finish": "Rust"
+          },
+          "swatchHex": "#9a4f2c"
+        },
+        {
+          "id": "v3",
+          "name": "Matte Black",
+          "price": 4999,
+          "stock": 18,
+          "sku": "CAF-CHR-03-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "upholstered",
+        "fabric",
+        "wood"
+      ],
+      "featured": true,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Upholstered Restaurant Chair | A & S Urbanseat",
+      "metaDescription": "A softly upholstered dining chair for restaurants where guests linger over the meal. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-02T12:00:00.000Z",
+      "updatedAt": "2026-08-13T12:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        38,
+        40,
+        37,
+        41
+      ]
+    },
+    {
+      "id": 40,
+      "name": "Cane-Look Café Chair",
+      "slug": "cane-look-cafe-chair",
+      "sku": "CAF-CHR-04",
+      "shortDescription": "A café chair with a cane-look back panel that brings a light, airy feel to a room.",
+      "description": "A woven cane-look back panel set in a timber frame, bringing a light, airy feel to cafés with a garden or heritage character.\n\nThe weave is a durable synthetic, so it keeps its look without the brittleness of natural cane.\n\nSpecifications: Frame: Hardwood frame; Seat: Solid wood seat, synthetic cane-look back; Seat height: approx. 46 cm; Overall size: approx. 45 × 52 × 86 cm; Stackable: No; Care: Dust the weave, wipe the frame with a dry cloth",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cane-Look+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cane-Look+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cane-Look+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 3999,
+      "comparePrice": 4599,
+      "costPrice": 2560,
+      "stock": 90,
+      "lowStockThreshold": 6,
+      "weight": 5.2,
+      "dimensions": {
+        "length": 45,
+        "width": 52,
+        "height": 86
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Natural Cane",
+          "price": 3999,
+          "stock": 44,
+          "sku": "CAF-CHR-04-CNE",
+          "attributes": {
+            "Finish": "Natural Cane"
+          },
+          "swatchHex": "#cfae7a"
+        },
+        {
+          "id": "v2",
+          "name": "Walnut",
+          "price": 3999,
+          "stock": 46,
+          "sku": "CAF-CHR-04-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "cane",
+        "wood",
+        "woven"
+      ],
+      "featured": false,
+      "trending": true,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cane-Look Café Chair | A & S Urbanseat",
+      "metaDescription": "A café chair with a cane-look back panel that brings a light, airy feel to a room. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-06-11T17:00:00.000Z",
+      "updatedAt": "2026-07-14T17:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        39,
+        41,
+        38,
+        42
+      ]
+    },
+    {
+      "id": 41,
+      "name": "Stackable Restaurant Chair",
+      "slug": "stackable-restaurant-chair",
+      "sku": "CAF-CHR-05",
+      "shortDescription": "A sturdy stackable restaurant chair that clears the floor quickly after closing.",
+      "description": "Built for busy dining halls and canteens: a sturdy chair that stacks high so floors can be cleared quickly at closing.\n\nRubber feet protect the floor, and the moulded seat wipes clean between sittings.\n\nSpecifications: Frame: Powder-coated steel; Seat: Moulded seat and back, wood-look finish; Seat height: approx. 46 cm; Overall size: approx. 45 × 51 × 82 cm; Stackable: Yes; Care: Wipe clean with a damp cloth",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Restaurant+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Restaurant+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Stackable+Restaurant+Chair+In+situ"
+      ],
+      "price": 2199,
+      "comparePrice": 0,
+      "costPrice": 1530,
+      "stock": 29,
+      "lowStockThreshold": 8,
+      "weight": 4.8,
+      "dimensions": {
+        "length": 45,
+        "width": 51,
+        "height": 82
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Matte Black",
+          "price": 2199,
+          "stock": 12,
+          "sku": "CAF-CHR-05-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        },
+        {
+          "id": "v2",
+          "name": "Walnut",
+          "price": 2199,
+          "stock": 17,
+          "sku": "CAF-CHR-05-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "stackable",
+        "metal",
+        "canteen"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Stackable Restaurant Chair | A & S Urbanseat",
+      "metaDescription": "A sturdy stackable restaurant chair that clears the floor quickly after closing. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-05T15:00:00.000Z",
+      "updatedAt": "2026-05-30T15:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        40,
+        42,
+        39,
+        43
+      ]
+    },
+    {
+      "id": 42,
+      "name": "Cross-Back Dining Chair",
+      "slug": "cross-back-dining-chair",
+      "sku": "CAF-CHR-06",
+      "shortDescription": "A cross-back timber dining chair with a woven seat, warm and quietly rustic.",
+      "description": "The crossed back of a farmhouse chair paired with a woven seat: warm, quietly rustic and at ease in cafés and family restaurants.\n\nSolid timber joints give it the heft that a well-used dining chair needs.\n\nSpecifications: Frame: Solid hardwood with cross back; Seat: Woven synthetic seat; Seat height: approx. 46 cm; Overall size: approx. 46 × 53 × 87 cm; Stackable: No; Care: Wipe with a dry cloth, avoid standing water",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cross-Back+Dining+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cross-Back+Dining+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Cross-Back+Dining+Chair+In+situ"
+      ],
+      "price": 4499,
+      "comparePrice": 0,
+      "costPrice": 3050,
+      "stock": 64,
+      "lowStockThreshold": 6,
+      "weight": 6,
+      "dimensions": {
+        "length": 46,
+        "width": 53,
+        "height": 87
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Walnut",
+          "price": 4499,
+          "stock": 20,
+          "sku": "CAF-CHR-06-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        },
+        {
+          "id": "v2",
+          "name": "Natural Oak",
+          "price": 4499,
+          "stock": 23,
+          "sku": "CAF-CHR-06-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        },
+        {
+          "id": "v3",
+          "name": "Matte Black",
+          "price": 4499,
+          "stock": 21,
+          "sku": "CAF-CHR-06-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "cross back",
+        "wood",
+        "woven"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Cross-Back Dining Chair | A & S Urbanseat",
+      "metaDescription": "A cross-back timber dining chair with a woven seat, warm and quietly rustic. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-08T17:00:00.000Z",
+      "updatedAt": "2026-06-03T17:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        41,
+        43,
+        40,
+        44
+      ]
+    },
+    {
+      "id": 43,
+      "name": "Tub Café Chair",
+      "slug": "tub-cafe-chair",
+      "sku": "CAF-CHR-07",
+      "shortDescription": "A rounded tub-shaped café chair that wraps around the sitter for relaxed seating.",
+      "description": "A rounded tub shape that wraps gently around the sitter, making it the chair guests pick for a long coffee.\n\nIts moulded shell sits on slim legs, so a row of tub chairs looks generous without feeling heavy.\n\nSpecifications: Frame: Powder-coated steel legs; Seat: Moulded tub shell with seat pad; Seat height: approx. 45 cm; Overall size: approx. 56 × 54 × 76 cm; Stackable: No; Care: Wipe clean, spot-clean the pad",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Tub+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Tub+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Tub+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 3299,
+      "comparePrice": 0,
+      "costPrice": 2180,
+      "stock": 89,
+      "lowStockThreshold": 6,
+      "weight": 5.5,
+      "dimensions": {
+        "length": 56,
+        "width": 54,
+        "height": 76
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Sage",
+          "price": 3299,
+          "stock": 37,
+          "sku": "CAF-CHR-07-SGE",
+          "attributes": {
+            "Finish": "Sage"
+          },
+          "swatchHex": "#9aa48a"
+        },
+        {
+          "id": "v2",
+          "name": "Ivory",
+          "price": 3299,
+          "stock": 20,
+          "sku": "CAF-CHR-07-IVR",
+          "attributes": {
+            "Finish": "Ivory"
+          },
+          "swatchHex": "#e9e1d0"
+        },
+        {
+          "id": "v3",
+          "name": "Rust",
+          "price": 3299,
+          "stock": 32,
+          "sku": "CAF-CHR-07-RST",
+          "attributes": {
+            "Finish": "Rust"
+          },
+          "swatchHex": "#9a4f2c"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "tub chair",
+        "lounge",
+        "metal"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Tub Café Chair | A & S Urbanseat",
+      "metaDescription": "A rounded tub-shaped café chair that wraps around the sitter for relaxed seating. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-05-04T15:00:00.000Z",
+      "updatedAt": "2026-06-12T15:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        42,
+        44,
+        41,
+        45
+      ]
+    },
+    {
+      "id": 44,
+      "name": "Slatted Wood Café Chair",
+      "slug": "slatted-wood-cafe-chair",
+      "sku": "CAF-CHR-08",
+      "shortDescription": "A slatted solid-wood café chair with a clean, Scandinavian-leaning line.",
+      "description": "Clean slatted lines in solid wood, for cafés with a calm, Scandinavian-leaning interior.\n\nThe slats flex just slightly as you lean back, and the finish is sealed for daily wiping.\n\nSpecifications: Frame: Solid hardwood; Seat: Slatted wood seat and back; Seat height: approx. 46 cm; Overall size: approx. 45 × 51 × 84 cm; Stackable: No; Care: Wipe with a damp, well-wrung cloth",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slatted+Wood+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slatted+Wood+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Slatted+Wood+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 3799,
+      "comparePrice": 0,
+      "costPrice": 2430,
+      "stock": 44,
+      "lowStockThreshold": 6,
+      "weight": 5,
+      "dimensions": {
+        "length": 45,
+        "width": 51,
+        "height": 84
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Natural Oak",
+          "price": 3799,
+          "stock": 22,
+          "sku": "CAF-CHR-08-OAK",
+          "attributes": {
+            "Finish": "Natural Oak"
+          },
+          "swatchHex": "#c49a6c"
+        },
+        {
+          "id": "v2",
+          "name": "Walnut",
+          "price": 3799,
+          "stock": 22,
+          "sku": "CAF-CHR-08-WAL",
+          "attributes": {
+            "Finish": "Walnut"
+          },
+          "swatchHex": "#5c3d2e"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "slatted",
+        "wood"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Slatted Wood Café Chair | A & S Urbanseat",
+      "metaDescription": "A slatted solid-wood café chair with a clean, Scandinavian-leaning line. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-07T13:00:00.000Z",
+      "updatedAt": "2026-07-14T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        43,
+        45,
+        42,
+        46
+      ]
+    },
+    {
+      "id": 45,
+      "name": "Wire Café Chair",
+      "slug": "wire-cafe-chair",
+      "sku": "CAF-CHR-09",
+      "shortDescription": "An open wire-frame café chair with a light, graphic silhouette and a seat pad.",
+      "description": "An open wire frame with a light, graphic silhouette that lets a room breathe and looks striking in rows.\n\nA tie-on seat pad adds comfort; the frame works indoors and on covered terraces.\n\nSpecifications: Frame: Powder-coated steel wire; Seat: Wire seat with tie-on pad; Seat height: approx. 46 cm; Overall size: approx. 46 × 52 × 82 cm; Stackable: Yes; Care: Wipe clean, dry after outdoor use",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wire+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wire+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Wire+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 2799,
+      "comparePrice": 0,
+      "costPrice": 1790,
+      "stock": 80,
+      "lowStockThreshold": 8,
+      "weight": 5,
+      "dimensions": {
+        "length": 46,
+        "width": 52,
+        "height": 82
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Matte Black",
+          "price": 2799,
+          "stock": 42,
+          "sku": "CAF-CHR-09-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        },
+        {
+          "id": "v2",
+          "name": "Antique Brass",
+          "price": 2799,
+          "stock": 38,
+          "sku": "CAF-CHR-09-BRS",
+          "attributes": {
+            "Finish": "Antique Brass"
+          },
+          "swatchHex": "#9c7c45"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "wire",
+        "metal",
+        "outdoor"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": true,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Wire Café Chair | A & S Urbanseat",
+      "metaDescription": "An open wire-frame café chair with a light, graphic silhouette and a seat pad. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-07-03T13:00:00.000Z",
+      "updatedAt": "2026-07-29T13:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        44,
+        46,
+        43,
+        42
+      ]
+    },
+    {
+      "id": 46,
+      "name": "Shell Café Chair",
+      "slug": "shell-cafe-chair",
+      "sku": "CAF-CHR-10",
+      "shortDescription": "A moulded shell chair on wooden legs, a modern and easy-care café staple.",
+      "description": "A moulded shell seat on tapered wooden legs: a modern café staple that is comfortable, easy to clean and easy to like.\n\nThe one-piece shell has no seams to trap crumbs, so a quick wipe keeps it ready for the next guest.\n\nSpecifications: Frame: Tapered wooden legs with steel cross-brace; Seat: Moulded polypropylene shell; Seat height: approx. 45 cm; Overall size: approx. 47 × 53 × 82 cm; Stackable: No; Care: Wipe clean with a damp cloth",
+      "categoryId": 3,
+      "brand": "",
+      "images": [
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Shell+Caf%C3%A9+Chair",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Shell+Caf%C3%A9+Chair+Detail",
+        "https://placehold.co/1200x1500/f1ebe1/686158?text=Shell+Caf%C3%A9+Chair+In+situ"
+      ],
+      "price": 1999,
+      "comparePrice": 2299,
+      "costPrice": 1290,
+      "stock": 50,
+      "lowStockThreshold": 8,
+      "weight": 4,
+      "dimensions": {
+        "length": 47,
+        "width": 53,
+        "height": 82
+      },
+      "variants": [
+        {
+          "id": "v1",
+          "name": "Ivory",
+          "price": 1999,
+          "stock": 12,
+          "sku": "CAF-CHR-10-IVR",
+          "attributes": {
+            "Finish": "Ivory"
+          },
+          "swatchHex": "#e9e1d0"
+        },
+        {
+          "id": "v2",
+          "name": "Matte Black",
+          "price": 1999,
+          "stock": 14,
+          "sku": "CAF-CHR-10-MBK",
+          "attributes": {
+            "Finish": "Matte Black"
+          },
+          "swatchHex": "#2a2a2a"
+        },
+        {
+          "id": "v3",
+          "name": "Sage",
+          "price": 1999,
+          "stock": 24,
+          "sku": "CAF-CHR-10-SGE",
+          "attributes": {
+            "Finish": "Sage"
+          },
+          "swatchHex": "#9aa48a"
+        }
+      ],
+      "tags": [
+        "cafe chair",
+        "restaurant chair",
+        "dining",
+        "shell chair",
+        "polypropylene",
+        "modern"
+      ],
+      "featured": false,
+      "trending": false,
+      "hot": false,
+      "isActive": true,
+      "rating": 0,
+      "totalReviews": 0,
+      "metaTitle": "Shell Café Chair | A & S Urbanseat",
+      "metaDescription": "A moulded shell chair on wooden legs, a modern and easy-care café staple. Shop online at A & S Urbanseat.",
+      "createdAt": "2026-08-31T15:00:00.000Z",
+      "updatedAt": "2026-10-06T09:00:00.000Z",
+      "frequentlyBoughtTogetherIds": [],
+      "relatedProductIds": [
+        45,
+        44,
+        43,
+        42
+      ]
     }
   ],
   "cart": [],
@@ -3455,20 +5987,9 @@
       "endAt": "",
       "onExpiry": "endOfDay"
     },
-    "featuredCouponIds": [
-      1,
-      2
-    ],
-    "dealOfTheDayIds": [
-      1,
-      3,
-      4
-    ],
-    "featuredProductIds": [
-      10,
-      12,
-      16
-    ],
+    "featuredCouponIds": [],
+    "dealOfTheDayIds": [],
+    "featuredProductIds": [],
     "updatedAt": "2026-06-14T07:28:09.336Z"
   }
 }

@@ -168,3 +168,166 @@ Literal counts from a grep of hex/rgb values (approximate):
 - `npm run build`: "Compiled successfully", no warnings. `CI=true npm test -- --passWithNoTests`: 6 passed, exit 0. `manifest.json` parses.
 - Splash checked in Chromium on a production build with the JS bundle blocked: light → `urbanseat-logo.png` on `rgb(250,247,242)`, dark → `urbanseat-logo-white.png` on `rgb(10,20,38)`; `body` `background-image: none`; logo 216 px wide at 360, 320 px at 768/1024/1440, centred. With the bundle allowed, the loader is hidden once React mounts. Title and `lang="en-IN"` confirmed. Footer shows the new contact values.
 - `git diff` contains no file under `src/pages/Admin` or `src/components/AdminLayout`.
+
+---
+
+## Prompt 03 — Catalogue data I
+
+**Date:** 2026-10-07. **Files:** `db.json` (`categories`, `products`, the three `dealsConfig` id arrays), new `scripts/validate-db.js`. No file under `src/`, `public/`, `server.js` or `package.json` changed, and no other `db.json` collection changed (checked by comparing every top-level key against `HEAD`).
+
+### What was done
+
+- `categories`: the 16 boilerplate records replaced by 23: departments 1–6 (5 and 6 have no children yet), the Plastic subtree (10–18) and the Office Chairs subtree (20–27).
+- `products`: the 19 boilerplate records replaced by 46 active products, ids 1–46.
+- `dealsConfig.featuredCouponIds`, `dealOfTheDayIds`, `featuredProductIds` set to `[]` (automatic mode). All other `dealsConfig` fields unchanged.
+- Data built with a throwaway generator script kept outside the repo. Output is 2-space JSON with no trailing newline, the same as before.
+- Key sets: every category has the 12 keys of the boilerplate's first category, in the same order. Every product has the 30 keys of the boilerplate's first product, in the same order. The boilerplate's own products 2–20 were missing `frequentlyBoughtTogetherIds` / `relatedProductIds`; every new record has both. Variant keys are `id, name, price, stock, sku, attributes` plus `swatchHex` on Colour/Finish variants only.
+
+### Id ranges
+
+| Range | Use |
+|---|---|
+| Categories 1–6 | Departments, `menuOrder` 1–6 |
+| Categories 10–18 | Plastic subtree (19 free) |
+| Categories 20–27 | Office Chairs subtree (28–29 free) |
+| Categories 30+ | Prompt 04 (Home Furniture, Office Tables & Desks, Plastic Dining Sets and Sofas) |
+| Products 1–46 | This prompt; Prompt 04 continues at 47 |
+
+### Category tree
+
+```
+1  Plastic Furniture        plastic-furniture                 menu 1
+   10 Essentials            plastic-essentials                sort 1
+      11 Chairs with Arms   plastic-essentials-armchairs      sort 1
+      12 Chairs without Arms plastic-essentials-chairs        sort 2
+      13 Centre Tables      plastic-essentials-centre-tables  sort 3
+      14 Shoe Racks         plastic-shoe-racks                sort 4
+   15 Premium               plastic-premium                   sort 2
+      16 Chairs with Arms   plastic-premium-armchairs         sort 1
+      17 Chairs without Arms plastic-premium-chairs           sort 2
+      18 Centre Tables      plastic-premium-centre-tables     sort 3
+2  Office Chairs            office-chairs                     menu 2
+   20 Essentials            office-chairs-essentials          sort 1
+      21 High-Back Chairs   office-essentials-high-back       sort 1
+      22 Low-Back Chairs    office-essentials-low-back        sort 2
+      23 Waiting Chairs     office-essentials-waiting         sort 3
+   24 Premium               office-chairs-premium             sort 2
+      25 High-Back Chairs   office-premium-high-back          sort 1
+      26 Low-Back Chairs    office-premium-low-back           sort 2
+      27 Waiting Chairs     office-premium-waiting            sort 3
+3  Café & Restaurant Chairs cafe-restaurant-chairs            menu 3 (flat)
+4  Outdoor Furniture        outdoor-furniture                 menu 4 (flat)
+5  Home Furniture           home-furniture                    menu 5 (no children yet)
+6  Office Tables & Desks    office-tables-desks               menu 6 (no children yet)
+```
+
+All categories are active. Only departments are in the main menu; children use `showInMainMenu: false, menuOrder: 0`. Essentials descriptions say "dependable everyday value" and Premium descriptions say "a heavier build and a finer finish". Category dates: created `2026-04-10`, updated `2026-10-06`.
+
+### Proof of coverage (46)
+
+| Client line | Category (id) | Count | Products (id, name, variants, placeholder price) |
+|---|---|---|---|
+| Essentials plastic · chair with arms | `plastic-essentials-armchairs` (11) | 3 | 1 Classic Plastic Armchair (White, Marble Beige, Coffee Brown, Brick Red) ₹899 · 2 Ribbed-Back Plastic Armchair (White, Marble Beige, Iron Black) ₹999, was ₹1,149 · 3 Slat-Back Plastic Armchair (White, Teak, Olive Green) ₹1,149 |
+| Essentials plastic · chair without arms | `plastic-essentials-chairs` (12) | 3 | 4 Classic Plastic Chair (4 colours) ₹699 · 5 Ribbed-Back Plastic Chair (3 colours) ₹749, was ₹849 · 6 Stackable Plastic Chair (White, Pearl Grey, Brick Red) ₹799 |
+| Essentials plastic · centre table, square | `plastic-essentials-centre-tables` (13) | 1 | 7 Square Plastic Centre Table (White, Coffee Brown) ₹1,249, was ₹1,449 |
+| Essentials plastic · centre table, round | `plastic-essentials-centre-tables` (13) | 1 | 8 Round Plastic Centre Table (White, Coffee Brown) ₹1,199 |
+| Essentials plastic · shoe rack 2/3/4/5 shelves | `plastic-shoe-racks` (14) | 3 × 4 variants | 9 Slim Plastic Shoe Rack ₹1,249 / 1,599 / 1,899 / 2,249 · 10 Wide Plastic Shoe Rack ₹1,599 / 1,999 / 2,449 / 2,849 · 11 Covered Plastic Shoe Rack ₹1,899 / 2,349 / 2,899 / 3,449, was ₹2,199 (`attributes.Shelves` "2 shelves" … "5 shelves") |
+| Premium plastic · chair with arms | `plastic-premium-armchairs` (16) | 3 | 12 Cushioned Plastic Armchair ₹2,499, was ₹2,899 · 13 High-Back Plastic Armchair ₹1,999 · 14 Woven-Texture Plastic Armchair (Natural Cane, Coffee Brown, White) ₹2,249 |
+| Premium plastic · chair without arms | `plastic-premium-chairs` (17) | 2 | 15 High-Back Plastic Chair ₹1,599 · 16 Cushioned Plastic Chair ₹1,899 |
+| Premium plastic · centre table, round | `plastic-premium-centre-tables` (18) | 1 | 17 Premium Round Plastic Centre Table (White, Coffee Brown) ₹2,299 |
+| Premium plastic · centre table, square | `plastic-premium-centre-tables` (18) | 1 | 18 Premium Square Plastic Centre Table (White, Coffee Brown) ₹2,499, was ₹2,849 |
+| Outdoor · Lobby set small/large | `outdoor-furniture` (4) | 1 × 2 | 19 Lobby Set: Small ₹22,999, Large ₹38,999; was ₹26,499 (`attributes.Size`) |
+| Outdoor · Jhula small/large | `outdoor-furniture` (4) | 1 × 2 | 20 Jhula (Garden Swing): Small ₹11,999, Large ₹21,999 |
+| Office Essentials · high-back | `office-essentials-high-back` (21) | 3 | 21 Mesh High-Back Office Chair (Black, Grey, Navy Blue) ₹5,999, was ₹6,999 · 22 Fabric High-Back Office Chair (Black, Grey) ₹5,499 · 23 Leatherette High-Back Office Chair (Black, Brown, Tan) ₹6,999 |
+| Office Essentials · low-back | `office-essentials-low-back` (22) | 2 | 24 Mesh Low-Back Office Chair ₹4,299 · 25 Fabric Low-Back Office Chair ₹3,799, was ₹4,399 |
+| Office Essentials · waiting | `office-essentials-waiting` (23) | 3 | 26 2-Seater Waiting Chair ₹4,999 · 27 3-Seater Waiting Chair ₹6,499, was ₹7,499 · 28 4-Seater Waiting Chair ₹7,999 (all `variants: []`) |
+| Office Premium · high-back | `office-premium-high-back` (25) | 3 | 29 Executive Mesh High-Back Chair ₹13,999, was ₹15,999 · 30 Executive Leatherette High-Back Chair ₹16,499 · 31 Ergonomic High-Back Chair with Headrest ₹19,999 |
+| Office Premium · low-back | `office-premium-low-back` (26) | 2 | 32 Executive Leatherette Low-Back Chair ₹10,499 · 33 Ergonomic Mesh Low-Back Chair ₹11,999, was ₹13,499 |
+| Office Premium · waiting | `office-premium-waiting` (27) | 3 | 34 Cushioned 2-Seater Waiting Bench (Black, Tan) ₹9,499 · 35 Cushioned 3-Seater Waiting Bench (Black, Tan) ₹12,999, was ₹14,999 · 36 Steel 3-Seater Waiting Chair (`[]`) ₹10,999 |
+| Café / restaurant chairs | `cafe-restaurant-chairs` (3) | 10 | 37 Bentwood-Style Café Chair ₹3,499, was ₹3,999 · 38 Metal Bistro Chair ₹2,499 · 39 Upholstered Restaurant Chair ₹4,999 · 40 Cane-Look Café Chair ₹3,999, was ₹4,599 · 41 Stackable Restaurant Chair ₹2,199 · 42 Cross-Back Dining Chair ₹4,499 · 43 Tub Café Chair ₹3,299 · 44 Slatted Wood Café Chair ₹3,799 · 45 Wire Café Chair ₹2,799 · 46 Shell Café Chair ₹1,999, was ₹2,299 (all `attributes.Finish` with `swatchHex`, 2–3 each) |
+
+Total 11 + 7 + 2 + 8 + 8 + 10 = 46. Departments: Plastic 18, Office Chairs 16, Café 10, Outdoor 2.
+
+### Content conventions
+
+- **Images:** `https://placehold.co/1200x1500/f1ebe1/686158?text=<Name>`, then the same with `+Detail` and `+In+situ` appended. Spaces become `+` and other characters are URL-encoded. Categories use `1600x1000` with the department name, or for children their slug words (e.g. `Plastic+Essentials+Armchairs`), so labels stay distinct where names repeat. No reference-site images are used.
+- **Slugs:** the `slugify` rule from `helpers.js` applied after removing accents, so "Café" gives `cafe` rather than `caf`. The validator checks `slug === slugify(fold(name))`.
+- **SKUs:** `<RANGE>-<TYPE>-<NN>` for products (`PLE` Essentials plastic, `PPR` Premium plastic, `OUT`, `OFE`, `OFP`, `CAF`), plus `-<CODE>` per variant (`-WHT`, `-2S`, `-LG` …).
+- **Descriptions:** two paragraphs in the brand voice, then `Specifications: Key: Value; Key: Value; …` with 5–7 pairs, every value hedged with "approx." where it is a measurement. No values contain `;`. No certifications or warranty claims.
+- **Shoe racks:** `dimensions` and `weight` describe the 5-shelf version. The specifications paragraph gives each shelf count's height. **Lobby Set / Jhula:** `dimensions` and `weight` describe the Large version, and the specifications paragraph describes both sizes.
+- **Price bands used (all placeholders):** Essentials plastic chairs ₹699–₹1,149; Premium plastic chairs ₹1,599–₹2,499; centre tables ₹1,199–₹2,499; shoe racks ₹1,249–₹3,449; Essentials office ₹3,799–₹6,999; Premium office ₹10,499–₹19,999; waiting ₹4,999–₹12,999; café ₹1,999–₹4,999; Lobby Set ₹22,999–₹38,999; Jhula ₹11,999–₹21,999. 15 of 46 products have a `comparePrice` 10–20% above price; the rest have `0`. `costPrice` is about 60–70% of price.
+- **Stock:** variants hold 9–48 units, except three deliberately low variants (Covered Shoe Rack 5 shelves: 4, threshold 8; Lobby Set Large: 4, threshold 5; Executive Leatherette High-Back Tan: 5, threshold 5) and two that are out of stock (Wide Shoe Rack 5 shelves; Metal Bistro Chair Antique Brass). `lowStockThreshold` is 8 below ₹3,000, 6 from ₹3,000 and 5 from ₹9,000.
+- **Flags:** featured 1, 11, 12, 19, 20, 21, 31, 37, 39 (all four departments). Trending 4, 7, 9, 27, 30, 38, 40. Hot 14, 18, 33, 45.
+- **Relations:** `relatedProductIds` lists 4 ids, ordered same category, then same tier, then same department. **Deviation:** Outdoor has only two products, so 19 and 20 each list the other plus three outdoor-suited plastic pieces (3 Slat-Back Plastic Armchair, 14 Woven-Texture Plastic Armchair, 8 Round Plastic Centre Table). Frequently bought together:
+  - Plastic chairs → a centre table of the same tier; centre tables → two armchairs/chairs.
+  - Office high-back chairs → a waiting chair of the same tier; waiting chairs → a high- or low-back chair.
+  - Café, shoe racks and outdoor products have `[]`.
+- **Ratings:** `rating: 0, totalReviews: 0` on every product until Prompt 05.
+- **Dates:** created between 2026-04-18 and 2026-09-10; `updatedAt` is never earlier than `createdAt` and never later than 2026-10-06.
+
+### Brand mapping
+
+`brand: "Nilkamal"` is set on all 18 plastic products (1–18), because the reference site's plastic-sofa page says "Deal with Nilkamal" and its plastic-chair page says "all brands". Office, café and outdoor products use `""`, so the card hides the brand. No other manufacturer is named. The tag `nilkamal` is on the plastic products only.
+
+### `scripts/validate-db.js`
+
+Dependency-free; exits 1 on failure. Usage: `node scripts/validate-db.js --catalogue` (now) and `node scripts/validate-db.js` (full mode, from Prompt 05). It checks:
+
+- **Wording:** no "non-premium" anywhere in the file.
+- **Categories:** key set and order; unique ids and slugs; parents exist and have no cycles; `sortOrder` is 1..n within each parent; the six departments keep their fixed id, slug and menu order; only departments appear in the menu.
+- **Products, identity and copy:** key set and order; unique ids, slugs and SKUs (product and variant); slug follows the slugify rule; name ≤ 48 characters; short description ≤ 110 characters; description ends with a parseable 5–7 pair Specifications paragraph.
+- **Products, catalogue rules:**
+  - `categoryId` points to an active category with no active children.
+  - Exactly 3 images, all on the placeholder pattern.
+  - `comparePrice` and `costPrice` are valid; `lowStockThreshold` is 3–8.
+  - Variant rules hold: same attribute keys on every variant, `swatchHex` only with a colour or finish attribute, `price` = lowest variant price, `stock` = sum of variant stock.
+  - Tags are lowercase and include the brand.
+  - Relations point to products that exist and are active, never to the product itself.
+  - Dates are valid.
+- **Coverage:** the `COVERAGE` table gives exact counts per slug, and the total must equal the sum. `VARIANT_RULES` requires 4 shelf variants, priced in rising order, on every shoe rack, and Small/Large on outdoor products. At least 2 low-stock and 1 out-of-stock variant must exist.
+- **Full mode:**
+  - References from orders, returns, reviews, wishlist and `dealsConfig` resolve.
+  - Order money math: item subtotal = price × quantity; order subtotal = sum of items; total = subtotal − discount + shipping + tax (the `Checkout.js` formula); `amountPayable` = total − `storeCreditUsed`.
+  - Ratings agree with approved reviews.
+  - The wallet ledger runs as a consistent balance per user and ends at `users[].storeCredit`.
+
+  **Prompt 04** appends its rows to `COVERAGE`. **Prompt 05** adds payment and coupon invariants.
+
+Self-test: a copy with seeded faults (wrong price, dangling relation, extra key, mixed attributes, bad parent, an uppercase "Non-Premium" tag) produced 10 failures and exit 1.
+
+### Dangling references left for Prompt 05 (expected)
+
+`orders[].items`, `returns[].items`, `reviews[].productId` and `wishlist[].productId` still describe the boilerplate's electronics products. Their ids 1–20 now resolve to different furniture records, so ids alone no longer show these as broken, and variant ids may not match. Order history still renders because orders store item snapshots. In full mode the validator now fails only on ratings (products 1, 2 and 5 have old approved reviews while `totalReviews` is 0). Prompt 05 reseeds all of these. `banners` still link to `/products?category=electronics` and similar slugs (Prompt 05 owns banners).
+
+### Admin fix: variant attributes kept on save (follow-up, requested by the owner)
+
+- **Problem:** `AdminProducts.js` rebuilt each variant from only `id, name, price, stock, sku`, both when opening the edit dialog and when saving. Saving any product with structured variants therefore dropped `attributes` and `swatchHex`, and the storefront fell back to flat tiles. The boilerplate behaved the same way.
+- **Fix:** both places now spread the original variant first (`...v`) and then override the editable fields. Fields the form does not edit stay on the variant, in their original key order.
+- **Verified in Chromium:** with servers freshly restarted, saving products 1 (Colour), 9 (Shelves), 26 (no variants) and 37 (Finish) without edits left each `db.json` record identical apart from `updatedAt`.
+- **Limitation:** the form still cannot edit `attributes`. Renaming a variant in the admin leaves its attribute value (for example `Colour: "White"`) unchanged. A row added in the admin has no `attributes`, so that product's selector falls back to flat tiles, as before.
+
+### Admin observation (pre-existing, not changed)
+
+- In the admin's category and parent dropdowns, the names "Essentials", "Premium", "Chairs with Arms" and so on appear twice. The slug column tells them apart in the table; the dropdowns show names only.
+
+### Verification
+
+- `node scripts/validate-db.js --catalogue`: all checks pass (23 categories, 46 products, 114 variants, 9 featured / 7 trending / 4 hot, 3 low / 2 out of stock).
+- `CI=true npm run build` compiled; `CI=true npm test -- --passWithNoTests` exit 0.
+- Chromium against JSON Server and `npm start`:
+  - **Header and listings:** the header lists the six departments in order. `?category=plastic-furniture` shows 18 products (parent includes its children); `office-chairs-premium` 8, `plastic-shoe-racks` 3, `cafe-restaurant-chairs` 10.
+  - **Covered Shoe Rack:** switching shelves changes the price (₹1,899 → ₹3,449), the SKU (`PLE-SHR-03-2S` … `-5S`) and the stock line ("Only 4 left in this option" on 5 shelves). Arrow keys move the selection.
+  - **Metal Bistro Chair and Lobby Set:** Antique Brass shows as sold out and disabled. Lobby Set Large shows ₹38,999 and "Only 4 left".
+  - **Cart:** all three products added to the cart with the correct variant name and price.
+  - **Search:** `?q=waiting` returns the 6 waiting products; "chair" returns 41.
+  - **Layout:** no horizontal overflow on product or listing pages at 360, 768 or 1024 px.
+  - **Admin:** the Categories and Products lists render, and the edit dialog opens. No page errors.
+
+### Needs client confirmation (placeholders)
+
+- **All 46 product names.** The client's site lists no model names for these ranges. "Square/Round Plastic Centre Table" are the only names taken from the site.
+- **"Lobby Set"** (our reading of "Looby set") and **"Jhula (Garden Swing)"** (our reading of "Julna"). Neither appears on the client's site.
+- **All prices, compare-at prices, cost prices and stock levels.**
+- **All specifications, dimensions, weights, colours and finishes**, including what the Lobby Set's Small and Large configurations contain.
+- **Brand attribution:** Nilkamal on every plastic product. Office, café and outdoor products have no brand.
+- **Category copy** (descriptions), and the tier labels "Essentials" and "Premium" as the shopper-facing names.
