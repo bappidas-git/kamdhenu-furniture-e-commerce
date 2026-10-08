@@ -331,9 +331,9 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-megamenu` | 55 | mega-menu flyout (desktop) |
 | `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
 | `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar (`AddToCartBar`, up to 768px; Prompt 16): above the bottom nav, which it covers while shown, below every drawer and modal (section 26.6) |
-| `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves |
+| `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves (the sidebar, the bottom sheet and, since Prompt 18, the cart drawer, which was 1200/1300) |
 | `--sf-z-modal` | 1100 | modals (auth) |
-| `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal, including the cart drawer's legacy 1200/1300 still in the code (section 25.1) |
+| `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal (section 25.1). It was set above the cart drawer's legacy 1200/1300; Prompt 18 moved the drawer to `--sf-z-overlay`, so nothing needs more than `--sf-z-modal` now, and 1400 is kept (lowering it is optional) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
 `--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested), `--sf-z-search` by Prompt 15 (1400, section 25.1). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
@@ -808,14 +808,14 @@ Written by Prompt 09. Files: `src/components/SidebarMenu/*`, `src/components/Bot
 
 ### 19.1 The overlay contract
 
-Every drawer, sheet and modal on the storefront should behave the same way. The sidebar and the bottom sheet follow this contract, and later overlays (cart drawer, search, auth modal) can adopt it with the same helper.
+Every drawer, sheet and modal on the storefront should behave the same way. The sidebar, the bottom sheet, the search overlay (Prompt 15) and the cart drawer (Prompt 18, section 28) follow this contract; the auth modal (Prompt 20) can adopt it with the same helper.
 
 | Concern | Rule |
 |---|---|
 | Semantics | `role="dialog"`, `aria-modal="true"` and a name (`aria-label`, or `aria-labelledby` pointing at a visible title) |
 | Focus | `useFocusTrap(ref, { active, onEscape, initialFocusRef, returnFocusRef, returnFocus })`: on open, focus moves to `initialFocusRef`, else the first focusable element, else the container (give it `tabIndex={-1}`). Tab and Shift+Tab cycle inside. On close, focus returns to the element that opened the layer, unless another layer has taken focus in the meantime. Only the most recently opened trap handles keys, so nested layers work. Focus is not forcibly pulled back into the layer: `aria-modal` hides the page from assistive technology, and portalled popovers and SweetAlert dialogs opened from inside the layer keep their own focus. |
 | Escape | `onEscape` (usually `onClose`), handled by the topmost trap only |
-| Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. This is the same signal the cart drawer, search and auth modal already set, and the one BottomNav listens to through `useBodyScrollLocked()`. |
+| Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. This is the same signal the auth modal sets (the cart drawer and search use this hook since Prompts 18 and 15), and the one BottomNav listens to through `useBodyScrollLocked()`. |
 | Stacking | Backdrops and panels at `--sf-z-overlay` (1000); modals at `--sf-z-modal` (1100); the full-screen search at `--sf-z-search` (1400, section 25.1); BottomNav (58) is always beneath them |
 | Backdrop | `--sf-color-overlay`, no blur; a click closes the layer |
 | Motion | Enter with `--sf-ease-out`; exit in `--sf-duration` with `--sf-ease-in-out`; under reduced motion, opacity only (an explicit `useReducedMotion()` variant, on top of `MotionConfig`) |
@@ -893,7 +893,7 @@ import { BottomDrawer } from "../../components/ui";
 - **14 (listing):** `BottomDrawer` covers the filter sheet's semantics: dialog, Escape, focus on the close button, focus back to the trigger, scroll lock. Its `footer` slot holds "Clear all" and "Show N results". The sheet's old `z-index: 1300` was there to beat a bottom nav at 1200 and is no longer needed.
 - **15 (search):** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's own restore becomes a no-op.
 - **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58). Done in Prompt 16 (section 26.6).
-- **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`.
+- **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`. Done for the cart drawer in Prompt 18 (section 28).
 - **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
 
 ---
@@ -1356,7 +1356,7 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 - A fixed, full-viewport surface in `--sf-color-bg` (paper; the navy-ink base in dark mode). No backdrop, blur or veil. It fades in over `--sf-duration` (`--sf-ease-out`) and out over `--sf-duration` (`--sf-ease-in-out`); under reduced motion it appears and goes at once.
 - **Two grid rows.** Row 1 is the top bar: `<BrandLogo height={28} />` (decorative here, `aria-hidden`) at the left of `.sf-container--wide`, 64px plus the top safe-area inset, a hairline below. The 44px "Close search" button sits over the bar's far end but comes last in the DOM, so Tab reaches it after the results. Row 2 scrolls (`overscroll-behavior: contain`; `scrollbar-gutter: stable` from 480px, so the column never shifts when results make it scroll).
 - **Column:** centred, `max-width: calc(64rem + 2 × --sf-gutter)` (three cards about the listing's width); 24px above the field on phones, `clamp(48px, 8vh, 80px)` from 768px; 64px plus the bottom inset below.
-- **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals that were in the code: the cart drawer (1200/1300, until Prompt 18) and the product page's mobile `AddToCartBar` (1300; Prompt 16 moved it to `--sf-z-stickybar`, section 26.6). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
+- **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals that were in the code: the cart drawer (1200/1300; Prompt 18 moved it to `--sf-z-overlay`, section 28.1) and the product page's mobile `AddToCartBar` (1300; Prompt 16 moved it to `--sf-z-stickybar`, section 26.6). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
 - **Progress hairline:** a 2px `--sf-color-accent` line along the top edge while the catalogue loads or a search is pending: the loading screen's grow-and-retract (2.4s, `--sf-ease-in-out`), still and full width under reduced motion. Drawn as a border, so forced-colours themes keep it. Decorative (`aria-hidden`).
 
 ### 25.2 The field
@@ -1593,3 +1593,61 @@ A thin wrapper around the site's one rail: `SectionHeading` (eyebrow "Related", 
 | Set: thumbnail hairline (stone) vs the sand panel | 1.29 | 1.50 | info |
 
 Every other pairing here is already in §14: ink, secondary and muted text on the page and on sand (the tags, the set), the gold stars on the page, the success tone on the page (the verified mark), the accent and the check mark on it, the focus ring on the page and on sand, and the primary and ghost buttons.
+
+---
+
+## 28. Cart drawer
+
+Written by Prompt 18. Files: `src/components/CartDrawer/CartDrawer.js` + `.module.css` (the drawer) and `src/components/CartDrawer/cartDelivery.js` (what it says about delivery, from the shipping methods). Props `open`, `onClose`; mounted once by `Header` (`open={isCartOpen}`), opened by the header's cart button and by `CartContext.addToCart` (not when a caller passes `openDrawer: false`, as Buy now does). There is no cart page: checkout step 0 is the full review.
+
+### 28.1 Surface and stacking
+
+- A side panel on the right, `width: min(440px, 100%)` (full width up to 480px), from the top of the viewport to the bottom; `--sf-color-bg` (paper; navy-ink in dark mode), `border-left: var(--sf-hairline)`, `--sf-shadow-lg`, square corners. Rendered in a portal on `<body>`, so a transformed ancestor never re-anchors it.
+- Backdrop `--sf-color-overlay`, no blur; a click closes the drawer. Backdrop and panel sit at `--sf-z-overlay` (1000), replacing the old 1200/1300: above the header, bottom nav and sticky bar, below the search overlay (1400) and SweetAlert (2000).
+- Four stacked parts: the header and the free-delivery block (fixed), a scrolling middle with the lines and the promises (`overscroll-behavior: contain`), and the footer, which stays at the bottom and clears the home indicator.
+- Side gutter `--cart-gutter`: 24px; 20px up to 480px.
+
+### 28.2 Structure
+
+| Part | Spec |
+|---|---|
+| Header | 64px plus the top inset, a hairline below: "Your cart" (`h2`, `.sf-display-sm`) and the number of pieces ("3 items", 14px muted, `getCartItemCount`); a 44px "Close cart" |
+| Free delivery | Only once the shipping methods have been read and one of them has a threshold (28.3). The line, 14px secondary: "Add **₹3,752.00** more for free delivery" (the amount in ink 500), or "Free delivery unlocked" in `--sf-color-success` 500 after a check mark. Under it a 2px `--sf-color-sand` track with a `--sf-color-primary` fill scaled to `min(1, subtotal / threshold)` (`scaleX`, `--sf-duration-slow`, `--sf-ease-out`). Hairline below |
+| Line | Hairline-separated rows, 20px above and below. A 72 × 90 thumbnail (4:5, `object-fit: cover`, sand, a hairline frame, lazy, `onImageError`; a pointer-only link: `tabIndex -1`, `aria-hidden`). Beside it: the name (Playfair 15px, two-line clamp, a link to `productPath`; a caramel underline on hover) and "Remove" at the top right (13px secondary `.sf-btn--link`, 44px hit area, named "Remove <name>, <option>"); the option (12px muted); `PriceBlock size="sm"` (unit price and the struck compare-at price); then the stepper and the line total (sans 15px 500, "Line total" for screen readers) |
+| Stepper | A 36px hairline pill: two 36px buttons, each with a 44px target (`::after`), named "Decrease quantity" / "Increase quantity" inside a group named "Quantity, <name>, <option>", around the figure (14px 500, tabular, a polite live region). "−" is unavailable at 1; "+" is unavailable when the line's `stock` is a number and the quantity has reached it ("No more stock available" as its title). Unavailable means `aria-disabled` at 50%, not `disabled`, so focus stays on a button that has just reached its limit |
+| Promises | One quiet centred row under the lines (it wraps on two lines in the panel): 16px outline icons from `trustIcons.js` in the accent beside 11px uppercase labels (500, 0.12em) in muted: "Secure payment" · "Cash on Delivery" (only while `settings.payment.codEnabled`) · "Easy returns · 7 days" (`STOREFRONT_CONFIG.returnsWindowDays`, hidden at 0). Shown once the store data has settled; a list named "Our promises" |
+| Footer | A hairline above: "Subtotal" and the amount in Playfair 20px (lining, tabular figures, `getCartTotal`); "Delivery" and its value in 14px (28.3); "Taxes calculated at checkout" (12px muted); `Checkout` (`.sf-btn--primary --lg --block`, a link to `/checkout`); "Continue shopping" (`.sf-btn--link`, closes the drawer). The old duplicate "View Cart" button (it also went to `/checkout`) is gone |
+| Empty | Centred: "Your cart is empty." (`.sf-display-sm`), "Pieces you add will wait here until you are ready to check out." (15px secondary) and a ghost "Browse furniture" to `/products`. No free-delivery block, promises or footer |
+
+### 28.3 Delivery data (display only)
+
+- `apiService.shipping.getMethods()` and `apiService.settings.get()` are read once, when the drawer first opens, and kept for the session; a read that failed is tried again on the next opening. Inactive methods are dropped, as at checkout.
+- **Threshold:** the lowest positive `freeAbove` of the active methods, the rule `resolveTrustBadgeDetail("freeShipping")` applies for the footer, the home strip and the product page (the resolver decides whether a threshold exists; it returns text, so `cartDelivery.js` reads the amount by the same rule, and a test pins the two together). **Rate:** the flat rate of the method carrying that threshold; with no threshold, the lowest rate. A method free at any amount (`rateType: "free"`, or a ₹0 rate) makes delivery free outright: no progress is drawn.
+- Free means `subtotal >= threshold` on the pre-discount subtotal, exactly checkout's rule.
+- The Delivery row: "₹499.00 · free above ₹9,999.00" below the threshold; "Free" (success, 500) at or above it, or when delivery is free outright; "₹499.00" with no threshold; "Calculated at checkout" when the read failed or no method is active; a skeleton (with "Loading" for screen readers) while the read runs. Amounts use `formatCurrency`, as everywhere else in the drawer and in the product page's delivery facts.
+- The drawer never charges delivery, computes taxes or applies coupons; checkout does all three.
+
+### 28.4 Keyboard, focus and announcements
+
+- `role="dialog"`, `aria-modal="true"`, `aria-labelledby` the title, `aria-describedby` the count. `useFocusTrap` (section 19.1): focus starts on "Close cart"; Tab and Shift+Tab stay inside; Escape closes; focus returns to whatever opened the drawer (the header's cart button, a card's quick add, the product page's Add to cart). `useBodyScrollLock` locks the page, and BottomNav goes `inert` beneath.
+- Tab order: close → for each line, the name, Remove, −, + → Checkout → Continue shopping.
+- After "Remove", focus moves to the next line's Remove (the previous line's for the last one); when the cart is empty, to the empty message (`tabIndex -1`), which is read out. A line that is folding away is `inert`.
+- A plain click on a link closes the drawer as it navigates; a modified click (new tab) leaves it open; any route change underneath (back, forward) closes it.
+- Live regions: the free-delivery line (`aria-live="polite"`, `aria-atomic`) and each stepper's figure.
+
+### 28.5 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| Panel | slides in from the right over `--sf-duration-slow` (`--sf-ease-out`); out over `--sf-duration` (`--sf-ease-in-out`) | opacity only |
+| Backdrop | fades in over `--sf-duration-slow`, out over `--sf-duration` | same |
+| Free-delivery block | drawn at once when known on opening; arriving later (the first opening) it unfolds from no height over `--sf-duration`, so the lines move down smoothly | opacity only |
+| Progress fill | `scaleX` to the new share over `--sf-duration-slow` (`--sf-ease-out`) | instant |
+| Removed line | folds its height to 0 and fades over `--sf-duration` (`--sf-ease-in-out`); the rows are `layout="position"` (the panel is a `layoutRoot`, the middle a `layoutScroll`) | fades in place, then the rows close up |
+| A line added while open | fades in over `--sf-duration` | same |
+
+Lines clip their content so the fold reaches 0; each reaches 8px into the gutters, where the focus rings and hit areas at its edges fit.
+
+### 28.6 Contrast
+
+No new pairs. The drawer uses ink, secondary and muted text on the page tone, the success tone on the page, the accent icons on the page, the focus ring, the primary and ghost buttons, and the ink fill on its sand track (the pair §27.8 already checks for the rating bars), all already in section 14. In forced-colours mode the track is `GrayText` and its fill `CanvasText`.

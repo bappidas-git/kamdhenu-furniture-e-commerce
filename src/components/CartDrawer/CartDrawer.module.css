@@ -1,813 +1,544 @@
-/* ========================================
-   CartDrawer - Backdrop
-   ======================================== */
+/* ==========================================================================
+   CartDrawer — the cart, a side panel (Prompt 18)
+   Tokens only (prompts/DESIGN_SYSTEM.md §28). A paper panel on the right
+   (navy-ink in dark mode) with a hairline left edge: the serif title, the
+   free-delivery line over a 2px sand track, hairline-separated lines, one
+   quiet row of promises, and a footer that stays at the bottom with the
+   subtotal and Checkout. Full width up to 480px.
+   ========================================================================== */
 
 .backdrop {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  backdrop-filter: blur(4px);
-  -webkit-backdrop-filter: blur(4px);
-  z-index: 1200;
+  z-index: var(--sf-z-overlay);
+  background-color: var(--sf-color-overlay);
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* ========================================
-   CartDrawer - Main Panel
-   ======================================== */
-
-.drawer {
+.panel {
+  --cart-gutter: var(--sf-space-6);
   position: fixed;
   top: 0;
   right: 0;
   bottom: 0;
-  width: 420px;
-  max-width: 100vw;
-  z-index: 1300;
+  z-index: var(--sf-z-overlay);
   display: flex;
   flex-direction: column;
-  overflow: hidden;
-  box-shadow: -8px 0 30px rgba(0, 0, 0, 0.15);
+  width: min(440px, 100%);
+  padding-right: env(safe-area-inset-right, 0px);
+  border-left: var(--sf-hairline);
+  background-color: var(--sf-color-bg);
+  box-shadow: var(--sf-shadow-lg);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-normal);
 }
 
-.drawer.dark {
-  background: #1a1d2e;
-  color: #e4e6f0;
+/* The panel only takes focus as a fallback; its controls show rings. */
+.panel:focus {
+  outline: none;
 }
 
-.drawer.light {
-  background: #ffffff;
-  color: #1a202c;
-}
-
-/* ========================================
-   Header
-   ======================================== */
-
+/* ---- Header: the title, the count and the close button -------------------- */
 .header {
+  flex: none;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px;
-  flex-shrink: 0;
+  gap: var(--sf-space-3);
+  min-height: calc(64px + env(safe-area-inset-top, 0px));
+  padding: env(safe-area-inset-top, 0px) var(--sf-space-3) 0 var(--cart-gutter);
+  border-bottom: var(--sf-hairline);
 }
 
-.dark .header {
-  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.light .header {
-  border-bottom: 1px solid #edf2f7;
-}
-
-.headerLeft {
+.heading {
   display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.headerIcon {
-  flex-shrink: 0;
-}
-
-.dark .headerIcon {
-  color: #a78bfa;
-}
-
-.light .headerIcon {
-  color: #6366f1;
-}
-
-.title {
-  font-size: 1.2rem;
-  font-weight: 700;
-  margin: 0;
-  letter-spacing: -0.02em;
-}
-
-.dark .title {
-  color: #f1f5f9;
-}
-
-.light .title {
-  color: #1e293b;
-}
-
-.itemCount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 24px;
-  height: 24px;
-  padding: 0 7px;
-  border-radius: 12px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  line-height: 1;
-}
-
-.dark .itemCount {
-  background: rgba(167, 139, 250, 0.2);
-  color: #a78bfa;
-}
-
-.light .itemCount {
-  background: rgba(99, 102, 241, 0.1);
-  color: #6366f1;
-}
-
-.closeButton {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border: none;
-  border-radius: 10px;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dark .closeButton {
-  background: rgba(255, 255, 255, 0.06);
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.dark .closeButton:hover {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
-}
-
-.light .closeButton {
-  background: #f7fafc;
-  color: #718096;
-}
-
-.light .closeButton:hover {
-  background: #edf2f7;
-  color: #2d3748;
-}
-
-/* ========================================
-   Free Shipping Progress Bar
-   ======================================== */
-
-.shippingBanner {
-  padding: 14px 24px;
-  flex-shrink: 0;
-}
-
-.dark .shippingBanner {
-  background: rgba(167, 139, 250, 0.06);
-  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.light .shippingBanner {
-  background: #f8faff;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.shippingText {
-  margin: 0 0 10px 0;
-  font-size: 0.82rem;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.dark .shippingText {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.light .shippingText {
-  color: #4a5568;
-}
-
-.dark .shippingText strong {
-  color: #a78bfa;
-}
-
-.light .shippingText strong {
-  color: #6366f1;
-}
-
-.checkIcon {
-  flex-shrink: 0;
-  color: #10b981;
-}
-
-.progressBarTrack {
-  width: 100%;
-  height: 6px;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.dark .progressBarTrack {
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.light .progressBarTrack {
-  background: #e2e8f0;
-}
-
-.progressBarFill {
-  height: 100%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, #667eea, #764ba2);
-  transition: width 0.4s ease;
-}
-
-.dark .progressBarFill {
-  background: linear-gradient(90deg, #a855f7, #ec4899);
-}
-
-/* ========================================
-   Items Container (Scrollable)
-   ======================================== */
-
-.itemsContainer {
-  flex: 1;
-  overflow-y: auto;
-  padding: 16px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-}
-
-/* Custom scrollbar */
-.itemsContainer::-webkit-scrollbar {
-  width: 5px;
-}
-
-.itemsContainer::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.dark .itemsContainer::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
-  border-radius: 3px;
-}
-
-.dark .itemsContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 255, 255, 0.2);
-}
-
-.light .itemsContainer::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.1);
-  border-radius: 3px;
-}
-
-.light .itemsContainer::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 0, 0, 0.2);
-}
-
-/* ========================================
-   Empty State
-   ======================================== */
-
-.emptyState {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex: 1;
-  min-height: 300px;
-}
-
-.emptyStateInner {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  text-align: center;
-  padding: 32px 24px;
-}
-
-.emptyIcon {
-  margin-bottom: 20px;
-}
-
-.dark .emptyIcon {
-  color: rgba(167, 139, 250, 0.25);
-}
-
-.light .emptyIcon {
-  color: rgba(99, 102, 241, 0.2);
-}
-
-.emptyTitle {
-  font-size: 1.15rem;
-  font-weight: 600;
-  margin: 0 0 8px 0;
-}
-
-.dark .emptyTitle {
-  color: #e2e8f0;
-}
-
-.light .emptyTitle {
-  color: #2d3748;
-}
-
-.emptyText {
-  font-size: 0.875rem;
-  margin: 0 0 24px 0;
-  line-height: 1.5;
-  max-width: 240px;
-}
-
-.dark .emptyText {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-.light .emptyText {
-  color: #a0aec0;
-}
-
-.continueShoppingBtn {
-  padding: 10px 28px;
-  border-radius: 10px;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.dark .continueShoppingBtn {
-  background: rgba(167, 139, 250, 0.15);
-  color: #a78bfa;
-}
-
-.dark .continueShoppingBtn:hover {
-  background: rgba(167, 139, 250, 0.25);
-}
-
-.light .continueShoppingBtn {
-  background: #eef2ff;
-  color: #6366f1;
-}
-
-.light .continueShoppingBtn:hover {
-  background: #e0e7ff;
-}
-
-/* ========================================
-   Cart Item Card
-   ======================================== */
-
-.cartItem {
-  display: flex;
-  gap: 14px;
-  padding: 14px;
-  border-radius: 12px;
-  transition: background 0.2s ease;
-}
-
-.dark .cartItem {
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.dark .cartItem:hover {
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.light .cartItem {
-  background: #fafbfc;
-  border: 1px solid #edf2f7;
-}
-
-.light .cartItem:hover {
-  background: #f7fafc;
-}
-
-/* Product image */
-.itemImage {
-  flex-shrink: 0;
-  width: 76px;
-  height: 76px;
-  border-radius: 10px;
-  overflow: hidden;
-  cursor: pointer;
-}
-
-.dark .itemImage {
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.light .itemImage {
-  background: #f7fafc;
-}
-
-.itemImage img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  display: block;
-  transition: transform 0.3s ease;
-}
-
-.itemImage:hover img {
-  transform: scale(1.05);
-}
-
-/* Item details column */
-.itemDetails {
-  flex: 1;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 var(--sf-space-3);
   min-width: 0;
 }
 
-.itemMeta {
+.title {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.count {
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  color: var(--sf-color-text-muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.close {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.close svg {
+  font-size: 22px;
+}
+
+@media (hover: hover) {
+  .close:hover {
+    background-color: var(--sf-color-sand);
+  }
+}
+
+.close:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+/* ---- Free delivery: the line and a 2px sand track with an ink fill -------- */
+/* The outer box folds (height animated from 0); the inner one carries the
+   padding and the rule, so the fold really starts at nothing. */
+.progress {
+  flex: none;
+  overflow: hidden;
+}
+
+.progressInner {
+  padding: var(--sf-space-4) var(--cart-gutter);
+  border-bottom: var(--sf-hairline);
+}
+
+.progressLine {
+  margin: 0 0 var(--sf-space-3);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
+}
+
+.amount {
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-color-text);
+  white-space: nowrap;
+}
+
+.unlocked {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-success);
+}
+
+.check {
+  display: inline-block;
+  margin-right: var(--sf-space-2);
+  vertical-align: -2px;
+}
+
+.track {
+  position: relative;
+  display: block;
+  height: 2px;
+  overflow: hidden;
+  background-color: var(--sf-color-sand);
+}
+
+/* Scaled rather than resized: only transform and opacity animate. */
+.fill {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background-color: var(--sf-color-primary);
+  transform-origin: left center;
+}
+
+/* ---- The scrolling middle: lines and promises ----------------------------- */
+.body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lines {
+  margin: 0;
+  padding: 0 var(--cart-gutter);
+  list-style: none;
+}
+
+/* The list item has no padding or rule of its own and clips its content, so
+   a removed line folds all the way to 0. It reaches 8px into the gutters,
+   where the focus rings and hit areas at the line's edges fit. */
+.line {
+  margin-inline: calc(-1 * var(--sf-space-2));
+  overflow: hidden;
+}
+
+.lineInner {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--sf-space-4);
+  margin-inline: var(--sf-space-2);
+  padding-block: var(--sf-space-5);
+  border-bottom: var(--sf-hairline);
+}
+
+/* 72 × 90 (4:5) on sand; the hairline keeps a sand photograph apart from
+   the panel. */
+.thumb {
+  position: relative;
+  display: block;
+  width: 72px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--sf-hairline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.details {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--sf-space-1);
+  min-width: 0;
 }
 
-.itemName {
-  font-size: 0.875rem;
-  font-weight: 600;
+.lineHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+}
+
+.name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  min-width: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-family: var(--sf-font-display);
+  font-size: 0.9375rem; /* 15px */
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .name:hover {
+    text-decoration-color: var(--sf-color-accent);
+  }
+}
+
+.name:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+/* A quiet text button (the .sf-btn--link primitive gives it a 44px target). */
+.remove {
+  --sf-btn-fg: var(--sf-color-text-secondary);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  flex: none;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: var(--sf-font-normal);
+}
+
+.variant {
   margin: 0;
-  line-height: 1.35;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.unitPrice {
+  margin-top: var(--sf-space-1);
+}
+
+.lineFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-3);
+  margin-top: var(--sf-space-3);
+}
+
+/* A 36px hairline pill; each button keeps a 44px target. */
+.stepper {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 36px;
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-pill);
+}
+
+.step {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -1px; /* sit on the pill's hairline */
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
+  color: var(--sf-color-text);
   cursor: pointer;
-  transition: color 0.15s ease;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.dark .itemName {
-  color: #f1f5f9;
+.step::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
 }
 
-.dark .itemName:hover {
-  color: #a78bfa;
+@media (hover: hover) {
+  .step:hover:not([aria-disabled="true"]) {
+    background-color: var(--sf-color-sand);
+  }
 }
 
-.light .itemName {
-  color: #1e293b;
+.step:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
 }
 
-.light .itemName:hover {
-  color: #6366f1;
-}
-
-.itemVariant {
-  font-size: 0.75rem;
-  font-weight: 500;
-}
-
-.dark .itemVariant {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.light .itemVariant {
-  color: #a0aec0;
-}
-
-/* Pricing */
-.itemPricing {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.itemPrice {
-  font-size: 0.9rem;
-  font-weight: 700;
-}
-
-.dark .itemPrice {
-  color: #a78bfa;
-}
-
-.light .itemPrice {
-  color: #6366f1;
-}
-
-.itemComparePrice {
-  font-size: 0.78rem;
-  text-decoration: line-through;
-}
-
-.dark .itemComparePrice {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.light .itemComparePrice {
-  color: #cbd5e0;
-}
-
-/* Bottom row: quantity, total, remove */
-.itemBottom {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 4px;
-}
-
-/* Quantity controls */
-.quantityControl {
-  display: flex;
-  align-items: center;
-  border-radius: 8px;
-  overflow: hidden;
-}
-
-.dark .quantityControl {
-  border: 1px solid rgba(255, 255, 255, 0.1);
-}
-
-.light .quantityControl {
-  border: 1px solid #e2e8f0;
-}
-
-.quantityBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 28px;
-  border: none;
-  cursor: pointer;
-  transition: all 0.15s ease;
-}
-
-.dark .quantityBtn {
-  background: rgba(255, 255, 255, 0.05);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.dark .quantityBtn:hover:not(:disabled) {
-  background: rgba(167, 139, 250, 0.2);
-  color: #a78bfa;
-}
-
-.light .quantityBtn {
-  background: #f7fafc;
-  color: #4a5568;
-}
-
-.light .quantityBtn:hover:not(:disabled) {
-  background: #eef2ff;
-  color: #6366f1;
-}
-
-.quantityBtn:disabled {
-  opacity: 0.35;
+/* aria-disabled rather than disabled, so focus stays on a button that has
+   just reached its limit. */
+.step[aria-disabled="true"] {
+  color: var(--sf-color-text-muted);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
-.quantityValue {
+.quantity {
+  min-width: 32px;
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
+  color: var(--sf-color-text);
+  user-select: none;
+}
+
+.lineTotal {
+  margin: 0;
+  font-size: 0.9375rem; /* 15px */
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-price);
+  white-space: nowrap;
+}
+
+/* ---- Promises: one quiet row of eyebrow labels with outline icons -------- */
+.trust {
   display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sf-space-2) var(--sf-space-5);
+  margin: 0;
+  padding: var(--sf-space-5) var(--cart-gutter) var(--sf-space-6);
+  list-style: none;
+}
+
+.trustItem {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-color-text-muted);
+}
+
+.trustIcon {
+  flex: none;
+  color: var(--sf-color-accent);
+}
+
+/* ---- Empty ------------------------------------------------------------------ */
+.empty {
+  display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  min-width: 32px;
-  height: 28px;
-  font-size: 0.82rem;
-  font-weight: 600;
+  gap: var(--sf-space-3);
+  min-height: 100%;
+  padding: var(--sf-space-12) var(--cart-gutter);
   text-align: center;
 }
 
-.dark .quantityValue {
-  background: rgba(255, 255, 255, 0.03);
-  color: #f1f5f9;
+.emptyTitle {
+  margin: 0;
+  color: var(--sf-color-text);
 }
 
-.light .quantityValue {
-  background: #ffffff;
-  color: #1e293b;
+/* Focused after the last line is removed, so it is read out; not a control. */
+.emptyTitle:focus {
+  outline: none;
 }
 
-/* Line total */
-.lineTotal {
-  font-size: 0.82rem;
-  font-weight: 600;
-  margin-left: auto;
+.emptyLine {
+  max-width: 30ch;
+  margin: 0 0 var(--sf-space-3);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
 }
 
-.dark .lineTotal {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.light .lineTotal {
-  color: #2d3748;
-}
-
-/* Remove button */
-.removeBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 30px;
-  height: 30px;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  flex-shrink: 0;
-  transition: all 0.2s ease;
-}
-
-.dark .removeBtn {
-  background: transparent;
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.dark .removeBtn:hover {
-  background: rgba(239, 68, 68, 0.12);
-  color: #f87171;
-}
-
-.light .removeBtn {
-  background: transparent;
-  color: #cbd5e0;
-}
-
-.light .removeBtn:hover {
-  background: rgba(239, 68, 68, 0.08);
-  color: #ef4444;
-}
-
-/* ========================================
-   Footer / Cart Summary (Sticky Bottom)
-   ======================================== */
-
+/* ---- Footer: stays at the bottom of the panel -------------------------------- */
 .footer {
-  flex-shrink: 0;
-  /* extra bottom inset keeps the checkout button above the home indicator */
-  padding: 20px 24px calc(24px + env(safe-area-inset-bottom, 0px));
-}
-
-.dark .footer {
-  border-top: 1px solid rgba(255, 255, 255, 0.08);
-  background: #1a1d2e;
-}
-
-.light .footer {
-  border-top: 1px solid #edf2f7;
-  background: #ffffff;
-}
-
-.summarySection {
+  flex: none;
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 18px;
+  gap: var(--sf-space-3);
+  padding: var(--sf-space-5) var(--cart-gutter)
+    calc(var(--sf-space-4) + env(safe-area-inset-bottom, 0px));
+  border-top: var(--sf-hairline);
+  background-color: var(--sf-color-bg);
+}
+
+.summary {
+  display: grid;
+  gap: var(--sf-space-2);
+  margin: 0;
 }
 
 .summaryRow {
   display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  align-items: center;
+  gap: var(--sf-space-4);
 }
 
-.summaryLabel {
-  font-size: 0.875rem;
+.summaryRow dt,
+.summaryRow dd {
+  margin: 0;
 }
 
-.dark .summaryLabel {
-  color: rgba(255, 255, 255, 0.5);
+.subtotal {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg); /* 20px */
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
 }
 
-.light .summaryLabel {
-  color: #718096;
+.subtotal dd {
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
 }
 
-.summaryValue {
-  font-size: 0.875rem;
-  font-weight: 600;
+.delivery {
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
 }
 
-.dark .summaryValue {
-  color: #f1f5f9;
+.delivery dd {
+  min-width: 0;
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
 }
 
-.light .summaryValue {
-  color: #1e293b;
+.delivery dd.free {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-success);
 }
 
-.freeShipping {
-  color: #10b981 !important;
-  font-weight: 700;
+.deliverySkeleton {
+  display: inline-block;
+  width: 9rem;
+  height: 0.75em;
+  vertical-align: middle;
 }
 
-/* Action buttons */
-.footerActions {
-  display: flex;
-  gap: 10px;
+.taxNote {
+  margin: 0;
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
 }
 
-.viewCartBtn {
-  flex: 1;
-  padding: 13px 16px;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  text-align: center;
+.checkout {
+  margin-top: var(--sf-space-1);
 }
 
-.dark .viewCartBtn {
-  background: rgba(255, 255, 255, 0.08);
-  color: #e2e8f0;
-  border: 1px solid rgba(255, 255, 255, 0.12);
+.continue {
+  --sf-btn-fg: var(--sf-color-text-secondary);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  align-self: center;
+  margin-block: var(--sf-space-1);
 }
 
-.dark .viewCartBtn:hover {
-  background: rgba(255, 255, 255, 0.14);
-}
-
-.light .viewCartBtn {
-  background: #ffffff;
-  color: #1e293b;
-  border: 1px solid #e2e8f0;
-}
-
-.light .viewCartBtn:hover {
-  background: #f7fafc;
-  border-color: #cbd5e0;
-}
-
-.checkoutBtn {
-  flex: 1;
-  padding: 13px 16px;
-  border-radius: 10px;
-  border: none;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  color: #ffffff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  box-shadow: 0 4px 14px rgba(102, 126, 234, 0.3);
-  transition: all 0.2s ease;
-  text-align: center;
-}
-
-.dark .checkoutBtn {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  box-shadow: 0 4px 14px rgba(168, 85, 247, 0.35);
-}
-
-.checkoutBtn:hover {
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.45);
-  transform: translateY(-1px);
-}
-
-.dark .checkoutBtn:hover {
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.5);
-}
-
-.checkoutBtn:active {
-  transform: translateY(0);
-}
-
-/* ========================================
-   Responsive - Full width on mobile
-   ======================================== */
-
+/* ---- Phones: full width ------------------------------------------------------- */
 @media (max-width: 480px) {
-  .drawer {
-    width: 100vw;
-  }
-
-  .header {
-    padding: 16px 18px;
-  }
-
-  .shippingBanner {
-    padding: 12px 18px;
-  }
-
-  .itemsContainer {
-    padding: 12px 18px;
-    gap: 10px;
-  }
-
-  .cartItem {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .itemImage {
-    width: 64px;
-    height: 64px;
-  }
-
-  .footer {
-    padding: 16px 18px calc(20px + env(safe-area-inset-bottom, 0px));
-  }
-
-  .footerActions {
-    flex-direction: column;
-    gap: 8px;
+  .panel {
+    --cart-gutter: var(--sf-space-5);
+    width: 100%;
+    border-left: 0;
   }
 }
 
-@media (min-width: 481px) and (max-width: 768px) {
-  .drawer {
-    width: 100vw;
-    max-width: 100vw;
+/* ---- Forced colours: keep the track and its fill apart ----------------------- */
+@media (forced-colors: active) {
+  .track,
+  .fill {
+    forced-color-adjust: none;
+  }
+
+  .track {
+    background-color: GrayText;
+  }
+
+  .fill {
+    background-color: CanvasText;
+  }
+}
+
+@media print {
+  .backdrop,
+  .panel {
+    display: none;
   }
 }
