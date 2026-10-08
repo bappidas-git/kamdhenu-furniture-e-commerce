@@ -1940,3 +1940,93 @@ None expected. Visible choices the client may want to see:
 - The "All furniture" introduction reuses `APP_DESCRIPTION` (already pending from Prompt 02).
 - The empty and error lines.
 - The quick price ranges (boilerplate values; see above).
+
+---
+
+## Prompt 15 — Search overlay
+
+**Date:** 2026-10-08. **Result:** the boilerplate's search modal (an 820px panel on an 85% black, blurred veil, an indigo focus glow, a private card with yellow stars, "Trending Searches" for laptops and sarees) is now a calm full-screen search overlay on paper: the logo and "Close search" in a slim top bar, a large serif field on a caramel underline, "Recent" and data-derived "Popular" columns before typing, the live department chips, a polite result count and storefront `ProductCard`s, with honest loading, nothing-matched and unavailable states. Scoring, chip matching, the shared catalogue cache, the recent-searches rules and every navigation target are the boilerplate's, moved unchanged. Reference: `prompts/DESIGN_SYSTEM.md` §25.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/SearchModal/SearchModal.js` | Rewritten (markup, states, focus and motion). Props `open`, `onClose` unchanged. The local `StarRating`, `FALLBACK_IMAGE`, `Icon` set, `TRENDING_SEARCHES` and the `useTheme`/`data-theme` theming are gone; cards are the storefront `ProductCard` without quick add or wishlist. |
+| `src/components/SearchModal/SearchModal.module.css` | Rewritten, tokens only: 70 hex + 44 rgba values → 0 (the JS carried 5 more, also gone). 859 → 527 lines. |
+| New `src/components/SearchModal/searchData.js` | The data rules, moved out of the component: `loadSearchData` and its module cache, `getRecentSearches`, `saveRecentSearch`, `clearRecentSearches`, `buildCategoryMap`, `buildCategoryNav`, `resolveCategory`, `matchesCategoryChip`, `scoreProduct` and the four constants, **byte-identical** to `HEAD` apart from `export` (script-checked). Added: `searchProducts` (the component's old `runSearch` pipeline as a pure function, same steps), `removeRecentSearch`, `getPopularSuggestions`, `getDepartments`, `departmentPath`, `POPULAR_COUNT`, `peekSearchData`, `clearSearchDataCache` (tests). |
+| `src/components/SearchModal/index.js` | Deleted (decision below). |
+| `src/theme/storefront-tokens.css` | One addition: `--sf-z-search: 1400` (decision below). |
+| New tests | `searchData.test.js` (20), `SearchModal.test.js` (31). |
+| `prompts/DESIGN_SYSTEM.md` | §9 z-index rows, §19.1 stacking row, new §25 "Search overlay". |
+
+Nothing else changed: `Header.js` and `BottomNav.js` (read only), `ProductCard`, `api.js`, `db.json` (SHA-256 unchanged), `src/utils/*`, contexts and the admin are untouched. The overlay still reads only `products.getAll()` + `categories.getAll()` (no `products.search`), so both API branches behave the same.
+
+### Before and after: the same results
+
+- `searchProducts` was run over `db.json` against the `HEAD` implementation (its functions extracted from the old file, its `runSearch` pipeline replayed) for 30 queries × the 7 department chips: **210 cases, byte-identical** (ids, order and category names).
+- The prompt's three: "chair" 42 (first twelve: 4, 5, 6, 15, 16, 27, 30, 38, 40, 33, 45, 21), "almirah" 2 (67, 68), "nilkamal" 22 (59, 84, 4, 7, 9, 14, 18, 1, 2, 3, 5, 6, …), the same before and after, in the browser on both API shapes too.
+
+### Decisions
+
+- **The popular-chips rule.** "Popular" lists the names of the first six active products with the admin's `trending` flag, in catalogue order (seeded: Classic Plastic Chair, Square Plastic Centre Table, Slim Plastic Shoe Rack, 3-Seater Waiting Chair, Executive Leatherette High-Back Chair, Metal Bistro Chair); a chip runs a search for its name. With no trending product, the column shows the departments (`getMainMenuCategories`, the header's six in menu order), titled "Departments", each linking to `/products?category=<slug>`. No demo terms and no counts anywhere.
+- **z-index: `--sf-z-search` (1400), added.** `--sf-z-modal` (1100) covers the header (50), mega-menu (55), bottom nav (58), sticky bar token (60) and every drawer and sheet (1000) in the map. In the code, though, two layers still carry legacy literals above it: the product page's mobile `AddToCartBar` (1300, Prompt 16) and the cart drawer (1200/1300, Prompt 18). On a product page at 360px, "Buy Now" and "Add to Cart" drew on top of the open overlay at 1100 (browser-confirmed, `elementFromPoint`), and with the cart drawer open (it has no focus trap yet) Shift+Tab can reach the header's Search and open the overlay under it. At 1400 the overlay covers both (checked); it stays below SweetAlert (2000). Once Prompts 16 and 18 move those layers to their tokens, `--sf-z-search` could return to `--sf-z-modal`'s value.
+- **`index.js` deleted.** Both consumers (`Header.js`, `BottomNav.js`) import `SearchModal/SearchModal` directly and may only be read here, and `BottomNav.test.js` mocks that path; no other component folder has a per-folder `index.js` (the barrels are `ui/` and `storefront/`).
+- **Two instances kept** (Prompt 09's decision). The module cache serves both; an instance opening after the other has loaded starts from the cache in a layout effect, so it shows no skeleton frame (tested).
+- **The data rules in `searchData.js`** (as Prompt 12's `homeData.js`): "move, do not rewrite", in a module that can be tested apart and diffed against `HEAD`. The moved comments are kept verbatim too, including the boilerplate's "Women's Ethnic Wear" example.
+- **Department chips appear with a query.** They scope a search, so the suggestions view (Recent / Popular) stays two calm columns; a department pressed before clearing the field is still pressed when typing resumes, and the overlay resets to "All" on close, as before. A second press on the department in force returns to "All" (a pressed toggle that cannot be released would mislead screen readers; Prompt 14's chips do the same).
+- **No skeleton flicker.** The view keeps the last settled results (or the last "nothing matched") while the next keystroke's 300ms debounce runs; skeletons show only when nothing has settled yet (first search, catalogue still loading). The count line describes the results on screen. The old modal flashed "No products found" while the catalogue was still loading; it now shows skeletons.
+- **The count is the total**, "42 results for “chair”", as before and as "View all 42 results" says, not the twelve shown; " in <Department>" is added while a department is pressed, and to "Nothing matched" too.
+- **One live region**, always in the DOM (`role="status"`, `aria-live="polite"`, `aria-atomic`): the count, or the state's serif line as an `h2`, so a screen reader hears "Nothing matched “zzz”." or "Search is unavailable right now." as well as counts. The results list is named by the count.
+- **Focus:** `useFocusTrap` + `useBodyScrollLock` (§19.1): the field takes focus as the trap opens (instead of the old 120ms timer), Tab stays inside, Escape closes, focus returns to the opener. A suggestion, Clear all, Try again and a removed recent's neighbour keep focus in place, as each of those controls gives way.
+- **Links, not buttons.** Results, "View all" and the department chips are router links, so a modified click opens a new tab and leaves the overlay open (it still remembers the query); a plain click closes it. Enter still submits to `/products?search=<term>`.
+- **Recent chips** are one pill holding two controls, the term and a 32px × (44px tall targets); removing one focuses the next ×, or the field when none are left.
+- **Hardening:** stored recent values that are not text no longer reach React (an object in the old store would have crashed the modal); the overlay closes on a route change underneath (back/forward), as the sidebar does.
+
+### Deviations from the prompt, and why
+
+1. **`BrandLogo` at 28px, not 24px:** the design system's minimum rendered height is 28px (§10).
+2. **The field steps down to display-sm below 480px.** At display-md (28px on a 360px phone) the placeholder needs 413px of a 328px field and was cut at "…rooms, b"; at display-sm (22px) it measures 324px and fits from 360px. Display-md from 480px.
+3. **The underline is `--sf-color-border-strong`, 2px accent on focus**, rather than a stone hairline that turns accent: stone is decorative (1.43 : 1) and the field needs a 3 : 1 boundary (WCAG 1.4.11); the 2px focus state also changes more than colour.
+4. **"Overlay click closes" has no target.** A full-screen surface has no backdrop (the old phone layout had none either), so nothing on the paper closes it; Escape, "Close search", navigation and a route change do. A stray click can never discard a query.
+5. **Department chips only with a query**, and a second press releases a department (both above).
+6. **`--sf-z-search` (1400) instead of `--sf-z-modal`** (above).
+7. **Additions:** the scoped count and "Nothing matched … in <Department>", the supporting line "Please check your connection and try again." (the listing's wording) under the unavailable title, the close-on-route-change rule, the new-tab behaviour of result links.
+
+### Verification
+
+- **Build:** `npm run build` → "Compiled successfully", no warnings. Mock-mode production builds of `HEAD` and of this branch, gzip: JS 414.23 → 415.03 kB (+0.80), CSS 57.77 → 56.81 kB (−0.96).
+- **Tests:** `CI=true npm test -- --passWithNoTests` → 364 tests in 30 suites (313 + 51), exit 0, no React or act warnings.
+- **Mutation check:** 27 seeded faults, each caught by at least one test, files restored byte for byte (SHA-256). They covered the popular rule (source, count, label), case-insensitive de-duplication, the twelve-card cap, sort order and the trending boost, focus after removing a recent, ArrowUp only from the first result, closing on plain clicks (results, View all, departments; also on the page already open, where no route change happens) but not on modified ones, the second press releasing a department, the error state, the live region, reduced motion, skeleton flicker, closing on route change, the reset on close, the shared cache, the View all target, the scoped count, remembering the query, retry, Escape and the no-results hint. The first pass caught 21 of 25: one test was weak (the case variant was also the ninth entry, which the cap dropped anyway), two close paths were masked by the route-change close, a modified-click test checked a dialog still in its exit animation, and one mutation was itself a syntax error. Tests were added or tightened, and all six reruns were caught.
+- **Static:** `node scripts/check-contrast.js` passes (no new pairs, §25.7); `node scripts/validate-db.js` passes; `db.json` SHA-256 unchanged (QA ran on a scratch copy through `JSON_SERVER_DB`). A grep of the overlay's CSS and JS finds no hex, `rgb()`, `hsl()`, gradient or font-name literal; `font-family` is only `var(--sf-font-*)`; z-index only `--sf-z-search` and a local `1` for the hairline inside the overlay; system colours only in the forced-colours block.
+- **Browser QA** (Playwright + Chromium, JSON Server on the scratch copy; 191 scripted checks, all passing on the dev server and on a mock-mode production build, console clean):
+  - **At 360, 768, 1024 and 1440px, light and dark:** the overlay fills the viewport at z 1400 on paper (`rgb(250, 247, 242)`) or navy-ink (`rgb(10, 20, 38)`) with no blur; `elementFromPoint` at the corners, centre and bottom bar always lands in it; the page is locked; no horizontal overflow; every control ≥ 44px tall (chips through their hit areas); the placeholder fits the field; focus starts in the field. The suggestions view shows the stored recents and six popular names. "chair" shows three cards per row from 1024px and two below, twelve cards, "42 results for “chair”" and "View all 42 results" → `/products?search=chair`. "zzz" shows "Nothing matched “zzz”." and six department links. Escape closes, focus is back on the header's Search, and the page unlocks. Up to 768px, the overlay opened from the bottom bar returns focus to its Search button.
+  - **Keyboard (1440):** Enter on the trigger opens it; ArrowDown → first result (with a visible ring), ArrowUp → field; Tab runs clear → 7 chips → 12 cards → View all → close → field, every stop inside the dialog with a visible focus style; Shift+Tab from the field → close; Escape → trigger.
+  - **Flows:** a result opens its product page and closes the overlay, remembering the query; a recent chip runs its search; a department chip scopes the count ("… in Office Chairs", pressed); "View all" lands on the listing titled "Results for “chair”"; Enter lands on `/products?search=sofa`; Recent lists newest first; × forgets one and moves focus to the next ×; Clear all forgets them all; a popular chip searches its product, which comes first.
+  - **Unavailable:** with `/products` aborted, and separately with JSON Server stopped (at 1024 and 360px), the serif line shows; after the server restarts, "Try again" recovers, with focus back in the field.
+  - **Loading:** with the catalogue held, the hairline runs, six skeleton cards sit in an `aria-busy` region and the department row shows pills; when it arrives, the field, count line and first card are exactly where they were.
+  - **Motion:** the overlay fades in; results stagger (later cards behind earlier ones mid-entrance) and all settle visible. Under reduced motion the overlay is opaque on its first frame, results have no transform, and the hairline is a still, full-width 2px caramel line while busy.
+  - **Layering:** at 360px on a product page the overlay covers the sticky Add-to-Cart bar (legacy 1300); at 1440px, opened over an open cart drawer (legacy 1200/1300), it covers that too.
+  - **Accessibility tree** (Playwright ARIA snapshot and CDP): dialog "Product search" (modal); a `search` landmark with searchbox "Search products"; group "Filter by department" with the pressed chip; `status` (live polite, atomic) holding "2 results for “almirah”" or the level-2 heading "Nothing matched “zzz”."; list "2 results for “almirah”" of articles named by product; regions "Recent" and "Popular"; "Close search" last. The bottom bar's instance, opened after scrolling, fills the viewport (it renders beside the inert, transformed bar, not inside it). NVDA and VoiceOver were not available here.
+- **Laravel shape:** a non-mock production build against a stub wrapping every answer in `{ success, data, meta }`: the same six popular names and the same counts and order for chair, almirah, nilkamal, office, sofa and zzz, from the overlay's one `GET /products` and one `GET /categories` (the stub's log). The page's other 404s were the footer's and deals context's Laravel-only routes (`/shipping/methods`, `/deals/config`), which JSON Server behind the stub does not have.
+- **Admin parity:** 12 screenshots (login, dashboard, Products; 1440 and 390px; light and dark), baseline build against this one: 9 byte-identical; the other 3 differ by at most 1/255 on 15–496 pixels, in regions where two runs of the baseline build also differ from each other (the 1440 dashboard's hash equals one a baseline run produced). No admin file, and nothing the admin imports besides the one new token, changed.
+
+### Pre-existing issues noticed (not changed)
+
+- **The overlay and the listing count some searches differently.** The overlay's scoring also matches category names and slugs; the listing's `?search=` filter (`Products.js`) does not. For "office" the overlay finds 20 and "View all 20 results" lands on a listing of 14 (the six waiting chairs and benches sit under `office-…-waiting` categories); "table" 33 vs 30, "café" 10 vs 7; the other 27 queries tested agree. Both are kept as they are ("same scoring"; `Products.js` is out of scope). Aligning the listing's filter with the overlay (adding the category name and slug) is a small follow-up.
+- **Legacy z-index literals above the modal layer:** `AddToCartBar` 1300 on phones (Prompt 16) and `CartDrawer` 1200/1300 (Prompt 18), plus the Profile toast 1300 (Prompt 21). The search overlay now sits above them; the auth modal (9999 until Prompt 20) does not need to.
+- **The cart drawer has no focus trap** (Prompt 18): Shift+Tab leaves it for the header behind.
+- **`aria-modal` alone:** Chromium still exposes the header behind an open overlay in its accessibility tree, as for the sidebar and sheets (the shared contract relies on `aria-modal`). Prompt 31 may add `inert` to the page behind every overlay.
+- **framer-motion's dev-only notice** "You have Reduced Motion enabled on your device…" appears on any page with reduced motion on (the home page logs it without the overlay ever opening); production builds are silent.
+
+### Notes for later prompts
+
+- **16 / 18:** with `AddToCartBar` on `--sf-z-stickybar` and the cart drawer on `--sf-z-overlay` (and its focus trap), `--sf-z-search` could drop to `--sf-z-modal`'s value; keep the search above both either way.
+- **20:** the auth modal belongs at `--sf-z-modal`, below the search overlay (no flow opens one over the other).
+- **29:** the overlay's copy sits in `SearchModal.js`: the placeholder, "Recent" / "Popular" / "Departments", "Clear all", the count line, "Nothing matched “q”.", "Try a room, a material or a department.", "Search is unavailable right now.", "Please check your connection and try again.", "Try again", "View all N results", the field label "Search products" and the chip group "Filter by department".
+- **30:** overlay fade `--sf-duration` (out with `--sf-ease-in-out`); results 8px rise and fade over `--sf-duration`, 40ms apart for eight; the hairline is the loading screen's 2.4s loop; all off under reduced motion.
+- **31:** one live region per overlay (`role="status"`); the chips' hit areas; the field's focus indicator is its 2px caramel underline (plus a transparent outline for forced colours); the pressed department uses `Highlight` in forced colours.
+- **32:** the overlay reads the full catalogue once per session (shared by both instances), lazily, on first open; the listing and "Complete the space" read it separately (a shared cache is still a candidate).
+
+### Needs client confirmation
+
+None expected. Visible choices the client may want to see: "Popular" follows the admin's `trending` flag (the seeded six are listed above), and the copy listed under "29".

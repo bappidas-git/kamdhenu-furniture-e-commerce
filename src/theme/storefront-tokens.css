@@ -209,6 +209,7 @@
   --sf-z-stickybar: 60;                /* mobile sticky Add-to-Cart bar */
   --sf-z-overlay: 1000;
   --sf-z-modal: 1100;
+  --sf-z-search: 1400;                 /* full-screen search: above every layer below SweetAlert (2000), incl. the legacy 1200/1300 ones */
 }
 
 /* ===========================================================================

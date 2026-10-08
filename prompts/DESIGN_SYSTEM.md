@@ -332,10 +332,11 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
 | `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar |
 | `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves |
-| `--sf-z-modal` | 1100 | modals and full-screen overlays (search, auth) |
+| `--sf-z-modal` | 1100 | modals (auth) |
+| `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal, including the legacy 1200/1300 layers still in the code (section 25.1) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
-Reserved, defined by its owner if needed: `--sf-z-search` (Prompt 15; only if search must sit above another modal). `--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
+`--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested), `--sf-z-search` by Prompt 15 (1400, section 25.1). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
 
 ---
 
@@ -815,7 +816,7 @@ Every drawer, sheet and modal on the storefront should behave the same way. The 
 | Focus | `useFocusTrap(ref, { active, onEscape, initialFocusRef, returnFocusRef, returnFocus })`: on open, focus moves to `initialFocusRef`, else the first focusable element, else the container (give it `tabIndex={-1}`). Tab and Shift+Tab cycle inside. On close, focus returns to the element that opened the layer, unless another layer has taken focus in the meantime. Only the most recently opened trap handles keys, so nested layers work. Focus is not forcibly pulled back into the layer: `aria-modal` hides the page from assistive technology, and portalled popovers and SweetAlert dialogs opened from inside the layer keep their own focus. |
 | Escape | `onEscape` (usually `onClose`), handled by the topmost trap only |
 | Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. This is the same signal the cart drawer, search and auth modal already set, and the one BottomNav listens to through `useBodyScrollLocked()`. |
-| Stacking | Backdrops and panels at `--sf-z-overlay` (1000); full-screen modals at `--sf-z-modal` (1100); BottomNav (58) is always beneath them |
+| Stacking | Backdrops and panels at `--sf-z-overlay` (1000); modals at `--sf-z-modal` (1100); the full-screen search at `--sf-z-search` (1400, section 25.1); BottomNav (58) is always beneath them |
 | Backdrop | `--sf-color-overlay`, no blur; a click closes the layer |
 | Motion | Enter with `--sf-ease-out`; exit in `--sf-duration` with `--sf-ease-in-out`; under reduced motion, opacity only (an explicit `useReducedMotion()` variant, on top of `MotionConfig`) |
 
@@ -1342,3 +1343,67 @@ Grid: three columns from 1024px, two below; column gap 24px from 768px and 16px 
 One `h1`; the rail is a region named by its "Filters" `h2`; the results are a region named "Results" (the page sits inside the app's `main`, so neither is an `aside` or a second `main`); the breadcrumb and the pagination are `nav`s; error and empty titles are `h2`s.
 
 No new colour pairs: the page uses ink, secondary and muted text on paper and sand, the warning text on paper, the accent and focus ring, the control boundary, the primary button and count disc, and the card's chips, all already in §14 and §23.5.
+
+---
+
+## 25. Search overlay
+
+Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.module.css` (the overlay) and `src/components/SearchModal/searchData.js` (its data rules: the catalogue cache, recent searches, category chips, scoring, suggestions). Props `open`, `onClose`; mounted by `Header` and `BottomNav`, which share one catalogue read through the module cache.
+
+### 25.1 Surface and stacking
+
+- A fixed, full-viewport surface in `--sf-color-bg` (paper; the navy-ink base in dark mode). No backdrop, blur or veil. It fades in over `--sf-duration` (`--sf-ease-out`) and out over `--sf-duration` (`--sf-ease-in-out`); under reduced motion it appears and goes at once.
+- **Two grid rows.** Row 1 is the top bar: `<BrandLogo height={28} />` (decorative here, `aria-hidden`) at the left of `.sf-container--wide`, 64px plus the top safe-area inset, a hairline below. The 44px "Close search" button sits over the bar's far end but comes last in the DOM, so Tab reaches it after the results. Row 2 scrolls (`overscroll-behavior: contain`; `scrollbar-gutter: stable` from 480px, so the column never shifts when results make it scroll).
+- **Column:** centred, `max-width: calc(64rem + 2 × --sf-gutter)` (three cards about the listing's width); 24px above the field on phones, `clamp(48px, 8vh, 80px)` from 768px; 64px plus the bottom inset below.
+- **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals still in the code: the cart drawer (1200/1300, until Prompt 18) and the product page's mobile `AddToCartBar` (1300, until Prompt 16). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
+- **Progress hairline:** a 2px `--sf-color-accent` line along the top edge while the catalogue loads or a search is pending: the loading screen's grow-and-retract (2.4s, `--sf-ease-in-out`), still and full width under reduced motion. Drawn as a border, so forced-colours themes keep it. Decorative (`aria-hidden`).
+
+### 25.2 The field
+
+| Part | Spec |
+|---|---|
+| Type | Playfair 400 at `--sf-text-display-md` (`--sf-text-display-sm` below 480px, where the placeholder needs 413px of a 328px field at 28px and fits at 22px), `--sf-leading-heading`, `--sf-tracking-display`; ink, a caramel caret |
+| Placeholder | "Search furniture, rooms, brands…", `--sf-color-text-muted` |
+| Boundary | no border; a 1px `--sf-color-border-strong` underline (the control boundary, 3.54 : 1, not the decorative stone) that turns `--sf-color-accent` and 2px thick (border + 1px shadow) while the field or its clear button has focus. A transparent outline keeps a ring in forced colours |
+| Semantics | `form role="search"`; a visually hidden `<label htmlFor>` "Search products"; `type="search"` (the browser's own cancel button hidden), `autocomplete="off"`, `autocorrect="off"`, `spellcheck="false"`, `enterkeyhint="search"`; Enter goes to `/products?search=<term>` |
+| Clear | a 44px `.sf-btn--icon` "Clear search" (sand on hover) while the field holds text; it empties the field and refocuses it |
+
+### 25.3 States
+
+| State | When | Content |
+|---|---|---|
+| Suggestions | the field is empty | two columns from 768px (stacked below): **Recent**, the `localStorage["recentSearches"]` terms, each a pill holding the term (runs it) and a 32px × (forgets it; 44px tall), with "Clear all" (`.sf-btn--link`, named "Clear all recent searches"); **Popular**, the rule in 25.4. Titles are `h2` eyebrows on a 32px head row, so both columns line up |
+| Loading | the catalogue is not here yet, or a query's first search has not settled | six `ProductCardSkeleton`s in the grid, in an `aria-busy` region; the department row as sand pills until the categories arrive; the hairline |
+| Results | matches | the count line, then up to `MAX_RESULTS` (12) storefront `ProductCard`s, and "View all N results" (`.sf-btn--ghost`, centred) when more match |
+| Nothing matched | no match | the serif line (`.sf-display-sm`) "Nothing matched “q”." (with " in <Department>" when one is pressed), "Try a room, a material or a department." and the department links |
+| Unavailable | the catalogue read failed | the serif line "Search is unavailable right now.", "Please check your connection and try again." and a primary "Try again", which reads the catalogue again (a failed read also retries on the next open) |
+
+- While a new query waits for its 300ms debounce, the last results (or the last "nothing matched") stay under the hairline; skeletons only show when there is nothing settled to show, so the grid never flickers between keystrokes.
+- The count line's height is held while loading, so the field, the department row, the count and the first card do not move when results replace the skeletons (measured equal in Chromium).
+
+### 25.4 Data rules
+
+- **Popular** (from data only): the names of the first six active products the admin flags `trending`, in catalogue order; a chip runs a search for its name. With none flagged, the departments stand in (`getMainMenuCategories`: the header's six, in menu order), titled **Departments**, each a link to `/products?category=<slug>`. Never a demo list, never counts.
+- **Department chips** (`.sf-chip`, `aria-pressed`, one horizontally scrolling row with the column's gutter as edge room): "All" plus each active top-level category, built from the live tree; each matches the category's slug and its descendants', plus name/slug substrings and tags. They appear once there is a query, since they scope a search. A press re-runs the search at once; a second press on the department in force returns to "All".
+- **Scoring, caching and recents** are the boilerplate's, moved unchanged into `searchData.js`: name exact 100 / starts-with 80 / word start 60 / contains 40; tags 30 / 20 / 10; category or brand 15; short description 5; trending +3 and hot +2 on a real match only; stable sort. One `products.getAll()` + `categories.getAll()` per session for both instances. Recent searches: newest first, at most 8, de-duplicated case-insensitively; a query is remembered when it is submitted, when "View all" is followed and when a result is followed.
+- **Cards:** `ProductCard` without `onAddToCart` or `onToggleWishlist`: one tab stop each (the link), its own placeholder and star handling. A plain click navigates and closes the overlay; a modified click (new tab) leaves it open; both remember the query.
+
+### 25.5 Keyboard, focus and announcements
+
+- `role="dialog"`, `aria-modal="true"`, `aria-label="Product search"`; `useFocusTrap` (section 19.1): focus starts in the field; Tab and Shift+Tab stay inside; Escape closes; focus returns to the control that opened the overlay. The bottom bar's Search button is still `inert` at that moment (the bar keys off the scroll lock), so there the bar's own restore (section 19.3) puts focus back once the lock is released. `useBodyScrollLock` locks the page.
+- Tab order: field → clear → department chips → result cards → "View all" → close.
+- ArrowDown in the field moves to the first result; ArrowUp on the first result returns to the field.
+- The status line is `role="status"` + `aria-live="polite"` + `aria-atomic`, always in the DOM: "42 results for “chair”" (figures and the query in ink 500, the rest muted 14px; " in <Department>" when scoped), or the state's serif line as an `h2`. The results list is named by it.
+- A route change underneath (back, forward) closes the overlay. A click on the paper never does: the surface has no "outside".
+
+### 25.6 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| Overlay | opacity 0 → 1, `--sf-duration`, `--sf-ease-out`; out the same with `--sf-ease-in-out` | none |
+| Results | opacity 0 → 1 and an 8px rise, `--sf-duration`, `--sf-ease-out`, 40ms apart for the first eight; the rest arrive with the eighth | none |
+| Hairline | 2.4s grow-and-retract while busy | still, full width |
+
+### 25.7 Contrast
+
+No new pairs. The overlay uses ink, secondary and muted text on the page, the control boundary (border-strong) and the accent (underline, caret, hairline) on the page, the focus ring, the primary and ghost buttons, the selected chip (primary-contrast on primary), and ink on sand and on primary-soft for the hover states, all already in section 14, and the card's own pairs (section 23.5).

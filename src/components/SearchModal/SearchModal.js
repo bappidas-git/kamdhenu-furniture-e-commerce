@@ -1,318 +1,141 @@
-import React, { useState, useEffect, useRef, useCallback } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
-import apiService from "../../services/api";
-import { formatCurrency, getProductMinPrice, productPath } from "../../utils/helpers";
+import React, { useCallback, useEffect, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import ProductCard, { ProductCardSkeleton } from "../storefront/ProductCard";
+import BrandLogo from "../ui/BrandLogo";
+import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { TOKENS } from "../../theme/tokens";
+import {
+  DEBOUNCE_MS,
+  MAX_RESULTS,
+  buildCategoryMap,
+  buildCategoryNav,
+  clearRecentSearches,
+  departmentPath,
+  getDepartments,
+  getPopularSuggestions,
+  getRecentSearches,
+  loadSearchData,
+  peekSearchData,
+  removeRecentSearch,
+  saveRecentSearch,
+  searchProducts,
+} from "./searchData";
 import styles from "./SearchModal.module.css";
 
-// ---------------------------------------------------------------------------
-// Static config
-// ---------------------------------------------------------------------------
-const TRENDING_SEARCHES = [
-  "Laptop",
-  "Earbuds",
-  "Smartwatch",
-  "Saree",
-  "Running Shoes",
-  "Bedsheet",
-  "T-Shirt",
-  "Speaker",
-];
+// =============================================================================
+// SearchModal — the full-screen search overlay
+// =============================================================================
+//
+// Props: open, onClose. Mounted twice, by Header and by BottomNav; the module
+// cache in searchData.js means one catalogue read (products.getAll +
+// categories.getAll, both API branches), and the two can never be open
+// together.
+//
+// A paper surface over the whole viewport: the logo top-left, "Close search"
+// top-right, a large serif field, then by state:
+//   • before typing — "Recent" (localStorage, each chip removable, "Clear all")
+//     and "Popular" (the first six products the admin flags as trending; with
+//     none, the departments, labelled "Departments");
+//   • searching — the department chips that scope the search, the live count
+//     and up to MAX_RESULTS storefront ProductCards ("View all N results" to
+//     the listing when more match); skeleton cards until a search settles;
+//   • nothing matched — a serif line, a hint and the department links;
+//   • catalogue unavailable — a serif line and "Try again".
+// A caramel hairline runs along the top while the catalogue loads or a
+// search is pending.
+//
+// Scoring, chip matching, the cache and the recent-searches rules live in
+// searchData.js, unchanged.
+//
+// Keyboard: focus starts in the field; ArrowDown moves to the first result
+// and ArrowUp from it back to the field; Tab runs field → clear → chips →
+// results → View all → close and stays inside; Escape closes; focus returns
+// to the control that opened the overlay. A route change closes it.
+// =============================================================================
 
-// Category filter chips (and the slugs each one matches) are derived at runtime
-// from the live category tree — see buildCategoryNav() — so they always reflect
-// what's in the catalogue with no hardcoded list to drift out of sync.
+const { duration, easeOut, easeInOut } = TOKENS.motion;
+// Results enter 40ms apart; from the eighth on they arrive together.
+const RESULT_STAGGER = 0.04;
+const STAGGER_CAP = 8;
+// How far a result rises as it fades in (px).
+const RESULT_RISE = 8;
+// Card boxes held while the catalogue loads or the first search settles:
+// two rows at three across, three rows at two.
+const SKELETON_COUNT = 6;
+// Pills held in a chip row while the catalogue loads.
+const CHIP_SKELETONS = 4;
 
-const RECENT_SEARCHES_KEY = "recentSearches";
-const MAX_RECENT_SEARCHES = 8;
-const MAX_RESULTS = 12;
-const DEBOUNCE_MS = 300;
+const cx = (...names) => names.filter(Boolean).join(" ");
 
-// Inline SVG fallback (no external host) shown if a product image fails to load.
-const FALLBACK_IMAGE =
-  "data:image/svg+xml;charset=UTF-8," +
-  encodeURIComponent(
-    '<svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120">' +
-      '<rect width="120" height="120" fill="#e2e8f0"/>' +
-      '<g fill="none" stroke="#94a3b8" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">' +
-      '<rect x="30" y="34" width="60" height="52" rx="6"/>' +
-      '<circle cx="48" cy="52" r="7"/>' +
-      '<path d="M34 80l20-18 16 14 10-8 16 14"/>' +
-      "</g></svg>"
-  );
+// Only non-empty strings make chips: a hand-edited or legacy value in the
+// store must never break the overlay.
+const recentTerms = (list) =>
+  (Array.isArray(list) ? list : []).filter((term) => typeof term === "string" && term.trim() !== "");
 
-// ---------------------------------------------------------------------------
-// Module-level cache — shared across every SearchModal instance (Header +
-// BottomNav) so the catalogue is fetched once instead of on every open.
-// ---------------------------------------------------------------------------
-let searchDataCache = null; // { products, categories }
-let searchDataPromise = null;
+const readRecentSearches = () => recentTerms(getRecentSearches());
 
-const loadSearchData = () => {
-  if (searchDataCache) return Promise.resolve(searchDataCache);
-  if (!searchDataPromise) {
-    searchDataPromise = Promise.all([
-      apiService.products.getAll(),
-      apiService.categories.getAll(),
-    ])
-      .then(([products, categories]) => {
-        searchDataCache = {
-          products: Array.isArray(products) ? products : [],
-          categories: Array.isArray(categories) ? categories : [],
-        };
-        return searchDataCache;
-      })
-      .catch((err) => {
-        searchDataPromise = null; // allow a retry on the next open
-        throw err;
-      });
-  }
-  return searchDataPromise;
-};
+// A plain left click: the router navigates in place and the overlay closes
+// with it. A modified click (new tab or window) leaves it open.
+const isPlainClick = (event) =>
+  !event.defaultPrevented &&
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.altKey &&
+  !event.ctrlKey &&
+  !event.shiftKey;
 
-// ---------------------------------------------------------------------------
-// Recent searches (localStorage)
-// ---------------------------------------------------------------------------
-const getRecentSearches = () => {
-  try {
-    const stored = localStorage.getItem(RECENT_SEARCHES_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? parsed : [];
-  } catch {
-    return [];
-  }
-};
+const hasModifier = (event) => event.altKey || event.ctrlKey || event.metaKey || event.shiftKey;
 
-const saveRecentSearch = (query) => {
-  try {
-    const recent = getRecentSearches();
-    const filtered = recent.filter((s) => s.toLowerCase() !== query.toLowerCase());
-    const updated = [query, ...filtered].slice(0, MAX_RECENT_SEARCHES);
-    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated));
-    return updated;
-  } catch {
-    return getRecentSearches();
-  }
-};
+const quoted = (text) => `“${text}”`;
 
-const clearRecentSearches = () => {
-  try {
-    localStorage.removeItem(RECENT_SEARCHES_KEY);
-  } catch {
-    // ignore
-  }
-};
+const CloseGlyph = ({ size = 20 }) => (
+  <svg viewBox="0 0 24 24" width={size} height={size} aria-hidden="true" focusable="false">
+    <path d="M6 6l12 12M18 6L6 18" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+  </svg>
+);
 
-// ---------------------------------------------------------------------------
-// Category resolution — products reference a numeric categoryId; resolve it to
-// a { name, slug } via the categories list. Tolerant of the Laravel shape too
-// (string slug or nested object), so both API branches keep working.
-// ---------------------------------------------------------------------------
-const buildCategoryMap = (categories) => {
-  const byId = {};
-  const bySlug = {};
-  (categories || []).forEach((c) => {
-    if (!c) return;
-    if (c.id != null) byId[c.id] = c;
-    if (c.slug) bySlug[String(c.slug).toLowerCase()] = c;
-  });
-  return { byId, bySlug };
-};
+const ChipSkeletons = () =>
+  Array.from({ length: CHIP_SKELETONS }, (_, index) => (
+    <span key={index} className={`sf-skeleton ${styles.chipSkeleton}`} />
+  ));
 
-// Build the storefront filter chips straight from the live category tree, so
-// adding / renaming / removing a category in the admin is reflected here with no
-// code change. One chip per active top-level category; each chip matches that
-// category's slug AND all of its descendants' slugs (so a "Women's Ethnic Wear"
-// chip still surfaces Sarees / Kurtas products). Returns { chips, groups }.
-const buildCategoryNav = (categories) => {
-  const list = (Array.isArray(categories) ? categories : []).filter(
-    (c) => c && c.isActive !== false
-  );
-  const byParent = {};
-  list.forEach((c) => {
-    const key = c.parentId == null ? "root" : String(c.parentId);
-    (byParent[key] = byParent[key] || []).push(c);
-  });
-  const descendantSlugs = (cat) => {
-    const slugs = [];
-    const stack = [cat];
-    while (stack.length) {
-      const cur = stack.pop();
-      if (cur.slug) slugs.push(String(cur.slug).toLowerCase());
-      (byParent[String(cur.id)] || []).forEach((child) => stack.push(child));
-    }
-    return slugs;
-  };
-  const tops = (byParent.root || [])
-    .slice()
-    .sort((a, b) => (a.sortOrder ?? 0) - (b.sortOrder ?? 0) || String(a.name).localeCompare(String(b.name)));
-  const chips = ["All", ...tops.map((c) => c.name)];
-  const groups = {};
-  tops.forEach((c) => { groups[c.name] = descendantSlugs(c); });
-  return { chips, groups };
-};
-
-const resolveCategory = (product, map) => {
-  if (!product) return { name: "", slug: "" };
-  if (typeof product.category === "string" && product.category) {
-    const slug = product.category.toLowerCase();
-    const found = map.bySlug[slug];
-    return { name: found ? found.name : product.category, slug: found ? String(found.slug).toLowerCase() : slug };
-  }
-  if (product.category && typeof product.category === "object") {
-    return {
-      name: product.category.name || "",
-      slug: String(product.category.slug || "").toLowerCase(),
-    };
-  }
-  const byId = map.byId[product.categoryId];
-  if (byId) return { name: byId.name, slug: String(byId.slug || "").toLowerCase() };
-  return { name: "", slug: "" };
-};
-
-const matchesCategoryChip = (product, chip, catInfo, groups = {}) => {
-  if (!chip || chip === "All") return true;
-  const group = groups[chip] || [chip.toLowerCase()];
-  const slug = (catInfo.slug || "").toLowerCase();
-  const name = (catInfo.name || "").toLowerCase();
-  const chipLower = chip.toLowerCase();
-  if (group.includes(slug)) return true;
-  if ((name && name.includes(chipLower)) || (slug && slug.includes(chipLower))) return true;
-  const tags = (product.tags || []).map((t) => String(t).toLowerCase());
-  if (group.some((g) => tags.includes(g))) return true;
-  return false;
-};
-
-// ---------------------------------------------------------------------------
-// Relevance scoring: exact name → starts-with → word match → contains →
-// tags → brand/category → description, with a small trending/hot boost.
-// ---------------------------------------------------------------------------
-const scoreProduct = (product, lowerQuery, catInfo) => {
-  let score = 0;
-  const name = (product.name || "").toLowerCase();
-  const desc = (product.shortDescription || "").toLowerCase();
-  const brand = (product.brand || "").toLowerCase();
-  const tags = (product.tags || []).map((t) => String(t).toLowerCase());
-  const catName = (catInfo.name || "").toLowerCase();
-  const catSlug = (catInfo.slug || "").toLowerCase();
-
-  // Name
-  if (name === lowerQuery) score += 100;
-  else if (name.startsWith(lowerQuery)) score += 80;
-  else if (name.split(/\s+/).some((w) => w.startsWith(lowerQuery))) score += 60;
-  else if (name.includes(lowerQuery)) score += 40;
-
-  // Tags
-  if (tags.some((t) => t === lowerQuery)) score += 30;
-  else if (tags.some((t) => t.startsWith(lowerQuery))) score += 20;
-  else if (tags.some((t) => t.includes(lowerQuery))) score += 10;
-
-  // Category / brand
-  if (catName.includes(lowerQuery) || catSlug.includes(lowerQuery)) score += 15;
-  if (brand.includes(lowerQuery)) score += 15;
-
-  // Description (weakest signal)
-  if (desc.includes(lowerQuery)) score += 5;
-
-  // Only matched products are eligible. Trending/hot give a small ranking
-  // boost on top of a real match — never a reason to surface a non-match.
-  if (score <= 0) return 0;
-  if (product.trending) score += 3;
-  if (product.hot) score += 2;
-
-  return score;
-};
-
-// ---------------------------------------------------------------------------
-// Inline SVG icons (match the SVG icon set used across the storefront instead
-// of inconsistent emoji/Unicode glyphs).
-// ---------------------------------------------------------------------------
-const Icon = {
-  Search: (props) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="11" cy="11" r="8" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-    </svg>
-  ),
-  Close: (props) => (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <line x1="18" y1="6" x2="6" y2="18" />
-      <line x1="6" y1="6" x2="18" y2="18" />
-    </svg>
-  ),
-  Clock: (props) => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="12" cy="12" r="9" />
-      <polyline points="12 7 12 12 15 14" />
-    </svg>
-  ),
-  Trending: (props) => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <polyline points="23 6 13.5 15.5 8.5 10.5 1 18" />
-      <polyline points="17 6 23 6 23 12" />
-    </svg>
-  ),
-  Arrow: (props) => (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <line x1="5" y1="12" x2="19" y2="12" />
-      <polyline points="12 5 19 12 12 19" />
-    </svg>
-  ),
-  Empty: (props) => (
-    <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" {...props}>
-      <circle cx="11" cy="11" r="7" />
-      <line x1="21" y1="21" x2="16.65" y2="16.65" />
-      <line x1="8" y1="11" x2="14" y2="11" />
-    </svg>
-  ),
-};
-
-// Star rating rendered with inline SVG (filled / half / empty), matching the
-// Products page. A unique gradient id per product avoids cross-card collisions.
-const StarRating = ({ rating = 0, idKey }) => {
-  const r = Math.round((Number(rating) || 0) * 2) / 2;
-  const gradId = `searchStarHalf-${idKey}`;
-  return (
-    <span className={styles.stars} aria-label={`Rated ${rating} out of 5`}>
-      <svg className={styles.starDefs} aria-hidden="true" focusable="false">
-        <defs>
-          <linearGradient id={gradId} x1="0" x2="1" y1="0" y2="0">
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="50%" stopColor="transparent" />
-          </linearGradient>
-        </defs>
-      </svg>
-      {[1, 2, 3, 4, 5].map((i) => {
-        const fill = i <= Math.floor(r) ? "#f59e0b" : i - 0.5 === r ? `url(#${gradId})` : "none";
-        return (
-          <svg key={i} width="13" height="13" viewBox="0 0 24 24" fill={fill} stroke="#f59e0b" strokeWidth="1.5" aria-hidden="true">
-            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-          </svg>
-        );
-      })}
-    </span>
-  );
-};
-
-// ---------------------------------------------------------------------------
-// Component
-// ---------------------------------------------------------------------------
 const SearchModal = ({ open, onClose }) => {
   const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
+  const uid = useId();
+  const inputId = `${uid}input`;
+  const countId = `${uid}count`;
+  const recentTitleId = `${uid}recent`;
+  const popularTitleId = `${uid}popular`;
+
+  const dialogRef = useRef(null);
   const inputRef = useRef(null);
+  const resultsRef = useRef(null);
+  const recentListRef = useRef(null);
   const debounceTimerRef = useRef(null);
   const activeCategoryRef = useRef("All");
+  const pendingRecentFocus = useRef(null);
 
   const [query, setQuery] = useState("");
-  const [allProducts, setAllProducts] = useState([]);
-  const [categoryMap, setCategoryMap] = useState({ byId: {}, bySlug: {} });
-  const [categoryNav, setCategoryNav] = useState({ chips: ["All"], groups: {} });
+  // The catalogue: "idle" before the first open, then "loading", "ready" or
+  // "error". An instance opening after the other one has loaded starts ready.
+  const [catalog, setCatalog] = useState(() => {
+    const cached = peekSearchData();
+    return cached ? { status: "ready", data: cached } : { status: "idle", data: null };
+  });
   const [results, setResults] = useState([]);
+  // The query the shown results belong to; null until a search settles.
+  const [resultsQuery, setResultsQuery] = useState(null);
   const [isSearching, setIsSearching] = useState(false);
   const [activeCategory, setActiveCategory] = useState("All");
   const [recentSearches, setRecentSearches] = useState([]);
+
+  const statusRef = useRef(catalog.status);
+  statusRef.current = catalog.status;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Keep a ref of the active category so the debounced query effect always uses
   // the latest value without re-subscribing on every chip change.
@@ -320,82 +143,78 @@ const SearchModal = ({ open, onClose }) => {
     activeCategoryRef.current = activeCategory;
   }, [activeCategory]);
 
-  // Core search routine (synchronous; the catalogue is already in memory).
-  const runSearch = useCallback(
-    (rawQuery, category) => {
-      const lowerQuery = (rawQuery || "").toLowerCase().trim();
-      if (!lowerQuery) {
-        setResults([]);
-        setIsSearching(false);
-        return;
-      }
-      const cat = category || "All";
-      const scored = allProducts
-        .map((product) => {
-          const catInfo = resolveCategory(product, categoryMap);
-          return { product, catInfo, score: scoreProduct(product, lowerQuery, catInfo) };
-        })
-        .filter((entry) => entry.score > 0 && matchesCategoryChip(entry.product, cat, entry.catInfo, categoryNav.groups))
-        .sort((a, b) => b.score - a.score)
-        .map((entry) => ({ ...entry.product, _catName: entry.catInfo.name }));
+  // The catalogue, through the shared cache. A failed read reset the cached
+  // promise, so this (on the next open, or "Try again") reads again.
+  const loadCatalog = useCallback(() => {
+    const cached = peekSearchData();
+    if (cached) {
+      setCatalog({ status: "ready", data: cached });
+      return;
+    }
+    setCatalog({ status: "loading", data: null });
+    loadSearchData()
+      .then((data) => setCatalog({ status: "ready", data }))
+      .catch((err) => {
+        console.error("Failed to load search data:", err);
+        setCatalog({ status: "error", data: null });
+      });
+  }, []);
 
-      setResults(scored);
-      setIsSearching(false);
-    },
-    [allProducts, categoryMap, categoryNav]
-  );
-
-  // Load catalogue (cached) when the modal first opens; refresh recent searches
-  // and focus the input. Reset transient state when it closes.
-  useEffect(() => {
+  // On open: the recent searches, and the catalogue unless it is here already.
+  // On close: back to a clean slate. A layout effect, so the first frame
+  // already shows the recent chips and a cached catalogue.
+  useLayoutEffect(() => {
     if (!open) {
       setQuery("");
-      setResults([]);
+      setResults((current) => (current.length ? [] : current));
+      setResultsQuery(null);
       setIsSearching(false);
       setActiveCategory("All");
       return;
     }
+    setRecentSearches(readRecentSearches());
+    if (statusRef.current !== "ready") loadCatalog();
+  }, [open, loadCatalog]);
 
-    let active = true;
-    setRecentSearches(getRecentSearches());
-    loadSearchData()
-      .then((data) => {
-        if (!active) return;
-        setAllProducts(data.products);
-        setCategoryMap(buildCategoryMap(data.categories));
-        setCategoryNav(buildCategoryNav(data.categories));
-      })
-      .catch((err) => {
-        if (active) console.error("Failed to load search data:", err);
-      });
+  // Focus into the field, Tab kept inside, Escape closes, focus back to the
+  // opener on close; the page behind does not scroll.
+  useFocusTrap(dialogRef, { active: open, onEscape: onClose, initialFocusRef: inputRef });
+  useBodyScrollLock(open);
 
-    const focusTimer = setTimeout(() => inputRef.current?.focus(), 120);
-    return () => {
-      active = false;
-      clearTimeout(focusTimer);
-    };
-  }, [open]);
-
-  // Lock body scroll while open (only the open instance acts; the closed one
-  // returns early so it never touches the body style).
+  // A route change underneath (back, forward) closes the overlay; links
+  // inside close it as they navigate.
+  const routeKey = location.pathname + location.search;
+  const lastRouteKey = useRef(routeKey);
   useEffect(() => {
-    if (!open) return undefined;
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    return () => {
-      document.body.style.overflow = previousOverflow;
-    };
-  }, [open]);
+    if (lastRouteKey.current === routeKey) return;
+    lastRouteKey.current = routeKey;
+    if (open) onCloseRef.current();
+  }, [routeKey, open]);
 
-  // Escape to close (single listener, added/removed with open state).
-  useEffect(() => {
-    if (!open) return undefined;
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape") onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+  const data = catalog.status === "ready" ? catalog.data : null;
+  const categoryMap = useMemo(() => buildCategoryMap(data?.categories), [data]);
+  const categoryNav = useMemo(() => buildCategoryNav(data?.categories), [data]);
+  const popular = useMemo(() => getPopularSuggestions(data?.products, data?.categories), [data]);
+  const departments = useMemo(() => getDepartments(data?.categories), [data]);
+
+  // Core search routine (synchronous; the catalogue is already in memory).
+  const runSearch = useCallback(
+    (rawQuery, category) => {
+      const trimmed = (rawQuery || "").trim();
+      if (!trimmed) {
+        setResults([]);
+        setResultsQuery(null);
+        setIsSearching(false);
+        return;
+      }
+      // Nothing to score until the catalogue arrives; this runs again then.
+      if (!data) return;
+      setResults(searchProducts(data.products, categoryMap, categoryNav.groups, trimmed, category));
+      setResultsQuery(trimmed);
+      setIsSearching(false);
+    },
+    [data, categoryMap, categoryNav]
+  );
 
   // Debounced search as the user types.
   useEffect(() => {
@@ -403,7 +222,8 @@ const SearchModal = ({ open, onClose }) => {
     if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
 
     if (!trimmed) {
-      setResults([]);
+      setResults((current) => (current.length ? [] : current));
+      setResultsQuery(null);
       setIsSearching(false);
       return undefined;
     }
@@ -418,19 +238,37 @@ const SearchModal = ({ open, onClose }) => {
     };
   }, [query, runSearch]);
 
+  // After a recent search is removed, focus the × of the chip that took its
+  // place (or the last one); with none left, the field.
+  useEffect(() => {
+    const index = pendingRecentFocus.current;
+    if (index === null) return;
+    pendingRecentFocus.current = null;
+    const removers = recentListRef.current
+      ? recentListRef.current.querySelectorAll("button[data-remove]")
+      : [];
+    const next = removers[Math.min(index, removers.length - 1)] || inputRef.current;
+    if (next) next.focus();
+  }, [recentSearches]);
+
   // ----- Handlers -----
+  const focusInput = () => {
+    if (inputRef.current) inputRef.current.focus();
+  };
+
   const handleInputChange = (e) => setQuery(e.target.value);
 
   const handleClear = () => {
     setQuery("");
     setResults([]);
-    inputRef.current?.focus();
+    setResultsQuery(null);
+    focusInput();
   };
 
   const goToSearchResults = (term) => {
     const trimmed = term.trim();
     if (!trimmed) return;
-    setRecentSearches(saveRecentSearch(trimmed));
+    setRecentSearches(recentTerms(saveRecentSearch(trimmed)));
     onClose();
     navigate(`/products?search=${encodeURIComponent(trimmed)}`);
   };
@@ -440,251 +278,399 @@ const SearchModal = ({ open, onClose }) => {
     goToSearchResults(query);
   };
 
-  const handleProductClick = (product) => {
-    if (query.trim()) setRecentSearches(saveRecentSearch(query.trim()));
-    onClose();
-    navigate(productPath(product));
+  // Following a result (or "View all") remembers the query, as before.
+  const rememberQuery = () => {
+    const trimmed = query.trim();
+    if (trimmed) setRecentSearches(recentTerms(saveRecentSearch(trimmed)));
   };
 
-  const handleChipSearch = (term) => setQuery(term);
+  // Clicks inside a result card bubble here after the card's link has acted.
+  // When the router took the click (a plain click) it navigates in place, so
+  // the overlay closes; a modified click opens a new tab and leaves it open.
+  const handleResultClick = (event) => {
+    const target = event.target;
+    if (!target || typeof target.closest !== "function" || !target.closest("a[href]")) return;
+    rememberQuery();
+    if (event.defaultPrevented) onClose();
+  };
+
+  const handleViewAllClick = (event) => {
+    rememberQuery();
+    if (isPlainClick(event)) onClose();
+  };
+
+  const handleDepartmentClick = (event) => {
+    if (isPlainClick(event)) onClose();
+  };
+
+  // A recent or popular chip runs its search. Focus returns to the field, as
+  // the chip itself gives way to the results.
+  const runSuggestion = (term) => {
+    setQuery(term);
+    focusInput();
+  };
 
   const handleClearRecent = () => {
     clearRecentSearches();
     setRecentSearches([]);
+    focusInput();
   };
 
+  const handleRemoveRecent = (term, index) => {
+    pendingRecentFocus.current = index;
+    setRecentSearches(recentTerms(removeRecentSearch(term)));
+  };
+
+  // A second press on the department in force goes back to "All".
   const handleCategoryClick = (cat) => {
-    setActiveCategory(cat);
+    const next = cat !== "All" && cat === activeCategory ? "All" : cat;
+    setActiveCategory(next);
     if (query.trim()) {
       if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
-      runSearch(query, cat);
+      runSearch(query, next);
     }
   };
 
-  // ----- Derived -----
-  const getPrice = (product) => {
-    const priceInfo = getProductMinPrice(product);
-    return priceInfo.sellingPrice || priceInfo.originalPrice || product.price || 0;
+  const handleRetry = () => {
+    loadCatalog();
+    focusInput();
   };
 
+  // ArrowDown from the field to the first result; ArrowUp from it back.
+  const firstResultLink = () =>
+    resultsRef.current ? resultsRef.current.querySelector("a[href]") : null;
+
+  const handleInputKeyDown = (event) => {
+    if (event.key !== "ArrowDown" || hasModifier(event)) return;
+    const first = firstResultLink();
+    if (!first) return;
+    event.preventDefault();
+    first.focus();
+  };
+
+  const handleResultsKeyDown = (event) => {
+    if (event.key !== "ArrowUp" || hasModifier(event)) return;
+    if (event.target !== firstResultLink()) return;
+    event.preventDefault();
+    focusInput();
+  };
+
+  // ----- Derived -----
   const trimmedQuery = query.trim();
-  const showResultsView = trimmedQuery.length > 0;
+  const status = catalog.status;
+  let view = "suggestions";
+  if (status === "error") view = "error";
+  else if (trimmedQuery) {
+    if (!data || resultsQuery === null) view = "loading";
+    else view = results.length > 0 ? "results" : "none";
+  }
+  const busy = status === "loading" || (status === "ready" && isSearching);
+  const scopeSuffix = activeCategory !== "All" ? ` in ${activeCategory}` : "";
+  const showScope =
+    (view === "loading" || view === "results" || view === "none") &&
+    (!data || categoryNav.chips.length > 1);
   const cappedResults = results.slice(0, MAX_RESULTS);
-  const themeAttr = isDarkMode ? "dark" : "light";
+  const searchHref = `/products?search=${encodeURIComponent(trimmedQuery)}`;
+
+  let statusContent = null;
+  if (view === "results") {
+    statusContent = (
+      <p id={countId} className={styles.count}>
+        <span className={styles.countFigure}>{results.length}</span>{" "}
+        {results.length === 1 ? "result" : "results"} for{" "}
+        <span className={styles.countFigure}>{quoted(resultsQuery)}</span>
+        {scopeSuffix}
+      </p>
+    );
+  } else if (view === "none") {
+    statusContent = (
+      <h2 className={`sf-display-sm ${styles.stateTitle}`}>
+        Nothing matched {quoted(resultsQuery)}
+        {scopeSuffix}.
+      </h2>
+    );
+  } else if (view === "error") {
+    statusContent = (
+      <h2 className={`sf-display-sm ${styles.stateTitle}`}>Search is unavailable right now.</h2>
+    );
+  }
+
+  const resultMotion = (index) =>
+    reduceMotion
+      ? { initial: false }
+      : {
+          initial: { opacity: 0, y: RESULT_RISE },
+          animate: { opacity: 1, y: 0 },
+          transition: {
+            duration: duration.base,
+            ease: easeOut,
+            delay: Math.min(index, STAGGER_CAP - 1) * RESULT_STAGGER,
+          },
+        };
 
   return (
     <AnimatePresence>
       {open && (
         <motion.div
+          ref={dialogRef}
           className={styles.overlay}
-          data-theme={themeAttr}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
-          onClick={onClose}
           role="dialog"
           aria-modal="true"
           aria-label="Product search"
+          tabIndex={-1}
+          initial={reduceMotion ? false : { opacity: 0 }}
+          animate={{ opacity: 1, transition: { duration: reduceMotion ? 0 : duration.base, ease: easeOut } }}
+          exit={{ opacity: 0, transition: { duration: reduceMotion ? 0 : duration.base, ease: easeInOut } }}
         >
-          <motion.div
-            className={styles.modal}
-            initial={{ opacity: 0, y: -30 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -30 }}
-            transition={{ duration: 0.25, ease: "easeOut" }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Search Header */}
-            <div className={styles.header}>
-              <form className={styles.searchBar} onSubmit={handleSubmit}>
-                <span className={styles.searchIcon}>
-                  <Icon.Search />
-                </span>
-                <input
-                  ref={inputRef}
-                  type="text"
-                  className={styles.searchInput}
-                  placeholder="Search for products, brands, categories..."
-                  value={query}
-                  onChange={handleInputChange}
-                  autoComplete="off"
-                  aria-label="Search products"
-                />
-                {query && (
-                  <button
-                    type="button"
-                    className={styles.clearBtn}
-                    onClick={handleClear}
-                    aria-label="Clear search"
-                  >
-                    <Icon.Close width="14" height="14" />
-                  </button>
-                )}
-              </form>
-              <button
-                type="button"
-                className={styles.closeBtn}
-                onClick={onClose}
-                aria-label="Close search"
-              >
-                <Icon.Close width="20" height="20" />
-              </button>
+          <span className={cx(styles.progress, busy && styles.progressActive)} aria-hidden="true" />
+
+          <div className={styles.bar}>
+            <div className={`sf-container sf-container--wide ${styles.barInner}`}>
+              <BrandLogo height={28} className={styles.logo} aria-hidden="true" />
             </div>
+          </div>
 
-            {/* Category Filter Chips */}
-            <div className={styles.categoryFilters}>
-              {categoryNav.chips.map((cat) => (
-                <button
-                  key={cat}
-                  type="button"
-                  className={`${styles.categoryChip} ${
-                    activeCategory === cat ? styles.categoryChipActive : ""
-                  }`}
-                  onClick={() => handleCategoryClick(cat)}
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-
-            {/* Content Area */}
-            <div className={styles.content}>
-              {showResultsView ? (
-                <div className={styles.resultsSection}>
-                  {isSearching && results.length === 0 ? (
-                    <div className={styles.loadingState}>
-                      <div className={styles.spinner} />
-                      <span>Searching…</span>
-                    </div>
-                  ) : results.length === 0 ? (
-                    <div className={styles.emptyState}>
-                      <span className={styles.emptyIcon}>
-                        <Icon.Empty />
-                      </span>
-                      <p className={styles.emptyTitle}>No products found for “{trimmedQuery}”</p>
-                      <p className={styles.emptyHint}>
-                        Try a different term or browse the trending searches.
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className={styles.resultsHeader}>
-                        <span className={styles.resultsCount}>
-                          {results.length} result{results.length !== 1 ? "s" : ""} for “{trimmedQuery}”
-                        </span>
-                        <button type="button" className={styles.viewAllBtn} onClick={handleSubmit}>
-                          View all results <Icon.Arrow />
-                        </button>
-                      </div>
-
-                      <div className={styles.resultsGrid}>
-                        {cappedResults.map((product, idx) => (
-                          <motion.button
-                            key={product.id}
-                            type="button"
-                            className={styles.productCard}
-                            initial={{ opacity: 0, y: 12 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.2, delay: Math.min(idx * 0.03, 0.3) }}
-                            onClick={() => handleProductClick(product)}
-                          >
-                            <div className={styles.productImageWrap}>
-                              <img
-                                src={product.images?.[0] || product.image || FALLBACK_IMAGE}
-                                alt={product.name}
-                                className={styles.productImage}
-                                loading="lazy"
-                                onError={(e) => {
-                                  if (e.currentTarget.dataset.fallback) return;
-                                  e.currentTarget.dataset.fallback = "1";
-                                  e.currentTarget.src = FALLBACK_IMAGE;
-                                }}
-                              />
-                            </div>
-                            <div className={styles.productInfo}>
-                              <h4 className={styles.productName}>{product.name}</h4>
-                              {product._catName && (
-                                <span className={styles.productCategory}>{product._catName}</span>
-                              )}
-                              <span className={styles.productPrice}>
-                                {formatCurrency(getPrice(product))}
-                              </span>
-                              <div className={styles.productMeta}>
-                                <StarRating rating={product.rating} idKey={product.id} />
-                                <span className={styles.ratingNum}>
-                                  {product.rating ? Number(product.rating).toFixed(1) : "New"}
-                                </span>
-                              </div>
-                            </div>
-                          </motion.button>
-                        ))}
-                      </div>
-
-                      {results.length > MAX_RESULTS && (
-                        <div className={styles.moreResults}>
-                          <button type="button" className={styles.viewAllBtn} onClick={handleSubmit}>
-                            View all {results.length} results <Icon.Arrow />
-                          </button>
-                        </div>
-                      )}
-                    </>
+          <div className={styles.body}>
+            <div className={styles.column}>
+              <form className={styles.form} role="search" onSubmit={handleSubmit}>
+                <label htmlFor={inputId} className="sf-visually-hidden">
+                  Search products
+                </label>
+                <div className={styles.field}>
+                  <input
+                    ref={inputRef}
+                    id={inputId}
+                    className={styles.input}
+                    type="search"
+                    placeholder="Search furniture, rooms, brands…"
+                    value={query}
+                    onChange={handleInputChange}
+                    onKeyDown={handleInputKeyDown}
+                    autoComplete="off"
+                    autoCorrect="off"
+                    spellCheck={false}
+                    enterKeyHint="search"
+                  />
+                  {query && (
+                    <button
+                      type="button"
+                      className={`sf-btn sf-btn--icon ${styles.iconButton} ${styles.clear}`}
+                      onClick={handleClear}
+                      aria-label="Clear search"
+                    >
+                      <CloseGlyph />
+                    </button>
                   )}
                 </div>
-              ) : (
-                <div className={styles.defaultContent}>
-                  {recentSearches.length > 0 && (
-                    <div className={styles.section}>
-                      <div className={styles.sectionHeader}>
-                        <h3 className={styles.sectionTitle}>
-                          <Icon.Clock /> Recent Searches
-                        </h3>
-                        <button
-                          type="button"
-                          className={styles.clearRecentBtn}
-                          onClick={handleClearRecent}
-                        >
-                          Clear all
-                        </button>
-                      </div>
-                      <div className={styles.chipGroup}>
-                        {recentSearches.map((term) => (
+              </form>
+
+              {showScope && (
+                <div className={styles.scope} role="group" aria-label="Filter by department">
+                  {data ? (
+                    <ul className={styles.scopeList}>
+                      {categoryNav.chips.map((cat) => (
+                        <li key={cat}>
                           <button
-                            key={term}
                             type="button"
-                            className={styles.searchChip}
-                            onClick={() => handleChipSearch(term)}
+                            className={`sf-chip ${styles.chip} ${styles.scopeChip}`}
+                            aria-pressed={activeCategory === cat}
+                            onClick={() => handleCategoryClick(cat)}
                           >
-                            <Icon.Clock width="13" height="13" />
-                            {term}
+                            {cat}
                           </button>
-                        ))}
-                      </div>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : (
+                    <div className={styles.scopeList} aria-hidden="true">
+                      <ChipSkeletons />
                     </div>
                   )}
-
-                  <div className={styles.section}>
-                    <h3 className={styles.sectionTitle}>
-                      <Icon.Trending /> Trending Searches
-                    </h3>
-                    <div className={styles.chipGroup}>
-                      {TRENDING_SEARCHES.map((term) => (
-                        <button
-                          key={term}
-                          type="button"
-                          className={styles.searchChip}
-                          onClick={() => handleChipSearch(term)}
-                        >
-                          <Icon.Trending width="13" height="13" />
-                          {term}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
                 </div>
               )}
+
+              <div
+                className={cx(styles.status, (view === "loading" || view === "results") && styles.statusLine)}
+                role="status"
+                aria-live="polite"
+                aria-atomic="true"
+              >
+                {statusContent}
+              </div>
+
+              <div className={styles.content} aria-busy={view === "loading" ? "true" : undefined}>
+                {view === "loading" && (
+                  <ul className={styles.grid} aria-hidden="true">
+                    {Array.from({ length: SKELETON_COUNT }, (_, index) => (
+                      <li key={index}>
+                        <ProductCardSkeleton />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {view === "results" && (
+                  <>
+                    <ul
+                      ref={resultsRef}
+                      className={styles.grid}
+                      aria-labelledby={countId}
+                      onKeyDown={handleResultsKeyDown}
+                    >
+                      {cappedResults.map((product, index) => (
+                        <motion.li key={product.id} onClick={handleResultClick} {...resultMotion(index)}>
+                          <ProductCard product={product} />
+                        </motion.li>
+                      ))}
+                    </ul>
+
+                    {results.length > MAX_RESULTS && (
+                      <div className={styles.more}>
+                        <Link to={searchHref} className="sf-btn sf-btn--ghost" onClick={handleViewAllClick}>
+                          View all {results.length} results
+                        </Link>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {view === "none" && (
+                  <div className={styles.state}>
+                    <p className={styles.stateLine}>Try a room, a material or a department.</p>
+                    {departments.length > 0 && (
+                      <ul className={cx(styles.chipList, styles.stateChips)} aria-label="Departments">
+                        {departments.map((department) => (
+                          <li key={department.id}>
+                            <Link
+                              to={departmentPath(department)}
+                              className={`sf-chip ${styles.chip}`}
+                              onClick={handleDepartmentClick}
+                            >
+                              {department.name}
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
+                )}
+
+                {view === "error" && (
+                  <div className={styles.state}>
+                    <p className={styles.stateLine}>Please check your connection and try again.</p>
+                    <button
+                      type="button"
+                      className={`sf-btn sf-btn--primary ${styles.stateAction}`}
+                      onClick={handleRetry}
+                    >
+                      Try again
+                    </button>
+                  </div>
+                )}
+
+                {view === "suggestions" && (
+                  <div className={styles.suggestions}>
+                    {recentSearches.length > 0 && (
+                      <section className={styles.group} aria-labelledby={recentTitleId}>
+                        <div className={styles.groupHead}>
+                          <h2 id={recentTitleId} className={`sf-eyebrow ${styles.groupTitle}`}>
+                            Recent
+                          </h2>
+                          <button
+                            type="button"
+                            className={`sf-btn sf-btn--link ${styles.clearAll}`}
+                            onClick={handleClearRecent}
+                            aria-label="Clear all recent searches"
+                          >
+                            Clear all
+                          </button>
+                        </div>
+                        <ul ref={recentListRef} className={styles.chipList}>
+                          {recentSearches.map((term, index) => (
+                            <li key={term} className={`sf-chip ${styles.recentChip}`}>
+                              <button
+                                type="button"
+                                className={styles.recentTerm}
+                                onClick={() => runSuggestion(term)}
+                              >
+                                {term}
+                              </button>
+                              <button
+                                type="button"
+                                className={styles.recentRemove}
+                                onClick={() => handleRemoveRecent(term, index)}
+                                aria-label={`Remove ${term} from recent searches`}
+                                data-remove=""
+                              >
+                                <CloseGlyph size={16} />
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </section>
+                    )}
+
+                    {data ? (
+                      popular.items.length > 0 && (
+                        <section className={styles.group} aria-labelledby={popularTitleId}>
+                          <div className={styles.groupHead}>
+                            <h2 id={popularTitleId} className={`sf-eyebrow ${styles.groupTitle}`}>
+                              {popular.kind === "popular" ? "Popular" : "Departments"}
+                            </h2>
+                          </div>
+                          <ul className={styles.chipList}>
+                            {popular.items.map((item) => (
+                              <li key={item.key}>
+                                {item.to ? (
+                                  <Link
+                                    to={item.to}
+                                    className={`sf-chip ${styles.chip}`}
+                                    onClick={handleDepartmentClick}
+                                  >
+                                    {item.label}
+                                  </Link>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    className={`sf-chip ${styles.chip}`}
+                                    onClick={() => runSuggestion(item.label)}
+                                  >
+                                    {item.label}
+                                  </button>
+                                )}
+                              </li>
+                            ))}
+                          </ul>
+                        </section>
+                      )
+                    ) : (
+                      <div className={styles.group} aria-hidden="true">
+                        <div className={styles.groupHead}>
+                          <span className={`sf-skeleton ${styles.titleSkeleton}`} />
+                        </div>
+                        <div className={styles.chipList}>
+                          <ChipSkeletons />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
             </div>
-          </motion.div>
+          </div>
+
+          {/* Last in the DOM, so Tab reaches it after the results; shown in the
+              top bar's row, top-right. */}
+          <div className={`sf-container sf-container--wide ${styles.closeRow}`}>
+            <button
+              type="button"
+              className={`sf-btn sf-btn--icon ${styles.iconButton} ${styles.close}`}
+              onClick={onClose}
+              aria-label="Close search"
+            >
+              <CloseGlyph />
+            </button>
+          </div>
         </motion.div>
       )}
     </AnimatePresence>
