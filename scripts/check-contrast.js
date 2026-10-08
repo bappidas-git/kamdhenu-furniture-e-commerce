@@ -267,6 +267,12 @@ const PAIRS = [
   // page; "Copied" turns the ghost button's text and border to success.
   ["Ticket: 'Copied' (success text and border) on the ticket surface", "--sf-color-success", "--sf-color-surface", AA],
   ["Ticket: 'off' eyebrow (accent-text) on the ticket surface", "--sf-color-accent-text", "--sf-color-surface", AA],
+  // Auth modal (Prompt 20): the dialog is the page tone; its message lines are
+  // the semantic tints over it, text, glyph, link and the link's focus ring in
+  // the tone (currentColor).
+  ["Auth: error line (error on error-bg over the page tone)", "--sf-color-error", ["--sf-color-error-bg", "--sf-color-bg"], AA],
+  ["Auth: success line (success on success-bg over the page tone)", "--sf-color-success", ["--sf-color-success-bg", "--sf-color-bg"], AA],
+  ["Auth: info line and its link (info on info-bg over the page tone)", "--sf-color-info", ["--sf-color-info-bg", "--sf-color-bg"], AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
