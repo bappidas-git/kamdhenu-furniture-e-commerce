@@ -263,6 +263,10 @@ const PAIRS = [
   // keep their control boundary.
   ["Reviews: rating bar fill (ink) on its sand track (graphic)", "--sf-color-text", SAND, LARGE],
   ["Set: checkbox boundary (border-strong) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
+  // Special offers (Prompt 19): coupon tickets are the surface tone on the
+  // page; "Copied" turns the ghost button's text and border to success.
+  ["Ticket: 'Copied' (success text and border) on the ticket surface", "--sf-color-success", "--sf-color-surface", AA],
+  ["Ticket: 'off' eyebrow (accent-text) on the ticket surface", "--sf-color-accent-text", "--sf-color-surface", AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -331,6 +335,9 @@ const INFO = [
   // over its edge so a sand photograph stays apart from the sand panel.
   ["Reviews: empty rating-bar track (sand) vs page", SAND, "--sf-color-bg"],
   ["Set: thumbnail hairline (stone) vs the sand panel", "--sf-color-border", SAND],
+  // Prompt 19: a ticket's notches are page-tone half-discs cut into the
+  // surface (decorative; the hairline arc draws their edge).
+  ["Ticket: notch (page tone) vs the ticket surface", "--sf-color-bg", "--sf-color-surface"],
 ];
 
 // ---------------------------------------------------------------------------
