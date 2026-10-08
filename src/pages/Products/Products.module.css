@@ -1,1166 +1,925 @@
-/* ==========================================================================
-   Products Page — Professional E-commerce Layout
-   ========================================================================== */
-
-/* ---- Local aliases mapped onto the GLOBAL storefront design tokens ----------
-   The listing keeps its own variable names (used by the rules below) but their
-   values now come from src/theme/storefront-tokens.css (--sf-*). A client
-   re-skins the whole storefront — listing included — from that one file, and the
-   listing's accent/CTA now matches the rest of the storefront (principle F).
-   Dark mode is inherited automatically because the --sf-* tokens flip under
-   body.dark, so a separate .dark override block is no longer needed here. */
-.page {
-  --bg: var(--sf-color-bg);
-  --sidebar-bg: var(--sf-color-surface);
-  --card-bg: var(--sf-color-surface);
-  --text-primary: var(--sf-color-text);
-  --text-secondary: var(--sf-color-text-secondary);
-  --text-muted: var(--sf-color-text-muted);
-  --border: var(--sf-color-border);
-  --border-light: var(--sf-color-surface-2);
-  --accent: var(--sf-color-primary);
-  --accent-hover: var(--sf-color-primary-dark);
-  --accent-bg: var(--sf-color-primary-soft);
-  --price-color: var(--sf-color-price);
-  --discount-text: var(--sf-color-discount);
-  --discount-badge-bg: var(--sf-color-danger);
-  --link-color: var(--sf-color-primary);
-  --link-hover: var(--sf-color-primary-dark);
-  --btn-primary-bg: var(--sf-color-primary);
-  --btn-primary-hover: var(--sf-color-primary-dark);
-  --btn-primary-text: var(--sf-color-primary-contrast);
-  --sortbar-bg: var(--sf-color-surface);
-  --input-bg: var(--sf-color-surface);
-  --input-border: var(--sf-color-border-strong);
-  --toggle-bg: var(--sf-color-border-strong);
-  --toggle-on-bg: var(--sf-color-primary);
-  --skeleton-bg: var(--sf-color-surface-2);
-  --skeleton-shimmer: var(--sf-color-surface-hover);
-  --overlay-bg: var(--sf-color-overlay);
-  --shadow-sm: var(--sf-shadow-sm);
-  --shadow-md: var(--sf-shadow-md);
-  --shadow-lg: var(--sf-shadow-lg);
-  --radius-sm: var(--sf-radius-sm);
-  --radius-md: var(--sf-radius-md);
-  --radius-lg: var(--sf-radius-lg);
-  --empty-box: var(--sf-color-surface-2);
-  --empty-line: var(--sf-color-border-strong);
-  --empty-circle: var(--sf-color-text-muted);
-  --error-color: var(--sf-color-danger);
-
-  min-height: 100vh;
-  background: var(--bg);
-  color: var(--text-primary);
-  padding-bottom: 60px;
-}
-
-/* Dark mode is driven by the global --sf-* tokens (which flip under body.dark),
-   so the listing needs no separate dark palette. The .dark class is still set on
-   the root for any legacy descendant selectors below. */
+/* =============================================================================
+ * Products — the listing page (Prompt 14)
+ * =============================================================================
+ * Page header: --sf-section-y of air, the breadcrumb, the serif title
+ * (display-lg) and the category's description (17px, secondary, 60ch).
+ *
+ * Layout (.sf-container--wide): from 1024px a 12-column grid, the filter rail
+ * in columns 1–3 (sticky under the header, scrolling on its own) and the
+ * results in 4–12. Below 1024px the rail lives in the bottom sheet and the
+ * toolbar carries the "Filters" button; on phones that toolbar sticks under
+ * the header.
+ *
+ * Results: three columns of cards from 1024px, two below (24px / 16px
+ * gutters), or list rows between hairlines; the applied filters as chips
+ * above them; hairline pagination below.
+ *
+ * Tokens only (prompts/DESIGN_SYSTEM.md): every colour, size and duration is a
+ * --sf-* variable, so dark mode and reduced motion follow on their own. The
+ * sticky offsets read --sf-header-height (published by the header).
+ * ========================================================================== */
 
 /* ==========================================================================
-   Breadcrumb
+   Page header
    ========================================================================== */
-.breadcrumb {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 12px 24px;
-  font-size: 13px;
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 4px;
+
+.header {
+  padding-top: var(--sf-section-y);
+  padding-bottom: clamp(var(--sf-space-8), 4vw, var(--sf-space-12));
 }
 
-.breadcrumbSep {
-  color: var(--text-muted);
-  margin: 0 2px;
+/* Phones: the trail keeps two lines' room (a leaf's trail wraps there), so
+   the title sits at the same height on every listing and nothing moves when a
+   deep-linked category's trail arrives. */
+@media (max-width: 767.98px) {
+  .crumbs {
+    min-height: calc(2 * 0.8125rem * var(--sf-leading-normal) + var(--sf-space-1));
+  }
 }
 
-.breadcrumbLink {
-  color: var(--link-color);
-  text-decoration: none;
+.title {
+  margin: var(--sf-space-4) 0 0;
+  color: var(--sf-color-text);
 }
 
-.breadcrumbLink:hover {
-  color: var(--link-hover);
-  text-decoration: underline;
+.intro {
+  max-width: 60ch;
+  /* Room for three lines on phones and two from 768px (the catalogue's
+     descriptions), so the header has its loaded height while it loads. */
+  min-height: calc(3 * var(--sf-text-md) * var(--sf-leading-body));
+  margin: var(--sf-space-4) 0 0;
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
 }
 
-.breadcrumbCurrent {
-  color: var(--text-secondary);
+@media (min-width: 768px) {
+  .title {
+    margin-top: var(--sf-space-6);
+  }
+
+  .intro {
+    min-height: calc(2 * var(--sf-text-md) * var(--sf-leading-body));
+  }
+}
+
+/* While a deep-linked category waits for the tree: the breadcrumb's lines
+   (two on phones, where a leaf's trail wraps; one from 768px), one line of
+   title and the description's lines (three on phones, two from 768px), each
+   in the line box the text will take. */
+.skeletonCrumbs {
+  display: grid;
+  row-gap: var(--sf-space-1); /* the breadcrumb's own row gap */
+}
+
+.skeletonCrumbs > span {
+  width: 16rem;
+  max-width: 70%;
+  height: 0.8125rem;
+  margin-block: calc(0.8125rem * (var(--sf-leading-normal) - 1) / 2);
+}
+
+.skeletonCrumbs > span + span {
+  width: 9rem;
+}
+
+@media (min-width: 768px) {
+  .skeletonCrumbs > span + span {
+    display: none;
+  }
+}
+
+.skeletonTitle {
+  display: inline-block;
+  width: 7em;
+  max-width: 100%;
+  height: 0.72em;
+}
+
+/* A grid, so the lines' margins never collapse. */
+.skeletonIntro {
+  display: grid;
+  max-width: 60ch;
+  margin-top: var(--sf-space-4);
+  font-size: var(--sf-text-md);
+}
+
+.skeletonIntroLine {
+  height: 0.75em;
+  margin-block: calc((var(--sf-leading-body) * 1em - 0.75em) / 2);
+}
+
+.skeletonIntroLine:nth-child(3) {
+  width: 55%;
+}
+
+@media (min-width: 768px) {
+  .skeletonIntroLine:nth-child(2) {
+    width: 70%;
+  }
+
+  .skeletonIntroLine:nth-child(3) {
+    display: none;
+  }
 }
 
 /* ==========================================================================
-   Layout — Sidebar + Main
+   Layout: rail + results
    ========================================================================== */
+
 .layout {
-  max-width: 1440px;
-  margin: 0 auto;
-  padding: 0 24px;
-  display: flex;
-  gap: 24px;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
 }
 
-/* ---- Sidebar ---- */
-.sidebar {
-  width: 240px;
-  min-width: 240px;
-  position: sticky;
-  /* Clear the fixed header (desktop = 140px) plus a small gap so the sticky
-     sidebar's top isn't tucked underneath it while scrolling. */
-  top: 152px;
-  max-height: calc(100vh - 172px);
-  overflow-y: auto;
-  background: var(--sidebar-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 16px;
-  box-shadow: var(--shadow-sm);
+/* Room for focus rings inside the rail's own scroll box. */
+.rail {
+  --rail-focus-room: var(--sf-space-2);
+  display: none;
 }
 
-/* Hide scrollbar but keep functionality */
-.sidebar::-webkit-scrollbar {
-  width: 4px;
-}
-
-.sidebar::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 4px;
-}
-
-.sidebarHeader {
-  display: flex;
-  justify-content: space-between;
+.results {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas:
+    "tools tools"
+    "count view"
+    "applied applied"
+    "body body"
+    "pager pager";
   align-items: center;
-  margin-bottom: 12px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid var(--border);
-}
-
-.sidebarTitle {
-  font-size: 16px;
-  font-weight: 700;
-  margin: 0;
-}
-
-.clearLink {
-  background: none;
-  border: none;
-  color: var(--link-color);
-  font-size: 13px;
-  cursor: pointer;
-  padding: 0;
-}
-
-.clearLink:hover {
-  color: var(--link-hover);
-  text-decoration: underline;
-}
-
-/* ---- Main ---- */
-.main {
-  flex: 1;
+  column-gap: var(--sf-space-4);
   min-width: 0;
 }
 
+@media (min-width: 768px) {
+  .results {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      "count tools view"
+      "applied applied applied"
+      "body body body"
+      "pager pager pager";
+  }
+}
+
+@media (min-width: 1024px) {
+  /* The minimum height is never less than the rail's: the rail's max-height
+     grows as the header compacts on scroll, and on a short listing the rail
+     would otherwise set the row's height and push the footer down mid-scroll. */
+  .layout {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(var(--sf-space-6), 2.5vw, var(--sf-space-10));
+    align-items: start;
+    min-height: calc(100vh - var(--sf-space-12));
+  }
+
+  .rail {
+    grid-column: 1 / span 3;
+    align-self: start;
+    display: block;
+    position: sticky;
+    top: calc(var(--sf-header-height) + var(--sf-space-6));
+    z-index: var(--sf-z-sticky);
+    max-height: calc(100vh - var(--sf-header-height) - var(--sf-space-12));
+    margin-inline: calc(-1 * var(--rail-focus-room));
+    padding: var(--sf-space-1) var(--rail-focus-room) var(--sf-space-6);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sf-color-border) transparent;
+  }
+
+  .results {
+    grid-column: 4 / span 9;
+    align-self: start;
+  }
+}
+
 /* ==========================================================================
-   Filter Sections
+   Filter rail and sheet
    ========================================================================== */
-.filterContent {}
 
-.filterContentMobile {}
-
-.filterSection {
-  padding: 14px 0;
-  border-bottom: 1px solid var(--border-light);
-}
-
-.filterSection:last-child {
-  border-bottom: none;
-}
-
-.filterTitle {
-  font-size: 13px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.3px;
-  margin: 0 0 10px;
-  color: var(--text-primary);
-}
-
-.filterList {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  max-height: 180px;
-  overflow-y: auto;
-}
-
-.filterList::-webkit-scrollbar {
-  width: 3px;
-}
-
-.filterList::-webkit-scrollbar-thumb {
-  background: var(--border);
-  border-radius: 3px;
-}
-
-/* Checkbox / Radio labels */
-.checkboxLabel,
-.radioLabel {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  cursor: pointer;
-  font-size: 13px;
-  padding: 3px 0;
-  color: var(--text-primary);
-}
-
-.checkboxLabel:hover,
-.radioLabel:hover {
-  color: var(--accent);
-}
-
-.checkbox,
-.radio {
-  width: 16px;
-  height: 16px;
-  accent-color: var(--accent);
-  cursor: pointer;
-  flex-shrink: 0;
-}
-
-.checkboxText {
-  flex: 1;
-  line-height: 1.3;
-}
-
-.filterCount {
-  color: var(--text-muted);
-  font-size: 12px;
-  flex-shrink: 0;
-}
-
-/* Price Range */
-.priceInputRow {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  margin-bottom: 10px;
-}
-
-.priceInput {
-  width: 70px;
-  padding: 6px 8px;
-  border: 1px solid var(--input-border);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  background: var(--input-bg);
-  color: var(--text-primary);
-  outline: none;
-}
-
-.priceInput:focus {
-  border-color: var(--accent);
-  box-shadow: 0 0 0 2px rgba(255, 153, 0, 0.2);
-}
-
-.priceSeparator {
-  color: var(--text-muted);
-  font-size: 12px;
-}
-
-.priceGoBtn {
-  padding: 6px 14px;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.priceGoBtn:hover {
-  background: var(--btn-primary-hover);
-}
-
-.quickRanges {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.quickRangeBtn {
-  background: none;
-  border: none;
-  color: var(--link-color);
-  font-size: 13px;
-  cursor: pointer;
-  text-align: left;
-  padding: 3px 0;
-}
-
-.quickRangeBtn:hover {
-  color: var(--link-hover);
-  text-decoration: underline;
-}
-
-/* Rating */
-.ratingOption {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-}
-
-.ratingPlus {
-  font-size: 12px;
-  color: var(--text-secondary);
-}
-
-.stars {
-  display: inline-flex;
-  align-items: center;
-  gap: 1px;
-}
-
-.reviewCount {
-  font-size: 12px;
-  color: var(--text-muted);
-  margin-left: 4px;
-}
-
-/* Toggle */
-.toggleLabel {
+.railHeader {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  cursor: pointer;
-  padding: 4px 0;
-  font-size: 13px;
+  gap: var(--sf-space-3);
+  min-height: var(--sf-tap-target);
+  padding-bottom: var(--sf-space-2);
 }
 
-.toggle {
-  position: relative;
-  width: 40px;
-  height: 22px;
-  background: var(--toggle-bg);
-  border: none;
-  border-radius: 11px;
-  cursor: pointer;
-  transition: background 0.2s;
+.railTitle {
+  margin: 0;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-base);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+/* Groups: an eyebrow legend over the controls, hairlines between groups. */
+.group {
+  min-width: 0;
+  margin: 0;
+  padding: var(--sf-space-5) 0 var(--sf-space-4);
+  border: 0;
+  border-top: var(--sf-hairline);
+}
+
+/* The sheet's header already draws a hairline over the first group. */
+.filtersInSheet > .group:first-child {
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* A floated legend lays out like a block (a fieldset's legend otherwise
+   ignores its margins). */
+.legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 var(--sf-space-2);
   padding: 0;
 }
 
-.toggleOn {
-  background: var(--toggle-on-bg);
+.legend + * {
+  clear: both;
 }
 
-.toggleThumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 18px;
-  height: 18px;
-  background: #ffffff;
-  border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
-}
-
-.toggleOn .toggleThumb {
-  transform: translateX(18px);
-}
-
-/* Clear All Filters button */
-.clearAllBtn {
-  display: block;
+/* One 44px row per option (.sf-check / .sf-radio / .sf-switch). */
+.option {
+  display: flex;
   width: 100%;
-  margin-top: 16px;
-  padding: 10px;
+}
+
+.optionText {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.optionDepartment .optionText {
+  font-weight: var(--sf-font-medium);
+}
+
+.optionCount {
+  flex: none;
+  font-size: var(--sf-text-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-color-text-muted);
+}
+
+/* Category outline */
+.tree,
+.subtree {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.treeRow {
+  display: flex;
+  align-items: flex-start;
+}
+
+.treeRow .option {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Each level of the outline sits 16px further in. */
+.subtree {
+  padding-inline-start: var(--sf-space-4);
+}
+
+.disclosure {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  margin-inline-end: calc(-1 * var(--sf-space-3));
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
   background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--discount-text);
-  font-size: 13px;
-  font-weight: 600;
+  color: var(--sf-color-text-muted);
   cursor: pointer;
-  transition: all 0.2s;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.clearAllBtn:hover {
-  background: rgba(204, 12, 57, 0.06);
-  border-color: var(--discount-text);
+.disclosure:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
 }
 
-/* ==========================================================================
-   Sort Bar
-   ========================================================================== */
-.sortBar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 12px;
-  background: var(--sortbar-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 10px 16px;
-  margin-bottom: 16px;
-  box-shadow: var(--shadow-sm);
+/* Plus when closed, minus when open (the sidebar's glyph). */
+.disclosureGlyph {
+  position: relative;
+  width: var(--sf-space-3);
+  height: var(--sf-space-3);
 }
 
-.sortBarLeft {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.disclosureGlyph::before,
+.disclosureGlyph::after {
+  content: "";
+  position: absolute;
+  background-color: currentColor;
 }
 
-.sortBarRight {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.disclosureGlyph::before {
+  inset: calc(50% - 0.5px) 0 auto;
+  height: 1px;
 }
 
-.resultsCount {
-  font-size: 14px;
-  color: var(--text-secondary);
+.disclosureGlyph::after {
+  inset: 0 auto 0 calc(50% - 0.5px);
+  width: 1px;
 }
 
-.resultsCount strong {
-  color: var(--text-primary);
-}
-
-/* Mobile filter button (hidden on desktop) */
-.mobileFilterBtn {
+.disclosure[aria-expanded="true"] .disclosureGlyph::after {
   display: none;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--text-primary);
-  cursor: pointer;
+}
+
+/* Price */
+.priceForm {
+  display: grid;
+  gap: var(--sf-space-3);
+}
+
+.priceFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-3);
+}
+
+.money {
+  position: relative;
+  display: block;
+}
+
+.currency {
+  position: absolute;
+  top: 50%;
+  left: var(--sf-space-3);
+  transform: translateY(-50%);
+  font-size: 0.9375rem;
+  line-height: 1;
+  color: var(--sf-color-text-muted);
+  pointer-events: none;
+}
+
+.moneyInput {
+  padding-inline: calc(var(--sf-space-3) + var(--sf-space-4)) var(--sf-space-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.priceApply {
+  justify-self: start;
+}
+
+.ranges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+  margin: var(--sf-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The 32px chip keeps a 44px-tall target without moving the row. */
+.rangeChip,
+.chip {
   position: relative;
 }
 
-.filterBadge {
+.rangeChip::after,
+.chip::after {
+  content: "";
   position: absolute;
-  top: -3px;
-  right: -3px;
-  width: 8px;
-  height: 8px;
-  background: var(--discount-badge-bg);
-  border-radius: 50%;
+  inset: -6px 0;
 }
 
-/* Sort dropdown */
-.sortLabel {
+/* Rating: the stars in ink, as on the cards. */
+.ratingGroup {
+  --sf-color-star: var(--sf-color-text);
+}
+
+/* Loading: legend and option bars in the filters' place. */
+.filtersSkeleton {
+  display: grid;
+}
+
+.skeletonGroup {
+  display: grid;
+  align-content: start;
+  gap: var(--sf-space-4);
+  padding: var(--sf-space-5) 0 var(--sf-space-4);
+  border-top: var(--sf-hairline);
+}
+
+.skeletonLegend {
+  width: 40%;
+  height: 10px;
+}
+
+.skeletonOption {
+  width: 75%;
+  height: 12px;
+  margin-block: var(--sf-space-2);
+}
+
+.skeletonOption:nth-child(even) {
+  width: 60%;
+}
+
+/* ==========================================================================
+   Toolbar: Filters (below 1024px), results, Sort, grid / list
+   ========================================================================== */
+
+.toolbar {
+  grid-area: tools;
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 13px;
-  color: var(--text-secondary);
-  white-space: nowrap;
+  gap: var(--sf-space-3);
+  min-width: 0;
+}
+
+.filtersButton {
+  flex: none;
+  padding-inline: var(--sf-space-4);
+}
+
+.filtersCount {
+  margin-inline-start: calc(-1 * var(--sf-space-1));
+}
+
+.sort {
+  display: flex;
+  flex: 1 1 auto;
+  align-items: center;
+  gap: var(--sf-space-2);
+  min-width: 0;
+}
+
+.sortLabel {
+  flex: none;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
 }
 
 .sortSelect {
-  padding: 6px 28px 6px 10px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 13px;
-  cursor: pointer;
-  outline: none;
-  appearance: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  padding-inline: var(--sf-space-3) var(--sf-space-8);
+  text-overflow: ellipsis;
 }
 
-.sortSelect:focus {
-  border-color: var(--accent);
+.count {
+  grid-area: count;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
 }
 
-/* View toggle */
-.viewToggle {
+.count strong {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+.view {
+  grid-area: view;
   display: flex;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  overflow: hidden;
+  justify-self: end;
 }
 
-.viewBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 34px;
-  background: var(--card-bg);
-  border: none;
+.viewButton {
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid transparent;
+  border-radius: 0;
+  background: none;
+  color: var(--sf-color-text-muted);
   cursor: pointer;
-  color: var(--text-muted);
-  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.viewBtn:first-child {
-  border-right: 1px solid var(--border);
+.viewButton[aria-pressed="true"] {
+  border-bottom-color: currentColor;
+  color: var(--sf-color-text);
 }
 
-.viewBtnActive {
-  background: var(--accent);
-  color: var(--sf-color-primary-contrast);
+.viewButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+/* Phones: the toolbar sticks under the header, edge to edge, on paper with a
+   hairline below; the results line and the view switch sit under it. The
+   select gets every pixel the row can spare (a tighter chevron; no icon in
+   the Filters button below 480px), so even "Price: High to Low" fits whole
+   from 360px; anything longer ends in an ellipsis. */
+@media (max-width: 767.98px) {
+  .toolbar {
+    position: sticky;
+    top: var(--sf-header-height);
+    z-index: var(--sf-z-sticky);
+    gap: var(--sf-space-2);
+    margin-inline: calc(-1 * var(--sf-gutter));
+    padding: var(--sf-space-2) var(--sf-gutter);
+    border-bottom: var(--sf-hairline);
+    background-color: var(--sf-color-bg);
+  }
+
+  .filtersButton {
+    padding-inline: var(--sf-space-3);
+  }
+
+  .sortSelect {
+    padding-inline: var(--sf-space-2) calc(var(--sf-space-6) + var(--sf-space-1));
+    background-position: right 17px center, right 12px center;
+  }
+
+  .count {
+    padding-top: var(--sf-space-2);
+  }
+
+  .view {
+    padding-top: var(--sf-space-2);
+  }
+}
+
+@media (max-width: 479.98px) {
+  .filtersIcon {
+    display: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .toolbar {
+    justify-self: end;
+  }
+
+  .sort {
+    flex: none;
+  }
+
+  .sortSelect {
+    flex: none;
+    width: auto;
+    padding-inline: var(--sf-space-4) calc(var(--sf-space-8) + var(--sf-space-2));
+  }
+}
+
+@media (min-width: 1024px) {
+  .filtersButton {
+    display: none;
+  }
 }
 
 /* ==========================================================================
-   Product Grid
+   Applied filters
    ========================================================================== */
+
+.applied {
+  grid-area: applied;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-2) var(--sf-space-5);
+  margin-top: var(--sf-space-4);
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.chip {
+  padding-inline: var(--sf-space-3) var(--sf-space-2);
+  white-space: normal;
+  text-align: left;
+}
+
+/* A deep-linked category's chip while its name loads. */
+.chipSkeleton {
+  width: 8.5rem;
+  height: 32px;
+  border-radius: var(--sf-radius-pill);
+}
+
+.chipIcon {
+  display: inline-grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  color: var(--sf-color-text-muted);
+}
+
+@media (hover: hover) {
+  .chip:hover .chipIcon {
+    color: var(--sf-color-text);
+  }
+}
+
+/* The rail has its own "Clear all" from 1024px. */
+@media (min-width: 1024px) {
+  .appliedClear {
+    display: none;
+  }
+}
+
+/* ==========================================================================
+   Results: grid, list, stock line, states
+   ========================================================================== */
+
+.body {
+  grid-area: body;
+  min-width: 0;
+  margin-top: var(--sf-space-6);
+}
+
 .grid {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: var(--sf-space-4);
+  row-gap: var(--sf-space-8);
+  margin: 0;
+  padding: 0;
+  list-style: none;
 }
 
-.gridList {
-  grid-template-columns: 1fr;
+@media (min-width: 768px) {
+  .grid {
+    column-gap: var(--sf-space-6);
+    row-gap: var(--sf-space-10);
+  }
 }
 
-/* ---- Card Wrapper ---- */
-.cardWrap {}
-
-.cardWrapList {
-  width: 100%;
+@media (min-width: 1024px) {
+  .grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 
-/* ---- Product Card ---- */
-.card {
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  cursor: pointer;
-  transition: box-shadow 0.2s, transform 0.2s;
-  display: flex;
-  flex-direction: column;
-  height: 100%;
+.item {
+  min-width: 0;
 }
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
+/* List view: rows between hairlines. */
+.rows {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-bottom: var(--sf-hairline);
 }
 
-.cardList {
-  flex-direction: row;
-  height: auto;
+.rows > li {
+  border-top: var(--sf-hairline);
 }
 
-.cardList:hover {
-  transform: none;
+/* "Only N left" under a card, in the product page's low-stock tone. */
+.stockNote {
+  margin: var(--sf-space-2) 0 0;
+  font-size: var(--sf-text-xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-warning);
 }
 
-/* Card Image */
-.cardImageWrap {
-  position: relative;
-  overflow: hidden;
-  background: var(--border-light);
-  aspect-ratio: 1 / 1;
-  flex-shrink: 0;
+/* Empty state (on the page) and error panel (sand). */
+.state {
+  max-width: 40rem;
+  padding-block: var(--sf-space-12);
 }
 
-.cardList .cardImageWrap {
-  width: 220px;
-  aspect-ratio: auto;
-  min-height: 200px;
+.statePanel {
+  max-width: none;
+  padding: clamp(var(--sf-space-8), 5vw, var(--sf-space-16));
 }
 
-.cardImage {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 12px;
-  transition: transform 0.3s;
+.stateTitle {
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-md);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
-.card:hover .cardImage {
-  transform: scale(1.05);
-}
-
-/* Wishlist button */
-.wishlistBtn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
-  z-index: 2;
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: 50%;
-  cursor: pointer;
-  transition: all 0.2s;
-  box-shadow: var(--shadow-sm);
-  color: var(--text-muted);
-}
-
-.wishlistBtn:hover {
-  transform: scale(1.1);
-  box-shadow: var(--shadow-md);
-}
-
-/* Discount badge */
-.discountBadge {
-  position: absolute;
-  top: 8px;
-  left: 8px;
-  background: var(--discount-badge-bg);
-  color: var(--sf-color-primary-contrast);
-  font-size: 11px;
-  font-weight: 700;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  z-index: 2;
-}
-
-/* Card Body */
-.cardBody {
-  padding: 12px 14px 14px;
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-}
-
-.cardList .cardBody {
-  justify-content: center;
-}
-
-.cardTitle {
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.35;
-  margin: 0 0 4px;
-  color: var(--text-primary);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
-}
-
-.card:hover .cardTitle {
-  color: var(--link-hover);
-}
-
-.cardDesc {
-  font-size: 13px;
-  color: var(--text-secondary);
-  margin: 0 0 8px;
-  line-height: 1.4;
-}
-
-.cardRating {
-  margin-bottom: 6px;
-}
-
-/* Price row */
-.cardPriceRow {
-  display: flex;
-  align-items: baseline;
-  gap: 8px;
-  flex-wrap: wrap;
-  margin-bottom: 8px;
-}
-
-.cardPrice {
-  font-size: 18px;
-  font-weight: 700;
-  color: var(--price-color);
-}
-
-.cardComparePrice {
-  font-size: 13px;
-  color: var(--text-muted);
-  text-decoration: line-through;
-}
-
-.cardDiscountText {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--discount-text);
-}
-
-.lowStock {
-  font-size: 12px;
-  color: var(--discount-text);
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-.outOfStock {
-  font-size: 12px;
-  color: var(--text-muted);
-  font-weight: 600;
-  margin-bottom: 8px;
-}
-
-/* Add to cart button */
-.addToCartBtn {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  margin-top: auto;
-  padding: 8px 16px;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: none;
-  border-radius: 20px;
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.addToCartBtn:hover:not(:disabled) {
-  background: var(--btn-primary-hover);
-  box-shadow: var(--shadow-sm);
-}
-
-.addToCartBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-/* ==========================================================================
-   Skeleton Loading
-   ========================================================================== */
-.skeleton {
-  background: var(--skeleton-bg);
-  border-radius: var(--radius-sm);
-  position: relative;
-  overflow: hidden;
-}
-
-.skeleton::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    var(--skeleton-shimmer) 50%,
-    transparent 100%
-  );
-  animation: shimmer 1.5s infinite;
-}
-
-@keyframes shimmer {
-  0% { transform: translateX(-100%); }
-  100% { transform: translateX(100%); }
-}
-
-.skeletonImage {
-  aspect-ratio: 1 / 1;
-}
-
-.skeletonLine {
-  height: 16px;
-  margin: 8px 14px;
-}
-
-/* ==========================================================================
-   Empty State
-   ========================================================================== */
-.emptyState {
-  text-align: center;
-  padding: 80px 20px;
-}
-
-.emptyIllustration {
-  margin-bottom: 24px;
-}
-
-.emptyTitle {
-  font-size: 22px;
-  font-weight: 700;
-  color: var(--text-primary);
-  margin: 0 0 8px;
-}
-
-.emptyText {
-  font-size: 14px;
-  color: var(--text-secondary);
-  margin: 0 0 24px;
-  max-width: 420px;
-  margin-left: auto;
-  margin-right: auto;
-}
-
-.emptyBtn {
-  padding: 10px 28px;
-  background: var(--btn-primary-bg);
-  color: var(--btn-primary-text);
-  border: none;
-  border-radius: 20px;
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.emptyBtn:hover {
-  background: var(--btn-primary-hover);
-}
-
-/* Fetch-failure state shares the empty layout but reads as an error */
-.errorIcon {
-  color: var(--error-color);
-  margin-bottom: 16px;
+.stateText {
+  max-width: 48ch;
+  margin: var(--sf-space-3) 0 var(--sf-space-6);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+  overflow-wrap: break-word;
 }
 
 /* ==========================================================================
    Pagination
    ========================================================================== */
+
 .pagination {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-top: 32px;
-  padding: 16px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  grid-area: pager;
+  display: grid;
+  justify-items: center;
+  gap: var(--sf-space-4);
+  margin-top: var(--sf-space-12);
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
 }
 
-.paginationLeft,
-.paginationRight {
-  flex-shrink: 0;
-}
-
-.paginationCenter {
-  display: flex;
+.perPage {
+  display: none;
   align-items: center;
-  gap: 4px;
+  gap: var(--sf-space-2);
 }
 
 .perPageLabel {
-  font-size: 13px;
-  color: var(--text-secondary);
-  display: flex;
-  align-items: center;
-  gap: 8px;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
+  white-space: nowrap;
 }
 
 .perPageSelect {
-  padding: 4px 8px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  background: var(--input-bg);
-  color: var(--text-primary);
-  font-size: 13px;
-  cursor: pointer;
+  width: auto;
 }
 
-.pageBtn {
+/* Phones: the numbers on one line, Previous and Next under them. */
+.pager {
+  display: grid;
+  grid-template-columns: auto auto;
+  grid-template-areas:
+    "pages pages"
+    "previous next";
+  justify-content: space-between;
+  row-gap: var(--sf-space-4);
+  width: 100%;
+}
+
+.step {
+  padding-inline: var(--sf-space-4);
+}
+
+.stepPrevious {
+  grid-area: previous;
+  justify-self: start;
+}
+
+.stepNext {
+  grid-area: next;
+  justify-self: end;
+}
+
+.pages {
+  grid-area: pages;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pages > li {
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-width: 36px;
-  height: 36px;
-  padding: 0 10px;
-  background: var(--card-bg);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text-primary);
-  font-size: 13px;
-  font-weight: 500;
+}
+
+/* Hairlines between the numbers; the ellipsis is a separator itself. */
+.pages > li + li:not(.ellipsis, .ellipsis + li)::before {
+  content: "";
+  width: 1px;
+  height: var(--sf-space-4);
+  background-color: var(--sf-color-border);
+}
+
+.pageButton {
+  min-width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0 var(--sf-space-2);
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background: none;
+  color: var(--sf-color-text-muted);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.45em;
   cursor: pointer;
-  transition: all 0.15s;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.pageBtn:hover:not(:disabled) {
-  border-color: var(--accent);
-  color: var(--accent);
+.pageButton[aria-current="page"] {
+  color: var(--sf-color-text);
+  font-weight: var(--sf-font-medium);
+  text-decoration-color: currentColor;
 }
 
-.pageBtn:disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
+.pageButton:focus-visible {
+  outline: 2px solid transparent;
+  box-shadow: var(--sf-shadow-focus);
 }
 
-.pageBtnActive {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: var(--sf-color-primary-contrast);
-  font-weight: 700;
-}
-
-.pageBtnActive:hover {
-  color: var(--sf-color-primary-contrast);
-}
-
-.pageBtnText {
-  display: inline;
-}
-
-.pageEllipsis {
-  display: flex;
-  align-items: center;
+.ellipsis {
   justify-content: center;
-  width: 36px;
-  height: 36px;
-  color: var(--text-muted);
-  font-size: 14px;
+  min-width: var(--sf-space-8);
+  font-size: var(--sf-text-sm);
+  color: var(--sf-color-text-muted);
 }
 
 .pageInfo {
-  font-size: 13px;
-  color: var(--text-secondary);
-}
-
-/* ==========================================================================
-   Mobile Bottom Sheet (Filter overlay)
-   ========================================================================== */
-.overlay {
-  position: fixed;
-  inset: 0;
-  background: var(--overlay-bg);
-  /* Above the fixed Header (1100) and BottomNav (1200) so the sheet — and
-     especially its "Clear All / Show Results" footer — is never covered. */
-  z-index: 1300;
-  display: flex;
-  align-items: flex-end;
-}
-
-.bottomSheet {
-  width: 100%;
-  max-height: 85vh;
-  background: var(--sidebar-bg);
-  border-top-left-radius: 20px;
-  border-top-right-radius: 20px;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
-
-.bottomSheetHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.bottomSheetTitle {
-  font-size: 18px;
-  font-weight: 700;
+  display: none;
   margin: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
+  white-space: nowrap;
 }
 
-.bottomSheetClose {
-  width: 36px;
-  height: 36px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--text-primary);
-  border-radius: 50%;
-  transition: background 0.15s;
+@media (hover: hover) {
+  .disclosure:hover,
+  .viewButton:hover,
+  .pageButton:hover {
+    color: var(--sf-color-text);
+  }
 }
 
-.bottomSheetClose:hover {
-  background: var(--border-light);
+@media (min-width: 768px) {
+  .pagination {
+    grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center;
+  }
+
+  .perPage {
+    display: flex;
+    justify-self: start;
+  }
+
+  .pager {
+    display: flex;
+    align-items: center;
+    gap: var(--sf-space-4);
+    width: auto;
+  }
+
+  .pageInfo {
+    display: block;
+    justify-self: end;
+  }
 }
 
-.bottomSheetBody {
-  flex: 1;
-  overflow-y: auto;
-  padding: 0 20px;
-}
-
-.bottomSheetFooter {
-  display: flex;
-  gap: 12px;
-  padding: 16px 20px;
-  border-top: 1px solid var(--border);
-  flex-shrink: 0;
-}
-
-.bottomSheetClearBtn {
-  flex: 1;
-  padding: 12px;
-  background: none;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  color: var(--text-primary);
-  font-size: 14px;
-  font-weight: 600;
-  cursor: pointer;
-}
-
-.bottomSheetClearBtn:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.bottomSheetApplyBtn {
-  flex: 2;
-  padding: 12px;
-  background: var(--btn-primary-bg);
-  border: none;
-  border-radius: var(--radius-md);
-  color: var(--btn-primary-text);
-  font-size: 14px;
-  font-weight: 700;
-  cursor: pointer;
-}
-
-.bottomSheetApplyBtn:hover {
-  background: var(--btn-primary-hover);
+/* Very narrow phones keep Previous / Next as arrows. */
+@media (max-width: 359.98px) {
+  .stepText {
+    display: none;
+  }
 }
 
 /* ==========================================================================
-   Responsive
+   Sheet footer
    ========================================================================== */
 
-/* Tablet */
-@media (max-width: 1024px) {
-  .grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-
-  .sidebar {
-    width: 210px;
-    min-width: 210px;
-    /* On tablet the header top bar is hidden, so the fixed header is 104px. */
-    top: 116px;
-    max-height: calc(100vh - 128px);
-  }
+.sheetClear {
+  flex: 1 1 0;
 }
 
-/* Mobile */
-@media (max-width: 768px) {
-  .layout {
-    padding: 0 12px;
-  }
-
-  /* Hide desktop sidebar */
-  .sidebar {
-    display: none;
-  }
-
-  /* Show mobile filter button */
-  .mobileFilterBtn {
-    display: flex;
-  }
-
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 10px;
-  }
-
-  .gridList {
-    grid-template-columns: 1fr;
-  }
-
-  .cardList .cardImageWrap {
-    width: 140px;
-    min-height: 140px;
-  }
-
-  .sortBar {
-    padding: 8px 12px;
-  }
-
-  .sortBarLeft {
-    gap: 10px;
-  }
-
-  .sortBarRight {
-    gap: 8px;
-  }
-
-  .sortLabel span {
-    display: none;
-  }
-
-  .pageBtnText {
-    display: none;
-  }
-
-  .pagination {
-    padding: 12px;
-    justify-content: center;
-  }
-
-  .paginationLeft,
-  .paginationRight {
-    display: none;
-  }
-
-  .cardTitle {
-    font-size: 13px;
-  }
-
-  .cardPrice {
-    font-size: 15px;
-  }
-
-  .addToCartBtn {
-    padding: 6px 12px;
-    font-size: 12px;
-    min-height: 40px;
-  }
-
-  .breadcrumb {
-    padding: 10px 12px;
-  }
-
-  /* Touch-target sizing */
-  .breadcrumbLink {
-    display: inline-block;
-    padding: 8px 2px;
-    margin: -8px 0;
-  }
-
-  .sortSelect {
-    min-height: 40px;
-  }
-
-  .pageBtn {
-    min-width: 40px;
-    min-height: 40px;
-  }
+.sheetApply {
+  flex: 2 1 0;
 }
 
-/* Small mobile */
-@media (max-width: 480px) {
-  .grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 8px;
-  }
+/* ==========================================================================
+   Forced colours (Windows contrast themes)
+   ========================================================================== */
 
-  .cardBody {
-    padding: 8px 10px 10px;
-  }
-
-  .cardImage {
-    padding: 8px;
-  }
-
-  .viewToggle {
-    display: none;
+@media (forced-colors: active) {
+  .disclosureGlyph::before,
+  .disclosureGlyph::after {
+    background-color: CanvasText;
   }
 }

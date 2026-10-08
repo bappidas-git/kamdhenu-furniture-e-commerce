@@ -1,0 +1,315 @@
+/* =============================================================================
+ * ProductListRow — the listing's list view (Prompt 14)
+ * =============================================================================
+ * One row per product between hairlines (drawn by the list in
+ * Products.module.css): the 4:5 thumbnail (160px wide; 112px on phones), the
+ * titles, summary, rating, price and stock line, then the actions (a ghost
+ * "Add to cart" and the wishlist disc). From 768px the actions sit in a third
+ * column; below it they wrap under the text. The card's look: no fill or
+ * shadow, a serif name, ink stars, ink-and-paper chips. Tokens only.
+ * ========================================================================== */
+
+.row,
+.skeleton {
+  --row-thumb: 112px;
+  display: grid;
+  grid-template-columns: var(--row-thumb) minmax(0, 1fr);
+  align-items: start;
+  column-gap: var(--sf-space-4);
+  padding-block: var(--sf-space-6);
+}
+
+.row {
+  grid-template-areas:
+    "media body"
+    "media actions";
+  row-gap: var(--sf-space-4);
+  color: var(--sf-color-text);
+}
+
+@media (min-width: 480px) {
+  .row,
+  .skeleton {
+    --row-thumb: 160px;
+    column-gap: var(--sf-space-6);
+  }
+}
+
+@media (min-width: 768px) {
+  .row {
+    grid-template-columns: var(--row-thumb) minmax(0, 1fr) auto;
+    grid-template-areas: "media body actions";
+  }
+}
+
+/* ── Thumbnail ────────────────────────────────────────────────────────── */
+
+.media {
+  grid-area: media;
+  position: relative;
+  isolation: isolate;
+}
+
+.mediaLink {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The card's page-tone keyline over the image edge. */
+.mediaLink::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--sf-color-bg);
+  pointer-events: none;
+}
+
+.image {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+.soldOut .image {
+  opacity: 0.6;
+}
+
+.chips {
+  position: absolute;
+  top: var(--sf-space-2);
+  left: var(--sf-space-2);
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-1);
+  max-width: calc(100% - 2 * var(--sf-space-2));
+  pointer-events: none;
+}
+
+/* The card's chip: brand paper on brand ink in both modes. */
+.chip {
+  --sf-badge-bg: var(--sf-brand-ink);
+  --sf-badge-fg: var(--sf-brand-paper);
+  min-height: 20px;
+  padding-block: var(--sf-space-1);
+  font-size: 0.625rem; /* 10px */
+  white-space: normal;
+  outline: 1px solid transparent; /* an edge in forced colours */
+}
+
+/* ── Text ─────────────────────────────────────────────────────────────── */
+
+.body {
+  grid-area: body;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-2);
+  min-width: 0;
+}
+
+.titleLink {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-1);
+  max-width: 100%;
+  border-radius: var(--sf-radius-sm);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.titleLink:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+.brand {
+  overflow: hidden;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-color-text-muted);
+}
+
+.name {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+  overflow-wrap: anywhere;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.summary {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  max-width: 60ch;
+  margin: 0;
+  font-size: 0.9375rem; /* 15px */
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+/* Stars in ink, as on the card. */
+.rating {
+  --sf-color-star: var(--sf-color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+}
+
+.ratingCount {
+  font-size: var(--sf-text-xs);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-color-text-muted);
+}
+
+/* The product page's low-stock tone. */
+.stock {
+  margin: 0;
+  font-size: 0.8125rem; /* 13px */
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-warning);
+}
+
+/* ── Actions ──────────────────────────────────────────────────────────── */
+
+.actions {
+  grid-area: actions;
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  min-width: 0;
+}
+
+/* Under the text on phones the button takes what the heart leaves; in the
+   third column it has a steady width. */
+.add {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 13rem;
+}
+
+@media (min-width: 768px) {
+  .add {
+    flex: none;
+    min-width: 9.5rem;
+  }
+}
+
+/* The card's wishlist disc, on the page: a 44px hairline circle. */
+.wishlist {
+  flex: none;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: var(--sf-hairline);
+  border-radius: 50%;
+  background: none;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.wishlist svg {
+  display: block;
+  width: 18px;
+  height: 18px;
+}
+
+.wishlisted {
+  color: var(--sf-color-accent);
+}
+
+.wishlist:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+@media (hover: hover) {
+  .titleLink:hover .name {
+    text-decoration-color: var(--sf-color-accent);
+  }
+
+  /* Its own rule: a browser without :has() drops only this one. */
+  .row:has(.mediaLink:hover) .name {
+    text-decoration-color: var(--sf-color-accent);
+  }
+
+  .wishlist:hover {
+    border-color: var(--sf-color-border-strong);
+    color: var(--sf-color-accent);
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .mediaLink:hover .image {
+    transform: scale(1.03);
+  }
+}
+
+/* ── Skeleton ─────────────────────────────────────────────────────────── */
+
+.skeletonMedia {
+  border-radius: var(--sf-radius-sm);
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  padding-top: var(--sf-space-1);
+}
+
+.skeletonLine {
+  height: 12px;
+}
+
+.skeletonBrand {
+  width: 24%;
+  height: 8px;
+}
+
+.skeletonName {
+  width: 58%;
+  height: 16px;
+}
+
+.skeletonSummary {
+  width: 82%;
+}
+
+.skeletonPrice {
+  width: 30%;
+}

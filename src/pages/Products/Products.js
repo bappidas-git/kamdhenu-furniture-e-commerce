@@ -1,7 +1,5 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
+import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, useId } from "react";
+import { useSearchParams } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
@@ -11,15 +9,31 @@ import {
   getCategoryScopeIds,
   orderCategoriesHierarchically,
 } from "../../utils/categories";
-import {
-  formatCurrency,
-  getProductMinPrice,
-  truncateText,
-  buildCartItem,
-  productPath,
-  getDeviceType,
-} from "../../utils/helpers";
+import { getProductMinPrice } from "../../utils/helpers";
+import { APP_DESCRIPTION } from "../../utils/constants";
+import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
+import { ProductCard, ProductCardSkeleton, StarRating } from "../../components/storefront";
+import { BottomDrawer, Reveal, staggerDelay } from "../../components/ui";
+import ProductListRow, { ProductListRowSkeleton } from "./ProductListRow";
 import styles from "./Products.module.css";
+
+// =============================================================================
+// Products — the listing (/products)
+// =============================================================================
+// An editorial listing: the breadcrumb, the serif title and the category's
+// description; a quiet filter rail (a bottom sheet below 1024px); a
+// restrained toolbar (results, Sort, grid/list); the applied filters as
+// removable chips; the storefront ProductCard grid (or list rows);
+// pagination.
+//
+// The data and the rules are the page's long-standing ones, kept as they
+// were: one catalogue read (products + categories), then client-side search,
+// category scope (a parent includes its children), price, rating, discount,
+// stock and brand filters, sorting and pagination, all driven by the URL
+// (category, search, sort, page, per_page, min_price, max_price; written with
+// replace, defaults omitted). Rating, discount, stock and brand are
+// session-only. A legacy ?category=<id> is rewritten to its slug.
+// =============================================================================
 
 // ---------------------------------------------------------------------------
 // Constants
@@ -68,141 +82,173 @@ const RATING_OPTIONS = [4, 3, 2, 1];
 const DISCOUNT_OPTIONS = [50, 30, 20, 10];
 const PER_PAGE_OPTIONS = [12, 24, 48];
 
-// ---------------------------------------------------------------------------
-// Skeleton Card
-// ---------------------------------------------------------------------------
-const SkeletonCard = () => (
-  <div className={styles.card}>
-    <div className={`${styles.cardImageWrap} ${styles.skeleton} ${styles.skeletonImage}`} />
-    <div className={styles.cardBody}>
-      <div className={`${styles.skeleton} ${styles.skeletonLine}`} style={{ width: "75%" }} />
-      <div className={`${styles.skeleton} ${styles.skeletonLine}`} style={{ width: "50%", height: 14 }} />
-      <div className={`${styles.skeleton} ${styles.skeletonLine}`} style={{ width: "40%", height: 22, marginTop: 8 }} />
-    </div>
-  </div>
-);
+// From this width the filter rail sits beside the results (the header's
+// desktop breakpoint); below it the filters open in the bottom sheet.
+const RAIL_QUERY = "(min-width: 1024px)";
+// The first cards enter with the staggered reveal; the rest render at once.
+const REVEAL_COUNT = 6;
+// Air between the sticky header and the results after a page change.
+const RESULTS_SCROLL_GAP = 16;
+
+// Listing copy (Prompt 29 owns the final wording).
+const ALL_FURNITURE = "All furniture";
+const ALL_FURNITURE_INTRO = APP_DESCRIPTION;
+const FURNITURE_CRUMB = { label: "Furniture", link: "/products" };
 
 // ---------------------------------------------------------------------------
-// Star icons (inline SVG so we don't depend on icon libraries)
+// Helpers
 // ---------------------------------------------------------------------------
-const StarIcon = ({ filled, half }) => (
-  <svg width="16" height="16" viewBox="0 0 24 24" fill={filled ? "#f59e0b" : "none"} stroke="#f59e0b" strokeWidth="2">
-    {half ? (
-      <>
-        <defs>
-          <linearGradient id="halfStar">
-            <stop offset="50%" stopColor="#f59e0b" />
-            <stop offset="50%" stopColor="transparent" />
-          </linearGradient>
-        </defs>
-        <polygon
-          points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"
-          fill="url(#halfStar)"
-        />
-      </>
-    ) : (
-      <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" />
-    )}
-  </svg>
-);
+const listingPath = (category) => `/products?category=${categoryParam(category)}`;
 
-const RatingStars = ({ value = 0, count }) => {
-  const stars = [];
-  for (let i = 1; i <= 5; i++) {
-    if (i <= Math.floor(value)) stars.push(<StarIcon key={i} filled />);
-    else if (i - 0.5 <= value) stars.push(<StarIcon key={i} half />);
-    else stars.push(<StarIcon key={i} />);
+// The category and its ancestors, root first, by walking `parentId` (a
+// broken or cyclic parent link ends the walk).
+const categoryTrail = (category, categories) => {
+  const trail = [];
+  const seen = new Set();
+  let current = category;
+  while (current && !seen.has(String(current.id))) {
+    seen.add(String(current.id));
+    trail.unshift(current);
+    const { parentId } = current;
+    current =
+      parentId == null ? null : categories.find((c) => String(c.id) === String(parentId)) || null;
   }
-  return (
-    <span className={styles.stars}>
-      {stars}
-      {count !== undefined && <span className={styles.reviewCount}>({count.toLocaleString()})</span>}
-    </span>
-  );
+  return trail;
 };
 
-// ---------------------------------------------------------------------------
-// SVG Icons
-// ---------------------------------------------------------------------------
-const HeartIcon = ({ filled }) =>
-  filled ? (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="#ec4899" stroke="#ec4899" strokeWidth="2">
-      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
-    </svg>
-  ) : (
-    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-      <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z" />
-    </svg>
-  );
+// "Sofas", "Sofas and Beds", "Sofas, Beds and 2 more"; a repeated name once.
+const joinNames = (names) => {
+  const unique = [...new Set(names)];
+  if (unique.length <= 2) return unique.join(" and ");
+  return `${unique[0]}, ${unique[1]} and ${unique.length - 2} more`;
+};
 
-const CartIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="9" cy="21" r="1" />
-    <circle cx="20" cy="21" r="1" />
-    <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
+// Rupees without paise unless the value has them: "₹5,000", "₹1,250.5".
+const formatRupees = (value) =>
+  new Intl.NumberFormat("en-IN", {
+    style: "currency",
+    currency: "INR",
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2,
+  }).format(value);
+
+// The applied price as a chip label, read the way the filter reads the
+// bounds (a bound that is not a positive number is no bound).
+const priceLabel = (min, max) => {
+  const lo = parseFloat(min);
+  const hi = parseFloat(max);
+  const hasLo = !isNaN(lo) && lo > 0;
+  const hasHi = !isNaN(hi) && hi > 0;
+  if (hasLo && hasHi) return `${formatRupees(lo)} – ${formatRupees(hi)}`;
+  if (hasLo) return `Above ${formatRupees(lo)}`;
+  if (hasHi) return `Under ${formatRupees(hi)}`;
+  return null;
+};
+
+// The price fields are numeric text: keep digits and the decimal point.
+const cleanPriceInput = (value) => value.replace(/[^\d.]/g, "");
+
+// "Only N left" follows the product page's rule: in stock, and at or under
+// the product's own lowStockThreshold (5 when it has none). Null otherwise.
+const lowStockCount = (product) => {
+  const stock = product?.stock;
+  if (typeof stock !== "number" || stock <= 0) return null;
+  const threshold = Number(product.lowStockThreshold) || 5;
+  return stock <= threshold ? stock : null;
+};
+
+const starsLabel = (count) => `${count} ${count === 1 ? "star" : "stars"}`;
+
+const prefersReducedMotion = () =>
+  typeof window !== "undefined" &&
+  typeof window.matchMedia === "function" &&
+  window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+// ---------------------------------------------------------------------------
+// Icons (1.5px strokes in currentColor)
+// ---------------------------------------------------------------------------
+const Icon = ({ children, size = 18 }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width={size}
+    height={size}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {children}
   </svg>
+);
+
+const FiltersIcon = () => (
+  <Icon>
+    <path d="M4 7h9M17 7h3M4 17h3M11 17h9" />
+    <circle cx="15" cy="7" r="2" />
+    <circle cx="9" cy="17" r="2" />
+  </Icon>
 );
 
 const GridIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="3" y="3" width="7" height="7" rx="1" />
-    <rect x="14" y="3" width="7" height="7" rx="1" />
-    <rect x="3" y="14" width="7" height="7" rx="1" />
-    <rect x="14" y="14" width="7" height="7" rx="1" />
-  </svg>
+  <Icon>
+    <rect x="4" y="4" width="6.5" height="6.5" />
+    <rect x="13.5" y="4" width="6.5" height="6.5" />
+    <rect x="4" y="13.5" width="6.5" height="6.5" />
+    <rect x="13.5" y="13.5" width="6.5" height="6.5" />
+  </Icon>
 );
 
 const ListIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-    <rect x="3" y="4" width="18" height="4" rx="1" />
-    <rect x="3" y="10" width="18" height="4" rx="1" />
-    <rect x="3" y="16" width="18" height="4" rx="1" />
-  </svg>
-);
-
-const FilterIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3" />
-  </svg>
-);
-
-const CloseIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-    <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
+  <Icon>
+    <rect x="4" y="4.5" width="5" height="6" />
+    <rect x="4" y="13.5" width="5" height="6" />
+    <path d="M12 6h8M12 9h5M12 15h8M12 18h5" />
+  </Icon>
 );
 
 const ChevronLeft = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="15 18 9 12 15 6" /></svg>
+  <Icon>
+    <path d="M14.5 6l-6 6 6 6" />
+  </Icon>
 );
 
 const ChevronRight = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><polyline points="9 6 15 12 9 18" /></svg>
+  <Icon>
+    <path d="M9.5 6l6 6-6 6" />
+  </Icon>
 );
 
-// ---------------------------------------------------------------------------
-// Empty state illustration (simple inline SVG)
-// ---------------------------------------------------------------------------
-const EmptyIllustration = () => (
-  <svg className={styles.emptyIllustration} width="200" height="160" viewBox="0 0 200 160" fill="none">
-    <rect x="40" y="30" width="120" height="90" rx="8" fill="var(--empty-box, #e2e8f0)" />
-    <rect x="55" y="50" width="90" height="10" rx="4" fill="var(--empty-line, #cbd5e1)" />
-    <rect x="55" y="70" width="60" height="10" rx="4" fill="var(--empty-line, #cbd5e1)" />
-    <rect x="55" y="90" width="75" height="10" rx="4" fill="var(--empty-line, #cbd5e1)" />
-    <circle cx="100" cy="135" r="18" fill="var(--empty-circle, #94a3b8)" opacity="0.3" />
-    <text x="100" y="140" textAnchor="middle" fontSize="20" fill="var(--empty-circle, #94a3b8)">?</text>
-  </svg>
+const RemoveIcon = () => (
+  <Icon size={12}>
+    <path d="M6 6l12 12M18 6L6 18" />
+  </Icon>
+);
+
+// The filters' place while the catalogue loads: legends and option rows.
+const FiltersSkeleton = () => (
+  <div className={styles.filtersSkeleton} aria-hidden="true">
+    {[6, 3, 4].map((rows, group) => (
+      <div key={group} className={styles.skeletonGroup}>
+        <span className={`sf-skeleton ${styles.skeletonLegend}`} />
+        {Array.from({ length: rows }).map((_, row) => (
+          <span key={row} className={`sf-skeleton ${styles.skeletonOption}`} />
+        ))}
+      </div>
+    ))}
+  </div>
 );
 
 // ---------------------------------------------------------------------------
 // Main Component
 // ---------------------------------------------------------------------------
 const Products = () => {
-  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const { isDarkMode } = useTheme();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const uid = useId();
 
   // ---- Data state ---
   const [allProducts, setAllProducts] = useState([]);
@@ -213,12 +259,13 @@ const Products = () => {
   // ---- UI state ----
   const [viewMode, setViewMode] = useState("grid"); // grid | list
   const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
+  // Departments open in the category outline (ids as strings).
+  const [openDepartments, setOpenDepartments] = useState(() => new Set());
 
   // ---- Refs ----
   const mainRef = useRef(null); // top of results region, for page-change scroll
-  const mobileTriggerRef = useRef(null); // restore focus here when the sheet closes
-  const sheetCloseRef = useRef(null); // focus this when the sheet opens
   const pendingScrollRef = useRef(false); // set by pagination, consumed post-commit
+  const filtersChangeRef = useRef(false); // the next category change comes from the page's own controls
 
   // ---- Read URL params ----
   const urlCategory = searchParams.get("category") || "";
@@ -491,49 +538,65 @@ const Products = () => {
   // Keep currentPage within range whenever the result set shrinks (e.g. filters
   // applied, or a deep-linked page that no longer exists). The value guard
   // (currentPage !== safePage) terminates after one correction, so adding
-  // syncUrlParams to the deps cannot loop.
+  // syncUrlParams to the deps cannot loop. Nothing is clamped until the
+  // catalogue has loaded: against the empty list every page but the first is
+  // out of range, which used to drop a deep-linked ?page= before its results
+  // existed.
   useEffect(() => {
+    if (loading || fetchError) return;
     if (currentPage !== safePage) {
       setCurrentPage(safePage);
       syncUrlParams({ page: safePage });
     }
-  }, [safePage, currentPage, syncUrlParams]);
+  }, [loading, fetchError, safePage, currentPage, syncUrlParams]);
 
   // Scroll the results back to the top after a pagination/per-page change. Runs
   // post-commit (so the new page's layout is settled and the smooth scroll isn't
   // cancelled by the re-render), and only when a pager action requested it — not
-  // on every filter change. Offset clears the fixed header (varies by device).
+  // on every filter change. The offset clears the sticky header, whose visible
+  // height the header publishes as --sf-header-height (it changes with the
+  // breakpoint and as the header compacts).
   useEffect(() => {
     if (!pendingScrollRef.current) return;
     pendingScrollRef.current = false;
-    const offsetByDevice = { mobile: 70, tablet: 114, desktop: 150 };
-    const offset = offsetByDevice[getDeviceType()] || 0;
+    const headerHeight =
+      parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height")) || 0;
+    const offset = headerHeight + RESULTS_SCROLL_GAP;
     const el = mainRef.current;
     const y = el ? el.getBoundingClientRect().top + window.scrollY - offset : 0;
-    window.scrollTo({ top: Math.max(0, y), behavior: "smooth" });
+    // "instant", not "auto": the root's `scroll-behavior: smooth` (index.css)
+    // would make "auto" smooth as well.
+    window.scrollTo({ top: Math.max(0, y), behavior: prefersReducedMotion() ? "instant" : "smooth" });
   }, [safePage, perPage]);
 
-  // ---- Mobile filter sheet: lock body scroll, close on Escape, manage focus ----
+  // ---- Mobile filter sheet ----
+  // BottomDrawer owns the dialog semantics, Escape, the focus move to its
+  // close button and back to the trigger, and the page scroll lock. The sheet
+  // belongs to narrow screens: if the window grows to the rail's width while
+  // it is open, it closes.
   useEffect(() => {
-    if (!mobileFiltersOpen) return undefined;
-    // The trigger button is persistently mounted, so capturing it here is safe
-    // and keeps the effect-cleanup ref-stability lint rule happy.
-    const trigger = mobileTriggerRef.current;
-    const prevOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-    const onKeyDown = (e) => {
-      if (e.key === "Escape") setMobileFiltersOpen(false);
+    if (!mobileFiltersOpen || typeof window.matchMedia !== "function") return undefined;
+    const query = window.matchMedia(RAIL_QUERY);
+    const onChange = () => {
+      if (query.matches) setMobileFiltersOpen(false);
     };
-    window.addEventListener("keydown", onKeyDown);
-    const focusTimer = setTimeout(() => sheetCloseRef.current?.focus(), 60);
+    onChange();
+    if (query.addEventListener) query.addEventListener("change", onChange);
+    else query.addListener(onChange);
     return () => {
-      document.body.style.overflow = prevOverflow;
-      window.removeEventListener("keydown", onKeyDown);
-      clearTimeout(focusTimer);
-      // Return focus to the trigger so keyboard users aren't dropped at <body>.
-      trigger?.focus();
+      if (query.removeEventListener) query.removeEventListener("change", onChange);
+      else query.removeListener(onChange);
     };
   }, [mobileFiltersOpen]);
+
+  const openFilters = (event) => {
+    // Safari does not focus a clicked button, and the sheet hands focus back
+    // to whatever held it when it opened: make that the trigger.
+    event.currentTarget.focus({ preventScroll: true });
+    setMobileFiltersOpen(true);
+  };
+
+  const closeFilters = useCallback(() => setMobileFiltersOpen(false), []);
 
   // ---- Helpers ----
   const hasActiveFilters =
@@ -571,16 +634,20 @@ const Products = () => {
     });
   }, [syncUrlParams]);
 
+  // The next selection is computed from this render's state, not inside a
+  // state updater: the URL sync is a side effect, and React may run an updater
+  // during render, where navigating is an error ("Cannot update a component
+  // while rendering a different component").
   const handleCategoryToggle = useCallback(
     (slug) => {
-      setSelectedCategories((prev) => {
-        const next = prev.includes(slug) ? prev.filter((c) => c !== slug) : [...prev, slug];
-        setCurrentPage(1);
-        syncUrlParams({ category: next, page: 1 });
-        return next;
-      });
+      const next = selectedCategories.includes(slug)
+        ? selectedCategories.filter((c) => c !== slug)
+        : [...selectedCategories, slug];
+      setSelectedCategories(next);
+      setCurrentPage(1);
+      syncUrlParams({ category: next, page: 1 });
     },
-    [syncUrlParams]
+    [selectedCategories, syncUrlParams]
   );
 
   const handlePriceRangeClick = useCallback(
@@ -646,33 +713,6 @@ const Products = () => {
     [syncUrlParams]
   );
 
-  const handleProductClick = useCallback(
-    (product) => {
-      // Route is /products/:slug, resolved via getBySlug (with a legacy-id
-      // fallback + canonical redirect), so link by the human-readable slug.
-      navigate(productPath(product));
-    },
-    [navigate]
-  );
-
-  const handleAddToCart = useCallback(
-    (e, product) => {
-      e.stopPropagation();
-      // buildCartItem produces the same id scheme the product page uses, so a
-      // quick-add merges with a detail-page add instead of creating a duplicate.
-      addToCart(buildCartItem(product));
-    },
-    [addToCart]
-  );
-
-  const handleWishlistToggle = useCallback(
-    (e, product) => {
-      e.stopPropagation();
-      toggleWishlist(product);
-    },
-    [toggleWishlist]
-  );
-
   // Select semantics (value, or 0 to clear). onChange handles keyboard + click;
   // a paired onClick clears when the already-selected radio is re-clicked.
   const handleRatingChange = useCallback(
@@ -706,28 +746,202 @@ const Products = () => {
     [resetToFirstPage]
   );
 
-  // ---- Category name helper ----
-  const getCategoryName = useCallback(
+  // ---- Applied-filter removal (the chips above the grid) ----
+  const handlePriceClear = useCallback(() => {
+    setMinPrice("");
+    setMaxPrice("");
+    setCurrentPage(1);
+    syncUrlParams({ min_price: "", max_price: "", page: 1 });
+  }, [syncUrlParams]);
+
+  const handleSearchClear = useCallback(() => {
+    setCurrentPage(1);
+    syncUrlParams({ search: "", page: 1 });
+  }, [syncUrlParams]);
+
+  // Category changes and "Clear all" made on this page are flagged, so the
+  // category outline never collapses a department under the pointer (below).
+  const toggleCategoryFromPage = useCallback(
     (slug) => {
-      const cat = categories.find(
-        (c) => c.slug === slug || String(c.id) === String(slug)
-      );
-      return cat ? cat.name : slug;
+      filtersChangeRef.current = true;
+      handleCategoryToggle(slug);
     },
-    [categories]
+    [handleCategoryToggle]
   );
 
-  // ---- Breadcrumb ----
+  const clearAllFromPage = useCallback(() => {
+    filtersChangeRef.current = true;
+    clearAllFilters();
+  }, [clearAllFilters]);
+
+  // A quick range is "on" when the bounds in force are exactly its own.
+  const isRangeActive = (range) => {
+    const lo = parseFloat(minPrice);
+    const hi = parseFloat(maxPrice);
+    const min = !isNaN(lo) && lo > 0 ? lo : 0;
+    const max = !isNaN(hi) && hi > 0 ? hi : Infinity;
+    return min === range.min && max === range.max;
+  };
+
+  // A quick range applies its bounds; pressing the one in force clears the
+  // price again, as a second click on a rating does.
+  const handleQuickRange = (range) =>
+    isRangeActive(range) ? handlePriceClear() : handlePriceRangeClick(range);
+
+  // ---- Selected categories, resolved (unknown tokens and repeats dropped) ----
+  const selectedCategoryList = useMemo(() => {
+    const seen = new Set();
+    return selectedCategories
+      .map((token) => resolveCategory(token, categories))
+      .filter((cat) => {
+        if (!cat || seen.has(String(cat.id))) return false;
+        seen.add(String(cat.id));
+        return true;
+      });
+  }, [selectedCategories, categories]);
+
+  // ---- Category outline: departments and which of them are open ----
+  // Each category's children in orderCategoriesHierarchically's order, keyed
+  // by parent id ("root" for the departments, and for any category whose
+  // parent is missing, which that helper lists at the top level).
+  const categoryChildren = useMemo(() => {
+    const map = new Map();
+    orderedCategories.ordered.forEach((cat) => {
+      const key = orderedCategories.depthOf(cat.id) === 0 ? "root" : String(cat.parentId);
+      if (!map.has(key)) map.set(key, []);
+      map.get(key).push(cat);
+    });
+    return map;
+  }, [orderedCategories]);
+  const departments = categoryChildren.get("root") || [];
+
+  // The departments that hold a selected category, as a stable key.
+  const activeDepartmentKey = useMemo(
+    () =>
+      [...new Set(selectedCategoryList.map((cat) => String(categoryTrail(cat, categories)[0].id)))]
+        .sort()
+        .join(","),
+    [selectedCategoryList, categories]
+  );
+
+  // A selection that arrives from elsewhere (the mega-menu, the breadcrumb, a
+  // link, back/forward) opens exactly its own departments. One made on this
+  // page only ever opens more: unticking a box never folds its department
+  // away under the pointer. A layout effect, so the outline is already open
+  // in the first frame the loaded filters are painted (an effect would paint
+  // it closed first and then push every department below it down).
+  useLayoutEffect(() => {
+    const active = activeDepartmentKey ? activeDepartmentKey.split(",") : [];
+    const fromPage = filtersChangeRef.current;
+    setOpenDepartments((prev) => {
+      if (!fromPage) return new Set(active);
+      if (active.every((id) => prev.has(id))) return prev;
+      return new Set([...prev, ...active]);
+    });
+  }, [activeDepartmentKey]);
+
+  // The flag covers one selection change, whether or not it moved a department.
+  useEffect(() => {
+    filtersChangeRef.current = false;
+  }, [selectedCategories]);
+
+  const toggleDepartment = useCallback((id) => {
+    setOpenDepartments((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }, []);
+
+  // ---- Page header: title, introduction, breadcrumb ----
+  // A deep-linked category is named once the category tree has loaded.
+  const categoriesPending = loading && categories.length === 0;
+  const headerPending = categoriesPending && selectedCategories.length > 0;
+  const categoryTitle = joinNames(selectedCategoryList.map((cat) => cat.name));
+  const heading = urlSearch ? `Results for “${urlSearch}”` : categoryTitle || ALL_FURNITURE;
+  const intro = urlSearch
+    ? null
+    : selectedCategoryList.length === 0
+      ? ALL_FURNITURE_INTRO
+      : selectedCategoryList.length === 1
+        ? selectedCategoryList[0].description || null
+        : null;
+
+  // Home › Furniture › Department › Group › Leaf: every ancestor of the
+  // selected category, each linking to its own listing; the last is the page.
   const breadcrumbItems = useMemo(() => {
-    const items = [
-      { label: "Home", path: "/" },
-      { label: "Products", path: "/products" },
-    ];
-    if (selectedCategories.length === 1) {
-      items.push({ label: getCategoryName(selectedCategories[0]) });
+    if (selectedCategoryList.length === 1) {
+      const crumbs = categoryTrail(selectedCategoryList[0], categories).map((cat) => ({
+        label: cat.name,
+        link: listingPath(cat),
+      }));
+      return urlSearch
+        ? [FURNITURE_CRUMB, ...crumbs, { label: heading }]
+        : [FURNITURE_CRUMB, ...crumbs];
     }
-    return items;
-  }, [selectedCategories, getCategoryName]);
+    if (selectedCategoryList.length > 1 || urlSearch) {
+      return [FURNITURE_CRUMB, { label: heading }];
+    }
+    return [{ label: ALL_FURNITURE }];
+  }, [selectedCategoryList, categories, urlSearch, heading]);
+
+  // ---- Applied filters, as removable chips ----
+  const appliedFilters = [];
+  if (urlSearch) {
+    appliedFilters.push({
+      key: "search",
+      label: `“${urlSearch}”`,
+      name: `search “${urlSearch}”`,
+      onRemove: handleSearchClear,
+      isSearch: true,
+    });
+  }
+  if (categoriesPending) {
+    // A deep-linked category has no name until the tree arrives; its chip
+    // holds its place meanwhile, so neither the chips nor the grid move.
+    selectedCategories.forEach((token, index) =>
+      appliedFilters.push({ key: `pending-${index}`, isPending: true })
+    );
+  } else {
+    selectedCategoryList.forEach((cat) =>
+      appliedFilters.push({
+        key: `category-${cat.id}`,
+        label: cat.name,
+        onRemove: () => toggleCategoryFromPage(categoryParam(cat)),
+      })
+    );
+  }
+  const appliedPrice = priceLabel(minPrice, maxPrice);
+  if (appliedPrice) {
+    appliedFilters.push({ key: "price", label: appliedPrice, onRemove: handlePriceClear });
+  }
+  if (minRating > 0) {
+    appliedFilters.push({
+      key: "rating",
+      label: `${starsLabel(minRating)} & up`,
+      onRemove: () => handleRatingChange(0),
+    });
+  }
+  if (minDiscount > 0) {
+    appliedFilters.push({
+      key: "discount",
+      label: `${minDiscount}% off or more`,
+      onRemove: () => handleDiscountChange(0),
+    });
+  }
+  if (inStockOnly) {
+    appliedFilters.push({ key: "stock", label: "In stock only", onRemove: handleInStockToggle });
+  }
+  selectedBrands.forEach((brand) =>
+    appliedFilters.push({
+      key: `brand-${brand}`,
+      label: brand,
+      onRemove: () => handleBrandToggle(brand),
+    })
+  );
+  // The sheet's filters in force (the search is set from the header).
+  const activeFilterCount = appliedFilters.filter((filter) => !filter.isSearch).length;
 
   // ---- Pagination range ----
   const paginationRange = useMemo(() => {
@@ -745,247 +959,320 @@ const Products = () => {
     return range;
   }, [safePage, totalPages]);
 
-  // ---- Filter Sidebar JSX (reused for desktop + mobile) ----
-  const renderFilters = (isMobile = false) => (
-    <div className={`${styles.filterContent} ${isMobile ? styles.filterContentMobile : ""}`}>
-      {/* Categories */}
-      <div className={styles.filterSection}>
-        <h4 className={styles.filterTitle}>Categories</h4>
-        <div className={styles.filterList}>
-          {orderedCategories.ordered.map((cat) => (
-            <label
-              key={cat.id || cat.slug}
-              className={styles.checkboxLabel}
-              style={orderedCategories.depthOf(cat.id) ? { paddingLeft: orderedCategories.depthOf(cat.id) * 16 } : undefined}
-            >
-              <input
-                type="checkbox"
-                checked={selectedCategories.some(
-                  (t) => t === cat.slug || String(t) === String(cat.id)
-                )}
-                onChange={() => handleCategoryToggle(categoryParam(cat))}
-                className={styles.checkbox}
-              />
-              <span className={styles.checkboxText}>{cat.name}</span>
-              <span className={styles.filterCount}>
-                ({categoryCounts.get(String(cat.id)) || 0})
-              </span>
-            </label>
-          ))}
-        </div>
-      </div>
+  // ---- Filters (rendered in the rail and in the sheet) ----
+  // `instance` keeps ids and radio-group names unique: both copies can be in
+  // the document at once.
+  const renderCategoryOption = (cat, depth) => {
+    const count = categoryCounts.get(String(cat.id)) || 0;
+    return (
+      <label className={`sf-check ${styles.option} ${depth === 0 ? styles.optionDepartment : ""}`}>
+        <input
+          type="checkbox"
+          checked={selectedCategories.some(
+            (t) => t === cat.slug || String(t) === String(cat.id)
+          )}
+          onChange={() => toggleCategoryFromPage(categoryParam(cat))}
+        />
+        <span className={styles.optionText}>{cat.name}</span>
+        <span className={styles.optionCount} aria-hidden="true">
+          {count}
+        </span>
+        <span className="sf-visually-hidden">
+          , {count} {count === 1 ? "product" : "products"}
+        </span>
+      </label>
+    );
+  };
 
-      {/* Price Range */}
-      <div className={styles.filterSection}>
-        <h4 className={styles.filterTitle}>Price Range</h4>
-        <div className={styles.priceInputRow}>
-          <input
-            type="number"
-            placeholder="Min"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-            className={styles.priceInput}
-          />
-          <span className={styles.priceSeparator}>to</span>
-          <input
-            type="number"
-            placeholder="Max"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-            className={styles.priceInput}
-          />
-          <button className={styles.priceGoBtn} onClick={handlePriceApply}>
-            Go
-          </button>
-        </div>
-        <div className={styles.quickRanges}>
-          {PRICE_RANGES.map((range) => (
-            <button
-              key={range.label}
-              className={styles.quickRangeBtn}
-              onClick={() => handlePriceRangeClick(range)}
-            >
-              {range.label}
+  // A category's descendants as nested lists, so assistive technology hears
+  // the hierarchy the indent shows (leaf names repeat across tiers).
+  const renderCategoryBranch = (parentId) => {
+    const children = categoryChildren.get(String(parentId));
+    if (!children) return null;
+    return (
+      <ul className={styles.subtree}>
+        {children.map((child) => (
+          <li key={child.id}>
+            {renderCategoryOption(child, 1)}
+            {renderCategoryBranch(child.id)}
+          </li>
+        ))}
+      </ul>
+    );
+  };
+
+  const renderFilters = (instance) => {
+    if (loading) return <FiltersSkeleton />;
+    const id = `${uid}${instance}`;
+
+    return (
+      <div className={instance === "sheet" ? styles.filtersInSheet : undefined}>
+        {/* Category: an outline of departments, open for the active one */}
+        {departments.length > 0 && (
+          <fieldset className={styles.group}>
+            <legend className={`sf-eyebrow ${styles.legend}`}>Category</legend>
+            <ul className={styles.tree}>
+              {departments.map((category) => {
+                const key = String(category.id);
+                const hasChildren = categoryChildren.has(key);
+                const open = openDepartments.has(key);
+                const panelId = `${id}-department-${key}`;
+                return (
+                  <li key={key}>
+                    <div className={styles.treeRow}>
+                      {renderCategoryOption(category, 0)}
+                      {hasChildren && (
+                        <button
+                          type="button"
+                          className={styles.disclosure}
+                          aria-expanded={open}
+                          aria-controls={panelId}
+                          aria-label={`${category.name} subcategories`}
+                          onClick={() => toggleDepartment(key)}
+                        >
+                          <span className={styles.disclosureGlyph} aria-hidden="true" />
+                        </button>
+                      )}
+                    </div>
+                    {hasChildren && (
+                      <div id={panelId} hidden={!open}>
+                        {renderCategoryBranch(category.id)}
+                      </div>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+          </fieldset>
+        )}
+
+        {/* Price: Min / Max (applied with the button or Enter) and quick ranges */}
+        <fieldset className={styles.group}>
+          <legend className={`sf-eyebrow ${styles.legend}`}>Price</legend>
+          <form
+            className={styles.priceForm}
+            noValidate
+            onSubmit={(event) => {
+              event.preventDefault();
+              handlePriceApply();
+            }}
+          >
+            <div className={styles.priceFields}>
+              <div className="sf-field">
+                <label className="sf-field__label" htmlFor={`${id}-min-price`}>
+                  Min
+                </label>
+                <span className={styles.money}>
+                  <span className={styles.currency} aria-hidden="true">
+                    {"₹"}
+                  </span>
+                  <input
+                    id={`${id}-min-price`}
+                    className={`sf-input ${styles.moneyInput}`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={minPrice}
+                    onChange={(e) => setMinPrice(cleanPriceInput(e.target.value))}
+                  />
+                </span>
+              </div>
+              <div className="sf-field">
+                <label className="sf-field__label" htmlFor={`${id}-max-price`}>
+                  Max
+                </label>
+                <span className={styles.money}>
+                  <span className={styles.currency} aria-hidden="true">
+                    {"₹"}
+                  </span>
+                  <input
+                    id={`${id}-max-price`}
+                    className={`sf-input ${styles.moneyInput}`}
+                    type="text"
+                    inputMode="numeric"
+                    autoComplete="off"
+                    value={maxPrice}
+                    onChange={(e) => setMaxPrice(cleanPriceInput(e.target.value))}
+                  />
+                </span>
+              </div>
+            </div>
+            <button type="submit" className={`sf-btn sf-btn--ghost ${styles.priceApply}`}>
+              Apply price
             </button>
-          ))}
-        </div>
-      </div>
+          </form>
+          <ul className={styles.ranges} aria-label="Price ranges">
+            {PRICE_RANGES.map((range) => (
+              <li key={range.label}>
+                <button
+                  type="button"
+                  className={`sf-chip ${styles.rangeChip}`}
+                  aria-pressed={isRangeActive(range)}
+                  onClick={() => handleQuickRange(range)}
+                >
+                  {range.label}
+                </button>
+              </li>
+            ))}
+          </ul>
+        </fieldset>
 
-      {/* Rating */}
-      <div className={styles.filterSection}>
-        <h4 className={styles.filterTitle}>Customer Rating</h4>
-        <div className={styles.filterList}>
+        {/* Customer rating (pressing the chosen one again clears it) */}
+        <fieldset className={`${styles.group} ${styles.ratingGroup}`}>
+          <legend className={`sf-eyebrow ${styles.legend}`}>Customer rating</legend>
           {RATING_OPTIONS.map((r) => (
-            <label key={r} className={styles.radioLabel}>
+            <label key={r} className={`sf-radio ${styles.option}`}>
               <input
                 type="radio"
-                name="rating"
+                name={`${id}-rating`}
                 checked={minRating === r}
                 onChange={() => handleRatingChange(r)}
                 onClick={() => { if (minRating === r) handleRatingChange(0); }}
-                className={styles.radio}
               />
-              <span className={styles.ratingOption}>
-                <RatingStars value={r} /> <span className={styles.ratingPlus}>{r}+ & up</span>
-              </span>
+              <StarRating rating={r} size={14} label={starsLabel(r)} />{" "}
+              <span className={styles.optionText}>&amp; up</span>
             </label>
           ))}
-        </div>
-      </div>
+        </fieldset>
 
-      {/* Discount */}
-      <div className={styles.filterSection}>
-        <h4 className={styles.filterTitle}>Discount</h4>
-        <div className={styles.filterList}>
+        {/* Discount (pressing the chosen one again clears it) */}
+        <fieldset className={styles.group}>
+          <legend className={`sf-eyebrow ${styles.legend}`}>Discount</legend>
           {DISCOUNT_OPTIONS.map((d) => (
-            <label key={d} className={styles.radioLabel}>
+            <label key={d} className={`sf-radio ${styles.option}`}>
               <input
                 type="radio"
-                name="discount"
+                name={`${id}-discount`}
                 checked={minDiscount === d}
                 onChange={() => handleDiscountChange(d)}
                 onClick={() => { if (minDiscount === d) handleDiscountChange(0); }}
-                className={styles.radio}
               />
-              <span className={styles.checkboxText}>{d}% or more</span>
+              <span className={styles.optionText}>{d}% or more</span>
             </label>
           ))}
-        </div>
-      </div>
+        </fieldset>
 
-      {/* Availability */}
-      <div className={styles.filterSection}>
-        <h4 className={styles.filterTitle}>Availability</h4>
-        <label className={styles.toggleLabel}>
-          <span className={styles.checkboxText}>In Stock Only</span>
-          <button
-            className={`${styles.toggle} ${inStockOnly ? styles.toggleOn : ""}`}
-            onClick={handleInStockToggle}
-            type="button"
-            role="switch"
-            aria-checked={inStockOnly}
-          >
-            <span className={styles.toggleThumb} />
-          </button>
-        </label>
-      </div>
+        {/* Availability */}
+        <fieldset className={styles.group}>
+          <legend className={`sf-eyebrow ${styles.legend}`}>Availability</legend>
+          <label className={`sf-switch ${styles.option}`}>
+            <input
+              type="checkbox"
+              role="switch"
+              checked={inStockOnly}
+              onChange={handleInStockToggle}
+            />
+            <span className={styles.optionText}>In stock only</span>
+          </label>
+        </fieldset>
 
-      {/* Brand */}
-      {availableBrands.length > 0 && (
-        <div className={styles.filterSection}>
-          <h4 className={styles.filterTitle}>Brand</h4>
-          <div className={styles.filterList}>
+        {/* Brand */}
+        {availableBrands.length > 0 && (
+          <fieldset className={styles.group}>
+            <legend className={`sf-eyebrow ${styles.legend}`}>Brand</legend>
             {availableBrands.map((brand) => (
-              <label key={brand} className={styles.checkboxLabel}>
+              <label key={brand} className={`sf-check ${styles.option}`}>
                 <input
                   type="checkbox"
                   checked={selectedBrands.includes(brand)}
                   onChange={() => handleBrandToggle(brand)}
-                  className={styles.checkbox}
                 />
-                <span className={styles.checkboxText}>{brand}</span>
+                <span className={styles.optionText}>{brand}</span>
               </label>
             ))}
-          </div>
+          </fieldset>
+        )}
+      </div>
+    );
+  };
+
+  // ---- Results: skeletons, the error panel, the empty state, cards or rows ----
+  const renderResults = () => {
+    if (loading) {
+      return (
+        <ul key="loading" className={viewMode === "list" ? styles.rows : styles.grid} aria-hidden="true">
+          {Array.from({ length: perPage }).map((_, i) => (
+            <li key={i} className={styles.item}>
+              {viewMode === "list" ? <ProductListRowSkeleton /> : <ProductCardSkeleton />}
+            </li>
+          ))}
+        </ul>
+      );
+    }
+
+    if (fetchError) {
+      // Fetch failed — never masquerade as "No products found"
+      return (
+        <div className={`sf-panel ${styles.state} ${styles.statePanel}`}>
+          <h2 className={styles.stateTitle}>We couldn&rsquo;t load the catalogue.</h2>
+          <p className={styles.stateText}>Please check your connection and try again.</p>
+          <button type="button" className="sf-btn sf-btn--primary" onClick={fetchCatalog}>
+            Try again
+          </button>
         </div>
-      )}
+      );
+    }
 
-      {/* Clear All */}
-      {hasActiveFilters && (
-        <button className={styles.clearAllBtn} onClick={clearAllFilters}>
-          Clear All Filters
-        </button>
-      )}
-    </div>
-  );
-
-  // ---- Product card ----
-  const renderProductCard = (product, index) => {
-    const priceInfo = getProductMinPrice(product);
-    const discount = priceInfo.discount;
-    const wishlisted = isInWishlist(product.id);
+    if (paginatedProducts.length === 0) {
+      return (
+        <div className={styles.state}>
+          <h2 className={styles.stateTitle}>Nothing here yet.</h2>
+          <p className={styles.stateText}>
+            {urlSearch ? (
+              <>
+                We couldn&rsquo;t find anything matching &ldquo;{urlSearch}&rdquo;. Try
+                another word, or clear the filters.
+              </>
+            ) : hasActiveFilters ? (
+              "No pieces match these filters. Try removing one or two."
+            ) : (
+              "There are no pieces in the catalogue just now."
+            )}
+          </p>
+          {hasAnyConstraint && (
+            <button type="button" className="sf-btn sf-btn--ghost" onClick={clearAllFromPage}>
+              Clear all filters
+            </button>
+          )}
+        </div>
+      );
+    }
 
     return (
-      <motion.div
-        key={product.id}
-        className={`${styles.cardWrap} ${viewMode === "list" ? styles.cardWrapList : ""}`}
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4) }}
-      >
-        <div
-          className={`${styles.card} ${viewMode === "list" ? styles.cardList : ""}`}
-          onClick={() => handleProductClick(product)}
-        >
-          {/* Image area */}
-          <div className={styles.cardImageWrap}>
-            <img
-              src={product.images?.[0] || product.image || "https://placehold.co/400x300?text=No+Image"}
-              alt={product.name}
-              className={styles.cardImage}
-              loading="lazy"
-            />
-            {/* Wishlist */}
-            <button
-              className={styles.wishlistBtn}
-              onClick={(e) => handleWishlistToggle(e, product)}
-              aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
-            >
-              <HeartIcon filled={wishlisted} />
-            </button>
-            {/* Discount badge */}
-            {discount > 0 && (
-              <span className={styles.discountBadge}>{discount}% OFF</span>
-            )}
-          </div>
-
-          {/* Body */}
-          <div className={styles.cardBody}>
-            <h3 className={styles.cardTitle}>{viewMode === "list" ? product.name : truncateText(product.name, 48)}</h3>
-
-            {viewMode === "list" && product.shortDescription && (
-              <p className={styles.cardDesc}>{truncateText(product.shortDescription, 120)}</p>
-            )}
-
-            {/* Social proof — shown ONLY when real ratings exist (no hollow "(0)") */}
-            {(product.totalReviews || 0) > 0 && (
-              <div className={styles.cardRating}>
-                <RatingStars value={product.rating || 0} count={product.totalReviews || 0} />
-              </div>
-            )}
-
-            <div className={styles.cardPriceRow}>
-              <span className={styles.cardPrice}>
-                {formatCurrency(priceInfo.sellingPrice, "INR")}
-              </span>
-              {priceInfo.originalPrice > priceInfo.sellingPrice && (
-                <span className={styles.cardComparePrice}>
-                  {formatCurrency(priceInfo.originalPrice, "INR")}
-                </span>
-              )}
-              {discount > 0 && (
-                <span className={styles.cardDiscountText}>{discount}% off</span>
-              )}
-            </div>
-
-            {product.stock !== undefined && product.stock <= 5 && product.stock > 0 && (
-              <span className={styles.lowStock}>Only {product.stock} left</span>
-            )}
-            {product.stock === 0 && (
-              <span className={styles.outOfStock}>Out of Stock</span>
-            )}
-
-            <button
-              className={styles.addToCartBtn}
-              onClick={(e) => handleAddToCart(e, product)}
-              disabled={product.stock === 0}
-            >
-              <CartIcon />
-              <span>Add to Cart</span>
-            </button>
-          </div>
-        </div>
-      </motion.div>
+      <ul key={viewMode} className={viewMode === "list" ? styles.rows : styles.grid}>
+        {paginatedProducts.map((product, index) => {
+          const lowStock = lowStockCount(product);
+          const content =
+            viewMode === "list" ? (
+              <ProductListRow
+                product={product}
+                lowStock={lowStock}
+                onAddToCart={(item) => addToCart(item)}
+                onToggleWishlist={toggleWishlist}
+                isWishlisted={isInWishlist(product.id)}
+              />
+            ) : (
+              <>
+                <ProductCard
+                  product={product}
+                  onAddToCart={(item) => addToCart(item)}
+                  onToggleWishlist={toggleWishlist}
+                  isWishlisted={isInWishlist(product.id)}
+                />
+                {lowStock != null && <p className={styles.stockNote}>Only {lowStock} left</p>}
+              </>
+            );
+          return index < REVEAL_COUNT ? (
+            <Reveal as="li" key={product.id} className={styles.item} delay={staggerDelay(index)}>
+              {content}
+            </Reveal>
+          ) : (
+            <li key={product.id} className={styles.item}>
+              {content}
+            </li>
+          );
+        })}
+      </ul>
     );
   };
 
@@ -993,288 +1280,297 @@ const Products = () => {
   // RENDER
   // ============================
   return (
-    <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-      {/* Breadcrumb */}
-      <nav className={styles.breadcrumb}>
-        {breadcrumbItems.map((item, i) => (
-          <React.Fragment key={i}>
-            {i > 0 && <span className={styles.breadcrumbSep}>&gt;</span>}
-            {item.path ? (
-              <a href={item.path} className={styles.breadcrumbLink} onClick={(e) => { e.preventDefault(); navigate(item.path); }}>
-                {item.label}
-              </a>
-            ) : (
-              <span className={styles.breadcrumbCurrent}>{item.label}</span>
-            )}
-          </React.Fragment>
-        ))}
-      </nav>
-
-      <div className={styles.layout}>
-        {/* ===== Desktop filter sidebar ===== */}
-        <aside className={styles.sidebar}>
-          <div className={styles.sidebarHeader}>
-            <h3 className={styles.sidebarTitle}>Filters</h3>
-            {hasActiveFilters && (
-              <button className={styles.clearLink} onClick={clearAllFilters}>
-                Clear All
-              </button>
-            )}
-          </div>
-          {renderFilters(false)}
-        </aside>
-
-        {/* ===== Main content ===== */}
-        <main className={styles.main} ref={mainRef}>
-          {/* Sort bar */}
-          <div className={styles.sortBar}>
-            <div className={styles.sortBarLeft}>
-              {/* Mobile filter trigger */}
-              <button
-                className={styles.mobileFilterBtn}
-                onClick={() => setMobileFiltersOpen(true)}
-                ref={mobileTriggerRef}
-                aria-haspopup="dialog"
-                aria-expanded={mobileFiltersOpen}
-              >
-                <FilterIcon />
-                <span>Filters</span>
-                {hasActiveFilters && <span className={styles.filterBadge} />}
-              </button>
-
-              <span className={styles.resultsCount}>
-                {loading ? (
-                  "Loading products…"
-                ) : fetchError ? (
-                  "Couldn't load products"
-                ) : filteredProducts.length === 0 ? (
-                  "No products found"
-                ) : filteredProducts.length > perPage ? (
-                  <>
-                    Showing{" "}
-                    <strong>
-                      {(safePage - 1) * perPage + 1}&ndash;
-                      {Math.min(safePage * perPage, filteredProducts.length)}
-                    </strong>{" "}
-                    of <strong>{filteredProducts.length}</strong> products
-                  </>
-                ) : (
-                  <>
-                    Showing <strong>{filteredProducts.length}</strong>{" "}
-                    {filteredProducts.length === 1 ? "product" : "products"}
-                  </>
-                )}
-              </span>
-            </div>
-
-            <div className={styles.sortBarRight}>
-              <label className={styles.sortLabel}>
-                Sort by:
-                <select
-                  value={sortBy}
-                  onChange={(e) => handleSortChange(e.target.value)}
-                  className={styles.sortSelect}
-                >
-                  {SORT_OPTIONS.map((opt) => (
-                    <option key={opt.value} value={opt.value}>
-                      {opt.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-
-              <div className={styles.viewToggle}>
-                <button
-                  className={`${styles.viewBtn} ${viewMode === "grid" ? styles.viewBtnActive : ""}`}
-                  onClick={() => setViewMode("grid")}
-                  aria-label="Grid view"
-                >
-                  <GridIcon />
-                </button>
-                <button
-                  className={`${styles.viewBtn} ${viewMode === "list" ? styles.viewBtnActive : ""}`}
-                  onClick={() => setViewMode("list")}
-                  aria-label="List view"
-                >
-                  <ListIcon />
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Product grid / list */}
-          {loading ? (
-            <div className={`${styles.grid} ${viewMode === "list" ? styles.gridList : ""}`}>
-              {Array.from({ length: perPage }).map((_, i) => (
-                <SkeletonCard key={i} />
-              ))}
-            </div>
-          ) : fetchError ? (
-            /* Fetch failed — never masquerade as "No products found" */
-            <div className={styles.emptyState}>
-              <div className={styles.errorIcon}>
-                <svg width="56" height="56" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="12" cy="12" r="10" />
-                  <line x1="12" y1="8" x2="12" y2="12" />
-                  <line x1="12" y1="16" x2="12.01" y2="16" />
-                </svg>
-              </div>
-              <h3 className={styles.emptyTitle}>Couldn't load products</h3>
-              <p className={styles.emptyText}>
-                Something went wrong while fetching the catalogue. Please check
-                your connection and try again.
-              </p>
-              <button className={styles.emptyBtn} onClick={fetchCatalog}>
-                Try Again
-              </button>
-            </div>
-          ) : paginatedProducts.length > 0 ? (
-            <div className={`${styles.grid} ${viewMode === "list" ? styles.gridList : ""}`}>
-              {paginatedProducts.map((product, index) => renderProductCard(product, index))}
-            </div>
+    <div>
+      {/* ===== Page header ===== */}
+      <header className={styles.header}>
+        <div className="sf-container sf-container--wide">
+          {headerPending ? (
+            <span className={styles.skeletonCrumbs} aria-hidden="true">
+              <span className="sf-skeleton" />
+              <span className="sf-skeleton" />
+            </span>
           ) : (
-            <div className={styles.emptyState}>
-              <EmptyIllustration />
-              <h3 className={styles.emptyTitle}>No products found</h3>
-              <p className={styles.emptyText}>
-                {urlSearch ? (
-                  <>
-                    We could not find any products matching{" "}
-                    <strong>&ldquo;{urlSearch}&rdquo;</strong>. Try a different
-                    search or adjust your filters.
-                  </>
-                ) : (
-                  "We could not find any products matching your criteria. Try adjusting your filters."
+            <Breadcrumb items={breadcrumbItems} className={styles.crumbs} />
+          )}
+          <h1 className={`sf-display-lg ${styles.title}`}>
+            {headerPending && !urlSearch ? (
+              <span className={`sf-skeleton ${styles.skeletonTitle}`} aria-hidden="true" />
+            ) : (
+              heading
+            )}
+          </h1>
+          {headerPending && !urlSearch ? (
+            <span className={styles.skeletonIntro} aria-hidden="true">
+              <span className={`sf-skeleton ${styles.skeletonIntroLine}`} />
+              <span className={`sf-skeleton ${styles.skeletonIntroLine}`} />
+              <span className={`sf-skeleton ${styles.skeletonIntroLine}`} />
+            </span>
+          ) : (
+            intro && <p className={styles.intro}>{intro}</p>
+          )}
+        </div>
+      </header>
+
+      <div className={`sf-container sf-container--wide ${styles.layout}`}>
+        {/* ===== Filter rail (from 1024px) ===== */}
+        <section className={styles.rail} aria-labelledby={`${uid}filters`}>
+          <div className={styles.railHeader}>
+            <h2 id={`${uid}filters`} className={styles.railTitle}>
+              Filters
+            </h2>
+            {hasActiveFilters && (
+              <button type="button" className="sf-btn sf-btn--link" onClick={clearAllFromPage}>
+                Clear all
+              </button>
+            )}
+          </div>
+          {renderFilters("rail")}
+        </section>
+
+        {/* ===== Results ===== */}
+        <section className={styles.results} ref={mainRef} aria-label="Results">
+          {/* Toolbar: Filters (below 1024px), Sort; sticky under the header on phones */}
+          <div className={styles.toolbar}>
+            <button
+              type="button"
+              className={`sf-btn sf-btn--ghost ${styles.filtersButton}`}
+              onClick={openFilters}
+              aria-haspopup="dialog"
+              aria-expanded={mobileFiltersOpen}
+            >
+              <span className={`sf-btn__icon ${styles.filtersIcon}`}>
+                <FiltersIcon />
+              </span>
+              Filters
+              {activeFilterCount > 0 && (
+                <>
+                  <span className={`sf-count ${styles.filtersCount}`} aria-hidden="true">
+                    {activeFilterCount}
+                  </span>
+                  <span className="sf-visually-hidden">, {activeFilterCount} applied</span>
+                </>
+              )}
+            </button>
+
+            <div className={styles.sort}>
+              <label className={styles.sortLabel} htmlFor={`${uid}sort`}>
+                Sort
+              </label>
+              <select
+                id={`${uid}sort`}
+                className={`sf-select ${styles.sortSelect}`}
+                value={sortBy}
+                onChange={(e) => handleSortChange(e.target.value)}
+              >
+                {SORT_OPTIONS.map((opt) => (
+                  <option key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          <p className={styles.count} aria-live="polite" aria-atomic="true">
+            {loading ? (
+              "Loading products…"
+            ) : fetchError ? (
+              "Couldn't load products"
+            ) : filteredProducts.length === 0 ? (
+              "No products found"
+            ) : filteredProducts.length > perPage ? (
+              <>
+                Showing{" "}
+                <strong>
+                  {(safePage - 1) * perPage + 1}&ndash;
+                  {Math.min(safePage * perPage, filteredProducts.length)}
+                </strong>{" "}
+                of <strong>{filteredProducts.length}</strong> products
+              </>
+            ) : (
+              <>
+                Showing <strong>{filteredProducts.length}</strong>{" "}
+                {filteredProducts.length === 1 ? "product" : "products"}
+              </>
+            )}
+          </p>
+
+          <div className={styles.view} role="group" aria-label="View">
+            <button
+              type="button"
+              className={styles.viewButton}
+              aria-pressed={viewMode === "grid"}
+              aria-label="Grid view"
+              onClick={() => setViewMode("grid")}
+            >
+              <GridIcon />
+            </button>
+            <button
+              type="button"
+              className={styles.viewButton}
+              aria-pressed={viewMode === "list"}
+              aria-label="List view"
+              onClick={() => setViewMode("list")}
+            >
+              <ListIcon />
+            </button>
+          </div>
+
+          {/* Applied filters */}
+          {appliedFilters.length > 0 && (
+            <div className={styles.applied}>
+              <ul className={styles.chips} aria-label="Applied filters">
+                {appliedFilters.map((filter) =>
+                  filter.isPending ? (
+                    <li key={filter.key} aria-hidden="true">
+                      <span className={`sf-skeleton ${styles.chipSkeleton}`} />
+                    </li>
+                  ) : (
+                    <li key={filter.key}>
+                      <button
+                        type="button"
+                        className={`sf-chip ${styles.chip}`}
+                        aria-label={`Remove ${filter.name || filter.label}`}
+                        onClick={filter.onRemove}
+                      >
+                        {filter.label}
+                        <span className={styles.chipIcon}>
+                          <RemoveIcon />
+                        </span>
+                      </button>
+                    </li>
+                  )
                 )}
-              </p>
-              {hasAnyConstraint && (
-                <button className={styles.emptyBtn} onClick={clearAllFilters}>
-                  Clear All Filters
+              </ul>
+              {appliedFilters.length > 1 && (
+                <button
+                  type="button"
+                  className={`sf-btn sf-btn--link ${styles.appliedClear}`}
+                  onClick={clearAllFromPage}
+                >
+                  Clear all
                 </button>
               )}
             </div>
           )}
 
+          {/* Product grid / list. The loading region and the results region
+              are separate elements: the results replace the skeletons rather
+              than the skeletons' region moving to make room for them. */}
+          <div
+            key={loading ? "loading" : "results"}
+            className={styles.body}
+            aria-busy={loading || undefined}
+          >
+            {renderResults()}
+          </div>
+
           {/* Pagination */}
           {!loading && filteredProducts.length > perPage && (
-            <div className={styles.pagination}>
-              <div className={styles.paginationLeft}>
-                <label className={styles.perPageLabel}>
-                  Items per page:
-                  <select
-                    value={perPage}
-                    onChange={(e) => handlePerPageChange(Number(e.target.value))}
-                    className={styles.perPageSelect}
-                  >
-                    {PER_PAGE_OPTIONS.map((n) => (
-                      <option key={n} value={n}>{n}</option>
-                    ))}
-                  </select>
+            <nav className={styles.pagination} aria-label="Pagination">
+              <div className={styles.perPage}>
+                <label className={styles.perPageLabel} htmlFor={`${uid}per-page`}>
+                  Per page
                 </label>
+                <select
+                  id={`${uid}per-page`}
+                  className={`sf-select ${styles.perPageSelect}`}
+                  value={perPage}
+                  onChange={(e) => handlePerPageChange(Number(e.target.value))}
+                >
+                  {PER_PAGE_OPTIONS.map((n) => (
+                    <option key={n} value={n}>{n}</option>
+                  ))}
+                </select>
               </div>
 
-              <div className={styles.paginationCenter}>
+              <div className={styles.pager}>
                 <button
-                  className={styles.pageBtn}
+                  type="button"
+                  className={`sf-btn sf-btn--ghost ${styles.step} ${styles.stepPrevious}`}
                   disabled={safePage <= 1}
                   onClick={() => handlePageChange(safePage - 1)}
                   aria-label="Previous page"
                 >
-                  <ChevronLeft />
-                  <span className={styles.pageBtnText}>Prev</span>
+                  <span className="sf-btn__icon">
+                    <ChevronLeft />
+                  </span>
+                  <span className={styles.stepText}>Previous</span>
                 </button>
 
-                {paginationRange.map((item, i) =>
-                  item === "..." ? (
-                    <span key={`ellipsis-${i}`} className={styles.pageEllipsis}>
-                      ...
-                    </span>
-                  ) : (
-                    <button
-                      key={item}
-                      className={`${styles.pageBtn} ${safePage === item ? styles.pageBtnActive : ""}`}
-                      onClick={() => handlePageChange(item)}
-                    >
-                      {item}
-                    </button>
-                  )
-                )}
+                <ol className={styles.pages}>
+                  {paginationRange.map((item, i) =>
+                    item === "..." ? (
+                      <li key={`ellipsis-${i}`} className={styles.ellipsis} aria-hidden="true">
+                        &hellip;
+                      </li>
+                    ) : (
+                      <li key={item}>
+                        <button
+                          type="button"
+                          className={styles.pageButton}
+                          aria-current={safePage === item ? "page" : undefined}
+                          aria-label={`Page ${item}`}
+                          onClick={() => handlePageChange(item)}
+                        >
+                          {item}
+                        </button>
+                      </li>
+                    )
+                  )}
+                </ol>
 
                 <button
-                  className={styles.pageBtn}
+                  type="button"
+                  className={`sf-btn sf-btn--ghost ${styles.step} ${styles.stepNext}`}
                   disabled={safePage >= totalPages}
                   onClick={() => handlePageChange(safePage + 1)}
                   aria-label="Next page"
                 >
-                  <span className={styles.pageBtnText}>Next</span>
-                  <ChevronRight />
+                  <span className={styles.stepText}>Next</span>
+                  <span className="sf-btn__icon">
+                    <ChevronRight />
+                  </span>
                 </button>
               </div>
 
-              <div className={styles.paginationRight}>
-                <span className={styles.pageInfo}>
-                  Page {safePage} of {totalPages}
-                </span>
-              </div>
-            </div>
+              <p className={styles.pageInfo}>
+                Page {safePage} of {totalPages}
+              </p>
+            </nav>
           )}
-        </main>
+        </section>
       </div>
 
-      {/* ===== Mobile filter bottom sheet ===== */}
-      <AnimatePresence>
-        {mobileFiltersOpen && (
-          <motion.div
-            className={styles.overlay}
-            onClick={() => setMobileFiltersOpen(false)}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
-          >
-            <motion.div
-              className={styles.bottomSheet}
-              role="dialog"
-              aria-modal="true"
-              aria-label="Product filters"
-              initial={{ y: "100%" }}
-              animate={{ y: 0 }}
-              exit={{ y: "100%" }}
-              transition={{ type: "spring", damping: 30, stiffness: 300 }}
-              onClick={(e) => e.stopPropagation()}
+      {/* ===== Filter sheet (below 1024px) ===== */}
+      <BottomDrawer
+        open={mobileFiltersOpen}
+        onClose={closeFilters}
+        title="Filters"
+        maxHeight="85vh"
+        footer={
+          <>
+            <button
+              type="button"
+              className={`sf-btn sf-btn--ghost ${styles.sheetClear}`}
+              onClick={clearAllFromPage}
+              disabled={!hasAnyConstraint}
             >
-              <div className={styles.bottomSheetHeader}>
-                <h3 className={styles.bottomSheetTitle}>Filters</h3>
-                <button
-                  className={styles.bottomSheetClose}
-                  onClick={() => setMobileFiltersOpen(false)}
-                  aria-label="Close filters"
-                  ref={sheetCloseRef}
-                >
-                  <CloseIcon />
-                </button>
-              </div>
-              <div className={styles.bottomSheetBody}>{renderFilters(true)}</div>
-              <div className={styles.bottomSheetFooter}>
-                <button
-                  className={styles.bottomSheetClearBtn}
-                  onClick={clearAllFilters}
-                  disabled={!hasAnyConstraint}
-                >
-                  Clear All
-                </button>
-                <button
-                  className={styles.bottomSheetApplyBtn}
-                  onClick={() => setMobileFiltersOpen(false)}
-                >
-                  Show {filteredProducts.length}{" "}
-                  {filteredProducts.length === 1 ? "Result" : "Results"}
-                </button>
-              </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+              Clear all
+            </button>
+            <button
+              type="button"
+              className={`sf-btn sf-btn--primary ${styles.sheetApply}`}
+              onClick={closeFilters}
+            >
+              Show {filteredProducts.length}{" "}
+              {filteredProducts.length === 1 ? "result" : "results"}
+            </button>
+          </>
+        }
+      >
+        {renderFilters("sheet")}
+      </BottomDrawer>
     </div>
   );
 };
