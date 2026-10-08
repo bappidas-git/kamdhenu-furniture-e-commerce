@@ -1,329 +1,453 @@
-import React, { useState, useEffect, useMemo, useCallback, useRef } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
+import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
 import apiService from "../../services/api";
+import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
+import { Reveal, SectionHeading, staggerDelay } from "../../components/ui";
+import { TOKENS } from "../../theme/tokens";
 import {
   formatCurrency,
   getProductMinPrice,
   getProductMaxDiscount,
-  buildCartItem,
-  productPath,
   copyToClipboard,
-  truncateText,
-  onImageError,
 } from "../../utils/helpers";
-import { resolveCountdownTarget, diffToParts } from "../../utils/dealsConfig";
+import {
+  rupees,
+  formatExpiry,
+  couponHeadline,
+  isCouponValid,
+  pickByIds,
+  pad,
+  useDealsCountdown,
+  timeLeftLabel,
+  chipContexts,
+} from "./offersData";
 import styles from "./SpecialOffers.module.css";
 
-// ── Coupon display helpers ───────────────────────────────────────────────────
-// Coupons shown here come from the same store the Admin manages and Checkout
-// validates against (apiService.coupons), so every advertised code redeems.
+// =============================================================================
+// Special Offers — /special-offers (Prompt 19)
+// =============================================================================
+// Admin-managed from top to bottom: the dealsConfig record (DealsConfigContext)
+// switches the page on or off, writes the hero's copy, sets the countdown and
+// picks the coupons, the deal of the day and the grid (each in the admin's
+// order, or automatic when the list is empty; rules in offersData.js and the
+// memos below, unchanged from the boilerplate).
+//
+// Paper and hairlines, no gradient and no urgency of our own:
+//   • the hero: the admin's tag (eyebrow), title (serif h1) and subtitle, then
+//     the countdown as one hairline row, only when the config runs a timer, or
+//     the "ended" note when a fixed end has passed with onExpiry "hide";
+//   • "Codes to use at checkout": the coupons as hairline tickets (value stub,
+//     a notched hairline, the terms, the code and a "Copy code" button);
+//   • "Deal of the day": three storefront cards with "You save ₹X" under each;
+//   • "All offers": the category chips (one row that scrolls sideways) over a
+//     grid of storefront cards that re-flows with AnimatePresence popLayout.
+// States: the config loading (the hero and four tickets in sand), the page
+// switched off, the data loading (skeletons in the final layout), a failed
+// read (a sand panel with "Try again") and nothing on offer.
+//
+// Accessibility: the countdown is role="timer", named by a summary that
+// changes at most once a minute ("Offers end in 5 hours and 12 minutes"); its
+// ticking figures are hidden from assistive technology. The chips are
+// aria-pressed toggles; a status line says what the grid shows. Each copy
+// button is named "Copy coupon code X", and a status line says whether the
+// code was copied.
+// =============================================================================
 
-// Compact rupee figure for promo copy — round values read cleaner without paise.
-const rupees = (n) => `₹${Math.round(Number(n) || 0).toLocaleString("en-IN")}`;
+// How long a copy button reads "Copied" (or "Couldn't copy").
+const COPY_FEEDBACK_MS = 2000;
+// Skeleton counts while the data loads: the admin's selection when there is
+// one (capped), else a typical automatic set.
+const skeletonCount = (ids, fallback, cap) => Math.min(ids?.length || fallback, cap);
 
-// Expiry shown on a coupon card — the same instant the checkout enforces.
-const formatExpiry = (iso) =>
-  new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
+const { duration, easeOut, easeInOut } = TOKENS.motion;
+// Grid cards entering after a chip press: 40ms apart for the first eight.
+const ENTER_STAGGER = 0.04;
 
-// Headline figure on a coupon's stub: "20%" for percentage, "₹500" for fixed.
-const couponHeadline = (c) => (c.type === "percentage" ? `${c.value}%` : rupees(c.value));
+const CheckGlyph = () => (
+  <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
+    <path
+      d="M5 12.5l4.5 4.5L19 7.5"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
-// Only advertise coupons a shopper can actually redeem right now: active, not
-// past expiry, not usage-exhausted — the same gates checkout enforces.
-// (minOrderAmount is order-dependent, so it's shown on the card instead.)
-const isCouponValid = (c, now = new Date()) =>
-  c &&
-  c.isActive !== false &&
-  (!c.expiresAt || new Date(c.expiresAt) > now) &&
-  !(c.usageLimit && c.usedCount >= c.usageLimit);
+const Chevron = ({ back }) => (
+  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+    <path
+      d={back ? "M14.5 5.5 8 12l6.5 6.5" : "M9.5 5.5 16 12l-6.5 6.5"}
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.5"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+    />
+  </svg>
+);
 
-// Resolve an ordered id selection against a list, preserving the admin order and
-// dropping ids that no longer exist.
-const pickByIds = (items, ids) => {
-  const byId = new Map(items.map((it) => [String(it.id), it]));
-  return (ids || []).map((id) => byId.get(String(id))).filter(Boolean);
-};
+// ── Countdown ────────────────────────────────────────────────────────────────
+// The admin's countdown, the "ended" note, or nothing; the rules are
+// useDealsCountdown's, and showCountdown / timerEnded are computed as before.
+// In its own component so the once-a-second tick re-renders this row only.
+const OfferCountdown = ({ timer }) => {
+  const countdown = useDealsCountdown(timer);
+  const showCountdown = timer?.enabled !== false && countdown.show;
+  const timerEnded = timer?.enabled !== false && countdown.ended;
 
-const pad = (n) => String(n).padStart(2, "0");
-
-// ── Countdown Hook (admin-configured) ────────────────────────────────────────
-// Targets the admin's window (fixed end date, or end-of-day when none) and
-// re-evaluates each second so a fixed end can expire live and honour onExpiry.
-const computeCountdown = (timer) => {
-  const r = resolveCountdownTarget(timer);
-  if (!r.active) {
-    return { show: false, ended: !!r.ended, parts: { hours: 0, minutes: 0, seconds: 0 } };
-  }
-  return { show: true, ended: false, parts: diffToParts(r.target) };
-};
-
-const useDealsCountdown = (timer) => {
-  const [state, setState] = useState(() => computeCountdown(timer));
-  const enabled = timer?.enabled;
-  const endAt = timer?.endAt;
-  const onExpiry = timer?.onExpiry;
-
-  useEffect(() => {
-    setState(computeCountdown({ enabled, endAt, onExpiry }));
-    const id = setInterval(
-      () => setState(computeCountdown({ enabled, endAt, onExpiry })),
-      1000
-    );
-    return () => clearInterval(id);
-  }, [enabled, endAt, onExpiry]);
-
-  return state;
-};
-
-// ── Star Rating ──────────────────────────────────────────────────────────────
-
-const StarRating = ({ rating, reviewCount }) => {
-  const fullStars = Math.floor(rating);
-  const hasHalf = rating - fullStars >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
-
-  return (
-    <div className={styles.starRating}>
-      {Array.from({ length: fullStars }, (_, i) => (
-        <span key={`f${i}`} className={styles.starFull}>&#9733;</span>
-      ))}
-      {hasHalf && <span className={styles.starHalf}>&#9733;</span>}
-      {Array.from({ length: Math.max(0, emptyStars) }, (_, i) => (
-        <span key={`e${i}`} className={styles.starEmpty}>&#9733;</span>
-      ))}
-      <span className={styles.reviewCount}>({reviewCount?.toLocaleString() || 0})</span>
-    </div>
-  );
-};
-
-// ── Responsive Category Tabs ─────────────────────────────────────────────────
-// Horizontally scrollable strip that never hides a tab: edge-fade affordances +
-// scroll buttons appear when there's more off-screen, and the active tab is
-// scrolled into view. Buttons are hidden on touch/mobile (CSS) where the strip
-// scrolls by swipe.
-const CategoryTabs = ({ categories, activeTab, onChange }) => {
-  const scrollRef = useRef(null);
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(true);
-
-  const updateEdges = useCallback(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const { scrollLeft, scrollWidth, clientWidth } = el;
-    setAtStart(scrollLeft <= 1);
-    setAtEnd(scrollLeft + clientWidth >= scrollWidth - 1);
-  }, []);
-
-  useEffect(() => {
-    updateEdges();
-    const el = scrollRef.current;
-    if (!el) return undefined;
-    el.addEventListener("scroll", updateEdges, { passive: true });
-    window.addEventListener("resize", updateEdges);
-    return () => {
-      el.removeEventListener("scroll", updateEdges);
-      window.removeEventListener("resize", updateEdges);
-    };
-  }, [updateEdges, categories.length]);
-
-  // Keep the active tab visible when it changes.
-  useEffect(() => {
-    const el = scrollRef.current;
-    if (!el) return;
-    const active = el.querySelector('[data-active="true"]');
-    if (active) active.scrollIntoView({ inline: "center", block: "nearest", behavior: "smooth" });
-  }, [activeTab]);
-
-  const scrollByDir = (dir) => {
-    const el = scrollRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * Math.max(180, el.clientWidth * 0.6), behavior: "smooth" });
-  };
-
-  return (
-    <div className={styles.tabBarWrap}>
-      <button
-        type="button"
-        className={`${styles.tabScrollBtn} ${styles.tabScrollLeft} ${atStart ? styles.tabScrollHidden : ""}`}
-        onClick={() => scrollByDir(-1)}
-        aria-label="Scroll categories left"
-        tabIndex={atStart ? -1 : 0}
-      >
-        &#8249;
-      </button>
-      <div className={`${styles.tabFade} ${styles.tabFadeLeft} ${atStart ? styles.tabFadeHidden : ""}`} />
-
-      <div className={styles.tabBar} ref={scrollRef}>
-        <button
-          type="button"
-          data-active={activeTab === "all"}
-          className={`${styles.tab} ${activeTab === "all" ? styles.tabActive : ""}`}
-          onClick={() => onChange("all")}
-        >
-          All Deals
-        </button>
-        {categories.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            data-active={activeTab === cat.id}
-            className={`${styles.tab} ${activeTab === cat.id ? styles.tabActive : ""}`}
-            onClick={() => onChange(cat.id)}
-          >
-            {cat.name}
-          </button>
-        ))}
-      </div>
-
-      <div className={`${styles.tabFade} ${styles.tabFadeRight} ${atEnd ? styles.tabFadeHidden : ""}`} />
-      <button
-        type="button"
-        className={`${styles.tabScrollBtn} ${styles.tabScrollRight} ${atEnd ? styles.tabScrollHidden : ""}`}
-        onClick={() => scrollByDir(1)}
-        aria-label="Scroll categories right"
-        tabIndex={atEnd ? -1 : 0}
-      >
-        &#8250;
-      </button>
-    </div>
-  );
-};
-
-// ── Product Card ─────────────────────────────────────────────────────────────
-
-const ProductCard = ({ product, categoryName, onAddToCart, onToggleWishlist, isWishlisted, index }) => {
-  const navigate = useNavigate();
-  const minPrice = getProductMinPrice(product);
-  const maxDiscount = getProductMaxDiscount(product);
-
-  const handleAddToCart = (e) => {
-    e.stopPropagation();
-    onAddToCart(product);
-  };
-
-  const handleWishlist = (e) => {
-    e.stopPropagation();
-    onToggleWishlist(product);
-  };
-
-  return (
-    <motion.div
-      className={styles.productCard}
-      initial={{ opacity: 0, y: 24 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: -16 }}
-      transition={{ duration: 0.3, delay: Math.min(index * 0.04, 0.4) }}
-      layout
-      onClick={() => navigate(productPath(product))}
-    >
-      <div className={styles.productImageWrap}>
-        <img
-          src={product.images?.[0] || product.image || "https://placehold.co/600x400?text=No+Image"}
-          alt={product.name}
-          className={styles.productImage}
-          loading="lazy"
-          onError={onImageError}
-        />
-        {maxDiscount > 0 && (
-          <span className={styles.discountBadge}>-{maxDiscount}%</span>
-        )}
-        <button
-          className={`${styles.wishlistBtn} ${isWishlisted ? styles.wishlisted : ""}`}
-          onClick={handleWishlist}
-          aria-label={isWishlisted ? "Remove from wishlist" : "Add to wishlist"}
-        >
-          {isWishlisted ? "❤" : "♡"}
-        </button>
-        <div className={styles.productOverlay}>
-          <button
-            className={styles.quickViewBtn}
-            onClick={(e) => {
-              e.stopPropagation();
-              navigate(productPath(product));
-            }}
-          >
-            Quick View
-          </button>
-        </div>
-      </div>
-
-      <div className={styles.productInfo}>
-        {categoryName && <span className={styles.productCategory}>{categoryName}</span>}
-        <h3 className={styles.productName}>{truncateText(product.name, 48)}</h3>
-        <StarRating rating={product.rating || 0} reviewCount={product.totalReviews || 0} />
-
-        <div className={styles.priceRow}>
-          <span className={styles.salePrice}>
-            {formatCurrency(minPrice.sellingPrice, minPrice.currency)}
+  if (showCountdown) {
+    const { hours, minutes, seconds } = countdown.parts;
+    return (
+      <div className={styles.countdown}>
+        {/* The figures tick every second; what assistive technology reads is
+            the summary in aria-label, which changes at most once a minute. */}
+        <div className={styles.timer} role="timer" aria-label={timeLeftLabel(countdown.parts)}>
+          <span className={styles.timerLabel} aria-hidden="true">
+            Offers end in
           </span>
-          {maxDiscount > 0 && (
-            <>
-              <span className={styles.originalPrice}>
-                {formatCurrency(minPrice.originalPrice, minPrice.currency)}
-              </span>
-              <span className={styles.discountPercent}>{maxDiscount}% off</span>
-            </>
-          )}
+          <span className={styles.clock} aria-hidden="true">
+            <span className={styles.unit}>
+              <span className={styles.figure}>{pad(hours)}</span>
+              <span className={`sf-eyebrow ${styles.unitLabel}`}>Hours</span>
+            </span>
+            <span className={styles.separator}>:</span>
+            <span className={styles.unit}>
+              <span className={styles.figure}>{pad(minutes)}</span>
+              <span className={`sf-eyebrow ${styles.unitLabel}`}>Minutes</span>
+            </span>
+            <span className={styles.separator}>:</span>
+            <span className={styles.unit}>
+              <span className={styles.figure}>{pad(seconds)}</span>
+              <span className={`sf-eyebrow ${styles.unitLabel}`}>Seconds</span>
+            </span>
+          </span>
         </div>
-
-        <button className={styles.addToCartBtn} onClick={handleAddToCart}>
-          Add to Cart
-        </button>
       </div>
-    </motion.div>
+    );
+  }
+
+  if (timerEnded) {
+    return (
+      <div className={styles.countdown}>
+        <p className={styles.ended}>This round of offers has ended. Prices shown are current.</p>
+      </div>
+    );
+  }
+
+  return null;
+};
+
+// ── Skeletons ────────────────────────────────────────────────────────────────
+// Sand blocks in the boxes the content will take; hidden from assistive
+// technology (the loading region is aria-busy).
+
+// A SectionHeading's eyebrow and title.
+const HeadingSkeleton = () => (
+  <div className={styles.headingSkeleton} aria-hidden="true">
+    <span className={`sf-skeleton ${styles.skeletonEyebrow}`} />
+    <span className={styles.skeletonHeadingLine}>
+      <span className="sf-skeleton" />
+    </span>
+  </div>
+);
+
+const TicketSkeleton = () => (
+  <div className={`${styles.ticket} ${styles.ticketSkeleton}`} aria-hidden="true">
+    <span className={styles.stub}>
+      <span className={`sf-skeleton ${styles.skeletonValue}`} />
+      <span className={`sf-skeleton ${styles.skeletonOff}`} />
+    </span>
+    <span className={styles.details}>
+      <span className={styles.skeletonDescription}>
+        <span className="sf-skeleton" />
+        <span className="sf-skeleton" />
+      </span>
+      <span className={styles.skeletonTerms}>
+        <span className="sf-skeleton" />
+      </span>
+      <span className={styles.skeletonTerms}>
+        <span className="sf-skeleton" />
+      </span>
+      <span className={styles.codeRow}>
+        <span className={`sf-skeleton ${styles.skeletonCode}`} />
+        <span className={`sf-skeleton ${styles.skeletonCopy}`} />
+      </span>
+    </span>
+  </div>
+);
+
+const TicketSkeletons = ({ count }) => (
+  <ul className={styles.tickets} aria-hidden="true">
+    {Array.from({ length: count }, (_, i) => (
+      <li key={i} className={styles.ticketItem}>
+        <TicketSkeleton />
+      </li>
+    ))}
+  </ul>
+);
+
+// While the config loads: the hero (eyebrow, the title's and the subtitle's
+// lines, the countdown row) and the coupons section with four tickets.
+const PageSkeleton = () => (
+  <div className={styles.page} aria-busy="true">
+    <p className="sf-visually-hidden">Loading offers</p>
+    <div className={styles.hero} aria-hidden="true">
+      <div className="sf-container sf-container--wide">
+        <span className={`sf-skeleton ${styles.skeletonTag}`} />
+        <span className={styles.skeletonTitle}>
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+        </span>
+        <span className={styles.skeletonSubtitle}>
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+        </span>
+        <div className={styles.countdown}>
+          <span className={styles.skeletonClock}>
+            <span className="sf-skeleton" />
+          </span>
+        </div>
+      </div>
+    </div>
+    <div className={styles.section} aria-hidden="true">
+      <div className="sf-container sf-container--wide">
+        <HeadingSkeleton />
+        <TicketSkeletons count={4} />
+      </div>
+    </div>
+  </div>
+);
+
+// ── Coupon ticket ────────────────────────────────────────────────────────────
+// A hairline ticket: the value on the stub, a hairline with a notch at either
+// end, then the terms, the code (selectable, so it can be copied by hand) and
+// the copy button. "Copied" in the success tone for two seconds; the section's
+// status line says it for assistive technology.
+const CouponTicket = ({ coupon, feedback, onCopy }) => {
+  const codeRef = useRef(null);
+  const copied = feedback === "copied";
+  const failed = feedback === "failed";
+
+  return (
+    <div className={styles.ticket}>
+      <p className={styles.stub}>
+        <span className={styles.value}>{couponHeadline(coupon)}</span>{" "}
+        <span className={`sf-eyebrow ${styles.off}`}>off</span>
+      </p>
+      <div className={styles.details}>
+        <p className={styles.description}>{coupon.description || `${couponHeadline(coupon)} off`}</p>
+        <p className={styles.terms}>
+          {coupon.minOrderAmount > 0 ? `Min order ${rupees(coupon.minOrderAmount)}` : "No minimum order"}
+          {coupon.type === "percentage" && coupon.maxDiscount ? (
+            <>
+              <span aria-hidden="true"> · </span>
+              <span className="sf-visually-hidden">, </span>
+              {`Up to ${rupees(coupon.maxDiscount)} off`}
+            </>
+          ) : null}
+        </p>
+        <p className={styles.terms}>
+          {coupon.expiresAt ? (
+            <>
+              Expires <time dateTime={coupon.expiresAt}>{formatExpiry(coupon.expiresAt)}</time>
+            </>
+          ) : (
+            "No expiry"
+          )}
+        </p>
+        <div className={styles.codeRow}>
+          <code ref={codeRef} className={`sf-chip sf-chip--selected ${styles.code}`}>
+            {coupon.code}
+          </code>
+          <button
+            type="button"
+            className={`sf-btn sf-btn--ghost ${styles.copy} ${copied ? styles.copied : ""}`}
+            onClick={() => onCopy(coupon.code, codeRef.current)}
+            aria-label={`Copy coupon code ${coupon.code}`}
+          >
+            {copied ? (
+              <>
+                <span className="sf-btn__icon">
+                  <CheckGlyph />
+                </span>
+                Copied
+              </>
+            ) : failed ? (
+              "Couldn’t copy"
+            ) : (
+              "Copy code"
+            )}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
-// ── Skeleton Loaders ─────────────────────────────────────────────────────────
+// ── Category chips ───────────────────────────────────────────────────────────
+// One row of .sf-chip toggles (aria-pressed) that scrolls sideways: swipe,
+// trackpad, or Tab (each chip scrolls into view as it takes focus). A pressed
+// chip is brought into view with scrollIntoView. On pointer screens from
+// 768px, while the row overflows, two hairline buttons page it left and right
+// (the product rail's buttons). No edge fades.
+const CategoryChips = ({ categories, contexts, activeTab, onSelect }) => {
+  const scrollerId = `${useId()}chips`;
+  const scrollerRef = useRef(null);
+  const listRef = useRef(null);
+  const reduceMotion = useReducedMotion();
+  const [edges, setEdges] = useState({ overflows: false, atStart: true, atEnd: true });
 
-const ProductSkeleton = () => (
-  <div className={styles.productCard}>
-    <div className={`${styles.productImageWrap} ${styles.skeletonImage}`} />
-    <div className={styles.productInfo}>
-      <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
-      <div className={`${styles.skeletonLine} ${styles.skeletonMedium}`} />
-      <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
-      <div className={`${styles.skeletonLine} ${styles.skeletonFull}`} />
-    </div>
-  </div>
-);
+  // Measure the overflow and the scroll position on scroll (once a frame) and
+  // whenever the row or its chips change size.
+  useEffect(() => {
+    const scroller = scrollerRef.current;
+    if (!scroller) return undefined;
+    let frame = 0;
+    const measure = () => {
+      frame = 0;
+      const { scrollLeft, scrollWidth, clientWidth } = scroller;
+      const next = {
+        overflows: scrollWidth > clientWidth + 1,
+        atStart: scrollLeft <= 1,
+        atEnd: scrollLeft + clientWidth >= scrollWidth - 1,
+      };
+      setEdges((prev) =>
+        prev.overflows === next.overflows && prev.atStart === next.atStart && prev.atEnd === next.atEnd
+          ? prev
+          : next
+      );
+    };
+    const schedule = () => {
+      if (!frame) frame = window.requestAnimationFrame(measure);
+    };
+    measure();
+    scroller.addEventListener("scroll", schedule, { passive: true });
+    let observer = null;
+    if (typeof ResizeObserver !== "undefined") {
+      observer = new ResizeObserver(schedule);
+      observer.observe(scroller);
+      if (listRef.current) observer.observe(listRef.current);
+    } else {
+      window.addEventListener("resize", schedule);
+    }
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      scroller.removeEventListener("scroll", schedule);
+      if (observer) observer.disconnect();
+      else window.removeEventListener("resize", schedule);
+    };
+  }, [categories.length]);
 
-const CouponSkeleton = () => (
-  <div className={styles.couponCard}>
-    <div className={styles.couponSkeletonLeft} />
-    <div className={styles.couponRight}>
-      <div className={`${styles.skeletonLine} ${styles.skeletonMedium}`} />
-      <div className={`${styles.skeletonLine} ${styles.skeletonShort}`} />
-      <div className={`${styles.skeletonLine} ${styles.skeletonFull}`} />
+  // "instant" under reduced motion: "auto" would follow the page's smooth
+  // scroll-behavior.
+  const behavior = reduceMotion ? "instant" : "smooth";
+
+  const press = (event, id) => {
+    onSelect(id);
+    event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "center", behavior });
+  };
+
+  const scrollPage = (direction) => {
+    const scroller = scrollerRef.current;
+    scroller?.scrollBy?.({ left: direction * Math.max(180, scroller.clientWidth * 0.6), behavior });
+  };
+
+  const chip = (id, label, context) => (
+    <li key={id}>
+      <button
+        type="button"
+        className={`sf-chip ${styles.chip}`}
+        aria-pressed={activeTab === id}
+        onClick={(event) => press(event, id)}
+      >
+        {label}
+        {context && (
+          <>
+            <span className={styles.chipDot} aria-hidden="true">
+              ·
+            </span>
+            <span className="sf-visually-hidden">, </span>
+            {context}
+          </>
+        )}
+      </button>
+    </li>
+  );
+
+  return (
+    <div className={styles.chipBar} role="group" aria-label="Filter offers by category">
+      <div id={scrollerId} ref={scrollerRef} className={styles.chipScroller}>
+        <ul ref={listRef} className={styles.chipList}>
+          {chip("all", "All")}
+          {categories.map((cat) => chip(cat.id, cat.name, contexts.get(cat.id)))}
+        </ul>
+      </div>
+      {edges.overflows && (
+        <div className={styles.chipNav}>
+          <button
+            type="button"
+            className={`sf-btn sf-btn--icon ${styles.chipNavButton}`}
+            aria-label="Previous categories"
+            aria-controls={scrollerId}
+            aria-disabled={edges.atStart || undefined}
+            onClick={() => !edges.atStart && scrollPage(-1)}
+          >
+            <Chevron back />
+          </button>
+          <button
+            type="button"
+            className={`sf-btn sf-btn--icon ${styles.chipNavButton}`}
+            aria-label="Next categories"
+            aria-controls={scrollerId}
+            aria-disabled={edges.atEnd || undefined}
+            onClick={() => !edges.atEnd && scrollPage(1)}
+          >
+            <Chevron />
+          </button>
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 // ── Main Component ───────────────────────────────────────────────────────────
 
 const SpecialOffers = () => {
-  const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   // The whole page is admin-managed via this config (master toggle, hero,
   // timer, featured coupon/product selections).
   const { config, loading: configLoading } = useDealsConfig();
   const enabled = config.enabled !== false;
+  const reduceMotion = useReducedMotion();
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
+  // A failed read shows the "Try again" panel; `attempt` re-runs the read.
+  const [fetchError, setFetchError] = useState(false);
+  const [attempt, setAttempt] = useState(0);
   const [activeTab, setActiveTab] = useState("all");
-  const [copiedCode, setCopiedCode] = useState(null);
+  // { code, ok } for COPY_FEEDBACK_MS after a copy button is pressed.
+  const [copyResult, setCopyResult] = useState(null);
+  const copyTimer = useRef(0);
+  // After "Try again", focus goes to the codes section (or back to the
+  // button when the read fails again), so it is not lost with the panel.
+  const focusAfterRetry = useRef(false);
+  const codesRef = useRef(null);
+  const retryRef = useRef(null);
 
-  const countdown = useDealsCountdown(config.timer);
+  useEffect(() => () => window.clearTimeout(copyTimer.current), []);
 
   // Fetch products (for deals), categories (for accurate tabs) and the real
   // coupons (so advertised codes match what checkout accepts) in one pass. Only
@@ -337,6 +461,7 @@ const SpecialOffers = () => {
     const fetchData = async () => {
       try {
         setLoading(true);
+        setFetchError(false);
         const [productsData, categoriesData, couponsData] = await Promise.all([
           apiService.products.getAll(),
           apiService.categories.getAll(),
@@ -352,6 +477,7 @@ const SpecialOffers = () => {
         setProducts([]);
         setCategories([]);
         setCoupons([]);
+        setFetchError(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -360,7 +486,13 @@ const SpecialOffers = () => {
     return () => {
       cancelled = true;
     };
-  }, [enabled]);
+  }, [enabled, attempt]);
+
+  useEffect(() => {
+    if (loading || !focusAfterRetry.current) return;
+    focusAfterRetry.current = false;
+    (fetchError ? retryRef.current : codesRef.current)?.focus();
+  }, [loading, fetchError]);
 
   // Coupons to advertise: the admin's ordered selection (kept to valid ones), or
   // — when nothing is selected — every valid active coupon (automatic).
@@ -371,13 +503,6 @@ const SpecialOffers = () => {
     }
     return valid;
   }, [coupons, config.featuredCouponIds]);
-
-  // Map of categoryId → name; products carry a numeric categoryId only.
-  const categoryMap = useMemo(() => {
-    const map = {};
-    categories.forEach((c) => { map[c.id] = c.name; });
-    return map;
-  }, [categories]);
 
   // Discounted products, highest discount first — the automatic deal pool.
   const discountedProducts = useMemo(() => {
@@ -417,19 +542,29 @@ const SpecialOffers = () => {
     }
   }, [dealCategories, activeTab]);
 
+  // A repeated chip name also shows its parent ("High-Back Chairs · Premium").
+  const chipContextById = useMemo(
+    () => chipContexts(dealCategories, categories),
+    [dealCategories, categories]
+  );
+
   // Handlers
-  const handleCopyCode = useCallback(async (code) => {
+  const handleCopyCode = useCallback(async (code, codeElement) => {
     const ok = await copyToClipboard(code);
-    if (ok) {
-      setCopiedCode(code);
-      setTimeout(() => setCopiedCode(null), 2000);
-    }
+    // When the clipboard is unavailable (an insecure page, a denied
+    // permission), leave the code selected so it can be copied by hand.
+    if (!ok && codeElement) window.getSelection?.()?.selectAllChildren(codeElement);
+    setCopyResult({ code, ok });
+    window.clearTimeout(copyTimer.current);
+    copyTimer.current = window.setTimeout(() => setCopyResult(null), COPY_FEEDBACK_MS);
   }, []);
 
   const handleAddToCart = useCallback(
-    // buildCartItem produces the same id scheme (and default variant/price) the
-    // product page uses, so offer adds merge with PDP adds instead of duplicating.
-    (product) => addToCart(buildCartItem(product), 1),
+    // The card hands over buildCartItem(product): the same id scheme (and
+    // default variant/price) the product page uses, so offer adds merge with
+    // PDP adds instead of duplicating. The call is still
+    // addToCart(buildCartItem(product), 1).
+    (cartItem) => addToCart(cartItem, 1),
     [addToCart]
   );
 
@@ -440,306 +575,278 @@ const SpecialOffers = () => {
     [toggleWishlist]
   );
 
+  const handleRetry = () => {
+    focusAfterRetry.current = true;
+    setAttempt((n) => n + 1);
+  };
+
   // ── Master toggle: page hidden ───────────────────────────────────────────────
-  // While the config is still loading we show a neutral loader so a disabled
-  // page never flashes its content first.
-  if (configLoading) {
+  // While the config is still loading we show the page's skeleton, so a
+  // disabled page never flashes its content first.
+  if (configLoading) return <PageSkeleton />;
+
+  if (!enabled) {
     return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.pageLoader}>
-          <div className={styles.spinner} aria-label="Loading" />
-        </div>
+      <div className={`sf-container sf-container--wide ${styles.unavailable}`}>
+        <p className="sf-eyebrow">Offers</p>
+        <h1 className={`sf-display-md ${styles.unavailableTitle}`}>No offers at the moment.</h1>
+        <p className={styles.unavailableText}>The full collection is open as usual.</p>
+        <Link to="/products" className="sf-btn sf-btn--primary sf-btn--lg">
+          Browse all furniture
+        </Link>
       </div>
     );
   }
 
-  if (!enabled) {
-    return (
-      <motion.div
-        className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className={styles.container}>
-          <section className={styles.unavailableState}>
-            <div className={styles.unavailableIcon}>&#128276;</div>
-            <h1 className={styles.unavailableTitle}>No Deals Right Now</h1>
-            <p className={styles.unavailableText}>
-              Our special offers page is taking a short break. Great deals are on their way back —
-              in the meantime, explore our full collection.
-            </p>
-            <button className={styles.emptyBtn} onClick={() => navigate("/products")}>
-              Browse All Products
-            </button>
-          </section>
-        </div>
-      </motion.div>
-    );
-  }
-
-  const showCountdown = config.timer?.enabled !== false && countdown.show;
-  const timerEnded = config.timer?.enabled !== false && countdown.ended;
+  const hero = config.hero || {};
+  const isEmpty = !loading && gridProducts.length === 0 && dealOfTheDay.length === 0;
+  const pieces = (n) => `${n} ${n === 1 ? "piece" : "pieces"}`;
+  const activeCategory = dealCategories.find((c) => c.id === activeTab);
+  const activeLabel = activeCategory
+    ? [activeCategory.name, chipContextById.get(activeCategory.id)].filter(Boolean).join(", ")
+    : "";
+  const copyStatus = copyResult
+    ? copyResult.ok
+      ? `Code ${copyResult.code} copied.`
+      : `Couldn’t copy. The code is ${copyResult.code}.`
+    : "";
 
   // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
-    <motion.div
-      className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      transition={{ duration: 0.3 }}
-    >
-      {/* ── Banner ──────────────────────────────────────────────────────── */}
-      <section className={styles.heroBanner}>
-        <div className={styles.heroContent}>
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            className={styles.heroInner}
-          >
-            {config.hero?.tag && <span className={styles.heroTag}>{config.hero.tag}</span>}
-            <motion.h1
-              className={styles.heroTitle}
-              initial={{ opacity: 0, scale: 0.94 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
-            >
-              {config.hero?.title || "Special Offers & Deals"}
-            </motion.h1>
-            {config.hero?.subtitle && (
-              <p className={styles.heroSubtitle}>{config.hero.subtitle}</p>
-            )}
-            {showCountdown ? (
-              <div className={styles.heroCountdown}>
-                <span className={styles.countdownLabel}>Deals end in:</span>
-                <div className={styles.countdownBoxes}>
-                  <div className={styles.countdownUnit}>
-                    <span className={styles.countdownNumber}>{pad(countdown.parts.hours)}</span>
-                    <span className={styles.countdownText}>Hours</span>
-                  </div>
-                  <span className={styles.countdownSep}>:</span>
-                  <div className={styles.countdownUnit}>
-                    <span className={styles.countdownNumber}>{pad(countdown.parts.minutes)}</span>
-                    <span className={styles.countdownText}>Min</span>
-                  </div>
-                  <span className={styles.countdownSep}>:</span>
-                  <div className={styles.countdownUnit}>
-                    <span className={styles.countdownNumber}>{pad(countdown.parts.seconds)}</span>
-                    <span className={styles.countdownText}>Sec</span>
-                  </div>
-                </div>
-              </div>
-            ) : timerEnded ? (
-              <div className={styles.heroEnded}>These deals have ended — fresh offers coming soon!</div>
-            ) : null}
-          </motion.div>
+    <div className={styles.page}>
+      {/* ── Hero: the admin's copy, then the countdown row ─────────────── */}
+      <header className={styles.hero}>
+        <div className="sf-container sf-container--wide">
+          {hero.tag && <p className={`sf-eyebrow sf-eyebrow--rule ${styles.heroTag}`}>{hero.tag}</p>}
+          <h1 className={`sf-display-xl ${styles.heroTitle}`}>
+            {hero.title || "Special Offers & Deals"}
+          </h1>
+          {hero.subtitle && <p className={styles.heroSubtitle}>{hero.subtitle}</p>}
+          <OfferCountdown timer={config.timer} />
         </div>
-      </section>
+      </header>
 
-      <div className={styles.container}>
-        {/* ── Coupons Section ───────────────────────────────────────────── */}
-        <section className={styles.section}>
-          <div className={styles.sectionHeader}>
-            <h2 className={styles.sectionTitle}>Active Coupons</h2>
-            <p className={styles.sectionSubtitle}>Copy a code and apply it at checkout</p>
-          </div>
-
-          {loading ? (
-            <div className={styles.couponGrid}>
-              {Array.from({ length: 4 }, (_, i) => (
-                <CouponSkeleton key={i} />
-              ))}
-            </div>
-          ) : featuredCoupons.length > 0 ? (
-            <div className={styles.couponGrid}>
-              {featuredCoupons.map((coupon) => (
-                <motion.div
-                  key={coupon.id ?? coupon.code}
-                  className={styles.couponCard}
-                  whileHover={{ y: -4 }}
-                  transition={{ duration: 0.2 }}
+      {fetchError ? (
+        <div className={styles.content}>
+          <section className={styles.section} aria-labelledby="offers-error-title">
+            <div className="sf-container sf-container--wide">
+              <div className={`sf-panel ${styles.state} ${styles.statePanel}`}>
+                <h2 id="offers-error-title" className={styles.stateTitle}>
+                  We couldn’t load the offers.
+                </h2>
+                <p className={styles.stateText}>Please check your connection and try again.</p>
+                <button
+                  ref={retryRef}
+                  type="button"
+                  className="sf-btn sf-btn--primary"
+                  onClick={handleRetry}
                 >
-                  <div className={styles.couponLeft}>
-                    <span className={styles.couponDiscount}>{couponHeadline(coupon)}</span>
-                    <span className={styles.couponLabel}>OFF</span>
-                  </div>
-                  <div className={styles.couponRight}>
-                    <p className={styles.couponDesc}>{coupon.description || `${couponHeadline(coupon)} off`}</p>
-                    <p className={styles.couponMeta}>
-                      {coupon.minOrderAmount > 0 ? `Min order ${rupees(coupon.minOrderAmount)}` : "No minimum order"}
-                      {coupon.type === "percentage" && coupon.maxDiscount
-                        ? ` · Up to ${rupees(coupon.maxDiscount)} off`
-                        : ""}
-                    </p>
-                    <p className={styles.couponMeta}>
-                      {coupon.expiresAt ? `Expires ${formatExpiry(coupon.expiresAt)}` : "No expiry"}
-                    </p>
-                    <div className={styles.couponCodeRow}>
-                      <code className={styles.couponCode}>{coupon.code}</code>
-                      <button
-                        className={`${styles.copyBtn} ${copiedCode === coupon.code ? styles.copied : ""}`}
-                        onClick={() => handleCopyCode(coupon.code)}
-                        aria-label={`Copy coupon code ${coupon.code}`}
+                  Try again
+                </button>
+              </div>
+            </div>
+          </section>
+        </div>
+      ) : (
+        <div className={styles.content} aria-busy={loading || undefined}>
+          {loading && <p className="sf-visually-hidden">Loading offers</p>}
+
+          {/* ── Codes ──────────────────────────────────────────────────── */}
+          <section
+            ref={codesRef}
+            tabIndex={-1}
+            className={`${styles.section} ${styles.focusTarget}`}
+            aria-labelledby="offers-codes-title"
+          >
+            <div className="sf-container sf-container--wide">
+              <SectionHeading
+                id="offers-codes-title"
+                eyebrow="Coupons"
+                title="Codes to use at *checkout*."
+                intro="Copy a code here, then enter it at checkout."
+              />
+              {loading ? (
+                <TicketSkeletons count={skeletonCount(config.featuredCouponIds, 4, 6)} />
+              ) : featuredCoupons.length > 0 ? (
+                <>
+                  <ul className={styles.tickets}>
+                    {featuredCoupons.map((coupon, index) => (
+                      <Reveal
+                        as="li"
+                        key={coupon.id ?? coupon.code}
+                        className={styles.ticketItem}
+                        delay={staggerDelay(index)}
                       >
-                        {copiedCode === coupon.code ? "Copied!" : "Copy Code"}
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              ))}
+                        <CouponTicket
+                          coupon={coupon}
+                          feedback={
+                            copyResult?.code === coupon.code ? (copyResult.ok ? "copied" : "failed") : null
+                          }
+                          onCopy={handleCopyCode}
+                        />
+                      </Reveal>
+                    ))}
+                  </ul>
+                  <p className="sf-visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+                    {copyStatus}
+                  </p>
+                </>
+              ) : (
+                <p className={styles.couponEmpty}>No codes right now.</p>
+              )}
+            </div>
+          </section>
+
+          {/* ── Deal of the day ────────────────────────────────────────── */}
+          {loading ? (
+            <div className={styles.section} aria-hidden="true">
+              <div className="sf-container sf-container--wide">
+                <HeadingSkeleton />
+                <ul className={styles.deals}>
+                  {Array.from({ length: skeletonCount(config.dealOfTheDayIds, 3, 6) }, (_, i) => (
+                    <li key={i} className={styles.deal}>
+                      <ProductCardSkeleton />
+                    </li>
+                  ))}
+                </ul>
+              </div>
             </div>
           ) : (
-            <p className={styles.couponEmpty}>
-              No active coupons right now — check back soon for fresh codes!
-            </p>
+            dealOfTheDay.length > 0 && (
+              <section className={styles.section} aria-labelledby="offers-today-title">
+                <div className="sf-container sf-container--wide">
+                  <SectionHeading id="offers-today-title" eyebrow="Today" title="Deal of the *day*." />
+                  <ul className={styles.deals}>
+                    {dealOfTheDay.map((product, idx) => {
+                      const minPrice = getProductMinPrice(product);
+                      const saving = minPrice.originalPrice - minPrice.sellingPrice;
+                      return (
+                        <Reveal as="li" key={product.id} className={styles.deal} delay={staggerDelay(idx)}>
+                          <ProductCard
+                            product={product}
+                            onAddToCart={handleAddToCart}
+                            onToggleWishlist={handleToggleWishlist}
+                            isWishlisted={isInWishlist(product.id)}
+                          />
+                          {saving > 0 && (
+                            <p className={styles.saving}>
+                              You save{" "}
+                              <span className={styles.savingAmount}>
+                                {formatCurrency(saving, minPrice.currency)}
+                              </span>
+                            </p>
+                          )}
+                        </Reveal>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </section>
+            )
           )}
-        </section>
 
-        {/* ── Deal of the Day ───────────────────────────────────────────── */}
-        {!loading && dealOfTheDay.length > 0 && (
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <div className={styles.sectionTitleRow}>
-                <h2 className={styles.sectionTitle}>Deal of the Day</h2>
-                {showCountdown && (
-                  <div className={styles.dotdTimer}>
-                    <span className={styles.timerIcon}>&#9200;</span>
-                    <span>
-                      {pad(countdown.parts.hours)}:{pad(countdown.parts.minutes)}:{pad(countdown.parts.seconds)}
-                    </span>
-                  </div>
-                )}
+          {/* ── All offers ─────────────────────────────────────────────── */}
+          {loading ? (
+            <div className={styles.section} aria-hidden="true">
+              <div className="sf-container sf-container--wide">
+                <HeadingSkeleton />
+                <div className={styles.chipSkeletons}>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <span key={i} className={`sf-skeleton ${styles.chipSkeleton}`} />
+                  ))}
+                </div>
+                <ul className={styles.grid}>
+                  {Array.from({ length: skeletonCount(config.featuredProductIds, 6, 9) }, (_, i) => (
+                    <li key={i} className={styles.item}>
+                      <ProductCardSkeleton />
+                    </li>
+                  ))}
+                </ul>
               </div>
-              <p className={styles.sectionSubtitle}>Today's top picks at the lowest prices</p>
             </div>
-            <div className={styles.dotdGrid}>
-              {dealOfTheDay.map((product, idx) => {
-                const minPrice = getProductMinPrice(product);
-                const maxDiscount = getProductMaxDiscount(product);
-                const saving = minPrice.originalPrice - minPrice.sellingPrice;
-                return (
-                  <motion.div
-                    key={product.id}
-                    className={styles.dotdCard}
-                    initial={{ opacity: 0, scale: 0.95 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.4, delay: idx * 0.1 }}
-                    onClick={() => navigate(productPath(product))}
-                  >
-                    <div className={styles.dotdImageWrap}>
-                      <img
-                        src={product.images?.[0] || product.image || "https://placehold.co/600x400?text=No+Image"}
-                        alt={product.name}
-                        className={styles.dotdImage}
-                        onError={onImageError}
-                      />
-                      {maxDiscount > 0 && <span className={styles.dotdBadge}>-{maxDiscount}%</span>}
-                    </div>
-                    <div className={styles.dotdInfo}>
-                      <h3 className={styles.dotdName}>{product.name}</h3>
-                      <div className={styles.dotdPriceRow}>
-                        <span className={styles.dotdSalePrice}>
-                          {formatCurrency(minPrice.sellingPrice, minPrice.currency)}
-                        </span>
-                        {maxDiscount > 0 && (
-                          <span className={styles.dotdOriginalPrice}>
-                            {formatCurrency(minPrice.originalPrice, minPrice.currency)}
-                          </span>
-                        )}
-                      </div>
-                      {saving > 0 && (
-                        <p className={styles.dotdSavings}>
-                          You save{" "}
-                          <span className={styles.dotdSavingsAmount}>
-                            {formatCurrency(saving, minPrice.currency)}
-                          </span>
-                        </p>
-                      )}
-                      <button
-                        className={styles.dotdBtn}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleAddToCart(product);
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                    </div>
-                  </motion.div>
-                );
-              })}
-            </div>
-          </section>
-        )}
-
-        {/* ── Deals by Category ─────────────────────────────────────────── */}
-        {!loading && gridProducts.length > 0 && (
-          <section className={styles.section}>
-            <div className={styles.sectionHeader}>
-              <h2 className={styles.sectionTitle}>
-                {dealCategories.length > 0 ? "Deals by Category" : "All Deals"}
-              </h2>
-              <p className={styles.sectionSubtitle}>
-                {filteredProducts.length} deal{filteredProducts.length !== 1 ? "s" : ""} available
-              </p>
-            </div>
-
-            {dealCategories.length > 0 && (
-              <CategoryTabs
-                categories={dealCategories}
-                activeTab={activeTab}
-                onChange={setActiveTab}
-              />
-            )}
-
-            {/* ── Products Grid ─────────────────────────────────────────── */}
-            <div className={styles.productsGrid}>
-              <AnimatePresence mode="popLayout">
-                {filteredProducts.map((product, index) => (
-                  <ProductCard
-                    key={product.id}
-                    product={product}
-                    categoryName={categoryMap[product.categoryId]}
-                    index={index}
-                    onAddToCart={handleAddToCart}
-                    onToggleWishlist={handleToggleWishlist}
-                    isWishlisted={isInWishlist(product.id)}
+          ) : (
+            gridProducts.length > 0 && (
+              <section className={styles.section} aria-labelledby="offers-all-title">
+                <div className="sf-container sf-container--wide">
+                  <SectionHeading
+                    id="offers-all-title"
+                    eyebrow="All offers"
+                    title={`${pieces(gridProducts.length)} on *offer*.`}
                   />
-                ))}
-              </AnimatePresence>
-            </div>
-          </section>
-        )}
+                  {dealCategories.length > 0 && (
+                    <CategoryChips
+                      categories={dealCategories}
+                      contexts={chipContextById}
+                      activeTab={activeTab}
+                      onSelect={setActiveTab}
+                    />
+                  )}
+                  <p className="sf-visually-hidden" role="status" aria-live="polite" aria-atomic="true">
+                    {activeCategory
+                      ? `Showing ${pieces(filteredProducts.length)} in ${activeLabel}.`
+                      : `Showing all ${pieces(gridProducts.length)}.`}
+                  </p>
+                  <Reveal>
+                    <ul className={styles.grid}>
+                      <AnimatePresence mode="popLayout" initial={false}>
+                        {filteredProducts.map((product, index) => (
+                          <motion.li
+                            key={product.id}
+                            className={styles.item}
+                            layout={!reduceMotion}
+                            initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                            animate={{
+                              opacity: 1,
+                              y: 0,
+                              transition: {
+                                duration: duration.base,
+                                ease: easeOut,
+                                delay: Math.min(index, 8) * ENTER_STAGGER,
+                              },
+                            }}
+                            exit={{ opacity: 0, transition: { duration: duration.fast, ease: easeInOut } }}
+                            transition={{ duration: duration.base, ease: easeOut }}
+                          >
+                            <ProductCard
+                              product={product}
+                              onAddToCart={handleAddToCart}
+                              onToggleWishlist={handleToggleWishlist}
+                              isWishlisted={isInWishlist(product.id)}
+                            />
+                          </motion.li>
+                        ))}
+                      </AnimatePresence>
+                    </ul>
+                  </Reveal>
+                </div>
+              </section>
+            )
+          )}
 
-        {/* ── Loading Skeletons ─────────────────────────────────────────── */}
-        {loading && (
-          <section className={styles.section}>
-            <div className={styles.productsGrid}>
-              {Array.from({ length: 8 }, (_, i) => (
-                <ProductSkeleton key={i} />
-              ))}
-            </div>
-          </section>
-        )}
-
-        {/* ── Empty State ───────────────────────────────────────────────── */}
-        {!loading && gridProducts.length === 0 && dealOfTheDay.length === 0 && (
-          <section className={styles.emptyState}>
-            <div className={styles.emptyIcon}>&#127991;</div>
-            <h2 className={styles.emptyTitle}>No Deals Available</h2>
-            <p className={styles.emptyText}>
-              There are no active deals right now. Check back soon for exciting offers!
-            </p>
-            <button className={styles.emptyBtn} onClick={() => navigate("/products")}>
-              Browse All Products
-            </button>
-          </section>
-        )}
-      </div>
-    </motion.div>
+          {/* ── Nothing on offer ───────────────────────────────────────── */}
+          {isEmpty && (
+            <section className={styles.section} aria-labelledby="offers-empty-title">
+              <div className="sf-container sf-container--wide">
+                <div className={styles.state}>
+                  <h2 id="offers-empty-title" className={styles.stateTitle}>
+                    Nothing on offer right now.
+                  </h2>
+                  <p className={styles.stateText}>
+                    {featuredCoupons.length > 0
+                      ? "No pieces are reduced just now, but the codes above still apply at checkout."
+                      : "No pieces are reduced just now."}
+                  </p>
+                  <Link to="/products" className="sf-btn sf-btn--ghost">
+                    Browse all furniture
+                  </Link>
+                </div>
+              </div>
+            </section>
+          )}
+        </div>
+      )}
+    </div>
   );
 };
 

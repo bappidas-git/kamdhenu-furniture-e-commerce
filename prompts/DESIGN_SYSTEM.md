@@ -1651,3 +1651,81 @@ Lines clip their content so the fold reaches 0; each reaches 8px into the gutter
 ### 28.6 Contrast
 
 No new pairs. The drawer uses ink, secondary and muted text on the page tone, the success tone on the page, the accent icons on the page, the focus ring, the primary and ghost buttons, and the ink fill on its sand track (the pair §27.8 already checks for the rating bars), all already in section 14. In forced-colours mode the track is `GrayText` and its fill `CanvasText`.
+
+---
+
+## 29. Special offers
+
+Written by Prompt 19. Files: `src/pages/SpecialOffers/SpecialOffers.js` + `.module.css` (the page) and `src/pages/SpecialOffers/offersData.js` (its rules: the coupon helpers, `isCouponValid`, `pickByIds`, `computeCountdown` and `useDealsCountdown`, moved unchanged; `timeLeftLabel` and `chipContexts`, new). Route `/special-offers`. Everything on it comes from the `dealsConfig` record through `DealsConfigContext`, which Admin → Special Offers writes.
+
+### 29.1 Structure and rhythm
+
+Inside `.sf-container--wide`, on paper:
+
+1. **Hero** (`header`): `config.hero.tag` as `.sf-eyebrow--rule`, `config.hero.title` as the `h1` (`.sf-display-xl`, plain serif: admin text has no accent word; `max-width: 14em`), `config.hero.subtitle` (sans 17px, `--sf-leading-body`, secondary, 52ch), then the countdown row (29.2). No gradient, no image. An empty tag or subtitle is left out; an empty title falls back to "Special Offers & Deals" (the old fallback, the same as `DEFAULT_DEALS_HERO.title`).
+2. **Codes**: `SectionHeading` (eyebrow "Coupons", "Codes to use at *checkout*.", intro "Copy a code here, then enter it at checkout."), then the tickets (29.3).
+3. **Deal of the day**, only when it has pieces: eyebrow "Today", "Deal of the *day*." (29.4).
+4. **All offers**, only when the grid has pieces: eyebrow "All offers", "{n} pieces on *offer*." (29.5).
+5. **Nothing on offer**, when both are empty (29.6).
+
+- Sections are padded by `--sf-section-y` with a full-width hairline between neighbours. The first one after the hero keeps 75% of its top padding (the countdown's hairline already parts them); the last keeps half its bottom padding, since `.main-content` adds its own before the footer.
+- One `h1`; the section titles are `h2`s and name their `section` (`aria-labelledby`).
+
+### 29.2 The countdown
+
+- **Rules (unchanged):** `useDealsCountdown(config.timer)`, with `showCountdown` / `timerEnded` computed as before. The hook runs in a small `OfferCountdown` component, so the once-a-second tick re-renders only that row, not the page's cards.
+- **Row:** hairlines above and below, 20px of padding (24px from 768px). "Offers end in" (sans 14px 500, secondary) beside the clock, which wraps under it on phones; they share the figures' baseline. Figures: Playfair 28px, `lining-nums tabular-nums`, ink; the colons muted; unit labels as eyebrows (Hours, Minutes, Seconds). Hours keep counting past 24 (a fixed end three days out reads 77 : 07 : 30), as the rule always did.
+- **Ended** (`onExpiry: "hide"` and the end has passed): the same row with "This round of offers has ended. Prices shown are current." (16px, muted). **Timer off:** no row at all. The page never shows a countdown the config did not ask for.
+- **Accessibility:** the row is `role="timer"`, named by `timeLeftLabel(parts)`: "Offers end in 5 hours and 12 minutes", "Offers end in 12 minutes", "Offers end in less than a minute". It uses hours and minutes only, so the name changes at most once a minute (React writes the attribute only when the string changes), while the label and the ticking figures inside are `aria-hidden`. A timer is `aria-live="off"` by role, so nothing is announced on its own; a screen reader reads the summary when it reaches the row.
+
+### 29.3 Coupon tickets
+
+- **Data (unchanged):** `coupons.getActive()` → `isCouponValid` → the admin's `featuredCouponIds` in order (`pickByIds`), or every valid coupon when the list is empty.
+- **Grid:** a `ul`, one column, two from 768px (16 / 24px gaps); each ticket reveals with `Reveal` (90ms apart).
+- **Ticket:** `--sf-color-surface`, `--sf-hairline`, radius sm, as tall as its row neighbour. The **stub** (at least 6.5rem; 8rem from 1024px): the value (`couponHeadline`: "₹500", "10%") in Playfair 32px, lining and tabular, never wrapping, over an "off" eyebrow in `--sf-color-accent-text`. Then a vertical hairline with a **notch** at each end: a 16px half-disc in the page tone with its own hairline arc (`.details::before` / `::after`), centred on the 1px line and laid over the ticket's border, so it reads as cut out of the ticket. The **details**: the description (sans 16px 500, ink; the old "{value} off" fallback), the terms (14px, muted): "Min order ₹X" or "No minimum order", with "· Up to ₹Y off" for a percentage coupon with a cap; "Expires d MMM yyyy" (in a `<time>`) or "No expiry".
+- **Code:** `.sf-chip .sf-chip--selected` (the ink pill with paper text), 13px 600 uppercase at 0.12em, never monospace. It is not a control: a text cursor, and `user-select: all`, so one click selects the code whole.
+- **Copy:** `.sf-btn--ghost`, 44px, at least 8.5rem wide so the label can change without moving anything; `aria-label="Copy coupon code X"`. After `copyToClipboard` succeeds it reads "Copied" with a check, its text and border in `--sf-color-success`, for 2s; a second copy restarts the two seconds. When the clipboard is unavailable (an insecure page, a denied permission) it reads "Couldn't copy" and the code is left selected, ready to copy by hand. A visually hidden polite status says "Code X copied." or "Couldn't copy. The code is X."
+- **No codes:** "No codes right now." (17px, muted).
+
+### 29.4 Deal of the day
+
+- **Data (unchanged):** the admin's `dealOfTheDayIds` in order, or the top three by `getProductMaxDiscount`.
+- Storefront `ProductCard`s (quick add and wishlist), one column below 640px (the 4:5 photograph runs the full content width), three from 640px (16 / 24 / 32px gaps).
+- **"You save ₹X"** under each card: `originalPrice − sellingPrice` from `getProductMinPrice` (the old math) in `formatCurrency`, sans 14px 500 in `--sf-color-discount`, only when it is above zero. The card's own discount mark stays its "Sale" chip.
+- The old second timer beside the section title is gone: one countdown, in the hero.
+
+### 29.5 All offers: chips and grid
+
+- **Data (unchanged):** the admin's `featuredProductIds` in order, or every discounted piece, the largest discount first. The chips are the grid's own categories in catalogue order (`dealCategories`); a chip filters by `categoryId`; a pressed category that leaves the offers falls back to "All".
+- **Chips:** a `role="group"` named "Filter offers by category": "All", then one `.sf-chip` per category, each `aria-pressed`. One row that scrolls sideways, with no scrollbar and no edge fades: on phones it runs to the screen's edges (the gutter is its edge room, `scroll-padding-inline` keeps a focused chip off the edge); from 768px it keeps to the content's edges with 6px of focus room. The row's 8px of vertical padding keeps the chips' 44px targets (`::after`) and focus rings inside its scroll box. Tab walks the chips, each scrolling into view as it takes focus.
+- **scrollIntoView:** a press calls `scrollIntoView({ block: "nearest", inline: "center" })` on the pressed chip (smooth; `"instant"` under reduced motion). Only on a press: never on load. The old tab bar called it on mount, which scrolled the window down to it on every visit (to 1729px at 360px wide, 785px at 1440px).
+- **Repeated names:** leaf names repeat across tiers, so a chip whose name another chip shares also names its parent: "High-Back Chairs · Essentials" and "High-Back Chairs · Premium" (the dot `aria-hidden`, a visually hidden comma; `chipContexts`). The seeded grid has none; the automatic grid has seven such pairs.
+- **Row buttons:** on `(hover: hover)` screens from 768px, while the row overflows, two 44px hairline squares (the product rail's) after it: "Previous categories" / "Next categories", `aria-controls` the row, `aria-disabled` at either end; a press scrolls the row by max(180px, 60% of its width). They show at 1024px with the seeded grid; at 1440px the row fits.
+- **Status:** a visually hidden polite status: "Showing all 8 pieces." or "Showing 1 piece in Beds.".
+- **Grid:** storefront `ProductCard`s, two columns, three from 1024px, with the listing's gaps (16 / 24px columns, 32 / 40px rows). Each card is a `motion.li` inside `AnimatePresence mode="popLayout" initial={false}`: after a press, entering cards fade in with an 8px rise over `--sf-duration` (40ms apart for the first eight), leaving cards fade out over `--sf-duration-fast` (popped out of the flow, against the `position: relative` list) and the others slide into place (`layout`). Under reduced motion the cards only fade and nothing slides. The list reveals once as it scrolls in (`Reveal`).
+
+### 29.6 States
+
+| State | When | What shows |
+|---|---|---|
+| Config loading | `useDealsConfig().loading` | the hero's lines in sand (the eyebrow; the title's three / two / one lines below 768px / at 768–1023px / from 1024px; the subtitle's three / two; the countdown row) and the codes section with four ticket skeletons; `aria-busy`, a visually hidden "Loading offers" |
+| Switched off | `config.enabled === false` | centred like the product page's "not found": eyebrow "Offers", `h1` "No offers at the moment." (`.sf-display-md`), "The full collection is open as usual.", a primary large "Browse all furniture" → `/products`. The header, sidebar and footer drop their "Offers" links on their own (unchanged) |
+| Data loading | the three reads are pending | the real hero and codes heading; skeleton tickets (the admin's coupon count, else 4), deal cards (else 3), chip pills and grid cards (else 6, at most 9); `aria-busy`. Measured equal to the loaded page: 0 CLS at 360, 768 and 1440px with web fonts blocked |
+| Failed read | `products.getAll` or `categories.getAll` throws (`coupons.getActive` never does) | a sand `.sf-panel`: "We couldn't load the offers." (display-md `h2`), "Please check your connection and try again.", primary "Try again", which reads again; focus then moves to the codes section, or back to "Try again" if it fails again |
+| Nothing on offer | the deal of the day and the grid are both empty | serif `h2` "Nothing on offer right now.", "No pieces are reduced just now." (adding ", but the codes above still apply at checkout." when there are codes), ghost "Browse all furniture" |
+
+As before, the data read starts alongside the config read (the context's default config is enabled), so an enabled page loads in one round trip; when the config says "off", that read is dropped.
+
+### 29.7 Motion
+
+Ticket and deal-card reveals (`Reveal`, 90ms apart), the grid's reveal and its popLayout re-flow (29.5), the chip row's smooth scrolling, and the copy button's colour change (`--sf-duration`). No page-level fade and no hero entrance (the `h1` is the page's largest paint). Under reduced motion: opacity only, instant scrolling.
+
+### 29.8 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Ticket: "Copied" (success text and border) on the ticket surface | 6.34 ✓ | 7.84 ✓ | 4.5:1 |
+| Ticket: "off" eyebrow (accent-text) on the ticket surface | 5.70 ✓ | 10.65 ✓ | 4.5:1 |
+| Ticket: notch (page tone) vs the ticket surface | 1.07 | 1.09 | info |
+
+Every other pairing is already in §14 and §23.5: ink, secondary and muted text on the page and the surface, the accent italic, the selected chip and the code pill (primary-contrast on primary), the ghost and primary buttons, the focus ring, sand panels and skeletons, the discount tone on the page, and the card's own pairs. In forced-colours mode the pressed chip keeps a `Highlight` fill.
