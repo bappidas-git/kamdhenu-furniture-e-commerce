@@ -73,12 +73,6 @@
   scroll-snap-align: start;
 }
 
-/* Skeleton card: the 4:5 image block and three text lines. */
-.skeletonText {
-  display: block;
-  padding-top: var(--sf-space-3);
-}
-
 /* Progress line and the previous / next buttons, under the cards. The row is
    as tall as the buttons, so its empty placeholder (while loading) matches. */
 .controls {

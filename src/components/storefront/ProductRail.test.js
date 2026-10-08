@@ -4,6 +4,7 @@ import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { useReducedMotion } from "framer-motion";
 import { buildCartItem } from "../../utils/helpers";
+import { ProductCardSkeleton } from "./ProductCard";
 import ProductRail from "./ProductRail";
 
 jest.mock("framer-motion", () => ({
@@ -83,7 +84,11 @@ test("holds skeleton cards while loading, hidden from assistive technology", () 
   const { container } = renderRail({ products: [], loading: true });
   const rail = screen.getByRole("group", { name: "Featured pieces" });
   expect(rail).toHaveAttribute("aria-busy", "true");
-  expect(container.querySelectorAll('li[aria-hidden="true"]')).toHaveLength(4);
+  const skeletons = container.querySelectorAll('li[aria-hidden="true"]');
+  expect(skeletons).toHaveLength(4);
+  // Each is ProductCardSkeleton, so the rail keeps its height when cards arrive.
+  const { container: card } = render(<ProductCardSkeleton />);
+  skeletons.forEach((li) => expect(li.innerHTML).toBe(card.innerHTML));
   expect(within(rail).queryAllByRole("link")).toHaveLength(0);
   // An empty placeholder holds the controls' row; no button exists yet.
   expect(within(rail).queryByRole("button")).not.toBeInTheDocument();

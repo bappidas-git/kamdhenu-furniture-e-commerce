@@ -1662,12 +1662,13 @@ Removed from Home (component, `.why*` rules, imports). **Kept in `src/utils/cons
 | `src/components/storefront/PriceBlock.js` + `.module.css` | Same props and defaults. Quiet sans figures (sm 15/13px, md 18/15px, lg 24/16px), a visually hidden "Was" before the struck price. The saving is opt-in as before (`showSavings`, default on lg) and now reads "Save 12%" (sm/md) or "Save ₹400.00" (lg); the inline "12% off" is gone. |
 | `src/components/storefront/StarRating.js` + `.module.css` | Same props and label. Inline SVG stars instead of the font's "★", each filled by its exact share of the rating; forced-colours rule. |
 | `src/components/storefront/index.js` | Also exports `ProductCardSkeleton`. |
+| `src/components/storefront/ProductRail.js` + `.module.css` | Follow-up requested after the PR went up: the loading branch renders `ProductCardSkeleton` in each `aria-hidden` list item, and the rail's own `.skeletonText` rule is gone (see "Follow-up" below). Nothing else in the rail changed. |
 | `scripts/check-contrast.js` | 11 card pairs and 3 informational rows; a `"--token@alpha"` layer syntax; the `PAIRS_DARK_ONLY` list its header already mentioned. |
 | New tests | `ProductCard.test.js` (22), `PriceBlock.test.js` (5), `StarRating.test.js` (5). |
-| Updated tests | `Home.test.js`, `FeaturedProducts.test.js`, `ProductRail.test.js`: the new labels ("Save to wishlist", "Add <name> to cart"), and one link per card instead of two. No other change to them. |
-| `prompts/DESIGN_SYSTEM.md` | New §23. |
+| Updated tests | `Home.test.js`, `FeaturedProducts.test.js`, `ProductRail.test.js`: the new labels ("Save to wishlist", "Add <name> to cart"), and one link per card instead of two. `ProductRail.test.js` also checks that each loading slot is `ProductCardSkeleton`. |
+| `prompts/DESIGN_SYSTEM.md` | New §23; §21.6 (the rail's loading state). |
 
-Nothing else changed. In particular the pages and components that render the card (`Home`, `FeaturedProducts`, `ProductRail`, `RelatedProducts`, `ProductDetails`), `helpers.js`, contexts, `api.js`, `db.json` (SHA-256 unchanged) and the admin are untouched. `Products`, `SpecialOffers`, `Wishlist` and `SearchModal` still render their own private cards until Prompts 14, 19, 25 and 15 adopt this one.
+Nothing else changed. In particular the pages and components that render the card (`Home`, `FeaturedProducts`, `RelatedProducts`, `ProductDetails`), `helpers.js`, contexts, `api.js`, `db.json` (SHA-256 unchanged) and the admin are untouched; `ProductRail` changed only in its loading branch. `Products`, `SpecialOffers`, `Wishlist` and `SearchModal` still render their own private cards until Prompts 14, 19, 25 and 15 adopt this one.
 
 ### The card
 
@@ -1705,7 +1706,7 @@ Nothing else changed. In particular the pages and components that render the car
 4. **An always-on page-tone keyline (1px, inset) over the image edge.** On Home's sand band the borderless sand placeholders dissolved into the band, leaving floating chips and hearts (screenshot-confirmed). The brief forbids touching the pages and asks that consumers render without changes, so the fix lives in the card: the line is the page colour, invisible on the page and visible on any other tone (1.11 : 1 on sand, enough to read as an edge with the placeholders). Prompt 11's handoff note asked for exactly this ("give their media a visible edge there").
 5. **The brand eyebrow is inside the card link** (the brief says the link wraps "only the image and name"), because it sits between them in the vertical stack. It is the link's description, not part of its name; the buttons stay outside.
 6. **"Added" is visual only.** The accessible name stays "Add <name> to cart": the cart toast already announces the add, and a name change on a focused button would announce it twice.
-7. **`ProductRail` keeps its own skeleton.** It is outside this prompt's file list. Its text block is 72px against the new card's 104px body, so a rail still grows 32–52px when cards replace the skeletons if a visitor watches it during a slow load (106–179px before). Swapping `ProductCardSkeleton` into its loading branch fixes it (note for 17/30/32).
+7. **`ProductRail` now renders `ProductCardSkeleton` while loading,** although the rail is outside this prompt's file list. The PR first left it alone; the repository owner then asked for it. The rail's own skeleton had a 72px text block against the card's 104.25px body, so a rail grew when its cards replaced the skeletons (measurements under "Follow-up").
 8. **Tests and the contrast script** changed beyond the four listed files: three test files for the renamed labels, and `check-contrast.js` (DESIGN_SYSTEM §15 requires new pairs there).
 
 ### Verification
@@ -1737,6 +1738,28 @@ Nothing else changed. In particular the pages and components that render the car
 - **Admin parity:** 20 screenshots (login, dashboard, Products, Reviews, Special Offers; 1440 and 390px; light and dark), baseline build against this one: all 20 pixel-identical. No admin file, and nothing the admin imports, changed.
 - **Laravel shape:** no data code changed. The card receives its products from the pages and makes no calls, so there is no JSON Server-only path to test.
 
+### Follow-up: `ProductCardSkeleton` in `ProductRail`
+
+The repository owner asked for this after the PR went up.
+
+- **Change:** `ProductRail`'s loading branch renders `<ProductCardSkeleton />` in each `aria-hidden` list item: `skeletonCount` of them, 4 by default and 6 when compact. Its `.skeletonText` rule is removed.
+- **Test:** `ProductRail.test.js` now compares each loading slot's markup with `ProductCardSkeleton`'s. With the old skeleton restored the test fails; the file was then restored byte for byte.
+- **Measured** with Playwright against JSON Server on the scratch copy. The featured and trending reads were held until the loading rail had been measured, then released. Both the dev server and the mock-mode production build gave the same figures:
+
+  | Rail height, loading → loaded (px) | 360px | 768px | 1024px | 1440px |
+  |---|---|---|---|---|
+  | Every card with a brand, a two-line name, no rating and no compare-at price (before → after) | +32.25 → **0** | +32.25 → **0** | +32.25 → **0** | +32.25 → **0** |
+  | Featured, the catalogue as seeded | +68.50 → +36.25 | +52.25 → +20.00 | +52.25 → +20.00 | +29.75 → −2.50 |
+  | Trending, the catalogue as seeded | +48.50 → +16.25 | +32.25 → 0 | +32.25 → 0 | +9.75 → −22.50 |
+
+  What remains with real data comes from the content itself:
+  - a rating row (+20px);
+  - a compare-at price that wraps under the price on phones (+16.25px);
+  - names that all fit on one line at 1440px (−22.5px), against the skeleton's two-line box.
+
+  Across the eight rail-and-width cases the total movement drops from 325.5px to 117.5px. Trending at 1440px is the one case that moves more than before (−22.5 against +9.75).
+- **Checks:** 282 tests pass; `npm run build` compiles with no warnings (−18 B JS, −19 B CSS gzip); `check-contrast.js` passes; `db.json` is unchanged.
+
 ### Pre-existing issues noticed (not changed)
 
 - **Cart drawer** (Prompt 18): it is not a `role="dialog"`; it still uses the old styling and purple accents.
@@ -1749,7 +1772,7 @@ Nothing else changed. In particular the pages and components that render the car
 - **14 (listing):** render `<ProductCard … />` with `onAddToCart={(item) => addToCart(item)}`; the card builds the cart item. Use `ProductCardSkeleton` for the loading grid. The card has no `layout="list"` variant: for the list view, render a page-local row reusing `PriceBlock` and `StarRating` (as your brief allows), or add the prop in your prompt. "Only N left" is not on the card.
 - **15 (search):** omit `onAddToCart` (and `onToggleWishlist` if you like); the card then shows only its link and chips.
 - **16 (product page):** `PriceBlock size="lg"` already renders your brief's line: 24px/500 price, struck muted compare, "Save ₹X" in accent-text, 12px muted tax note. `StarRating` is SVG; pass `size={14}` for the quiet row.
-- **17:** wrapping `ProductRail` gives the related rail focus room. While there, swap `ProductCardSkeleton` into `ProductRail`'s loading branch (keep the `li aria-hidden` wrappers; its tests count them) to remove the remaining 32–52px growth.
+- **17:** wrapping `ProductRail` gives the related rail focus room, and its loading state already matches the card (`ProductCardSkeleton`).
 - **18 (cart drawer):** `PriceBlock size="sm"` draws unit price + struck compare; savings stay off unless `showSavings`.
 - **19 (offers):** the card's "Sale" chip is the only discount mark on it; render "You save ₹X" under the card as briefed. `PriceBlock` with `showSavings` would say "Save 12%" at sm.
 - **25 (wishlist):** pass `{ ...item, id: item.productId, images: [item.image] }`. Snapshots carry `hot` and `stock`, so "New" and "Sold out" work; with one image there is no crossfade.

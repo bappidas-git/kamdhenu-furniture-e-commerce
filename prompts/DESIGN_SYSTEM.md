@@ -1017,7 +1017,7 @@ import { ProductRail } from "../../components/storefront";
 <ProductRail
   products={items}            // renders nothing when empty and not loading
   label="Related pieces"      // or labelledBy="<heading id>"
-  loading={loading}           // skeleton cards (4:5 + three lines); skeletonCount
+  loading={loading}           // ProductCardSkeletons (§23.2); skeletonCount
   compact={false}             // compact: smaller cards, more per view
   onAddToCart={(cartItem) => addToCart(cartItem, 1)}
   onToggleWishlist={toggleWishlist}
@@ -1034,7 +1034,7 @@ import { ProductRail } from "../../components/storefront";
 - **Structure:** a `role="group"` with `aria-roledescription="carousel"` and a name, holding a `<ul>` of cards (list semantics keep the count and positions) and, when the track overflows, a controls row: a decorative hairline progress line (ink thumb, sized and placed by `--rail-visible` / `--rail-progress`) and two 44px hairline buttons, "Previous pieces" and "Next pieces" (`aria-controls` the list).
 - **Scrolling:** `scroll-snap-type: x mandatory`, cards snap to their start, with `scroll-padding` keeping them on the content edge. A button scrolls one page of whole cards (smooth, instant under reduced motion). At either end its button gets `aria-disabled="true"`, so focus is never dropped. The track adds no tab stop: Tab walks the cards, each scrolling into view, and the arrow keys scroll the track while focus is inside it.
 - **Focus room:** the track keeps 8px of padding (cancelled by negative margins) so focus rings are not clipped by its overflow.
-- **Loading:** while `loading`, skeleton cards and an empty `aria-hidden` row of the controls' height hold the rail's place; the group is `aria-busy`.
+- **Loading:** while `loading`, `ProductCardSkeleton`s (each in an `aria-hidden` list item) and an empty `aria-hidden` row of the controls' height hold the rail's place; the group is `aria-busy`. The rail keeps its height when cards arrive whose tallest has a brand and a two-line name (§23.2).
 - **Measuring:** the scroll position is read in a layout effect, on scroll (one rAF per frame) and on resize (`ResizeObserver`). The progress line is written to the element directly, so scrolling never re-renders the cards.
 
 ### 21.7 Decisions to keep
@@ -1213,7 +1213,7 @@ A card costs three tab stops (link, heart, quick add). With its View all, previo
 
 ### 23.2 `ProductCardSkeleton`
 
-`<ProductCardSkeleton className? />` is `aria-hidden`. It draws the 4:5 `.sf-skeleton--image` and three bars (brand, name, price) set in the line boxes of a card with a brand and a two-line name, so it is exactly that card's height at every width (measured equal at 360, 768, 1024 and 1440px). A card with a rating row is 20px taller; one without a brand is 20.5px shorter. Put `aria-busy` on the loading region.
+`<ProductCardSkeleton className? />` is `aria-hidden`. It draws the 4:5 `.sf-skeleton--image` and three bars (brand, name, price) set in the line boxes of a card with a brand and a two-line name, so it is exactly that card's height at every width (measured equal at 360, 768, 1024 and 1440px). A card with a rating row is 20px taller; one without a brand is 20.5px shorter. Put `aria-busy` on the loading region. `ProductRail` renders it while loading (§21.6).
 
 ### 23.3 `PriceBlock`
 
