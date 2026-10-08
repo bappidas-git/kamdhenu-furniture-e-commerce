@@ -1,0 +1,142 @@
+/* =============================================================================
+ * Marquee — a slow ribbon of phrases between hairlines (Prompt 12)
+ * =============================================================================
+ * Full width, 48px tall (hairlines included), eyebrow type in the muted tone.
+ * The track holds two identical halves and slides left by one half per loop
+ * (--marquee-duration, set from `speed` and the number of copies), so the
+ * loop is seamless. It pauses on hover (pointer devices), while the control
+ * has focus, and when paused with the control; under reduced motion the
+ * track and the control are removed and the plain list shows instead.
+ * Tokens only.
+ * ========================================================================== */
+
+.marquee {
+  --marquee-gap: var(--sf-space-6);
+  position: relative;
+  display: flex;
+  align-items: center;
+  min-height: 48px; /* border-box: the two hairlines included */
+  border-block: var(--sf-hairline);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+/* The phrases for screen readers (the moving track is aria-hidden); visually
+   hidden unless motion is reduced (below). Hidden, it keeps the phrases'
+   own casing: browsers pass text-transform on to assistive technology. */
+.list {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  list-style: none;
+  text-transform: none;
+}
+
+.viewport {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  border-right: var(--sf-hairline);
+}
+
+.track {
+  display: flex;
+  width: max-content;
+  animation: marquee-scroll var(--marquee-duration, 60s) linear infinite;
+  will-change: transform;
+}
+
+.half,
+.set {
+  display: flex;
+  flex: none;
+}
+
+/* Every phrase is followed by a dot, so the seam between copies looks like
+   any other gap. */
+.phrase {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: var(--marquee-gap);
+  padding-right: var(--marquee-gap);
+  white-space: nowrap;
+}
+
+.phrase::after {
+  content: "\00B7";
+}
+
+@keyframes marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (hover: hover) {
+  .marquee:hover .track {
+    animation-play-state: paused;
+  }
+}
+
+.marquee:focus-within .track,
+.paused .track {
+  animation-play-state: paused;
+}
+
+/* The Pause/Play control, its glyph in line with the page's right gutter. */
+.toggle {
+  --sf-btn-fg: var(--sf-color-text-muted);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  --sf-btn-bg-hover: var(--sf-color-primary-soft);
+  flex: none;
+  margin-inline: var(--sf-space-1) max(0px, calc(var(--sf-gutter) - var(--sf-space-3)));
+}
+
+/* Reduced motion: no track, no control; the list shows, centred and still,
+   wrapping on narrow screens. */
+@media (prefers-reduced-motion: reduce) {
+  .viewport,
+  .toggle {
+    display: none;
+  }
+
+  .track {
+    animation: none;
+  }
+
+  .list {
+    position: static;
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: var(--sf-space-1) var(--marquee-gap);
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: var(--sf-space-3) var(--sf-gutter);
+    overflow: visible;
+    clip-path: none;
+    white-space: normal;
+    text-transform: uppercase;
+  }
+
+  .listItem {
+    white-space: nowrap;
+  }
+}

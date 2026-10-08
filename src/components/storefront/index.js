@@ -20,4 +20,7 @@ export { default as ProductRail } from "./ProductRail";
 export { default as RelatedProducts } from "./RelatedProducts";
 export { default as FrequentlyBoughtTogether } from "./FrequentlyBoughtTogether";
 export { default as ReviewsSection } from "./ReviewsSection";
+export { default as ReviewCarousel } from "./ReviewCarousel";
+export { default as BrandStrip } from "./BrandStrip";
+export { default as PressStrip } from "./PressStrip";
 export * from "./variantUtils";

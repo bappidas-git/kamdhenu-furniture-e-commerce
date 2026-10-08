@@ -1,7 +1,113 @@
-.cta { padding: 64px 16px; text-align: center; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: #fff; }
-.dark.cta { background: linear-gradient(135deg, #581c87 0%, #9f1239 100%); }
-.content { max-width: 600px; margin: 0 auto; }
-.content h2 { font-size: 2rem; font-weight: 800; margin-bottom: 12px; }
-.content p { font-size: 1.1rem; opacity: 0.9; margin-bottom: 24px; }
-.ctaBtn { padding: 14px 36px; border-radius: 12px; border: none; background: #fff; color: #f5576c; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.3s; }
-.ctaBtn:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.2); }
+/* =============================================================================
+ * CTASection — closing brand statement (revived in Prompt 12)
+ * =============================================================================
+ * A centred panel inside .sf-container--wide: eyebrow, display-xl title, one
+ * line, buttons. Navy and sand tones fill the panel; paper leaves it on the
+ * page. From 1024px the panel is at least 420px tall. No gradients, no
+ * shadow. Tokens only.
+ * ========================================================================== */
+
+.cta {
+  padding-block: var(--sf-section-y);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: clamp(var(--sf-space-12), 8vw, var(--sf-space-24))
+    clamp(var(--sf-space-6), 5vw, var(--sf-space-16));
+  border-radius: var(--sf-radius-sm);
+  text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .panel {
+    min-height: 420px;
+  }
+}
+
+.eyebrow {
+  margin: 0 0 var(--sf-space-4);
+}
+
+.title {
+  max-width: 13em;
+  margin: 0;
+}
+
+.line {
+  max-width: 34em;
+  margin: var(--sf-space-6) 0 0;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--sf-space-3);
+  width: 100%;
+  max-width: 22rem;
+  margin-top: var(--sf-space-10);
+}
+
+@media (min-width: 480px) {
+  .actions {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+    width: auto;
+    max-width: none;
+  }
+}
+
+/* 48px buttons with generous sides, as the hero's. */
+.button {
+  --sf-btn-size: 48px;
+  padding-inline: var(--sf-space-8);
+}
+
+/* ---- Tones ------------------------------------------------------------------- */
+
+.paper .panel {
+  padding-inline: 0;
+  color: var(--sf-color-text);
+}
+
+.sand .panel {
+  background-color: var(--sf-color-sand);
+  color: var(--sf-color-text);
+}
+
+.paper .line,
+.sand .line {
+  color: var(--sf-color-text-secondary);
+}
+
+/* Always dark (identical in both modes): paper text, a muted eyebrow and
+   line, the accent word in caramel (DESIGN_SYSTEM §3.3, §5.5, §5.6). */
+.navy .panel {
+  background-color: var(--sf-color-surface-dark);
+  color: var(--sf-color-on-dark);
+}
+
+.navy .eyebrow,
+.navy .line {
+  color: var(--sf-color-on-dark-muted);
+}
+
+.navy .title em {
+  color: var(--sf-color-on-dark-accent);
+}
+
+/* Forced colours: the panel keeps a visible edge when fills are dropped. */
+@media (forced-colors: active) {
+  .sand .panel,
+  .navy .panel {
+    border: 1px solid CanvasText;
+  }
+}

@@ -6,7 +6,15 @@ import apiService from "../../services/api";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { stripAccent } from "../../components/ui";
-import { COMPLETE_THE_SPACE, HOME_SECTIONS, SPACES, STORY } from "../../content/homeContent";
+import {
+  CLOSING_CTA,
+  COMPLETE_THE_SPACE,
+  HOME_SECTIONS,
+  MARQUEE_PHRASES,
+  PROMISE_STEPS,
+  SPACES,
+  STORY,
+} from "../../content/homeContent";
 import { buildCartItem } from "../../utils/helpers";
 import db from "../../../db.json";
 import Home from "./Home";
@@ -16,12 +24,16 @@ jest.mock("../../services/api", () => ({
   default: {
     categories: { getAll: jest.fn() },
     products: {
+      getAll: jest.fn(),
       getFeatured: jest.fn(),
       getTrending: jest.fn(),
       getBySlug: jest.fn(),
       getFrequentlyBoughtTogether: jest.fn(),
       getRelated: jest.fn(),
+      getReviews: jest.fn(),
     },
+    settings: { get: jest.fn() },
+    shipping: { getMethods: jest.fn() },
   },
 }));
 jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
@@ -35,19 +47,46 @@ jest.mock("../../components/storefront/AssuranceStrip", () => ({
   __esModule: true,
   default: () => null,
 }));
-// The interim "Why choose us" icons would be fetched from the Iconify API.
-jest.mock("@iconify/react", () => ({ Icon: () => null }));
 
-// jsdom has no IntersectionObserver (Reveal uses one).
+// jsdom has no IntersectionObserver (Reveal and the lazy reads use one). By
+// default every observed element is reported in view at once; a test can
+// switch that off and bring the elements into view itself.
+let autoIntersect = true;
+const observers = new Set();
+class MockIntersectionObserver {
+  constructor(callback) {
+    this.callback = callback;
+    this.targets = new Set();
+    observers.add(this);
+  }
+  observe(target) {
+    this.targets.add(target);
+    if (autoIntersect) this.callback([{ isIntersecting: true, target }], this);
+  }
+  unobserve(target) {
+    this.targets.delete(target);
+  }
+  disconnect() {
+    this.targets.clear();
+    observers.delete(this);
+  }
+}
+const intersectAll = () =>
+  [...observers].forEach((observer) =>
+    observer.callback(
+      [...observer.targets].map((target) => ({ isIntersecting: true, target })),
+      observer
+    )
+  );
 beforeAll(() => {
-  window.IntersectionObserver = class {
-    observe() {}
-    unobserve() {}
-    disconnect() {}
-  };
+  window.IntersectionObserver = MockIntersectionObserver;
 });
 afterAll(() => {
   delete window.IntersectionObserver;
+});
+afterEach(() => {
+  autoIntersect = true;
+  observers.clear();
 });
 
 // ── The seeded catalogue ─────────────────────────────────────────────────────
@@ -67,8 +106,14 @@ const deferred = () => {
   return handle;
 };
 
+const SETTINGS = db.settings;
+const SHIPPING = db.shipping_methods.filter((m) => m.isActive);
+const approvedReviewsFor = (id) =>
+  db.reviews.filter((r) => String(r.productId) === String(id) && r.status === "approved");
+
 // Each read answers from the seed unless a test overrides it. `bundle` and
-// `related` replace what the two curation calls return.
+// `related` replace what the two curation calls return; `reviewsFor(id)`
+// what a product's reviews read returns.
 const serve = ({
   categories = CATEGORIES,
   featured = FEATURED,
@@ -76,6 +121,10 @@ const serve = ({
   anchor = ANCHOR,
   bundle,
   related,
+  catalogue = db.products,
+  reviewsFor = approvedReviewsFor,
+  settings = SETTINGS,
+  shipping = SHIPPING,
 } = {}) => {
   const answer = (value) =>
     value && typeof value.then === "function" ? value : value instanceof Error ? Promise.reject(value) : Promise.resolve(value);
@@ -89,6 +138,10 @@ const serve = ({
   apiService.products.getRelated.mockImplementation((p) =>
     answer(related ?? productsFor(p.relatedProductIds))
   );
+  apiService.products.getAll.mockImplementation(() => answer(catalogue));
+  apiService.products.getReviews.mockImplementation((id) => answer(reviewsFor(id)));
+  apiService.settings.get.mockImplementation(() => answer(settings));
+  apiService.shipping.getMethods.mockImplementation(() => answer(shipping));
 };
 
 let addToCart;
@@ -127,7 +180,7 @@ const completeTheSpace = () => querySection(COMPLETE_THE_SPACE.title);
 
 // ── Order and data sources ───────────────────────────────────────────────────
 
-test("renders the discovery sections in order after the hero", async () => {
+test("renders every section in order after the hero, ending with the closing CTA", async () => {
   serve();
   await renderHome();
   const headings = screen.getAllByRole("heading").filter((h) => ["H1", "H2"].includes(h.tagName));
@@ -139,8 +192,10 @@ test("renders the discovery sections in order after the hero", async () => {
     `H2 ${stripAccent(COMPLETE_THE_SPACE.title)}`,
     `H2 ${stripAccent(STORY[1].title)}`,
     `H2 ${stripAccent(HOME_SECTIONS.trending.title)}`,
-    // Interim, until Prompt 12 replaces it with "Our promise".
-    "H2 Why Choose A & S Urbanseat",
+    `H2 ${HOME_SECTIONS.brands.eyebrow}`,
+    `H2 ${stripAccent(HOME_SECTIONS.reviews.title)}`,
+    `H2 ${stripAccent(HOME_SECTIONS.promise.title)}`,
+    `H2 ${stripAccent(CLOSING_CTA.title)}`,
   ]);
 });
 
@@ -409,4 +464,196 @@ test.each([
   serve();
   await renderHome();
   expect(screen.queryByRole("heading", { name: HOME_SECTIONS.recentlyViewed.eyebrow })).not.toBeInTheDocument();
+});
+
+// ── The closing half (Prompt 12) ─────────────────────────────────────────────
+
+const LAZY_READS = () => [
+  apiService.products.getAll,
+  apiService.products.getReviews,
+  apiService.settings.get,
+  apiService.shipping.getMethods,
+];
+
+test("reads the closing half lazily, each section once it comes near", async () => {
+  autoIntersect = false;
+  serve();
+  await renderHome();
+  LAZY_READS().forEach((read) => expect(read).not.toHaveBeenCalled());
+  // Until then the lazy sections hold their place.
+  expect(screen.getByRole("region", { name: HOME_SECTIONS.brands.eyebrow })).toHaveAttribute("aria-busy", "true");
+  expect(screen.getByRole("group", { name: HOME_SECTIONS.reviews.carouselLabel })).toHaveAttribute("aria-busy", "true");
+
+  await act(async () => intersectAll());
+  await flush();
+  expect(apiService.products.getAll).toHaveBeenCalledTimes(1);
+  expect(apiService.products.getReviews).toHaveBeenCalledTimes(FEATURED.length);
+  expect(apiService.settings.get).toHaveBeenCalledTimes(1);
+  expect(apiService.shipping.getMethods).toHaveBeenCalledTimes(1);
+});
+
+test("the brands strip lists the catalogue's brand names as text, the store's own last", async () => {
+  serve();
+  await renderHome();
+  const strip = screen.getByRole("region", { name: HOME_SECTIONS.brands.eyebrow });
+  expect(within(strip).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
+    "Carlton",
+    "Nilkamal",
+    "Winsome",
+    "A & S Urbanseat",
+  ]);
+  expect(within(strip).queryByRole("img")).not.toBeInTheDocument();
+});
+
+test("the brands strip is hidden when the catalogue cannot be read", async () => {
+  serve({ catalogue: new Error("500") });
+  await renderHome();
+  expect(screen.queryByRole("region", { name: HOME_SECTIONS.brands.eyebrow })).not.toBeInTheDocument();
+});
+
+test("reviews come from the featured products' approved reviews, newest first", async () => {
+  serve();
+  await renderHome();
+  expect(apiService.products.getReviews.mock.calls.map(([id]) => id)).toEqual(FEATURED.map((p) => p.id));
+  const reviewsSection = section(HOME_SECTIONS.reviews.title);
+  const carousel = within(reviewsSection).getByRole("group", { name: HOME_SECTIONS.reviews.carouselLabel });
+  const slides = carousel.querySelectorAll('[aria-roledescription="slide"]');
+  const expected = FEATURED.flatMap((p) => approvedReviewsFor(p.id)).sort(
+    (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
+  );
+  expect(slides).toHaveLength(expected.length);
+  expect(expected).toHaveLength(7);
+  expect(slides[0]).toHaveTextContent(expected[0].body);
+  expect(slides[0]).toHaveTextContent(expected[0].userName);
+  const shoeRack = product(expected[0].productId);
+  expect(within(slides[0]).getByRole("link", { name: shoeRack.name })).toHaveAttribute(
+    "href",
+    `/products/${shoeRack.slug}`
+  );
+  // None of the seeded verified reviews belongs to these products.
+  expect(carousel).not.toHaveTextContent("Verified purchase");
+});
+
+test("pending and rejected reviews never appear", async () => {
+  // Answer with every seeded review, whatever its status.
+  serve({ reviewsFor: (id) => db.reviews.filter((r) => r.productId === id) });
+  await renderHome();
+  const carousel = screen.getByRole("group", { name: HOME_SECTIONS.reviews.carouselLabel });
+  db.reviews
+    .filter((r) => r.status !== "approved")
+    .forEach((r) => expect(carousel).not.toHaveTextContent(r.body));
+  // Product 12's pending review is the only non-approved one among them.
+  expect(db.reviews.find((r) => r.productId === 12 && r.status === "pending")).toBeTruthy();
+});
+
+test("with no approved reviews the section is hidden, not shown empty", async () => {
+  serve({ reviewsFor: () => [] });
+  await renderHome();
+  expect(querySection(HOME_SECTIONS.reviews.title)).not.toBeInTheDocument();
+  expect(screen.queryByText("No customer reviews yet.")).not.toBeInTheDocument();
+});
+
+test("failed review reads also hide the section", async () => {
+  serve({ reviewsFor: () => new Error("500") });
+  await renderHome();
+  expect(querySection(HOME_SECTIONS.reviews.title)).not.toBeInTheDocument();
+});
+
+test("reviews wait for the featured list", async () => {
+  const featured = deferred();
+  serve({ featured: featured.promise });
+  await renderHome();
+  expect(apiService.products.getReviews).not.toHaveBeenCalled();
+  await act(async () => featured.resolve(FEATURED));
+  await flush();
+  expect(apiService.products.getReviews).toHaveBeenCalledTimes(FEATURED.length);
+});
+
+test("the press slot renders nothing: there is no data source for it", async () => {
+  serve();
+  const { container } = await renderHome();
+  expect(screen.queryByText(HOME_SECTIONS.press.eyebrow)).not.toBeInTheDocument();
+  expect(container).not.toHaveTextContent(/as featured in|as seen in|trusted by/i);
+});
+
+test("the promise steps quote live delivery, payment and returns data", async () => {
+  serve();
+  await renderHome();
+  const promise = section(HOME_SECTIONS.promise.title);
+  const steps = within(promise).getAllByRole("listitem");
+  expect(steps).toHaveLength(PROMISE_STEPS.length);
+  steps.forEach((step, index) => {
+    expect(within(step).getByRole("heading", { level: 3, name: PROMISE_STEPS[index].title })).toBeInTheDocument();
+    expect(within(step).getByRole("img")).toHaveAttribute("alt", PROMISE_STEPS[index].image.alt);
+    expect(within(step).getByRole("img")).toHaveAttribute("loading", "lazy");
+    expect(step).toHaveTextContent(`0${index + 1}`);
+  });
+  expect(promise).toHaveTextContent("Or choose cash on delivery and pay when your furniture arrives.");
+  expect(promise).toHaveTextContent("in 7–10 business days. Orders above ₹9,999 ship free.");
+  expect(promise).toHaveTextContent("returned within 7 days of delivery");
+});
+
+test("the payment step mentions cash on delivery only while it is enabled", async () => {
+  serve({ settings: { ...SETTINGS, payment: { ...SETTINGS.payment, codEnabled: false } } });
+  await renderHome();
+  const promise = section(HOME_SECTIONS.promise.title);
+  expect(promise).toHaveTextContent("Check out securely online with cards, UPI or net banking.");
+  expect(promise).not.toHaveTextContent(/cash/i);
+});
+
+test("the promise steps never guess a number when the data is missing", async () => {
+  serve({ settings: new Error("500"), shipping: new Error("500") });
+  await renderHome();
+  const promise = section(HOME_SECTIONS.promise.title);
+  expect(promise).not.toHaveTextContent(/₹|business days|cash/i);
+  expect(promise).toHaveTextContent(PROMISE_STEPS.find((s) => s.dataKey === "delivery").fallback);
+});
+
+test("the marquee gives screen readers its phrases once", async () => {
+  serve();
+  await renderHome();
+  const list = screen
+    .getAllByRole("list")
+    .find((ul) => within(ul).queryByText(MARQUEE_PHRASES[0], { exact: true }));
+  expect(within(list).getAllByRole("listitem").map((li) => li.textContent)).toEqual(MARQUEE_PHRASES);
+  expect(screen.getByRole("button", { name: "Pause the moving text" })).toBeInTheDocument();
+});
+
+test("the page ends with the navy closing CTA, without a form of its own", async () => {
+  serve();
+  const { container } = await renderHome();
+  const closing = section(CLOSING_CTA.title);
+  expect(within(closing).getByRole("link", { name: CLOSING_CTA.primary.label })).toHaveAttribute("href", "/products");
+  expect(within(closing).getByRole("link", { name: CLOSING_CTA.secondary.label })).toHaveAttribute("href", "/support");
+  expect(within(closing).getByRole("link", { name: CLOSING_CTA.primary.label })).toHaveClass("sf-btn--paper");
+  expect(closing.querySelector("form, input")).toBeNull();
+  const page = container.firstElementChild;
+  expect(page.lastElementChild).toBe(closing);
+});
+
+test("the interim 'Why choose us' grid and its claims are gone", async () => {
+  serve();
+  const { container } = await renderHome();
+  expect(screen.queryByRole("heading", { name: /why choose/i })).not.toBeInTheDocument();
+  expect(container).not.toHaveTextContent(/24\/7|256-bit|full refund guarantee|same-day/i);
+});
+
+test("while the promise data loads, the steps hold their bodies' place without showing copy", async () => {
+  const settings = deferred();
+  serve({ settings: settings.promise });
+  await renderHome();
+  const promise = section(HOME_SECTIONS.promise.title);
+  const list = within(promise).getByRole("list");
+  expect(list).toHaveAttribute("aria-busy", "true");
+  // Each body is a hidden layout copy under skeleton lines (fillers, no live
+  // value); the only exposed paragraph is the numeral and eyebrow line.
+  expect(promise).not.toHaveTextContent(/9,999|7–10/);
+  list.querySelectorAll("li").forEach((li) => {
+    expect(li.querySelector('p[aria-hidden="true"] .sf-skeleton')).not.toBeNull();
+    expect(li.querySelectorAll("p:not([aria-hidden])")).toHaveLength(1);
+  });
+  await act(async () => settings.resolve(SETTINGS));
+  await flush();
+  expect(list).not.toHaveAttribute("aria-busy");
+  expect(promise).toHaveTextContent("Check out securely online with cards, UPI or net banking.");
 });

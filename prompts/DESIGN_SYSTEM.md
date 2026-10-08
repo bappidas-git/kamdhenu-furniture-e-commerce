@@ -592,7 +592,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 
 ### 16.4 React primitives (`src/components/ui`)
 
-Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`, and since Prompt 09 `BottomDrawer`, `useFocusTrap`, `useBodyScrollLock`, `useBodyScrollLocked` and `getFocusableElements`: section 19).
+Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`, since Prompt 09 `BottomDrawer`, `useFocusTrap`, `useBodyScrollLock`, `useBodyScrollLocked` and `getFocusableElements` (section 19), and since Prompt 12 `Marquee` (section 22.6)).
 
 **`<Reveal>`**: the standard scroll reveal (section 8). Fades in with a 20px rise once the element is 10% inside the viewport (`whileInView`, `viewport={{ once, margin: "-10% 0px" }}`, `TOKENS.motion` duration 0.9s and ease-out). With reduced motion (`useReducedMotion()`, and `MotionConfig` around the storefront) it only fades: no transform.
 
@@ -975,7 +975,7 @@ Written by Prompt 11. Files: `src/pages/Home/Home.js` + `.module.css` (the secti
 
 ### 21.1 Page rhythm
 
-Order after the assurance strip: Shop by space · story block 1 · Featured Collections · Complete the space · story block 2 · Trending · Recently viewed, then Prompt 12's sections.
+Order after the assurance strip: Shop by space · story block 1 · Featured Collections · Complete the space · story block 2 · Trending · Recently viewed, then Prompt 12's sections (§22).
 
 - Every section is `.sf-section` (Recently viewed: `.sf-section--tight`) inside `.sf-container .sf-container--wide`, the left edge the header, hero and strip share.
 - Neighbouring sections are separated by a full-width hairline (`.section + .section { border-top: var(--sf-hairline) }`). The one sand band, Complete the space, has none on it or after it. A later home section joins the rhythm by adding the page's `styles.section` class.
@@ -1044,3 +1044,123 @@ import { ProductRail } from "../../components/storefront";
 - No page-level fade: the hero is the page's entrance, and the sections reveal as they scroll in.
 
 No new colour pairs: the tiles use the hero's on-dark-on-scrim pair, and the sand band uses the ink, secondary, muted, accent, accent-text and focus-ring pairs on sand already in §14.
+
+---
+
+## 22. Home social proof, explainer and closing CTA
+
+Written by Prompt 12. Files: `src/pages/Home/Home.js` + `.module.css` (sections 8–13), `src/pages/Home/homeData.js` (the data rules), `src/hooks/useNearViewport.js`, `src/components/storefront/BrandStrip.js` (+ `WordmarkStrip`), `PressStrip.js`, `ReviewCarousel.js` (each with its module), `src/components/ui/Marquee.js` + `.module.css`, `src/components/CTASection/*`, and the content in `src/content/homeContent.js` (`HOME_SECTIONS.brands/reviews/press/promise`, `PROMISE_STEPS`, `MARQUEE_PHRASES`, `CLOSING_CTA`).
+
+### 22.1 Page rhythm (the closing half)
+
+Order after Recently viewed: Brands we carry · As featured in (renders nothing today) · From our customers · Our promise · the marquee · the closing CTA. Then `.main-content`'s own bottom padding (80px; 70px up to 768px) and the footer's navy newsletter band.
+
+- **Strips draw their own hairlines.** `BrandStrip`, `PressStrip` and `Marquee` are thin rows with a hairline above and below. They do not carry the page's `.section` class, so the section after a strip gets no second rule; a section that follows a section keeps the page's `.section + .section` hairline. Two strips side by side share one rule (`.strip + .strip`).
+- **One sand band per page (§13) still holds.** The reviews section is paper between hairlines; each review slide is a sand panel.
+- **The closing CTA is a contained navy panel** inside `.sf-container--wide`: `--sf-section-y` of paper above it, nothing below but `.main-content`'s padding, so the navy panel and the navy footer never touch (no seam) and the paper between them reads as a deliberate gap.
+
+### 22.2 Lazy reads: `useNearViewport`
+
+```jsx
+import useNearViewport from "../../hooks/useNearViewport";
+
+const [ref, near] = useNearViewport();          // rootMargin "100% 0px" by default
+<section ref={ref}>…</section>                  // a callback ref; it may mount later
+useEffect(() => { if (near) startTheRead(); }, [near]);
+```
+
+- `near` turns true once the element is within `rootMargin` of the viewport (one viewport height above or below by default, so a section the page opens on, e.g. after scroll restoration, loads at once) and stays true. Without `IntersectionObserver` it is true at once.
+- The home page starts each closing-half read from its own section: the brands strip → `products.getAll()` (once); the reviews section → `products.getReviews(id)` for the featured products (at most 8, after the featured list has resolved); the promise section → `settings.get()` + `shipping.getMethods()`. None of them is in the initial network. Every read falls back to "no data".
+- While a read is pending its section holds its final height (22.8): skeleton lines and skeleton slides, `aria-busy` on the region or list.
+
+### 22.3 `BrandStrip`, `WordmarkStrip`, `PressStrip`
+
+| Prop | Notes |
+|---|---|
+| `brands` | `string[]` in display order; blank entries are dropped. The home page passes `collectBrands(products)` (`homeData.js`): the distinct non-empty `brand` values of the active products (case, spacing and punctuation ignored), alphabetical, with the store's own brand (`APP_NAME`) last. Seeded result: Carlton · Nilkamal · Winsome · A & S Urbanseat. |
+| `label` | the row's heading: an `h2` set as `.sf-eyebrow`; it names the region |
+| `loading` | skeleton lines in a box as tall as the names will be (two lines on phones, one from 768px); `aria-busy` |
+| `headingId`, `className`, `ref` | the ref reaches the `<section>` (the lazy-load trigger) |
+
+- **Layout:** from 768px one 56px row (hairlines included), the label on the left, the names on the right; on phones the label sits above the names, which wrap. Names: sans 13px, 500, uppercase, `--sf-tracking-eyebrow`, muted.
+- **Separators:** a `·` drawn in each name's leading gap. The list is pulled one gap to the left inside a clipping wrapper, so the first name on every line (also after wrapping) loses its dot. The dot uses `content: "\00B7" / ""`, so it stays out of the accessible name where supported.
+- **Names only:** no logos (none are licensed), no links, no "trusted by" wording. Returns `null` with no names once loaded.
+- **`PressStrip`** ("As featured in") renders the same row for `items: [{ name, logo? }]` (a logo shows instead of the name, with the name as its `alt`) and returns `null` unless at least one item has a name. The home page hands it `[]`: no press or client data source exists and the schema cannot be extended (`00_INDEX.md`, §5 item 7). Never hardcode names.
+
+### 22.4 `ReviewCarousel`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `reviews` | `[]` | each `{ id, userName, rating, body, isVerifiedPurchase, createdAt, product: { id, name, slug } }` |
+| `loading`, `error` | `false` | skeleton slides / an honest error line (only when there are no reviews) |
+| `label` or `labelledBy` | — | names the carousel |
+| `previousLabel`, `nextLabel` | "Previous reviews", "Next reviews" | the buttons' names |
+| `slideLabel` | "Review {index} of {count}" | the slides' and the dots' names |
+| `verifiedLabel`, `emptyLabel`, `errorLabel` | "Verified purchase", "No customer reviews yet.", "Reviews could not be loaded just now." | the empty and error lines are muted eyebrows |
+| `skeletonCount`, `className` | 3, — | |
+
+- **Slide** (a sand panel, radius sm, 24–32px padding): the review text as a serif quote (Playfair 22px, `--sf-leading-tight`, typographic quotes) of at most 240 characters (`clampQuote`: cut at a word, ellipsis); then, above a hairline, the stars (`StarRating` 14px), the reviewer's name as stored, "Verified purchase" (success tone, check mark) only when `isVerifiedPurchase === true`, and the product's name (ink link with an accent underline) beside the short date (`formatDate(…, "short")` in a `<time>`). No avatar, title, place or invented date; a missing name, product or date is left out. The quote fills the slide, so every caption sits on the same line.
+- **Stars on sand are ink** (§4): each slide sets `--sf-color-star: var(--sf-color-text)`, which `StarRating` reads; the empty stars keep `--sf-color-border-strong` (3.19 : 1 on sand).
+- **Per view:** 1 below 768px, 2 at 768–1023px, 3 from 1024px; snap scrolling, no bleed.
+- **Controls** (only when the track overflows): one dot per review (a 24px-wide, 44px-tall target around a 6px mark: hollow border-strong, filled ink for the slides in view; WCAG 2.5.8 asks for 24 × 24) on the left, the hairline previous/next squares on the right (the rail's). A dot scrolls its slide into view (as far as the track goes); the buttons scroll one page of whole slides; smooth, instant under reduced motion. While loading, an empty row of the controls' height holds their place.
+- **Accessibility:** a group with `aria-roledescription="carousel"`; slides are `role="group"` + `aria-roledescription="slide"` + "Review N of M"; dots and buttons carry `aria-controls`; the dots of the slides in view carry `aria-current="true"` (a window, not a single item, when several are in view); the buttons use `aria-disabled` at either end, so focus is never dropped. Every slide stays in the reading order. Forced colours keep the dot states.
+- **Data rule (home):** `loadFeaturedReviews(featured)` → `selectReviews`: approved reviews only (the endpoint's filter, and any other `status` is dropped again), at least 40 characters of text, newest first, at most 10, from at most 8 reads in parallel (a failed read counts as none). With none left the home page hides the whole section; the component's own empty state stays available for other pages.
+
+### 22.5 Our promise
+
+- **Content:** `PROMISE_STEPS`, three `{ dataKey, eyebrow, title, body, fallback?, image: { src, alt, width, height } }`, numbered 01–03 by order (Order → Delivery → After delivery). `body` is a list of sentences; a sentence with `{placeholders}` shows only when each has a live value, `{ text, requires: "cod" }` only while COD is on; `fallback` is used when no sentence survives. A step only sees its own `dataKey`'s values:
+
+  | `dataKey` | Values | Source |
+  |---|---|---|
+  | `payment` | `cod` (gates sentences, never printed) | `resolveTrustBadgeDetail("cod", { settings })` |
+  | `delivery` | `{days}` "7–10"; `{threshold}` "above ₹9,999" | the active method named "Standard…" (`estimatedDays`, hyphen → en dash; "0"/text rejected); `resolveTrustBadgeDetail("freeShipping", { shipping })` in sentence case, the strip's and footer's amount |
+  | `returns` | `{returns}` 7 | `STOREFRONT_CONFIG.returnsWindowDays`, only when `resolveTrustBadgeDetail("easyReturns")` is not null (> 0) |
+
+- **Layout:** three columns from 768px, stacked on phones. Each step: a 4:5 image frame (sand while it loads, lazy image with `width`/`height`), the serif numeral (20px, `--sf-color-accent-text`, `aria-hidden`: the `<ol>` numbers the steps) beside the step's `.sf-eyebrow`, the title (`h3`, Playfair 24px, 400), the body (sans 15px, `--sf-leading-body`, secondary, 40ch). `Reveal` per step, 90ms apart.
+- **The page's one lift:** the image rises 4px (`translateY(-4px)`, `--sf-duration-slow`, `--sf-ease-out`) while the pointer rests on the step (or focus is inside it), only under `(hover: hover)` and without reduced motion. The steps carry no links, so in practice it is a hover cue.
+- **Loading:** each body is laid out invisibly with `promiseBodyLayout(step)` (every sentence, fillers in place of the values; `visibility: hidden`, `aria-hidden`) under two skeleton lines, so the step already has its height.
+
+### 22.6 `Marquee`
+
+```jsx
+import { Marquee } from "../../components/ui";
+
+<Marquee items={MARQUEE_PHRASES} speed={60} />   // speed: seconds per pass through the phrases
+```
+
+- 48px tall (border-box, hairlines included), full width, eyebrow type in the muted tone; a `·` after every phrase. The track holds two identical halves, each repeating the phrases as often as the width needs (measured with a `ResizeObserver`), and slides left by one half per loop over `speed × copies` seconds, so the pace is the same at every width and the seam never shows.
+- **Pauses** while the pointer rests on it (`hover: hover` devices), while its control has focus, and for good with its Pause/Play control (44px, at the right end behind a hairline; label "Pause the moving text" / "Play the moving text"). WCAG 2.2.2 asks for a way to pause moving content that runs longer than five seconds.
+- **Assistive technology:** the moving track is `aria-hidden`; the phrases are also a visually hidden plain list, read once. That list keeps the phrases' own casing (`text-transform: none`), because browsers pass `text-transform` on to assistive technology.
+- **Reduced motion:** no track and no control; the list shows instead, centred and still, wrapping on narrow screens.
+- Phrases only, no claims, numbers or offers; an empty list renders nothing.
+
+### 22.7 `CTASection`
+
+| Prop | Notes |
+|---|---|
+| `eyebrow`, `title` (required, one `*accent*`), `line` | the copy |
+| `primary`, `secondary` | `{ label, to }` router links; `secondary: null` hides it |
+| `tone` | `"paper"` (on the page, no panel padding at the sides) · `"sand"` (sand panel) · `"navy"` (navy panel, both modes) |
+| `as`, `headingId`, `className` | heading level (`h2`), its id (it names the region), an extra class |
+
+- A centred panel: eyebrow, `.sf-display-xl` title (max 13em, balanced), one line (17px, `--sf-leading-body`, 34em), buttons 48px tall with 32px sides (stacked full width below 480px). From 1024px the panel is at least 420px tall. Radius sm, no shadow, no gradient.
+- Buttons: paper and sand use `.sf-btn--primary` + `.sf-btn--ghost`; navy uses `.sf-btn--paper` + `.sf-btn--paper-ghost` (brand ink on brand paper, 16.25 : 1; hover caramel, 8.85 : 1; caramel ring on navy, 8.35 : 1).
+- Navy text: `--sf-color-on-dark`; eyebrow and line `--sf-color-on-dark-muted`; the accent word `--sf-color-on-dark-accent`. Identical in light and dark mode. Forced colours draw the panel's edge.
+- The home page passes `CLOSING_CTA` with `tone="navy"` and removes the section's bottom padding (`section.closing`); it never carries a form (the footer's newsletter band follows).
+
+### 22.8 Measurements (Chromium, mock-mode production build)
+
+- **Heights, pending vs loaded** (the lazy reads held back): brands strip and promise steps identical at 360/768/1024/1440px; the reviews section within 4–31px (its skeleton height is tuned per width to the seeded reviews; real reviews vary).
+- **CLS** while scrolling the whole page: 0 at 360 and 1440px and under reduced motion. With every API call delayed 1.5s and a fast scroll, 0.007–0.015 in some runs, all of it from the Featured, Complete the space and Trending cards growing 33–39px as their images load (the same growth measures identically on the Prompt 11 build); the closing-half sections only move with it. Prompt 13's card with a reserved image box removes it.
+
+### 22.9 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Review slide: stars (ink) on sand (graphic) | 14.64 ✓ | 12.52 ✓ | 3:1 |
+| Review slide: empty star (border-strong) on sand (graphic) | 3.19 ✓ | 3.27 ✓ | 3:1 |
+| Review slide: verified mark (success) on sand | 5.35 ✓ | 6.74 ✓ | 4.5:1 |
+| Review slide: gold star on sand (not used) | 2.91 | 8.26 | info |
+| Review slide: filled star (ink) vs empty star (border-strong) on sand | 4.58 | 3.83 | info |
+
+Every other pairing in this half is already in §14 and §16.8: ink, secondary and muted text on page and sand (the slides' product links are ink), accent-text on the page (the step numerals), the accent underline and the focus ring on sand, the control border on the page (the hollow dots), and the on-dark tokens, paper buttons and caramel ring on navy.

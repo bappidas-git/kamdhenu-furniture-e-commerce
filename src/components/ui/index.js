@@ -5,6 +5,7 @@ export { default as BrandLogo } from "./BrandLogo";
 export { default as Reveal, staggerDelay } from "./Reveal";
 export { default as SectionHeading } from "./SectionHeading";
 export { default as renderAccent, stripAccent } from "./renderAccent";
+export { default as Marquee } from "./Marquee";
 export {
   default as useFocusTrap,
   getFocusableElements,

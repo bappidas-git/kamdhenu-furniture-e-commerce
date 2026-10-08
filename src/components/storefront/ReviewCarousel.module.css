@@ -1,0 +1,298 @@
+/* =============================================================================
+ * ReviewCarousel — snap-scrolling review slides (Prompt 12)
+ * =============================================================================
+ * Slides per view come from --review-per-view (1 / 2 / 3); --review-gaps is
+ * the number of gaps inside one view. Each slide is a sand panel (the page's
+ * one sand band is "Complete the space", so the section itself stays on
+ * paper), its stars drawn in ink as the design system asks on sand. Under the
+ * slides: one dot per review and the hairline previous / next buttons, as in
+ * ProductRail. Tokens only.
+ * ========================================================================== */
+
+.carousel {
+  --review-gap: clamp(var(--sf-space-4), 2vw, var(--sf-space-6));
+  --review-per-view: 1;
+  --review-gaps: 0;
+  position: relative;
+}
+
+@media (min-width: 768px) {
+  .carousel {
+    --review-per-view: 2;
+    --review-gaps: 1;
+  }
+}
+
+@media (min-width: 1024px) {
+  .carousel {
+    --review-per-view: 3;
+    --review-gaps: 2;
+  }
+}
+
+.track {
+  position: relative; /* the slides' offsetParent, for measuring */
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: calc(
+    (100% - var(--review-gaps) * var(--review-gap)) / var(--review-per-view)
+  );
+  gap: var(--review-gap);
+  margin: 0;
+  padding: 0;
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+}
+
+.track::-webkit-scrollbar {
+  display: none;
+}
+
+/* ---- Slide ----------------------------------------------------------------- */
+
+.slide {
+  /* DESIGN_SYSTEM §4: on sand, stars are drawn in ink (the gold falls below
+     3:1 there). StarRating reads this token. */
+  --sf-color-star: var(--sf-color-text);
+  display: flex;
+  min-width: 0;
+  padding: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  color: var(--sf-color-text);
+  scroll-snap-align: start;
+}
+
+.figure {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-6);
+  width: 100%;
+  margin: 0;
+}
+
+/* The quote fills the slide, so every caption sits on the same line. */
+.quote {
+  flex: 1;
+  margin: 0;
+}
+
+.quote p {
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: 1.375rem; /* 22px */
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+  overflow-wrap: break-word;
+}
+
+.quote p::before {
+  content: "\201C";
+}
+
+.quote p::after {
+  content: "\201D";
+}
+
+.caption {
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-2);
+  padding-top: var(--sf-space-5);
+  border-top: var(--sf-hairline);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+.byline {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-1) var(--sf-space-3);
+  margin: 0;
+}
+
+.name {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+/* The product page's verified tone (ReviewsSection), with a check mark. */
+.verified {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-1);
+  font-size: var(--sf-text-xs);
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-success);
+}
+
+.verified svg {
+  flex: none;
+}
+
+/* The product link and the date; spacing (no separator) between them, so a
+   narrow slide wraps the date cleanly onto its own line. */
+.meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--sf-space-1) var(--sf-space-4);
+  margin: 0;
+  font-size: var(--sf-text-xs);
+  color: var(--sf-color-text-muted);
+}
+
+/* The product link: ink with an accent underline (DESIGN_SYSTEM §13). */
+.product {
+  color: var(--sf-color-text);
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-thickness var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .product:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+.product:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+  border-radius: var(--sf-radius-sm);
+}
+
+/* ---- Loading ----------------------------------------------------------------
+   A sand block per slide, about as tall as a slide with a four- or five-line
+   quote at that width (measured with the seeded reviews), so the section
+   hardly moves when the reviews arrive. */
+.skeleton {
+  display: block;
+  min-height: 17rem;
+  scroll-snap-align: start;
+}
+
+@media (min-width: 480px) {
+  .skeleton {
+    min-height: 15.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .skeleton {
+    min-height: 17.25rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .skeleton {
+    min-height: 19rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .skeleton {
+    min-height: 17rem;
+  }
+}
+
+/* ---- Controls --------------------------------------------------------------
+   The dots on the left, the buttons on the right; the row is as tall as the
+   buttons, so its empty placeholder (while loading) matches. */
+.controls {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-4);
+  min-height: var(--sf-tap-target);
+  margin-top: var(--sf-space-6);
+}
+
+.dots {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  min-width: 0;
+  /* Pull the first dot's hit area back so its mark lines up with the slides. */
+  margin-left: calc(-1 * var(--sf-space-2));
+}
+
+/* Each dot is a 24px-wide, 44px-tall target (WCAG 2.5.8 asks for 24 × 24)
+   around a 6px mark: hollow (border-strong) or, for the slides in view,
+   filled ink. */
+.dot {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--sf-space-6);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background: none;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.dotMark {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border: 1px solid var(--sf-color-border-strong);
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.dot[aria-current="true"] .dotMark {
+  border-color: var(--sf-color-text);
+  background-color: var(--sf-color-text);
+}
+
+@media (hover: hover) {
+  .dot:hover .dotMark {
+    border-color: var(--sf-color-text);
+  }
+}
+
+.buttons {
+  display: flex;
+  flex: none;
+  gap: var(--sf-space-2);
+}
+
+/* Hairline square buttons: ink chevron, stone border that turns ink on hover. */
+.control {
+  --sf-btn-border: var(--sf-color-border);
+  --sf-btn-border-hover: var(--sf-color-text);
+  --sf-btn-fg: var(--sf-color-text);
+  --sf-btn-bg-hover: var(--sf-color-primary-soft);
+}
+
+/* ---- Empty and error states --------------------------------------------------
+   One muted eyebrow line. */
+.state {
+  margin: 0;
+}
+
+/* ---- Forced colours ----------------------------------------------------------
+   Keep the dots' state visible when colours are replaced. */
+@media (forced-colors: active) {
+  .dotMark {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+  }
+
+  .dot[aria-current="true"] .dotMark {
+    background-color: CanvasText;
+  }
+}

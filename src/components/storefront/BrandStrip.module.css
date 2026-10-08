@@ -1,0 +1,116 @@
+/* =============================================================================
+ * BrandStrip / WordmarkStrip — a row of names between hairlines (Prompt 12)
+ * =============================================================================
+ * The label (.sf-eyebrow) on the left and the names on the right, one 56px
+ * row (hairlines included) from 768px; on phones the label sits above the
+ * names, which wrap. Names: sans 13px, 500, uppercase, eyebrow tracking,
+ * muted, with a dot between neighbours. Tokens only.
+ * ========================================================================== */
+
+.strip {
+  border-block: var(--sf-hairline);
+}
+
+/* Two strips in a row (brands, then press) share one rule. */
+.strip + .strip {
+  border-top: 0;
+}
+
+.inner {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-2);
+  padding-block: var(--sf-space-4);
+}
+
+@media (min-width: 768px) {
+  .inner {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--sf-space-8);
+    min-height: 54px; /* + the two hairlines = 56px */
+    padding-block: var(--sf-space-2);
+  }
+}
+
+.label {
+  flex: none;
+  margin: 0;
+}
+
+/* The list shrinks to its names and sits on the right. Each name is preceded
+   by a dot drawn in its leading gap; the wrapper pulls the list one gap to
+   the left and clips it, so the first name of every line loses its dot. */
+.listWrap {
+  --strip-gap: var(--sf-space-6);
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  row-gap: var(--sf-space-1);
+  margin: 0 0 0 calc(-1 * var(--strip-gap));
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  position: relative;
+  padding-left: var(--strip-gap);
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem; /* 13px */
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-color-text-muted);
+}
+
+/* The dot is decorative: the second declaration (empty alt text) keeps it out
+   of the accessible name where supported. */
+.item::before {
+  content: "\00B7";
+  content: "\00B7" / "";
+  position: absolute;
+  left: calc(var(--strip-gap) / 2);
+  transform: translateX(-50%);
+  color: var(--sf-color-text-muted);
+}
+
+/* A press logo, when PressStrip is given one: one line tall, never wider
+   than 160px. */
+.logo {
+  display: block;
+  width: auto;
+  max-width: 160px;
+  height: 1.5rem;
+  object-fit: contain;
+}
+
+/* ---- Loading -----------------------------------------------------------------
+   Skeleton lines where the names will be, in a box as tall as the names: two
+   lines on phones (where a few names already wrap), one from 768px. */
+.skeleton {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 22rem;
+  min-height: calc(2 * var(--sf-leading-normal) * 1em + var(--sf-space-1));
+  padding-top: 0.375em; /* centres each 0.75em line in its 1.5em line box */
+  font-size: 0.8125rem; /* the names' size */
+}
+
+@media (min-width: 768px) {
+  .skeleton {
+    min-height: calc(var(--sf-leading-normal) * 1em);
+  }
+
+  .skeletonExtra {
+    display: none;
+  }
+}

@@ -1,10 +1,13 @@
 /* =============================================================================
- * Home page — the discovery sections (Prompt 11)
+ * Home page — the discovery sections (Prompt 11) and the closing half
+ * (Prompt 12)
  * =============================================================================
  * The hero and the assurance strip have their own modules (Prompt 10). Below
  * them: Shop by space, story block 1, Featured Collections (FeaturedProducts),
  * Complete the space, story block 2, Trending and Recently viewed (both
- * ProductRail), then the interim "Why choose us" grid that Prompt 12 replaces.
+ * ProductRail); then the brands strip (BrandStrip), the reviews
+ * (ReviewCarousel), Our promise, the marquee (Marquee) and the closing CTA
+ * (CTASection), each component styling itself.
  *
  * Every section is .sf-section inside .sf-container--wide, the left edge the
  * header, hero and strip share. Sections are separated by full-width
@@ -361,53 +364,117 @@
   margin: 0 0 var(--sf-space-6);
 }
 
-/* ── Interim: "Why choose us" (Prompt 12 replaces it) ─────────────────────── */
+/* ── 11. Our promise ──────────────────────────────────────────────────────── */
 
-.whyGrid {
+/* Three columns from 768px, stacked on phones. Each step: a 4:5 image (the
+   frame reserves it, sand while it loads), the serif numeral beside the
+   eyebrow, a 24px serif title and a 15px body. */
+.steps {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--sf-space-8) clamp(var(--sf-space-6), 3vw, var(--sf-space-12));
+  gap: var(--sf-space-12);
   margin: 0;
   padding: 0;
   list-style: none;
 }
 
-@media (min-width: 480px) {
-  .whyGrid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+@media (min-width: 768px) {
+  .steps {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    column-gap: clamp(var(--sf-space-6), 3vw, var(--sf-space-12));
   }
 }
 
-@media (min-width: 1024px) {
-  .whyGrid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 0;
+}
+
+.stepMedia {
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+/* The one lift the page allows: a step's image rises 4px while the pointer
+   rests on the step (pointer devices only; none under reduced motion). */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .step:hover .stepMedia,
+  .step:focus-within .stepMedia {
+    transform: translateY(-4px);
   }
 }
 
-.whyItem {
-  padding-top: var(--sf-space-5);
-  border-top: var(--sf-hairline);
-}
-
-.whyIcon {
+.stepImage {
   display: block;
-  width: 24px;
-  height: 24px;
-  color: var(--sf-color-accent);
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
-.whyTitle {
-  margin: var(--sf-space-4) 0 var(--sf-space-2);
-  font-family: var(--sf-font-sans);
-  font-size: var(--sf-text-base);
-  font-weight: var(--sf-font-semibold);
-  line-height: var(--sf-leading-tight);
+.stepMeta {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sf-space-3);
+  margin: var(--sf-space-6) 0 0;
+}
+
+.stepNumber {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-normal);
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+  color: var(--sf-color-accent-text);
+}
+
+.stepTitle {
+  margin: var(--sf-space-3) 0 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-xl); /* 24px */
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
   color: var(--sf-color-text);
+  overflow-wrap: break-word;
+  text-wrap: balance;
 }
 
-.whyText {
-  margin: 0;
-  font-size: var(--sf-text-sm);
+.stepBody {
+  max-width: 40ch;
+  margin: var(--sf-space-3) 0 0;
+  font-size: 0.9375rem; /* 15px */
   line-height: var(--sf-leading-body);
   color: var(--sf-color-text-secondary);
+}
+
+/* While the settings and shipping methods are read: the body laid out
+   invisibly (so the step already has its height) under two skeleton lines. */
+.stepBodyPending {
+  position: relative;
+}
+
+.stepBodyLayout {
+  visibility: hidden;
+}
+
+.stepSkeleton {
+  position: absolute;
+  inset: 0 0 auto;
+  display: block;
+}
+
+/* ── 13. Closing CTA ──────────────────────────────────────────────────────── */
+
+/* The page ends here: .main-content's own bottom padding separates the navy
+   panel from the navy footer, so the section adds none below it. (The
+   element in the selector outweighs CTASection's own padding rule whatever
+   the stylesheet order.) */
+section.closing {
+  padding-bottom: 0;
 }
