@@ -1,7 +1,18 @@
+/* =============================================================================
+ * VariantSelector — eyebrow names, chips and swatches (Prompt 16)
+ * =============================================================================
+ * Each attribute is an eyebrow ("COLOUR") with the chosen value beside it in
+ * ink, over a row of options: 40px .sf-chip pills (ink fill when chosen, from
+ * the primitive's [aria-checked="true"] rule) or, for colour rows, 28px
+ * swatches in a 44px target with a 2px ink ring when chosen. Sold out keeps
+ * its strike; an option that only conflicts with another choice is dimmed.
+ * Tokens only (prompts/DESIGN_SYSTEM.md); the swatch colours are product data.
+ * ========================================================================== */
+
 .selector {
   display: flex;
   flex-direction: column;
-  gap: var(--sf-space-5);
+  gap: var(--sf-space-6);
 }
 
 .group {
@@ -12,210 +23,229 @@
 
 .groupHead {
   display: flex;
+  flex-wrap: wrap;
   align-items: baseline;
-  gap: var(--sf-space-2);
+  gap: var(--sf-space-1) var(--sf-space-3);
 }
 
 .label {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
-  color: var(--sf-color-text);
-  text-transform: capitalize;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
 }
 
 .chosen {
+  font-family: var(--sf-font-sans);
   font-size: var(--sf-text-sm);
-  color: var(--sf-color-text-muted);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text);
 }
 
 .options {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sf-space-3);
+  gap: var(--sf-space-2);
 }
 
+/* Swatch targets are 44px; the circles inside are 28px, 16px apart. */
 .optionsColor {
-  gap: var(--sf-space-3);
+  gap: var(--sf-space-1);
+  margin-inline-start: calc(var(--sf-space-2) * -1);
 }
 
-/* ---- Tiles (flat variants + non-colour structured attributes) ---- */
-.tile {
+/* ---- Chips (non-colour attributes and flat variants) ---------------------- */
+.chip {
   position: relative;
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 2px;
-  min-height: var(--sf-tap-target);
-  padding: 8px 16px;
-  border: 1.5px solid var(--sf-color-border-strong);
-  border-radius: var(--sf-radius-md);
-  background: var(--sf-color-surface);
-  color: var(--sf-color-text);
-  cursor: pointer;
-  transition: border-color var(--sf-transition-fast),
-    background var(--sf-transition-fast), transform var(--sf-transition-fast),
-    box-shadow var(--sf-transition-fast);
-}
-
-/* chip = compact, single-line tile for structured attribute values */
-.tileChip {
-  flex-direction: row;
-  align-items: center;
-  justify-content: center;
+  min-height: 40px;
   min-width: var(--sf-tap-target);
-  padding: 10px 18px;
+  padding-inline: var(--sf-space-4);
+  font-variant-numeric: tabular-nums;
 }
 
-.tile:hover:not(:disabled) {
-  border-color: var(--sf-color-primary);
-  transform: translateY(-1px);
+/* A 44px target around the 40px pill without moving the row. */
+.chip::before {
+  content: "";
+  position: absolute;
+  inset: -2px 0;
 }
 
-.tile:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
+.chipName {
+  white-space: nowrap;
 }
 
-.tileActive {
-  border-color: var(--sf-color-primary);
-  background: var(--sf-color-primary-soft);
-  box-shadow: inset 0 0 0 1px var(--sf-color-primary);
+/* Flat variants carry their price: "16GB / 512GB  ₹74,999.00". */
+.chipFlat {
+  white-space: normal;
+  text-align: start;
 }
 
-.tileName {
-  font-size: var(--sf-text-sm);
+.chipPrice {
+  color: inherit;
   font-weight: var(--sf-font-medium);
+  white-space: nowrap;
 }
 
-.tilePrice {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
-  color: var(--sf-color-primary);
-}
-
-/* Unavailable with the CURRENT other selections, but buyable on its own — kept
-   clickable (clicking snaps to a valid variant). Dimmed, no strike. */
-.tileMuted {
-  opacity: 0.55;
-}
-
-.tileMuted .tileName {
-  text-decoration: line-through;
-  text-decoration-color: var(--sf-color-border-strong);
-}
-
-.tileOos {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Diagonal strike for sold-out tiles (kept legible, honest signal) */
-.tileOos::after {
+/* Sold out: disabled (the primitive dims it to 50%) with a diagonal strike
+   across the pill, drawn as a hard-stop line in the control-boundary tone. */
+.chipOos::after {
   content: "";
   position: absolute;
   inset: 0;
   border-radius: inherit;
-  background: linear-gradient(
-    to top left,
-    transparent calc(50% - 0.6px),
-    var(--sf-color-border-strong) calc(50% - 0.6px),
-    var(--sf-color-border-strong) calc(50% + 0.6px),
-    transparent calc(50% + 0.6px)
+  background-image: linear-gradient(
+    to top right,
+    transparent calc(50% - 0.75px),
+    var(--sf-color-border-strong) calc(50% - 0.75px),
+    var(--sf-color-border-strong) calc(50% + 0.75px),
+    transparent calc(50% + 0.75px)
   );
   pointer-events: none;
 }
 
-.oosTag {
-  font-size: var(--sf-text-xs);
-  color: var(--sf-color-danger);
-  font-weight: var(--sf-font-medium);
+/* Buyable, but not with the other current choice: still clickable (it snaps
+   to a real variant), dimmed, with the value struck through. */
+.chipMuted {
+  opacity: 0.55;
 }
 
-/* ---- Colour swatches ---- */
+.chipMuted .chipName {
+  text-decoration-line: line-through;
+  text-decoration-color: var(--sf-color-border-strong);
+}
+
+/* ---- Colour swatches -------------------------------------------------------- */
 .swatch {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 3px;
-  border: 2px solid transparent;
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  padding: 0;
+  border: 0;
   border-radius: var(--sf-radius-pill);
   background: transparent;
   cursor: pointer;
-  transition: border-color var(--sf-transition-fast), transform var(--sf-transition-fast);
-}
-
-.swatch:hover:not(:disabled) {
-  transform: translateY(-1px);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .swatch:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 0;
   box-shadow: var(--sf-shadow-focus);
 }
 
-.swatchActive {
-  border-color: var(--sf-color-primary);
+/* The circle: a 1px boundary in the control tone, so a white swatch on paper
+   still has a visible edge (WCAG 1.4.11). */
+.swatchChip {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--sf-color-border-strong);
+  border-radius: var(--sf-radius-pill);
+  background-color: var(--sf-color-sand);
+  transition: box-shadow var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.swatchChip {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 34px;
-  height: 34px;
-  border-radius: var(--sf-radius-pill);
-  border: 1px solid var(--sf-color-border);
-  background: var(--sf-color-surface-2);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.25);
+/* Chosen: a 2px ink ring, 2px clear of the circle. */
+.swatchActive .swatchChip {
+  box-shadow: 0 0 0 2px var(--sf-color-bg), 0 0 0 4px var(--sf-color-primary);
+}
+
+@media (hover: hover) {
+  .swatch:not(:disabled):not(.swatchActive):hover .swatchChip {
+    box-shadow: 0 0 0 2px var(--sf-color-bg), 0 0 0 3px var(--sf-color-border-strong);
+  }
 }
 
 .swatchText {
-  font-size: var(--sf-text-sm);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-xs);
   font-weight: var(--sf-font-semibold);
   color: var(--sf-color-text-secondary);
 }
 
-/* Unavailable with current other selections but buyable on its own — clickable
-   (snaps on click). Dimmed without the hard sold-out strike. */
-.swatchMuted {
-  opacity: 0.5;
+.swatchMuted .swatchChip {
+  opacity: 0.45;
 }
 
+/* Sold out: a faded circle under a strike that reads on any colour (a paper
+   line with control-tone edges). */
 .swatchOos {
-  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .swatchOos .swatchChip {
-  position: relative;
-  overflow: hidden;
+  opacity: 0.4;
 }
 
-.swatchOos .swatchChip::after {
+.swatchOos::after {
   content: "";
   position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    to top left,
-    transparent calc(50% - 1px),
-    var(--sf-color-danger) calc(50% - 1px),
-    var(--sf-color-danger) calc(50% + 1px),
-    transparent calc(50% + 1px)
+  inset: calc((var(--sf-tap-target) - 28px) / 2);
+  border-radius: var(--sf-radius-pill);
+  background-image: linear-gradient(
+    to top right,
+    transparent calc(50% - 2px),
+    var(--sf-color-border-strong) calc(50% - 2px),
+    var(--sf-color-border-strong) calc(50% - 1px),
+    var(--sf-color-bg) calc(50% - 1px),
+    var(--sf-color-bg) calc(50% + 1px),
+    var(--sf-color-border-strong) calc(50% + 1px),
+    var(--sf-color-border-strong) calc(50% + 2px),
+    transparent calc(50% + 2px)
   );
+  pointer-events: none;
 }
 
-/* ---- Selected variant honest meta ---- */
+/* ---- The chosen variant's honest stock note -------------------------------- */
+.selectedMeta {
+  margin-top: calc(var(--sf-space-3) * -1);
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem; /* 13px */
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+}
+
 .selectedMeta:empty {
   display: none;
 }
 
 .metaLow {
-  font-size: var(--sf-text-sm);
   color: var(--sf-color-warning);
-  font-weight: var(--sf-font-medium);
 }
 
 .metaOos {
-  font-size: var(--sf-text-sm);
-  color: var(--sf-color-danger);
-  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-error);
+}
+
+/* ---- Windows contrast themes -------------------------------------------------- */
+@media (forced-colors: active) {
+  .swatchChip {
+    forced-color-adjust: none;
+    border-color: CanvasText;
+  }
+
+  .swatchActive .swatchChip {
+    box-shadow: 0 0 0 2px Canvas, 0 0 0 4px Highlight;
+  }
+
+  /* The strike is a gradient, which the browser drops here: keep it, in the
+     system text colour. */
+  .swatchOos::after,
+  .chipOos::after {
+    forced-color-adjust: none;
+    background-image: linear-gradient(
+      to top right,
+      transparent calc(50% - 1px),
+      CanvasText calc(50% - 1px),
+      CanvasText calc(50% + 1px),
+      transparent calc(50% + 1px)
+    );
+  }
 }

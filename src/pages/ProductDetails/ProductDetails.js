@@ -1,14 +1,16 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
 import { categoryParam } from "../../utils/categories";
+import { formatCurrency } from "../../utils/helpers";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
+import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import {
   ProductGallery,
+  ProductGallerySkeleton,
   SocialProof,
   PriceBlock,
   VariantSelector,
@@ -31,34 +33,110 @@ import styles from "./ProductDetails.module.css";
 // PRESENTATION + the UX principles. Everything here is API/db.json-driven — no
 // hardcoded business content — and every persuasive element is bound to real
 // data (see the ethics notes in STOREFRONT_UX_GUIDELINES.md).
+//
+// The first screen (Prompt 16): the shared breadcrumb with the category's
+// full trail, then a 12-column grid with the gallery in seven columns (sticky
+// from 1024px) and the buy box in five: eyebrow, serif title, ratings row,
+// price, summary, variants, quantity and stock, actions, SKU, promises and the
+// delivery facts. One column below 980px, the gallery first. The tabs, the
+// bundle and the related rail below are Prompt 17's.
 // =============================================================================
 
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+// The category's ancestors, root first ([department, …, leaf]), read one level
+// at a time through the category endpoint the page already uses. A failed or
+// missing read leaves the leaf on its own; a cycle or a very deep tree stops.
+const MAX_CATEGORY_DEPTH = 6;
+const loadCategoryTrail = async (leaf) => {
+  const trail = [leaf];
+  const seen = new Set([String(leaf.id)]);
+  let parentId = leaf.parentId;
+  try {
+    while (
+      parentId != null &&
+      parentId !== "" &&
+      trail.length < MAX_CATEGORY_DEPTH &&
+      !seen.has(String(parentId))
+    ) {
+      const parent = await apiService.categories.getById(parentId);
+      if (!parent) return [leaf];
+      seen.add(String(parentId));
+      trail.unshift(parent);
+      parentId = parent.parentId;
+    }
+    return trail;
+  } catch (error) {
+    return [leaf];
+  }
+};
+
 // ─── Loading Skeleton ───────────────────────────────────────────────────────
+// The page's own layout in sand: trail, gallery, then the buy box's lines,
+// chips, stepper and buttons, so the loaded page lands in the same places.
 const Skeleton = () => (
-  <div className={styles.skeletonPage}>
-    <div className={styles.skeletonBreadcrumb} />
-    <div className={styles.skeletonLayout}>
-      <div className={styles.skeletonMainImage} />
-      <div className={styles.skeletonRight}>
-        <div className={styles.skeletonTitle} />
-        <div className={styles.skeletonRating} />
-        <div className={styles.skeletonPrice} />
-        <div className={styles.skeletonDesc} />
-        <div className={styles.skeletonDesc} />
-        <div className={styles.skeletonButtons} />
+  <div className={`sf-container sf-container--wide ${styles.container}`} aria-busy="true">
+    <span className="sf-visually-hidden">Loading the product</span>
+    <div className={styles.crumbs} aria-hidden="true">
+      <span className={`sf-skeleton ${styles.crumbSkeleton}`} />
+    </div>
+    <div className={styles.mainLayout} aria-hidden="true">
+      <div className={styles.gallerySection}>
+        <ProductGallerySkeleton />
+      </div>
+      <div className={styles.infoSection}>
+        <span className={styles.eyebrow}>
+          <span className={`sf-skeleton ${styles.eyebrowSkeleton}`} />
+        </span>
+        <span className={`sf-display-md ${styles.productName} ${styles.titleSkeleton}`}>
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+        </span>
+        <span className={`${styles.socialProof} ${styles.lineSkeleton}`}>
+          <span className="sf-skeleton" />
+        </span>
+        <span className={`${styles.price} ${styles.priceSkeleton}`}>
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+        </span>
+        <span className={`${styles.shortDescription} ${styles.textSkeleton}`}>
+          <span className="sf-skeleton" />
+          <span className="sf-skeleton" />
+        </span>
+        <hr className={styles.rule} />
+        <span className={styles.chipsSkeleton}>
+          <span className={`sf-skeleton ${styles.eyebrowSkeleton}`} />
+          <span className={styles.chipsRow}>
+            <span className="sf-skeleton" />
+            <span className="sf-skeleton" />
+            <span className="sf-skeleton" />
+          </span>
+        </span>
+        <span className={`${styles.purchaseRow} ${styles.variantsGap}`}>
+          <span className={`sf-skeleton ${styles.stepperSkeleton}`} />
+          <span className={`sf-skeleton ${styles.statusSkeleton}`} />
+        </span>
+        <span className={styles.actions}>
+          <span className={`sf-skeleton ${styles.addToCart} ${styles.buttonSkeleton}`} />
+          <span className={`sf-skeleton ${styles.buyNow} ${styles.buttonSkeleton}`} />
+          <span className={`sf-skeleton ${styles.wishlist} ${styles.circleSkeleton}`} />
+        </span>
       </div>
     </div>
   </div>
 );
 
 // ─── Not Found State ────────────────────────────────────────────────────────
+// An in-app state (no redirect): the serif line and a way back to the shop.
 const NotFound = () => (
-  <div className={styles.notFound}>
-    <div className={styles.notFoundIcon}>404</div>
-    <h2>Product Not Found</h2>
-    <p>The product you are looking for does not exist or has been removed.</p>
-    <Link to="/products" className={styles.notFoundLink}>
-      Browse Products
+  <div className={`sf-container sf-container--wide ${styles.notFound}`}>
+    <p className="sf-eyebrow">Not found</p>
+    <h1 className={`sf-display-md ${styles.notFoundTitle}`}>We couldn't find that piece.</h1>
+    <p className={styles.notFoundText}>
+      It may have been renamed, or it is no longer in our catalogue.
+    </p>
+    <Link to="/products" className="sf-btn sf-btn--primary sf-btn--lg">
+      Browse all furniture
     </Link>
   </div>
 );
@@ -68,7 +146,6 @@ const ProductDetails = () => {
   // Route is /products/:slug (slug canonical; legacy numeric id still resolves).
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const tabsRef = useRef(null);
@@ -90,6 +167,12 @@ const ProductDetails = () => {
   const [category, setCategory] = useState(null);
   const [settings, setSettings] = useState(null);
   const [shipping, setShipping] = useState([]);
+  // [department, …, leaf] once read; [] with no category; null while reading.
+  const [categoryTrail, setCategoryTrail] = useState(null);
+  // Settings and shipping methods have both answered (or failed).
+  const [storeDataReady, setStoreDataReady] = useState(false);
+  // The shopper has changed the variant (drives the status announcement).
+  const [variantPicked, setVariantPicked] = useState(false);
 
   // ── Fetch product ──────────────────────────────────────────────────────
   const fetchProduct = useCallback(async () => {
@@ -125,6 +208,7 @@ const ProductDetails = () => {
         setSelectedVariant(null);
       }
       setQuantity(1);
+      setVariantPicked(false);
 
       // Recently viewed (key must match what Home.js reads).
       try {
@@ -149,11 +233,17 @@ const ProductDetails = () => {
         /* ignore localStorage errors */
       }
 
+      // A new product never shows the previous one's category or trail.
+      setCategory(null);
+      setCategoryTrail(data.categoryId ? null : []);
       if (data.categoryId) {
         apiService.categories
           .getById(data.categoryId)
-          .then(setCategory)
-          .catch(() => {});
+          .then((found) => {
+            setCategory(found);
+            if (!found) setCategoryTrail([]);
+          })
+          .catch(() => setCategoryTrail([]));
       }
     } catch (error) {
       console.error("Error fetching product:", error);
@@ -200,9 +290,19 @@ const ProductDetails = () => {
   }, [product]);
 
   // ── Public store data for trust signals + transparent delivery info ─────
+  // Both reads settle (a failure counts as no data) before the promises and
+  // the delivery facts are shown, so nothing is claimed ahead of the data.
   useEffect(() => {
-    apiService.settings.get().then(setSettings).catch(() => {});
-    apiService.shipping.getMethods().then((m) => setShipping(Array.isArray(m) ? m : [])).catch(() => {});
+    let active = true;
+    Promise.allSettled([
+      apiService.settings.get().then((s) => active && setSettings(s)),
+      apiService.shipping
+        .getMethods()
+        .then((m) => active && setShipping(Array.isArray(m) ? m : [])),
+    ]).then(() => active && setStoreDataReady(true));
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
@@ -216,6 +316,18 @@ const ProductDetails = () => {
       fetchAov();
     }
   }, [product, fetchReviews, fetchAov]);
+
+  // ── Category trail for the breadcrumb (once the leaf is known) ──────────
+  useEffect(() => {
+    if (!category) return undefined;
+    let active = true;
+    loadCategoryTrail(category).then((trail) => {
+      if (active) setCategoryTrail(trail);
+    });
+    return () => {
+      active = false;
+    };
+  }, [category]);
 
   // ── Derived values ─────────────────────────────────────────────────────
   const images =
@@ -308,11 +420,56 @@ const ProductDetails = () => {
     tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
   }, []);
 
+  // A variant chosen in the selector (the selection logic is the selector's).
+  const handleVariantChange = useCallback((variant) => {
+    setSelectedVariant(variant);
+    setVariantPicked(true);
+  }, []);
+
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) return <Skeleton />;
   if (notFound || !product) return <NotFound />;
 
   const wishlisted = isInWishlist(product.id);
+
+  // Stock status, from the derived values only.
+  const stockStatus = isOutOfStock
+    ? { text: "Out of stock", tone: styles.stockOut }
+    : isLowStock
+    ? { text: `Only ${currentStock} left`, tone: styles.stockLow }
+    : hasStockInfo
+    ? { text: "In stock", tone: styles.stockIn }
+    : null;
+
+  // Announced (politely) when the shopper changes the variant: what it is,
+  // what it costs and whether it is in stock.
+  const variantAnnouncement =
+    variantPicked && selectedVariant
+      ? [selectedVariant.name, formatCurrency(currentPrice, "INR"), stockStatus?.text]
+          .filter(Boolean)
+          .join(", ")
+      : "";
+
+  // Brand first; else the category's name (held as a skeleton while it loads).
+  const eyebrowPending =
+    !product.brand && !!product.categoryId && !category && categoryTrail === null;
+  const eyebrow = product.brand || category?.name || "";
+
+  const crumbs = [
+    ...(categoryTrail || []).map((c) => ({
+      label: c.name,
+      link: `/products?category=${categoryParam(c)}`,
+    })),
+    { label: product.name },
+  ];
+
+  // The tax line waits for the settings (a blank line holds its place), so
+  // the page never states a tax treatment the store has not confirmed.
+  const taxNote = settings
+    ? settings?.store?.taxIncluded === false
+      ? "Exclusive of taxes — calculated at checkout"
+      : "Inclusive of all taxes"
+    : "\u00a0";
 
   return (
     <motion.div
@@ -320,28 +477,17 @@ const ProductDetails = () => {
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
       transition={{ duration: 0.3 }}
-      className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}
+      className={styles.page}
     >
-      <div className={styles.container}>
-        {/* ── Breadcrumb (orientation) ──────────────────────────────────── */}
-        <nav className={styles.breadcrumb} aria-label="Breadcrumb">
-          <Link to="/" className={styles.breadcrumbLink}>
-            Home
-          </Link>
-          <span className={styles.breadcrumbSep}>&rsaquo;</span>
-          {category ? (
-            <>
-              <Link
-                to={`/products?category=${categoryParam(category)}`}
-                className={styles.breadcrumbLink}
-              >
-                {category.name}
-              </Link>
-              <span className={styles.breadcrumbSep}>&rsaquo;</span>
-            </>
-          ) : null}
-          <span className={styles.breadcrumbCurrent}>{product.name}</span>
-        </nav>
+      <div className={`sf-container sf-container--wide ${styles.container}`}>
+        {/* ── Breadcrumb (orientation): the category's full trail ───────── */}
+        <div className={styles.crumbs}>
+          {categoryTrail === null ? (
+            <span className={`sf-skeleton ${styles.crumbSkeleton}`} aria-hidden="true" />
+          ) : (
+            <Breadcrumb items={crumbs} className={styles.trail} />
+          )}
+        </div>
 
         {/* ── Above the fold: media + buy box ───────────────────────────── */}
         <div className={styles.mainLayout}>
@@ -350,113 +496,143 @@ const ProductDetails = () => {
           </div>
 
           <div className={styles.infoSection}>
-            {product.brand && <span className={styles.brand}>{product.brand}</span>}
-            <h1 className={styles.productName}>{product.name}</h1>
+            {(product.brand || product.categoryId) && (
+              <p className={styles.eyebrow}>
+                {eyebrowPending ? (
+                  <span className={`sf-skeleton ${styles.eyebrowSkeleton}`} aria-hidden="true" />
+                ) : (
+                  eyebrow
+                )}
+              </p>
+            )}
+            <h1 className={`sf-display-md ${styles.productName}`}>{product.name}</h1>
 
             {/* Social proof — real ratings only, jumps to reviews */}
             <SocialProof
               rating={displayAvg}
               count={totalRatingsCount}
               onReviewsClick={scrollToReviews}
+              className={styles.socialProof}
             />
 
             {/* Price — honest compare/discount + transparent tax note */}
-            <PriceBlock
-              price={currentPrice}
-              comparePrice={comparePrice}
-              currency="INR"
-              size="lg"
-              taxNote={
-                settings?.store?.taxIncluded === false
-                  ? "Exclusive of taxes — calculated at checkout"
-                  : "Inclusive of all taxes"
-              }
-            />
-
-            {currentSku && (
-              <div className={styles.skuLine}>
-                SKU: <span>{currentSku}</span>
-              </div>
-            )}
+            <div className={styles.price}>
+              <PriceBlock
+                price={currentPrice}
+                comparePrice={comparePrice}
+                currency="INR"
+                size="lg"
+                taxNote={taxNote}
+              />
+            </div>
 
             {product.shortDescription && (
               <p className={styles.shortDescription}>{product.shortDescription}</p>
             )}
 
-            {/* Variant selection — visible swatches/tiles, never a dropdown */}
+            <hr className={styles.rule} />
+
+            {/* Variant selection — visible swatches/chips, never a dropdown */}
             {product.variants && product.variants.length > 0 && (
-              <VariantSelector
-                variants={product.variants}
-                value={selectedVariant}
-                onChange={setSelectedVariant}
-                productStock={product.stock}
-                currency="INR"
-              />
+              <div className={styles.variants}>
+                <VariantSelector
+                  variants={product.variants}
+                  value={selectedVariant}
+                  onChange={handleVariantChange}
+                  productStock={product.stock}
+                  currency="INR"
+                />
+              </div>
             )}
 
             {/* Quantity + honest stock status */}
             <div className={styles.purchaseRow}>
-              <div className={styles.quantityBlock}>
-                <span className={styles.quantityLabel}>Quantity</span>
-                <QuantityStepper
-                  value={quantity}
-                  onChange={setQuantity}
-                  min={1}
-                  max={maxQuantity}
-                  disabled={isOutOfStock}
-                />
-              </div>
-              <div className={styles.stockStatus}>
-                {isOutOfStock ? (
-                  <span className={styles.stockOut}>Out of Stock</span>
-                ) : isLowStock ? (
-                  <span className={styles.stockLow}>
-                    Only {currentStock} left — order soon!
-                  </span>
-                ) : hasStockInfo ? (
-                  <span className={styles.stockIn}>In Stock</span>
-                ) : null}
-              </div>
+              <QuantityStepper
+                value={quantity}
+                onChange={setQuantity}
+                min={1}
+                max={maxQuantity}
+                disabled={isOutOfStock}
+              />
+              {stockStatus && (
+                <p className={cx(styles.stockStatus, stockStatus.tone)}>{stockStatus.text}</p>
+              )}
             </div>
 
             {/* Primary / secondary CTAs (standard copy, clear hierarchy) */}
-            <div className={styles.actionButtons} ref={buyBoxRef}>
+            <div className={styles.actions} ref={buyBoxRef}>
               <button
-                className={`${styles.addToCartBtn} ${added ? styles.addToCartDone : ""}`}
+                type="button"
+                className={cx(
+                  "sf-btn sf-btn--primary sf-btn--lg sf-btn--block",
+                  styles.addToCart
+                )}
                 onClick={handleAddClick}
                 disabled={isOutOfStock}
               >
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 002 1.61h9.72a2 2 0 002-1.61L23 6H6" />
-                </svg>
-                {isOutOfStock ? "Out of Stock" : added ? "Added to Cart ✓" : "Add to Cart"}
+                {isOutOfStock ? (
+                  "Out of stock"
+                ) : added ? (
+                  <>
+                    Added
+                    <svg className={styles.check} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+                      <path d="M5 12.5l4.5 4.5L19 7.5" />
+                    </svg>
+                  </>
+                ) : (
+                  "Add to cart"
+                )}
               </button>
               <button
-                className={styles.buyNowBtn}
+                type="button"
+                className={cx("sf-btn sf-btn--ghost sf-btn--lg sf-btn--block", styles.buyNow)}
                 onClick={handleBuyNow}
                 disabled={isOutOfStock}
               >
-                Buy Now
+                Buy now
               </button>
               <button
-                className={`${styles.wishlistBtn} ${wishlisted ? styles.wishlistBtnActive : ""}`}
+                type="button"
+                className={cx(styles.wishlist, wishlisted && styles.wishlistActive)}
                 onClick={() => toggleWishlist(product)}
-                aria-label={wishlisted ? "Remove from wishlist" : "Add to wishlist"}
+                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
                 aria-pressed={wishlisted}
               >
-                <svg viewBox="0 0 24 24" width="22" height="22" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill={wishlisted ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true" focusable="false">
                   <path d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 000-7.78z" />
                 </svg>
               </button>
             </div>
 
+            {currentSku && (
+              <p className={styles.sku}>
+                SKU: <span>{currentSku}</span>
+              </p>
+            )}
+
+            <hr className={styles.rule} />
+
             {/* Trust signals near the decision point (config + live data) */}
-            <TrustBadges settings={settings} shipping={shipping} variant="grid" />
+            <TrustBadges
+              settings={settings}
+              shipping={shipping}
+              variant="grid"
+              loading={!storeDataReady}
+            />
 
             {/* Transparent delivery, COD & returns — REAL data, shown upfront */}
-            <DeliveryReturnsInfo shipping={shipping} settings={settings} currency="INR" />
+            <div className={styles.delivery}>
+              <DeliveryReturnsInfo
+                shipping={shipping}
+                settings={settings}
+                currency="INR"
+                loading={!storeDataReady}
+              />
+            </div>
+
+            <p className="sf-visually-hidden" role="status">
+              {variantAnnouncement}
+            </p>
           </div>
         </div>
 
@@ -590,13 +766,12 @@ const ProductDetails = () => {
       <AddToCartBar
         anchorRef={buyBoxRef}
         price={currentPrice}
-        comparePrice={comparePrice}
         currency="INR"
         image={product.images?.[0] || product.image}
-        name={selectedVariant?.name || product.name}
+        name={product.name}
+        detail={selectedVariant?.name}
         disabled={isOutOfStock}
         onAddToCart={handleAddClick}
-        onBuyNow={handleBuyNow}
       />
     </motion.div>
   );

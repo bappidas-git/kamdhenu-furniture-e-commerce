@@ -70,7 +70,7 @@ treatment) are **never** hardcoded in config — they're read from the live
 | **C** | Variants **without dropdowns** | `VariantSelector` | Visible swatches/tiles; grouped per attribute when structured; color chips; per-variant price & **real** availability; impossible combos disabled; ARIA radiogroups. Generic across color/size/material/storage/… |
 | **D** | Authentic social proof | `SocialProof`, `ReviewsSection`, `StarRating` | Real ratings/reviews only; verified-purchase badges; customer photos (UGC) when present; **honest empty states**. |
 | **E** | Trust signals near the decision | `TrustBadges`, `DeliveryReturnsInfo` | Config-driven badges + transparent shipping/COD/returns shown **upfront** from real data. |
-| **F** | Clear, standard CTAs | PDP buttons, `AddToCartBar`, `ProductCard` | Conventional copy ("Add to Cart", "Buy Now"), strong primary/secondary hierarchy, consistent storefront-wide. |
+| **F** | Clear, standard CTAs | PDP buttons, `AddToCartBar`, `ProductCard` | Conventional copy ("Add to cart", "Buy now"), strong primary/secondary hierarchy, consistent storefront-wide. |
 | **G** | Micro-interactions that remove hesitation | `QuantityStepper`, add-to-cart "Added ✓" state, cart toast + mini-cart, skeletons | Immediate, satisfying feedback; never janky/ambiguous. |
 | **H** | Increase AOV — helpfully | `FrequentlyBoughtTogether`, `RelatedProducts` | Data-driven only; render nothing when there's no real data. |
 | **I** | Mobile-first & accessible | `AddToCartBar` (sticky), tokens (`--sf-tap-target`), focus styles, ARIA | Sticky mobile Add-to-Cart, ≥44px targets, keyboard nav, contrast, focus-visible everywhere. |
@@ -83,7 +83,7 @@ The components are designed so that **fake signals are hard to ship**:
 
 - **`SocialProof` accepts only numbers** — an aggregate `rating` and a `count`
   of real ratings — never free-typed marketing claims. With `count = 0` it shows
-  *"No ratings yet"*, never a hollow `0.0 (0)`.
+  *"No reviews yet"*, never a hollow `0.0 (0)`.
 - **`ReviewsSection` renders only the approved reviews it's handed.** The API
   (`products.getReviews`) filters to `status: "approved"`, so unmoderated or
   rejected reviews can't appear. UGC photos render only when a real review has
@@ -106,7 +106,9 @@ The components are designed so that **fake signals are hard to ship**:
 - **Trust badges are owner-attested *policies*** (genuine product, secure
   payment, returns) — legitimately configurable copy — **not** live demand/
   scarcity signals. Where a badge implies a number (free shipping, returns, COD),
-  that number is resolved from live `settings`/`shipping` data.
+  that number is resolved from live `settings`/`shipping` data, and a badge the
+  live data does not back (COD switched off, no free-shipping threshold, a
+  0-day returns window) is not shown at all.
 
 If you add a new persuasive element, bind it to a real data source. If the data
 isn't there, **show nothing or an honest empty state.**

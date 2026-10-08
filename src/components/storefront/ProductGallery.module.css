@@ -1,131 +1,205 @@
+/* =============================================================================
+ * ProductGallery — the product page's media (Prompt 16)
+ * =============================================================================
+ * A 4:5 frame on sand with a hairline drawn over its edge, every photograph
+ * stacked inside it (the active one at full opacity, a --sf-duration
+ * crossfade between them), and a strip of 56px hairline thumbnails: under
+ * the frame up to 768px, a vertical strip beside it from 769px.
+ *
+ * --gallery-max-width (set by the page) caps the frame's width; the root is
+ * that wide (plus the strip beside it) and no wider, so the page can align it.
+ * Tokens only (prompts/DESIGN_SYSTEM.md).
+ * ========================================================================== */
+
 .gallery {
+  --gallery-thumb: 56px;
+  --gallery-strip-gap: var(--sf-space-4);
+  /* Room for the focus ring inside the scrolling strip. */
+  --gallery-focus-room: 6px;
   display: grid;
-  grid-template-columns: 72px minmax(0, 1fr);
-  gap: var(--sf-space-4);
-  align-items: start;
-}
-
-/* When there's a single image the strip is not rendered → one column. */
-.gallery:has(.main:only-child) {
   grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    "frame"
+    "thumbs";
+  row-gap: var(--sf-space-3);
+  width: 100%;
+  max-width: var(--gallery-max-width, none);
 }
 
-.thumbs {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sf-space-3);
-  max-height: 520px;
-  overflow-y: auto;
-  padding-right: 2px;
-}
-
-.thumb {
-  width: 72px;
-  height: 72px;
-  flex-shrink: 0;
-  padding: 0;
-  border: 2px solid var(--sf-color-border);
-  border-radius: var(--sf-radius-md);
+/* ── The frame ──────────────────────────────────────────────────────────── */
+.frame,
+.frameSkeleton {
+  grid-area: frame;
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  background: var(--sf-color-surface-2);
-  cursor: pointer;
-  transition: border-color var(--sf-transition-fast), transform var(--sf-transition-fast);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
 }
 
-.thumb img {
+.frame {
+  /* The photographs (1), the hairline (2) and the chip (3) stack inside it. */
+  isolation: isolate;
+  /* Vertical scrolling and pinch stay with the browser; a horizontal swipe
+     reaches the gallery. */
+  touch-action: pan-y pinch-zoom;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* The hairline sits over the photograph's edge, so a sand-toned photograph
+   (or the sand placeholder) never dissolves into a sand page. */
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: var(--sf-hairline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.frame:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+.image {
+  position: absolute;
+  inset: 0;
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
+  opacity: 0;
+  user-select: none;
+  transition: opacity var(--sf-duration) var(--sf-ease-out),
+    transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
-.thumb:hover {
-  transform: translateY(-1px);
+.contain .image {
+  object-fit: contain;
+}
+
+.imageActive {
+  z-index: 1;
+  opacity: 1;
+}
+
+/* Hover-zoom is for a mouse (the component listens to mouse pointers only). */
+@media (hover: hover) and (pointer: fine) {
+  .zoomable {
+    cursor: zoom-in;
+  }
+}
+
+/* The one overlay: a quiet eyebrow chip, paper on any photograph. */
+.sale {
+  position: absolute;
+  top: var(--sf-space-4);
+  left: var(--sf-space-4);
+  z-index: 3;
+  pointer-events: none;
+  /* Windows contrast themes draw this outline, so the chip keeps an edge. */
+  outline: 1px solid transparent;
+}
+
+/* ── The strip ──────────────────────────────────────────────────────────── */
+.thumbs {
+  grid-area: thumbs;
+  position: relative;
+  display: flex;
+  gap: var(--sf-space-2);
+  min-width: 0;
+  margin: calc(var(--gallery-focus-room) * -1);
+  padding: var(--gallery-focus-room);
+  overflow-x: auto;
+  overflow-y: hidden;
+  overscroll-behavior-x: contain;
+  scrollbar-width: thin;
+}
+
+.thumb,
+.thumbSkeleton {
+  position: relative;
+  display: block;
+  flex: none;
+  width: var(--gallery-thumb);
+  height: var(--gallery-thumb);
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+
+.thumb {
+  padding: 0;
+  border: var(--sf-hairline);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  opacity: 0.6;
+  transition: opacity var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .thumb:hover img {
+    opacity: 1;
+  }
 }
 
 .thumbActive {
   border-color: var(--sf-color-primary);
 }
 
+.thumbActive img {
+  opacity: 1;
+}
+
 .thumb:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   box-shadow: var(--sf-shadow-focus);
 }
 
-.main {
-  position: relative;
-  aspect-ratio: 1 / 1;
-  border-radius: var(--sf-radius-lg);
-  overflow: hidden;
-  background: var(--sf-color-surface-2);
-  cursor: zoom-in;
-}
-
-.main:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
-}
-
-.mainImg {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  display: block;
-  transition: transform var(--sf-transition-slow);
-}
-
-.discountBadge {
-  position: absolute;
-  top: var(--sf-space-3);
-  left: var(--sf-space-3);
-  z-index: 2;
-  background: var(--sf-color-danger);
-  color: var(--sf-color-primary-contrast);
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-bold);
-  padding: 4px 10px;
-  border-radius: var(--sf-radius-pill);
-}
-
-.dots {
-  position: absolute;
-  bottom: var(--sf-space-3);
-  left: 0;
-  right: 0;
-  display: flex;
-  justify-content: center;
-  gap: 6px;
-}
-
-.dot {
-  width: 6px;
-  height: 6px;
-  border-radius: var(--sf-radius-pill);
-  background: var(--sf-color-border-strong);
-  transition: width var(--sf-transition-fast), background var(--sf-transition-fast);
-}
-
-.dotActive {
-  width: 18px;
-  background: var(--sf-color-primary);
-}
-
-/* ---- Mobile: thumbnail strip moves below the image, scrolls horizontally ---- */
-@media (max-width: 768px) {
-  .gallery {
-    grid-template-columns: minmax(0, 1fr);
+/* ── Vertical strip beside the frame (769px and up) ─────────────────────── */
+@media (min-width: 769px) {
+  .multi {
+    grid-template-columns: var(--gallery-thumb) minmax(0, 1fr);
+    grid-template-areas: "thumbs frame";
+    column-gap: var(--gallery-strip-gap);
+    /* The frame's cap plus the strip (invalid, so no cap, without the hook). */
+    max-width: calc(var(--gallery-max-width) + var(--gallery-thumb) + var(--gallery-strip-gap));
   }
 
-  .thumbs {
-    order: 2;
-    flex-direction: row;
-    max-height: none;
-    overflow-x: auto;
-    padding-bottom: 2px;
+  /* The strip takes no height of its own and stretches to the frame's, so a
+     long strip scrolls beside the frame instead of growing the gallery. */
+  .multi .thumbs {
+    flex-direction: column;
+    align-self: start;
+    block-size: 0;
+    min-block-size: calc(100% + var(--gallery-focus-room) * 2);
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-x: auto;
+    overscroll-behavior-y: contain;
+  }
+}
+
+/* ── Windows contrast themes ────────────────────────────────────────────── */
+@media (forced-colors: active) {
+  .thumbActive {
+    border: 2px solid Highlight;
   }
 
-  .main {
-    order: 1;
-    cursor: default; /* no hover-zoom on touch */
+  .sale {
+    outline-color: CanvasText;
   }
 }

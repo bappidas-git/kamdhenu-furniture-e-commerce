@@ -1,92 +1,116 @@
+/* =============================================================================
+ * DeliveryReturnsInfo — a facts list between hairlines (Prompt 16)
+ * =============================================================================
+ * A small serif heading (Playfair 20px), then one row per fact with a hairline
+ * above each and below the last: delivery methods as name + window on the
+ * left and cost + free-delivery threshold on the right; the COD, returns and
+ * tax lines as single sentences. Sans 14px ink, details 13px muted. No icons,
+ * no box, no fill. Tokens only.
+ * ========================================================================== */
+
 .panel {
-  border: 1px solid var(--sf-color-border);
-  border-radius: var(--sf-radius-lg);
-  background: var(--sf-color-surface);
-  padding: var(--sf-space-4);
   display: flex;
   flex-direction: column;
   gap: var(--sf-space-3);
+  font-family: var(--sf-font-sans);
 }
 
 .title {
-  display: flex;
-  align-items: center;
-  gap: var(--sf-space-2);
   margin: 0;
-  font-size: var(--sf-text-md);
-  font-weight: var(--sf-font-semibold);
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
   color: var(--sf-color-text);
 }
 
-.title svg {
-  color: var(--sf-color-primary);
-}
-
 .list {
-  list-style: none;
   margin: 0;
   padding: 0;
-  display: flex;
-  flex-direction: column;
+  list-style: none;
+  border-bottom: var(--sf-hairline);
+}
+
+.row,
+.fact {
+  min-height: var(--sf-tap-target);
+  padding-block: var(--sf-space-3);
+  border-top: var(--sf-hairline);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text);
 }
 
 .row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: var(--sf-space-3);
-  padding: var(--sf-space-3) 0;
-  border-bottom: 1px solid var(--sf-color-border);
+  gap: var(--sf-space-4);
 }
 
-.row:last-child {
-  border-bottom: none;
-}
-
-.rowMain {
+.main,
+.cost {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   min-width: 0;
 }
 
-.rowName {
-  font-size: var(--sf-text-sm);
+.cost {
+  flex: none;
+  align-items: flex-end;
+  text-align: end;
+}
+
+.name,
+.price {
   font-weight: var(--sf-font-medium);
-  color: var(--sf-color-text);
 }
 
-.rowEta {
-  font-size: var(--sf-text-xs);
-  color: var(--sf-color-text-muted);
-}
-
-.rowCost {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
-  color: var(--sf-color-text);
+.price {
+  font-variant-numeric: tabular-nums;
   white-space: nowrap;
 }
 
-.facts {
-  list-style: none;
-  margin: 0;
-  padding: var(--sf-space-3) 0 0;
-  border-top: 1px solid var(--sf-color-border);
-  display: flex;
-  flex-direction: column;
-  gap: var(--sf-space-2);
+.meta {
+  font-size: 0.8125rem; /* 13px */
+  color: var(--sf-color-text-muted);
+}
+
+.cost .meta {
+  white-space: nowrap;
 }
 
 .fact {
   display: flex;
   align-items: center;
-  gap: var(--sf-space-2);
-  font-size: var(--sf-text-sm);
   color: var(--sf-color-text-secondary);
 }
 
-.fact svg {
-  color: var(--sf-color-success);
-  flex-shrink: 0;
+/* ---- Loading ---------------------------------------------------------------- */
+.skeletonName,
+.skeletonMeta,
+.skeletonCost,
+.skeletonFact {
+  height: 10px;
+}
+
+.skeletonName {
+  width: 9em;
+  margin-block: 5px;
+}
+
+.skeletonMeta {
+  width: 7em;
+  margin-block: 5px 4.5px;
+}
+
+.skeletonCost {
+  width: 4.5em;
+  margin-block: 5px;
+}
+
+.skeletonFact {
+  width: 16em;
+  max-width: 100%;
 }

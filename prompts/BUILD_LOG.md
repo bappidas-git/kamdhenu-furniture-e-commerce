@@ -2039,3 +2039,148 @@ The repository owner asked for this after the PR went up. The overlay's "View al
 - **Measured** over `db.json` for 258 queries (every word of the product names, tags, brands, category names and slugs, plus the 30 above): the listing now selects exactly the overlay's "All" results for all 258; before, 50 differed. Mostly these are plural or category words: "chairs" 5 vs 42, "tables" 1 vs 20, "sofas" 0 vs 5, "beds" 3 vs 9, "mirrors" 0 vs 4, and the leaf categories' slugs (`cafe-restaurant-chairs` 0 vs 10). In the browser (mock-mode production build), "office", "table", "café", "chair", "chairs", "almirah", "nilkamal", "sofa", "sofas", "tables", "mirrors" and "zzz" each show the same count in the overlay and on the listing that "View all" (or Enter) opens: "office" is now 20 and 20.
 - **Tests:** `searchData.test.js` +3 (a category match, a blank query, set equality with the overlay over ten seeded queries); `Products.test.js` +1 (`?search=office` lists the overlay's 20, the 2-Seater Waiting Chair among them). 368 tests pass. Three seeded faults (the old inline filter back, the category ignored, the query untrimmed) each failed a test; files restored byte for byte.
 - **Checks:** `npm run build` compiles with no warnings (JS −95 B gzip); ESLint is clean on the changed sources; `db.json` is unchanged.
+
+---
+
+## Prompt 16 — Product details primary
+
+**Date:** 2026-10-08. **Result:** the product page's first screen is now an editorial buy page. Under the shared breadcrumb (the category's full trail), a 4:5 gallery with a hairline frame fills seven columns and sticks under the header from 1024px. Beside it, the buy box reads: eyebrow, serif title, a quiet ratings row, the price, the summary, chips and swatches, quantity and stock, ink and ghost actions with a hairline heart, the SKU, outline-icon promises and a hairline list of delivery facts. On phones a 64px paper bar keeps Add to cart in reach, now on the token scale. The page's derived values and cart wiring are byte-identical (script-checked), the variant data and `variantUtils` are untouched, and every claim on the surface comes from data. Reference: `prompts/DESIGN_SYSTEM.md` §26.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/pages/ProductDetails/ProductDetails.js` | The first screen rebuilt (skeleton, not-found, shared `Breadcrumb` with the full trail, 12-column grid, buy box, actions, `AddToCartBar` mount). Kept byte-identical, spliced from `HEAD` by a script and compared afterwards: `fetchReviews`, `fetchAov`, the load effects, the derived values with the quantity clamp and the reviews blend, and the cart wiring (`handleAddToCart`, `handleAddClick`, `handleBuyNow`, `scrollToReviews`), plus the tabs, bundle and related JSX (Prompt 17's). `fetchProduct` changed only in its category part (below). New: `loadCategoryTrail`, the store-data `Promise.allSettled`, `handleVariantChange` and the variant announcement. The no-op `styles.dark` class and its `useTheme` import are gone. |
+| `src/pages/ProductDetails/ProductDetails.module.css` | Rewritten for the first screen, tokens only. The tabs rules are kept (Prompt 17's) apart from their `scroll-margin-top` (now the header contract). |
+| `src/components/storefront/ProductGallery.js` + module | Rewritten (DESIGN_SYSTEM §26.3); new `ProductGallerySkeleton` export. |
+| `VariantSelector.js` + module | Restyled (eyebrows, 40px `.sf-chip`s, 28px swatches with a 2px ink ring) and the ARIA radio-group keyboard pattern added. Selection logic, availability rules and the stock note unchanged. |
+| `QuantityStepper.js` + module | A 44px hairline pill; the control is a named `group` (new `label` prop, default "Quantity"). |
+| `SocialProof.js` + module | One quiet row: 14px stars, "4.6 · 12 reviews" as a link-styled button, "No reviews yet". |
+| `TrustBadges.js` + module | A 2 × 2 of eyebrow labels with 20px outline icons. Dynamic badges are shown only when the data backs them; new `loading` prop. |
+| `DeliveryReturnsInfo.js` + module | A serif "Delivery & returns" `h2` over a hairline facts list; new `loading` and `title` props; `null` when there is nothing to say. |
+| `AddToCartBar.js` + module | The 64px paper bar, `--sf-z-stickybar` instead of `z-index: 1300`, a `detail` prop (the chosen variant), the keyboard safeguards; `comparePrice` and `onBuyNow` removed. |
+| `src/components/storefront/index.js` | Also exports `ProductGallerySkeleton`. |
+| New tests | `ProductDetails.test.js` (19), `ProductGallery.test.js` (13), `VariantSelector.test.js` (9), `QuantityStepper.test.js` (4), `SocialProof.test.js` (5), `DeliveryReturnsInfo.test.js` (4), `AddToCartBar.test.js` (6); `TrustBadges.test.js` +3. |
+| `prompts/DESIGN_SYSTEM.md` | New §26; §9 (sticky bar and search rows), §19.5, §24.1 and §25.1 updated. |
+| `STOREFRONT_UX_GUIDELINES.md` | "No reviews yet"; the trust-badge rule; the CTA copy casing. |
+
+Nothing else changed: `PriceBlock`, `StarRating`, `ProductCard`, `ReviewsSection`, `FrequentlyBoughtTogether`, `RelatedProducts`, `Breadcrumb`, `variantUtils`, contexts, `api.js`, `src/utils/*`, the tokens, `db.json` (SHA-256 unchanged) and every admin file are untouched.
+
+### The sticky-bar z-index token
+
+`AddToCartBar` uses **`--sf-z-stickybar` (60)**, the token Prompt 01 defined and Prompt 09 reserved for it, replacing the old mobile `z-index: 1300` (set to beat the old 1200 bottom nav). It sits above `--sf-z-bottomnav` (58), which it covers while shown, as before. It sits below every drawer, sheet and modal (≥ 1000) and below the search overlay (1400). Checked with `elementFromPoint` at 360px: the bar over the bottom nav, and the opened cart drawer over the bar. No token was added. The search overlay's 1400 now only needs to beat the cart drawer's legacy 1200/1300 (Prompt 18).
+
+### The gallery fit decision
+
+- **Frame:** `object-fit: cover` (the placeholders and portrait photographs fill the 4:5 frame); `fit="contain"` is available for photography that must be shown whole, with sand around it.
+- **Desktop size:** the frame fills its seven columns (702 × 878px at 1440). I tried capping its height so the whole photograph fits the viewport while it sticks, with fixed allowances (192px, 160px), centring and no cap, at 1440 × 900, 1366 × 768, 1280 × 800 and 1920 × 1080. Every cap left a hole between the photograph and the buy box (110–220px) on laptop screens, so the spec's seven columns won. The cost: on screens shorter than about 1000px the photograph's lower part sits below the fold at load. While it sticks, its lower edge can be cut by the viewport. With the seeded data the sticky phase is short, because the buy box is only about 150px taller than the gallery at 1440. Measured: the gallery sticks at exactly `--sf-header-height` + 24px (136px at 1440, 180px at 1024).
+- **One column:** the frame is capped at `max(280px, 75vh × 4/5)` and centred, so a portrait tablet (768 × 1024: 614 × 768) is not all photograph. Phones are unaffected (328 × 410 at 360).
+
+### Decisions
+
+- **Breadcrumb: the full trail.** The leaf alone ("Chairs with Arms") is ambiguous: the leaf names repeat in Essentials and Premium. The page reads each ancestor through the existing `categories.getById`: 0–2 extra small reads per product with the seeded tree, cycle-safe, at most six levels. A failed read falls back to the leaf (or Home › product). The trail's box is reserved (two lines on phones, one from 768px), with a skeleton while it loads. **Below 768px the product's own crumb is visually hidden** (it stays in the accessibility tree with `aria-current`), since the `h1` names it again directly below. Before that change, the Ergonomic High-Back Chair's trail took three lines at 360px (CLS 0.024). After it, all 84 products fit their box at 320, 360, 768 and 1024px, and that case measures 0.
+- **A new product never shows the previous one's category.** `fetchProduct` now resets `category` and the trail (before, navigating from a categorised product to an uncategorised one kept the stale category) and records whether the leaf read failed, so the trail cannot wait forever.
+- **Honest promises.** `TrustBadges` used to show "Cash on Delivery" even with COD switched off (only its "Available" sub-label hid). Now a dynamic badge shows only when `resolveTrustBadgeDetail` backs it, the rule the footer and the assurance strip already follow. Until the settings and shipping reads settle (`Promise.allSettled`), dynamic badges and the delivery facts are skeletons. Every badge keeps two lines' room, so the grid does not move when one drops. The tax note likewise waits for the settings (a no-break space holds its line); before, it said "Inclusive of all taxes" until the settings arrived, then flipped.
+- **Keyboard.** Prompt 04 observed that ArrowRight did not move a variant radiogroup. There was no handler; Tab and Enter only worked because each option was its own tab stop. The selector now follows the ARIA radio-group pattern: one tab stop (the chosen option), and the arrow keys, Home and End move the choice, skipping sold-out options. The gallery's thumbnails are a tablist with one tab stop and arrow/Home/End navigation. The frame keeps its Left/Right arrows, and is a tab stop only when there is more than one image.
+- **Zoom for a mouse only, and a swipe for touch.** The old gallery zoomed on any pointer's enter, so a tap on a phone left the image zoomed at 2× until another tap. Zoom now listens to mouse pointers only. A horizontal swipe on touch and pen steps through the images (`touch-action: pan-y pinch-zoom`), with the thumbnails as the single-pointer alternative.
+- **Stepper focus.** The old pill hid its overflow, which clipped the buttons' focus ring; it no longer does.
+- **Action layout by container query.** The buy box is a size container. Below 26rem (416px), Add to cart takes its own row and Buy now and the heart share the next; from 26rem, the three share one row. That is phones up to about 448px, and the 980–1279px desktop range, where the five columns are narrow. Chromium 105+, Safari 16+ and Firefox 110+ support it; older browsers keep the stacked rows. The minified CSS keeps the `@container` rule and the `html:has()` rule intact (checked in the built file).
+- **A status announcement** (visually hidden, polite) says what a shopper chose when they change the variant: "5 shelves, ₹3,449.00, Only 4 left". It stays empty on load and on every new product.
+- **Sticky bar keyboard safeguards.** While the bar is shown, `html` gets `scroll-padding-bottom` (64px + inset + 16px), so focused content stops above the bar instead of under it. If keyboard focus lands on something the bar covers where it rests (the fixed bottom nav), the bar steps aside until focus moves on. Both checked in Chromium at 360px.
+- **Labels:** "Add to cart", "Buy now", "Added" with a check icon (the old "Added to Cart ✓"), "Out of stock", and "Save to wishlist" / "Remove from wishlist" (the card's wording; it was "Add to wishlist"). The stock line drops "— order soon!".
+
+### Deviations from the prompt, and why
+
+1. **No desktop height cap on the gallery**, and a 75vh cap in one column ("The gallery fit decision").
+2. **The phone trail ends at the category** (the product's crumb is visually hidden below 768px) to keep within two lines (Decisions).
+3. **The sticky bar has no Buy now and no compare price.** The brief lists thumbnail, name, price and a compact Add to cart. At 360px the old bar's compare price overlapped Buy now (noted by Prompt 01). The bar adds the chosen variant after the price ("₹3,449.00 · 5 shelves"), so the shopper sees what it will add. Buy now stays in the buy box.
+4. **`TrustBadges` hides unbacked dynamic badges** and the page holds the promises and the tax note until the store data settles (a behaviour change on purpose: "trust badges only from config/settings/shipping").
+5. **Additions:** the radio-group and tablist keyboard patterns, the swipe, the variant announcement, the bar's two keyboard safeguards, the `loading`/`title`/`label`/`detail` props, `ProductGallerySkeleton`, and the category reset in `fetchProduct`.
+6. **Swatch boundary in `--sf-color-border-strong`** (3.54 : 1), not the stone hairline (1.43 : 1). A white swatch on paper measures 1.03 : 1 without it (WCAG 1.4.11). It is still a 1px line.
+7. **The title is not clamped.** Seeded names (48 characters at most) take one or two lines at display-md. Clamping an `h1` would hide text from sighted users only.
+8. **`DeliveryReturnsInfo` renders nothing** when it has nothing to say (it used to render an empty titled panel), and its heading is an `h2` (it was an `h3` with no `h2` above it).
+
+### Verification
+
+- **Byte-identical blocks:** a script extracted `fetchReviews`/`fetchAov` (36 lines), the load effects (11), the derived values and cart wiring (90) and the tabs/bundle/related JSX (124) from `HEAD` and found each verbatim in the new file.
+- **Build:** `npm run build` → "Compiled successfully", no warnings. Mock-mode production builds of `HEAD` and this branch, gzip: JS 414.94 → 417.23 kB (+2.29), CSS 56.81 → 57.42 kB (+0.61).
+- **Tests:** `CI=true npm test -- --passWithNoTests` → 431 tests in 37 suites (368 + 63), exit 0, with no console output. The page test no longer silences `console.error`: a first draft did, and hid act() warnings from reads settling after its assertions; every test now waits for the page's reads to settle.
+- **Mutation check:** 30 seeded faults, each caught, files restored byte for byte (SHA-256):
+  - cart line id; Buy now opening the drawer; recently viewed keeping 21; no quantity clamp;
+  - the tax note before settings; a trail without ancestors; low stock read as in stock; an announcement without a pick; an eyebrow ignoring the category; store data never ready;
+  - first image lazy; zoom on touch; Sale at 0; all thumbnails tabbable; swipe always forward;
+  - arrows landing on sold-out options; roving tab stops on swatches and on chips;
+  - an unbacked badge shown; a pending badge labelled; a hyphenated window; an inactive method shown;
+  - the bar's `aria-hidden` inverted; the bar never yielding; the bar tabbable while hidden; the observer's margin;
+  - "0.0" with no reviews; always plural; the stepper not live; the stepper ignoring max.
+
+  The first pass caught 27. Two patterns did not apply (the files hold `\u` escapes). One fault was missed: the swatches' tab stops were untested, so the colour test now asserts them. All three were then caught.
+- **Static:** `node scripts/check-contrast.js` passes; there are no new pairs (DESIGN_SYSTEM §26.9). `node scripts/validate-db.js` passes. `db.json` SHA-256 is unchanged; QA ran on a scratch copy through `JSON_SERVER_DB`. A grep of the 16 touched style and script files finds no hex, `rgb()`, `hsl()` or font-name literal. The only z-index literals are a local 1/2/3 inside the isolated gallery frame; the bar uses its token. The only gradients are the hard-stop strike lines (the technique the old file and the select chevron already use).
+- **Browser QA:** Playwright and Chromium, JSON Server on the scratch copy. 83 scripted checks pass on the dev server and on a mock-mode production build:
+  - **Variants:** every variant of the six test products updates the price, SKU and stock status as the data says (Covered Shoe Rack ₹1,899 → ₹3,449 and "Only 4 left"; the armchair's four swatches; Lobby Set Large "Only 4 left"; Carlton King ₹23,999 and "Only 4 left"). The sold-out Antique Brass swatch and the Wide Shoe Rack's 5 shelves are disabled. The alna has no selector and its own SKU.
+  - **Keyboard:** Tab reaches the frame (with the ring), then the selected thumbnail. Arrows and Home move the images. Tab then reaches the reviews jump, then the chosen variant; ArrowRight moves and chooses; Tab leaves the group.
+  - **Zoom and crossfade:** zoom is `matrix(2, …)` at the cursor and resets when the pointer leaves. A tap at 390px never zooms. The crossfade runs over 0.32s, and 0.01ms under reduced motion.
+  - **Cart and checkout:** Add to cart opens the drawer with line `19-v2` at ₹38,999 ×1, and the header reads "Cart, 1 item". Buy now lands on `/checkout` with Small ×2 in the cart. The heart toggles `aria-pressed`, and the header's wishlist count follows.
+  - **Sticky gallery:** at header + 24px, at 1440 and 1024.
+  - **Sticky bar at 360px:**
+    - It shows on load, is 64px tall at z 60, covers the bottom nav, and sets the 80px scroll padding.
+    - It hides with `aria-hidden` and `tabindex="-1"` (and no padding) while the buy box is in view, and returns past it.
+    - It mirrors the chosen option and adds it; the opened drawer covers it.
+    - Keyboard focus in the bottom nav sends it away, and it returns.
+  - **Admin data:** an Express rate and window changed through JSON Server (₹1,099, 2–4 days) shows on the page, and COD switched off removes both the promise and the fact. Both were restored.
+  - **Routing:** `/products/11` → `/products/covered-plastic-shoe-rack`; recently viewed is written. An unknown slug shows the not-found state, and its link opens the listing.
+  - **Overflow and consoles:** no horizontal overflow on eight products at 320, 360, 768, 1024 and 1440px in both modes; clean consoles.
+- **Layout shift** (production build, a `layout-shift` observer, the API held 600ms and every image 1.5s, four products):
+  - 0 at 360, 768 and 1440px, with and without reduced motion.
+  - 0.0336 at 1024px on every product: the header's department row wrapping when its categories load. This is the figure Prompts 10 and 14 recorded on every page, not this surface.
+  - The page skeleton's gallery lands exactly where the loaded gallery does (measured equal at 360 and 1440).
+- **Accessibility tree** (Playwright ARIA snapshots):
+  - the trail as a navigation list ending in the product;
+  - group "Covered Plastic Shoe Rack, image 1 of 3" with the shown image named, and tablist "Product images" with three tabs;
+  - the eyebrow paragraph and the `h1`;
+  - button "Rated 4.0 out of 5, 2 reviews";
+  - the price with "Was" and "Save ₹300.00", and the tax note;
+  - radiogroup "Shelves" with the checked radio;
+  - group "Quantity" (decrease disabled at 1);
+  - the stock paragraph and the three actions;
+  - list "Our promises";
+  - `h2` "Delivery & returns" over its list.
+
+  After choosing 5 shelves, the status reads "5 shelves, ₹3,449.00, Only 4 left". The shown bar exposes its text and button; hidden, it is absent from the tree. NVDA and VoiceOver were not available here.
+- **Forced colours** (Chromium emulation): the swatches keep their colours, and the chosen one has a `Highlight` ring; the active thumbnail has a `Highlight` border; the buttons are outlined. The sold-out strikes were lost at first (the browser drops gradient backgrounds there); they are now kept in `CanvasText` (`forced-color-adjust: none` on the strike only).
+- **Laravel shape:** a non-mock production build against a stub answering `{ success, data, meta }` shows the same trails, prices, ratings row, promises, five delivery facts and tax line for three products, and redirects `/products/11`. Its log shows only existing routes (`/products/slug/{slug}`, `/products/{id}`, `/products/{id}/reviews`, `/products`, `/categories/{id}`, `/settings`, `/shipping/methods`) and no 404.
+- **Admin parity:** 20 screenshots (login, dashboard, Products, Shipping, Settings; 1440 and 390px; light and dark) of the `HEAD` build and this one. 19 are pixel-identical. The 20th differs in 8 pixels by 1/255, inside a remote product thumbnail on the dark Products list (the image-decode noise earlier prompts recorded). Nothing the admin imports changed.
+
+### Pre-existing issues noticed (not changed)
+
+- **The reviews blend counts each review twice.** `totalRatingsCount = product.totalReviews + reviews.length`, but `totalReviews` is already the count of approved reviews: the backend docs (file 03 §8) and Prompt 05's seed both say so. So the ratings row says "2 reviews" for the Covered Shoe Rack's one review, "4" for the Carlton Mattress's two and "6" for the Wooden Sofa Set's three. The old page showed the same counts ("2 Ratings & Reviews"), and "Based on N ratings" in the reviews tab uses the same figure. The average is unaffected while the aggregate matches the reviews. The prompt asks for the blend byte-identical, so it is unchanged. **It needs a decision:** Prompt 17 owns the reviews summary, and a two-line fix is to count the fetched reviews once they have loaded (and the aggregate only until then).
+- **Stock is stated twice when low.** The selector's "Only 4 left in this option" and the purchase row's "Only 4 left" repeat each other. The brief keeps both.
+- **The page-level fade** (`motion.div`, opacity 0 → 1 over 0.3s) delays the first paint of the gallery's eager image, the page's LCP (Prompts 30 and 32).
+- **A legacy-id link loads the product twice** (and its reviews, AOV and category reads), once by id and once after the canonical redirect.
+- **No `scroll-padding-top` site-wide.** Tabbing backwards can leave focused elements under the sticky header (Prompt 31).
+- **The description tab's specification table** shows weight and dimensions without units ("6.8", "62 × 33 × 98") (Prompt 17).
+
+### Notes for later prompts
+
+- **17:** the page container is now `.sf-container--wide`, so the tabs, bundle and related rail are inside it. `.tabsSection` keeps its rules, except that `scroll-margin-top` is now `calc(var(--sf-header-height) + 16px)`. The ratings row's button calls `scrollToReviews` (it sets the Reviews tab and scrolls); keep it working if anchored sections replace the tabs. See the reviews-blend decision above.
+- **18:** the bar is at `--sf-z-stickybar`. Once the cart drawer is on its token too, `--sf-z-search` can drop to `--sf-z-modal`'s value.
+- **29:** the copy is in:
+  - `ProductDetails.js`: the not-found line, "Loading the product", the stock texts, the action labels and the tax notes;
+  - `SocialProof`: "No reviews yet", "N reviews";
+  - `DeliveryReturnsInfo`: the heading and the fact sentences;
+  - `AddToCartBar`: "Add to cart", "Added", "Out of stock";
+  - `VariantSelector`: "Select Option", the stock notes and the hints.
+
+  The trust labels are `TRUST_BADGE_CATALOG`'s.
+- **30:** motion values are in DESIGN_SYSTEM §26.8; the page fade is listed above.
+- **31:** see the hidden product crumb on phones, the swatch boundary, the bar's scroll padding and focus yield, and the radio-group and tablist patterns. Screen readers are still to test.
+- **32:** the first photograph is eager with `fetchpriority="high"`, the others lazy. The thumbnails reuse the full-size URLs (no `srcset` yet). The trail adds 0–2 category reads per product.
+
+### Needs client confirmation
+
+None expected. Visible choices the client may want to see:
+
+- Buy now lives only in the buy box; the phone bar offers Add to cart, with the chosen option beside the price.
+- On phones the trail ends at the category.
+- The not-found line: "It may have been renamed, or it is no longer in our catalogue."
+- "Save to wishlist" as the heart's label, as on the cards.

@@ -1,238 +1,325 @@
 /* ═══════════════════════════════════════════════════════════════════════════
- * ProductDetails — page shell only. The buy-box widgets, gallery, variants,
- * trust signals, reviews and AOV modules are reusable components that style
+ * ProductDetails — page shell. The buy-box widgets, gallery, variants, trust
+ * signals, reviews and AOV modules are reusable components that style
  * themselves from the design tokens (src/theme/storefront-tokens.css). This
- * file therefore only lays out the page and styles a few page-level atoms — and
- * uses tokens throughout, so it re-skins with the rest of the storefront.
+ * file lays out the page and styles its own atoms, with tokens throughout.
+ *
+ * First screen (Prompt 16): .sf-container--wide; the trail; a 12-column grid
+ * from 980px with the gallery in columns 1–7 (sticky from 1024px at
+ * --sf-header-height + 24px) and the buy box in 8–12 with 48px of air on its
+ * left; one column below 980px, the gallery first.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 .page {
   min-height: 100vh;
   background: var(--sf-color-bg);
   color: var(--sf-color-text);
-  transition: background var(--sf-transition), color var(--sf-transition);
 }
 
 .container {
-  max-width: var(--sf-container-max);
-  margin: 0 auto;
-  padding: var(--sf-space-5) var(--sf-space-6) var(--sf-space-16);
+  padding-top: var(--sf-space-6);
+  padding-bottom: var(--sf-space-16);
 }
 
 /* ── Breadcrumb ──────────────────────────────────────────────────────────── */
-.breadcrumb {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: var(--sf-space-2);
-  padding: var(--sf-space-4) 0;
-  font-size: var(--sf-text-sm);
+/* The trail's room is held while the category reads finish: two lines of the
+   13px trail (and the list's 4px row gap) on phones, where a deep category
+   wraps, and one line from 768px. */
+.crumbs {
+  --crumb-line: calc(0.8125rem * 1.5);
+  display: flow-root;
+  min-height: calc(var(--crumb-line) * 2 + var(--sf-space-1));
+  margin-bottom: var(--sf-space-4);
 }
 
-.breadcrumbLink {
-  color: var(--sf-color-primary);
-  text-decoration: none;
-  transition: color var(--sf-transition-fast);
+.crumbSkeleton {
+  width: min(24rem, 72%);
+  height: 10px;
+  margin-block: calc((var(--crumb-line) - 10px) / 2);
 }
 
-.breadcrumbLink:hover {
-  text-decoration: underline;
-}
-
-.breadcrumbSep {
-  color: var(--sf-color-text-muted);
-}
-
-.breadcrumbCurrent {
-  color: var(--sf-color-text-secondary);
-  font-weight: var(--sf-font-medium);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  max-width: 320px;
+/* Below 768px the trail ends at the category: the current page's crumb (the
+   product, named again by the h1 right below) stays for assistive technology
+   but is not drawn, so even the deepest trail keeps to its two lines. */
+@media (max-width: 767.98px) {
+  .trail li:last-child:not(:first-child) {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
+  }
 }
 
 /* ── Main layout ─────────────────────────────────────────────────────────── */
 .mainLayout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--sf-space-10);
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--sf-space-8);
   margin-bottom: var(--sf-space-12);
 }
 
+/* One column: the gallery is centred and at most 75% of the viewport tall
+   (a tablet's portrait screen would otherwise be all photograph). */
 .gallerySection {
-  position: sticky;
-  top: var(--sf-space-6);
-  align-self: start;
+  display: flex;
+  justify-content: center;
+  min-width: 0;
+  --gallery-max-width: max(280px, calc(75vh * 4 / 5));
 }
 
 .infoSection {
   display: flex;
   flex-direction: column;
-  gap: var(--sf-space-5);
+  align-items: stretch;
   min-width: 0;
+  container: pdp-info / inline-size;
 }
 
-.brand {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--sf-color-primary);
+@media (min-width: 768px) {
+  .container {
+    padding-top: var(--sf-space-8);
+  }
+
+  .crumbs {
+    min-height: var(--crumb-line);
+    margin-bottom: var(--sf-space-6);
+  }
 }
 
-.productName {
+@media (min-width: 980px) {
+  .mainLayout {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--sf-space-6);
+    align-items: start;
+  }
+
+  /* Two columns: the gallery fills its seven columns (no height cap; capping
+     the 4:5 frame to short laptop screens left a hole between it and the buy
+     box). */
+  .gallerySection {
+    grid-column: 1 / span 7;
+    justify-content: flex-start;
+    --gallery-max-width: initial;
+  }
+
+  .infoSection {
+    grid-column: 8 / span 5;
+    padding-left: var(--sf-space-12);
+  }
+}
+
+@media (min-width: 1024px) {
+  .gallerySection {
+    position: sticky;
+    top: calc(var(--sf-header-height) + var(--sf-space-6));
+  }
+}
+
+/* ── Buy box ─────────────────────────────────────────────────────────────── */
+/* Brand (or the category) as an eyebrow; the line is held while it loads. */
+.eyebrow {
+  display: block;
+  min-height: calc(var(--sf-text-eyebrow) * 1.5);
   margin: 0;
-  font-size: var(--sf-text-2xl);
-  font-weight: var(--sf-font-bold);
-  line-height: var(--sf-leading-tight);
-  color: var(--sf-color-text);
-}
-
-.skuLine {
-  font-size: var(--sf-text-sm);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: 1.5;
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
   color: var(--sf-color-text-muted);
 }
 
-.skuLine span {
-  color: var(--sf-color-text-secondary);
-  font-weight: var(--sf-font-medium);
+.eyebrowSkeleton {
+  display: inline-block;
+  width: 7rem;
+  height: 10px;
+  vertical-align: middle;
+}
+
+.productName {
+  margin: var(--sf-space-3) 0 0;
+  color: var(--sf-color-text);
+}
+
+.socialProof {
+  margin-top: var(--sf-space-4);
+}
+
+.price {
+  margin-top: var(--sf-space-5);
 }
 
 .shortDescription {
-  margin: 0;
+  max-width: 52ch;
+  margin: var(--sf-space-5) 0 0;
+  font-family: var(--sf-font-sans);
   font-size: var(--sf-text-base);
-  line-height: var(--sf-leading-normal);
+  line-height: var(--sf-leading-body);
   color: var(--sf-color-text-secondary);
+}
+
+.rule {
+  width: 100%;
+  height: 0;
+  margin: var(--sf-space-6) 0;
+  border: 0;
+  border-top: var(--sf-hairline);
+}
+
+.variants + .purchaseRow,
+.variantsGap {
+  margin-top: var(--sf-space-6);
 }
 
 /* ── Quantity + stock ────────────────────────────────────────────────────── */
 .purchaseRow {
   display: flex;
-  align-items: center;
-  gap: var(--sf-space-5);
   flex-wrap: wrap;
-}
-
-.quantityBlock {
-  display: flex;
   align-items: center;
-  gap: var(--sf-space-3);
-}
-
-.quantityLabel {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
-  color: var(--sf-color-text);
+  gap: var(--sf-space-3) var(--sf-space-5);
 }
 
 .stockStatus {
+  margin: 0;
+  font-family: var(--sf-font-sans);
   font-size: var(--sf-text-sm);
   font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
 }
 
 .stockIn {
   color: var(--sf-color-success);
 }
+
 .stockLow {
   color: var(--sf-color-warning);
 }
+
 .stockOut {
-  color: var(--sf-color-danger);
+  color: var(--sf-color-error);
 }
 
-/* ── Action buttons ──────────────────────────────────────────────────────── */
-.actionButtons {
-  display: flex;
-  gap: var(--sf-space-3);
-  align-items: stretch;
-}
-
-.addToCartBtn,
-.buyNowBtn {
-  display: inline-flex;
+/* ── Actions ─────────────────────────────────────────────────────────────── */
+/* Narrow column: Add to cart on its own row, then Buy now and the heart.
+   From a 416px column (the container query): one row of three. */
+.actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 48px;
+  grid-template-areas:
+    "add add"
+    "buy wish";
   align-items: center;
-  justify-content: center;
-  gap: var(--sf-space-2);
-  flex: 1;
-  min-height: 52px;
-  border-radius: var(--sf-radius-md);
-  font-size: var(--sf-text-base);
-  font-weight: var(--sf-font-semibold);
+  gap: var(--sf-space-3);
+  margin-top: var(--sf-space-5);
+}
+
+@container pdp-info (min-width: 26rem) {
+  .actions {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 48px;
+    grid-template-areas: "add buy wish";
+  }
+}
+
+.addToCart {
+  grid-area: add;
+  padding-inline: var(--sf-space-5);
+}
+
+.buyNow {
+  grid-area: buy;
+  padding-inline: var(--sf-space-5);
+}
+
+/* 52px (--lg) on phones and tablets, 56px from 980px. */
+@media (min-width: 980px) {
+  .addToCart,
+  .buyNow {
+    --sf-btn-size: 56px;
+  }
+}
+
+/* "Added ✓": the check settles in beside the label. */
+.check {
+  flex: none;
+  animation: pdp-check-in var(--sf-duration) var(--sf-ease-out);
+}
+
+@keyframes pdp-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .check {
+    animation: none;
+  }
+}
+
+/* The heart: a 48px hairline circle, filled caramel once saved. */
+.wishlist {
+  grid-area: wish;
+  justify-self: center;
+  display: inline-grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  padding: 0;
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
+  color: var(--sf-color-text);
   cursor: pointer;
-  transition: filter var(--sf-transition-fast), transform var(--sf-transition-fast),
-    background var(--sf-transition-fast), color var(--sf-transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out),
+    color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.addToCartBtn {
-  border: none;
-  background: var(--sf-gradient-primary);
-  color: var(--sf-color-primary-contrast);
+@media (hover: hover) {
+  .wishlist:hover {
+    border-color: var(--sf-color-primary);
+    color: var(--sf-color-accent);
+  }
 }
 
-.addToCartBtn:hover:not(:disabled) {
-  filter: brightness(1.05);
-  transform: translateY(-1px);
+.wishlist:active {
+  transform: scale(0.99);
 }
 
-.addToCartDone {
-  background: var(--sf-color-success);
-}
-
-.buyNowBtn {
-  border: 1.5px solid var(--sf-color-primary);
-  background: transparent;
-  color: var(--sf-color-primary);
-}
-
-.buyNowBtn:hover:not(:disabled) {
-  background: var(--sf-color-primary-soft);
-  transform: translateY(-1px);
-}
-
-.addToCartBtn:focus-visible,
-.buyNowBtn:focus-visible,
-.wishlistBtn:focus-visible {
-  outline: none;
+.wishlist:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   box-shadow: var(--sf-shadow-focus);
 }
 
-.addToCartBtn:disabled,
-.buyNowBtn:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
+.wishlistActive {
+  color: var(--sf-color-accent);
 }
 
-.wishlistBtn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 52px;
-  min-height: 52px;
-  flex-shrink: 0;
-  border: 1.5px solid var(--sf-color-border-strong);
-  border-radius: var(--sf-radius-md);
-  background: var(--sf-color-surface);
+.sku {
+  margin: var(--sf-space-3) 0 0;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
   color: var(--sf-color-text-muted);
-  cursor: pointer;
-  transition: color var(--sf-transition-fast), border-color var(--sf-transition-fast);
 }
 
-.wishlistBtn:hover {
-  color: var(--sf-color-accent);
-  border-color: var(--sf-color-accent);
+.sku span {
+  font-variant-numeric: tabular-nums;
 }
 
-.wishlistBtnActive {
-  color: var(--sf-color-accent);
-  border-color: var(--sf-color-accent);
-  background: var(--sf-color-primary-soft);
+.delivery {
+  margin-top: var(--sf-space-8);
 }
 
-/* ── Tabs ────────────────────────────────────────────────────────────────── */
+/* ── Tabs (Prompt 17 restyles them; only the scroll target is set here) ──── */
 .tabsSection {
   margin-top: var(--sf-space-8);
-  scroll-margin-top: 90px;
+  scroll-margin-top: calc(var(--sf-header-height) + var(--sf-space-4));
 }
 
 .tabNav {
@@ -320,128 +407,144 @@
   font-weight: var(--sf-font-medium);
 }
 
-/* ── Skeleton ────────────────────────────────────────────────────────────── */
-.skeletonPage {
-  max-width: var(--sf-container-max);
-  margin: 0 auto;
-  padding: var(--sf-space-6);
-}
-
-.skeletonPage > *,
-.skeletonRight > * {
-  background: linear-gradient(
-    90deg,
-    var(--sf-color-surface-2) 25%,
-    var(--sf-color-surface-hover) 37%,
-    var(--sf-color-surface-2) 63%
-  );
-  background-size: 400% 100%;
-  animation: sfShimmer 1.4s ease infinite;
-  border-radius: var(--sf-radius-md);
-}
-
-.skeletonBreadcrumb {
-  height: 16px;
-  width: 220px;
-  margin-bottom: var(--sf-space-6);
-}
-
-.skeletonLayout {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: var(--sf-space-10);
-}
-
-.skeletonMainImage {
-  aspect-ratio: 1 / 1;
-}
-
-.skeletonRight {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sf-space-4);
-}
-
-.skeletonTitle { height: 34px; width: 80%; }
-.skeletonRating { height: 18px; width: 40%; }
-.skeletonPrice { height: 30px; width: 50%; }
-.skeletonDesc { height: 14px; width: 100%; }
-.skeletonButtons { height: 52px; width: 100%; margin-top: var(--sf-space-3); }
-
-@keyframes sfShimmer {
-  0% { background-position: 100% 50%; }
-  100% { background-position: 0 50%; }
-}
-
-/* ── Not found ───────────────────────────────────────────────────────────── */
-.notFound {
-  max-width: 480px;
-  margin: 0 auto;
-  padding: var(--sf-space-16) var(--sf-space-6);
-  text-align: center;
-  color: var(--sf-color-text);
-}
-
-.notFoundIcon {
-  font-size: 3rem;
-  font-weight: var(--sf-font-bold);
-  color: var(--sf-color-primary);
-}
-
-.notFound h2 {
-  margin: var(--sf-space-3) 0;
-}
-
-.notFound p {
-  color: var(--sf-color-text-muted);
-}
-
-.notFoundLink {
-  display: inline-block;
-  margin-top: var(--sf-space-5);
-  padding: var(--sf-space-3) var(--sf-space-6);
-  background: var(--sf-gradient-primary);
-  color: var(--sf-color-primary-contrast);
-  border-radius: var(--sf-radius-md);
-  text-decoration: none;
-  font-weight: var(--sf-font-semibold);
-}
-
-/* ── Responsive ──────────────────────────────────────────────────────────── */
 @media (max-width: 980px) {
-  .mainLayout {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sf-space-6);
-  }
-  .gallerySection {
-    position: static;
-  }
   .descriptionTab {
     grid-template-columns: minmax(0, 1fr);
     gap: var(--sf-space-6);
   }
-  .skeletonLayout {
-    grid-template-columns: minmax(0, 1fr);
+}
+
+/* ── Skeleton (the page's layout in sand) ────────────────────────────────── */
+.titleSkeleton,
+.priceSkeleton,
+.textSkeleton,
+.chipsSkeleton {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Two lines of display-md: bars 0.6em tall in 1.1em line boxes. */
+.titleSkeleton > span {
+  height: 0.6em;
+  margin-block: 0.25em;
+}
+
+.titleSkeleton > span:first-child {
+  width: 90%;
+}
+
+.titleSkeleton > span:last-child {
+  width: 55%;
+}
+
+/* The ratings row's 20px line. */
+.lineSkeleton {
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+}
+
+.lineSkeleton > span {
+  width: 11rem;
+  height: 10px;
+}
+
+/* The 24px price line, then the 12px tax note. */
+.priceSkeleton {
+  gap: var(--sf-space-2);
+}
+
+.priceSkeleton > span:first-child {
+  width: 9rem;
+  height: 20px;
+  margin-block: 5px;
+}
+
+.priceSkeleton > span:last-child {
+  width: 13rem;
+  height: 10px;
+  margin-block: 4px;
+}
+
+/* Two 16px lines of the summary. */
+.textSkeleton > span {
+  height: 10px;
+  margin-block: calc((var(--sf-text-base) * 1.6 - 10px) / 2);
+}
+
+.textSkeleton > span:last-child {
+  width: 70%;
+}
+
+.chipsSkeleton {
+  gap: var(--sf-space-3);
+}
+
+.chipsRow {
+  display: flex;
+  gap: var(--sf-space-2);
+}
+
+.chipsRow > span {
+  width: 6.5rem;
+  height: 40px;
+  border-radius: var(--sf-radius-pill);
+}
+
+.stepperSkeleton {
+  width: 130px;
+  height: var(--sf-tap-target);
+  border-radius: var(--sf-radius-pill);
+}
+
+.statusSkeleton {
+  width: 4.5rem;
+  height: 10px;
+}
+
+.buttonSkeleton {
+  height: 52px;
+}
+
+@media (min-width: 980px) {
+  .buttonSkeleton {
+    height: 56px;
   }
 }
 
-@media (max-width: 768px) {
-  .container {
-    padding: var(--sf-space-3) var(--sf-space-4) 96px;
-  }
-  .productName {
-    font-size: var(--sf-text-xl);
-  }
-  .actionButtons {
-    flex-wrap: wrap;
-  }
-  .addToCartBtn,
-  .buyNowBtn {
-    flex: 1 1 100%;
-    order: 2;
-  }
-  .wishlistBtn {
-    order: 1;
-    width: 100%;
+.circleSkeleton {
+  width: 48px;
+  height: 48px;
+  border-radius: var(--sf-radius-pill);
+}
+
+/* ── Not found ───────────────────────────────────────────────────────────── */
+.notFound {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--sf-space-4);
+  padding-block: var(--sf-section-y);
+  text-align: center;
+}
+
+.notFoundTitle {
+  max-width: 18em;
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.notFoundText {
+  max-width: 44ch;
+  margin: 0 0 var(--sf-space-4);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+@media (forced-colors: active) {
+  .wishlistActive svg {
+    fill: Highlight;
   }
 }

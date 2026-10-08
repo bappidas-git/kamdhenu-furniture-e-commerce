@@ -1,26 +1,50 @@
+/* =============================================================================
+ * AddToCartBar — the sticky mobile bar (Prompt 16)
+ * =============================================================================
+ * Up to 768px only. Paper with a top hairline, 64px plus the home-indicator
+ * inset: a 40px thumbnail, the name (Playfair 15px, one line), the price (sans
+ * 14px, 500) and the chosen option, and a compact 44px .sf-btn--primary.
+ * It slides up over --sf-duration and sits at --sf-z-stickybar: above the
+ * bottom nav (--sf-z-bottomnav), below every drawer and modal. No shadow, no
+ * gradient. Tokens only.
+ * ========================================================================== */
+
 .bar {
+  --bar-height: 64px;
   position: fixed;
-  left: 0;
   right: 0;
   bottom: 0;
-  z-index: var(--sf-z-stickybar); /* see note below for mobile override */
-  display: flex;
+  left: 0;
+  z-index: var(--sf-z-stickybar);
+  /* Hidden on wider screens: the buy box is always in reach there. */
+  display: none;
   align-items: center;
   justify-content: space-between;
   gap: var(--sf-space-3);
-  padding: var(--sf-space-3) var(--sf-space-4);
-  padding-bottom: calc(var(--sf-space-3) + env(safe-area-inset-bottom));
-  background: var(--sf-color-surface);
-  border-top: 1px solid var(--sf-color-border);
-  box-shadow: 0 -4px 20px rgba(15, 23, 42, 0.12);
-  transform: translateY(110%);
-  transition: transform var(--sf-transition);
-  /* Hidden by default on desktop; this is a mobile-first device. */
-  display: none;
+  min-height: calc(var(--bar-height) + env(safe-area-inset-bottom, 0px));
+  padding: var(--sf-space-2) calc(var(--sf-gutter) + env(safe-area-inset-right, 0px))
+    calc(var(--sf-space-2) + env(safe-area-inset-bottom, 0px))
+    calc(var(--sf-gutter) + env(safe-area-inset-left, 0px));
+  border-top: var(--sf-hairline);
+  background-color: var(--sf-color-bg);
+  font-family: var(--sf-font-sans);
+  transform: translateY(100%);
+  transition: transform var(--sf-duration) var(--sf-ease-out);
 }
 
 .visible {
   transform: translateY(0);
+}
+
+@media (max-width: 768px) {
+  .bar {
+    display: flex;
+  }
+
+  /* While the bar is up, keep focused and scrolled-to content clear of it. */
+  :global(html):has(.visible) {
+    scroll-padding-bottom: calc(var(--bar-height, 64px) + env(safe-area-inset-bottom, 0px) + var(--sf-space-4));
+  }
 }
 
 .info {
@@ -31,105 +55,92 @@
 }
 
 .thumb {
-  width: 44px;
-  height: 44px;
+  flex: none;
+  width: 40px;
+  height: 40px;
   border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
   object-fit: cover;
-  background: var(--sf-color-surface-2);
-  flex-shrink: 0;
+  /* A hairline over the edge, so a sand photograph keeps its shape. */
+  outline: 1px solid var(--sf-color-border);
+  outline-offset: -1px;
 }
 
-.priceWrap {
+.text {
   display: flex;
   flex-direction: column;
   min-width: 0;
 }
 
 .name {
-  font-size: var(--sf-text-xs);
-  color: var(--sf-color-text-muted);
-  white-space: nowrap;
   overflow: hidden;
+  font-family: var(--sf-font-display);
+  font-size: 0.9375rem; /* 15px */
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
   text-overflow: ellipsis;
-  max-width: 38vw;
+  white-space: nowrap;
 }
 
 .priceRow {
   display: flex;
   align-items: baseline;
-  gap: var(--sf-space-2);
-}
-
-.price {
-  font-size: var(--sf-text-md);
-  font-weight: var(--sf-font-bold);
-  color: var(--sf-color-price);
-}
-
-.compare {
+  min-width: 0;
   font-size: var(--sf-text-sm);
-  color: var(--sf-color-compare);
-  text-decoration: line-through;
-}
-
-.actions {
-  display: flex;
-  align-items: center;
-  gap: var(--sf-space-2);
-  flex-shrink: 0;
-}
-
-.addBtn,
-.buyNow {
-  min-height: var(--sf-tap-target);
-  padding: 0 var(--sf-space-5);
-  border-radius: var(--sf-radius-md);
-  font-weight: var(--sf-font-semibold);
-  font-size: var(--sf-text-sm);
-  cursor: pointer;
-  transition: filter var(--sf-transition-fast), background var(--sf-transition-fast),
-    color var(--sf-transition-fast);
+  line-height: var(--sf-leading-normal);
   white-space: nowrap;
 }
 
+.price {
+  flex: none;
+  color: var(--sf-color-price);
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+}
+
+.dot::before {
+  content: "\00B7";
+  margin-inline: var(--sf-space-1);
+  color: var(--sf-color-text-muted);
+}
+
+.detail {
+  overflow: hidden;
+  min-width: 0;
+  font-size: 0.8125rem; /* 13px */
+  color: var(--sf-color-text-muted);
+  text-overflow: ellipsis;
+}
+
+/* Compact primary: 44px, a fixed minimum width so "Added" or "Out of stock"
+   never moves the text beside it. */
 .addBtn {
-  border: none;
-  background: var(--sf-gradient-primary);
-  color: var(--sf-color-primary-contrast);
+  flex: none;
+  min-width: 7.75rem;
+  padding-inline: var(--sf-space-4);
 }
 
-.addBtn:hover:not(:disabled) {
-  filter: brightness(1.05);
+.check {
+  flex: none;
+  animation: bar-check-in var(--sf-duration) var(--sf-ease-out);
 }
 
-.addBtnDone {
-  background: var(--sf-color-success);
+@keyframes bar-check-in {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
 }
 
-.buyNow {
-  border: 1.5px solid var(--sf-color-primary);
-  background: transparent;
-  color: var(--sf-color-primary);
+@media (prefers-reduced-motion: reduce) {
+  .check {
+    animation: none;
+  }
 }
 
-.addBtn:focus-visible,
-.buyNow:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
-}
-
-.addBtn:disabled,
-.buyNow:disabled {
-  opacity: 0.55;
-  cursor: not-allowed;
-}
-
-/* Mobile-first: the bar only exists on phones/large-phones. It intentionally
-   sits ABOVE the global BottomNav (z 1200) so the PDP's primary CTA is never
-   hidden while a shopper is deciding. */
-@media (max-width: 768px) {
+@media print {
   .bar {
-    display: flex;
-    z-index: 1300;
+    display: none;
   }
 }

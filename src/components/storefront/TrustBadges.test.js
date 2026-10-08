@@ -26,3 +26,37 @@ test("dynamic sub-labels come from live data", () => {
   expect(screen.queryByText("Available")).not.toBeInTheDocument();
   expect(screen.queryByText(/Above/)).not.toBeInTheDocument();
 });
+
+test("a dynamic badge shows only while the live data backs it", () => {
+  render(
+    <TrustBadges
+      ids={["securePayment", "cod", "freeShipping", "easyReturns"]}
+      settings={{ payment: { codEnabled: false } }}
+      shipping={[{ freeAbove: 0 }]}
+    />
+  );
+  const items = within(screen.getByRole("list", { name: "Our promises" })).getAllByRole("listitem");
+  expect(items.map((item) => item.querySelector(".label").textContent)).toEqual([
+    TRUST_BADGE_CATALOG.securePayment.label,
+    TRUST_BADGE_CATALOG.easyReturns.label,
+  ]);
+  expect(screen.queryByText(TRUST_BADGE_CATALOG.cod.label)).not.toBeInTheDocument();
+  expect(screen.queryByText(TRUST_BADGE_CATALOG.freeShipping.label)).not.toBeInTheDocument();
+});
+
+test("while the data loads, dynamic badges are hidden skeletons and nothing is claimed", () => {
+  render(<TrustBadges ids={["securePayment", "cod"]} loading settings={null} shipping={[]} />);
+  const list = screen.getByRole("list", { name: "Our promises" });
+  expect(list).toHaveAttribute("aria-busy", "true");
+  expect(within(list).getAllByRole("listitem")).toHaveLength(1);
+  expect(within(list).getByText(TRUST_BADGE_CATALOG.securePayment.label)).toBeInTheDocument();
+  expect(screen.queryByText(TRUST_BADGE_CATALOG.cod.label)).not.toBeInTheDocument();
+  expect(list.querySelectorAll('li[aria-hidden="true"] .sf-skeleton').length).toBeGreaterThan(0);
+});
+
+test("the detail follows the label, separated for screen readers", () => {
+  render(<TrustBadges ids={["easyReturns"]} />);
+  expect(screen.getByRole("listitem")).toHaveTextContent(
+    `${TRUST_BADGE_CATALOG.easyReturns.label}, ${STOREFRONT_CONFIG.returnsWindowDays}-day returns`
+  );
+});

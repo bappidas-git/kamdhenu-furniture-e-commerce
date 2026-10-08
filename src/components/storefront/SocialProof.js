@@ -9,9 +9,14 @@ import styles from "./SocialProof.module.css";
 //   This component is deliberately built so it CANNOT display a fabricated
 //   signal. It accepts only numbers — an aggregate `rating` and a `count` of
 //   real ratings — never free-typed claims like "Bestseller!" or "10k sold".
-//   When `count` is 0 it renders an honest empty state ("No ratings yet"); it
+//   When `count` is 0 it renders an honest empty state ("No reviews yet"); it
 //   will not show a hollow "0.0 (0)". Callers must pass values derived from the
 //   real reviews system, so what shows is always backed by data.
+//
+// Look (Prompt 16): one quiet row, the stars (14px; 12px at "sm") then
+// "4.6 · 12 reviews" in ink. With `onReviewsClick` the row is a button styled
+// as a link that jumps to the reviews; screen readers hear
+// "Rated 4.6 out of 5, 12 reviews".
 //
 // Props:
 //   rating         number  aggregate rating 0–5 (real)
@@ -29,39 +34,48 @@ const SocialProof = ({
 }) => {
   const ratingsCount = Math.max(0, Number(count) || 0);
   const value = Math.max(0, Math.min(5, Number(rating) || 0));
+  const rootClass = `${styles.wrap} ${styles[size] || ""} ${className}`.trim();
 
   // Honest empty state — no ratings, so claim nothing.
   if (ratingsCount <= 0) {
     return (
-      <div className={`${styles.wrap} ${styles[size]} ${className}`}>
-        <span className={styles.empty}>No ratings yet</span>
+      <div className={rootClass}>
+        <span className={styles.empty}>No reviews yet</span>
       </div>
     );
   }
 
-  const starSize = size === "sm" ? 14 : 18;
-  const countLabel = `${ratingsCount.toLocaleString()} ${
-    ratingsCount === 1 ? "rating" : "Ratings & Reviews"
+  const figure = value.toFixed(1);
+  const countLabel = `${ratingsCount.toLocaleString("en-IN")} ${
+    ratingsCount === 1 ? "review" : "reviews"
   }`;
 
-  const Tag = onReviewsClick ? "button" : "div";
-
-  return (
-    <Tag
-      type={onReviewsClick ? "button" : undefined}
-      className={`${styles.wrap} ${styles[size]} ${
-        onReviewsClick ? styles.clickable : ""
-      } ${className}`}
-      onClick={onReviewsClick}
-      aria-label={`Rated ${value.toFixed(1)} out of 5 from ${countLabel}`}
-    >
-      <span className={styles.badge}>
-        {value.toFixed(1)} <span className={styles.badgeStar} aria-hidden="true">★</span>
+  const content = (
+    <>
+      <span className={styles.stars} aria-hidden="true">
+        <StarRating rating={value} size={size === "sm" ? 12 : 14} />
       </span>
-      <StarRating rating={value} size={starSize} />
-      <span className={styles.count}>{countLabel}</span>
-    </Tag>
+      <span className={styles.text}>
+        <span className="sf-visually-hidden">Rated </span>
+        <span className={styles.figure}>{figure}</span>
+        <span className="sf-visually-hidden"> out of 5, </span>
+        <span className={styles.dot} aria-hidden="true" />
+        <span className={styles.count}>{countLabel}</span>
+      </span>
+    </>
   );
+
+  if (onReviewsClick) {
+    return (
+      <div className={rootClass}>
+        <button type="button" className={styles.link} onClick={onReviewsClick}>
+          {content}
+        </button>
+      </div>
+    );
+  }
+
+  return <div className={rootClass}>{content}</div>;
 };
 
 export default SocialProof;
