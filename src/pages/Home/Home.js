@@ -1,22 +1,32 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { Icon } from "@iconify/react";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
+import useNearViewport from "../../hooks/useNearViewport";
 import apiService from "../../services/api";
 import { categoryParam } from "../../utils/categories";
 import HeroSection from "../../components/HeroSection/HeroSection";
 import AssuranceStrip from "../../components/storefront/AssuranceStrip";
 import FeaturedProducts from "../../components/FeaturedProducts/FeaturedProducts";
-import { PriceBlock, ProductCard, ProductRail } from "../../components/storefront";
-import { Reveal, SectionHeading, renderAccent, staggerDelay } from "../../components/ui";
+import CTASection from "../../components/CTASection/CTASection";
 import {
+  BrandStrip,
+  PressStrip,
+  PriceBlock,
+  ProductCard,
+  ProductRail,
+  ReviewCarousel,
+} from "../../components/storefront";
+import { Marquee, Reveal, SectionHeading, renderAccent, staggerDelay } from "../../components/ui";
+import {
+  CLOSING_CTA,
   COMPLETE_THE_SPACE,
   HOME_SECTIONS,
+  MARQUEE_PHRASES,
+  PROMISE_STEPS,
   SPACES,
   STORY,
 } from "../../content/homeContent";
-import { APP_NAME, WHY_CHOOSE_US } from "../../utils/constants";
 import {
   buildCartItem,
   formatCurrency,
@@ -25,6 +35,13 @@ import {
   PLACEHOLDER_IMG,
   productPath,
 } from "../../utils/helpers";
+import {
+  collectBrands,
+  loadFeaturedReviews,
+  loadPromiseData,
+  promiseBodyLayout,
+  resolvePromiseBody,
+} from "./homeData";
 import styles from "./Home.module.css";
 
 // =============================================================================
@@ -34,12 +51,18 @@ import styles from "./Home.module.css";
 // 11), in this order:
 //   Shop by space · story block 1 · Featured Collections · Complete the space
 //   (the one sand band) · story block 2 · Trending · Recently viewed
-// then the sections Prompt 12 owns. Copy and media come from homeContent.js.
+// then the closing half (Prompt 12):
+//   Brands we carry · (As featured in) · From our customers · Our promise ·
+//   the marquee · the closing CTA, directly above the footer's newsletter band
+// Copy and media come from homeContent.js.
 //
 // Data: categories, featured and trending products in one Promise.all (each
 // read falls back to [] on failure); once featured has resolved, the "Complete
-// the space" anchor and its companions. Sections whose data is missing are
-// hidden; nothing is invented to fill them.
+// the space" anchor and its companions. The closing half reads lazily, each
+// section when it comes within a screen of the viewport: the catalogue for the
+// brand names, the approved reviews of the featured products, and the store
+// settings and shipping methods for the promise steps (rules in homeData.js).
+// Sections whose data is missing are hidden; nothing is invented to fill them.
 // =============================================================================
 
 // Must match the key written by ProductDetails.js so viewing a product
@@ -297,31 +320,108 @@ const CompleteTheSpace = ({ curation, onAddToCart, onToggleWishlist, isInWishlis
   );
 };
 
-// ── Interim: "Why choose us" ─────────────────────────────────────────────────
-// Kept as it was for Prompt 12, which replaces it with the "Our promise"
-// explainer (its claims come from WHY_CHOOSE_US in constants.js); restyled
-// here only so the page carries no colour literals.
+// ── From our customers ───────────────────────────────────────────────────────
+// Approved reviews of the featured pieces (loadFeaturedReviews). `reviews` is
+// null until they are read (skeleton slides hold the section's place); with
+// none to show the section is hidden rather than showing an empty block.
 
-const WhyChooseUs = () => (
-  <section className={`sf-section ${styles.section}`} aria-labelledby="home-why-title">
-    <div className="sf-container sf-container--wide">
-      <SectionHeading
-        id="home-why-title"
-        title={`Why Choose ${APP_NAME}`}
-        intro="We put our customers first"
-      />
-      <ul className={styles.whyGrid}>
-        {WHY_CHOOSE_US.map((item, index) => (
-          <Reveal as="li" key={item.id || index} className={styles.whyItem} delay={staggerDelay(index)}>
-            <Icon icon={item.icon} className={styles.whyIcon} aria-hidden="true" />
-            <h3 className={styles.whyTitle}>{item.title}</h3>
-            <p className={styles.whyText}>{item.description}</p>
-          </Reveal>
-        ))}
-      </ul>
-    </div>
-  </section>
-);
+const CustomerReviews = ({ reviews, sectionRef }) => {
+  if (Array.isArray(reviews) && reviews.length === 0) return null;
+  const copy = HOME_SECTIONS.reviews;
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`sf-section ${styles.section}`}
+      aria-labelledby="home-reviews-title"
+    >
+      <Reveal className="sf-container sf-container--wide">
+        <SectionHeading id="home-reviews-title" eyebrow={copy.eyebrow} title={copy.title} />
+        <ReviewCarousel
+          reviews={reviews || []}
+          loading={reviews === null}
+          label={copy.carouselLabel}
+        />
+      </Reveal>
+    </section>
+  );
+};
+
+// ── Our promise ──────────────────────────────────────────────────────────────
+// Three steps from PROMISE_STEPS. Each body quotes only live data (the
+// shipping methods, the store settings, the returns policy) through
+// resolvePromiseBody; `data` is null until those reads settle, and meanwhile
+// skeleton lines over an invisible layout copy hold each body's place.
+
+const stepNumber = (index) => String(index + 1).padStart(2, "0");
+
+const PromiseSteps = ({ data, sectionRef }) => {
+  const steps = PROMISE_STEPS.filter(Boolean);
+  if (steps.length === 0) return null;
+  const copy = HOME_SECTIONS.promise;
+  const loading = data === null;
+
+  return (
+    <section
+      ref={sectionRef}
+      className={`sf-section ${styles.section}`}
+      aria-labelledby="home-promise-title"
+    >
+      <div className="sf-container sf-container--wide">
+        <SectionHeading id="home-promise-title" eyebrow={copy.eyebrow} title={copy.title} />
+        <ol className={styles.steps} aria-busy={loading || undefined}>
+          {steps.map((step, index) => {
+            const body = loading ? "" : resolvePromiseBody(step, data);
+            return (
+              <Reveal
+                as="li"
+                key={step.dataKey || index}
+                className={styles.step}
+                delay={staggerDelay(index)}
+              >
+                {step.image?.src && (
+                  <div className={styles.stepMedia}>
+                    <img
+                      className={styles.stepImage}
+                      src={step.image.src}
+                      alt={step.image.alt || ""}
+                      width={step.image.width}
+                      height={step.image.height}
+                      loading="lazy"
+                      decoding="async"
+                      onError={onImageError}
+                    />
+                  </div>
+                )}
+                <p className={styles.stepMeta}>
+                  {/* The list already numbers the steps for screen readers. */}
+                  <span className={styles.stepNumber} aria-hidden="true">
+                    {stepNumber(index)}
+                  </span>
+                  {step.eyebrow && <span className="sf-eyebrow">{step.eyebrow}</span>}
+                </p>
+                <h3 className={styles.stepTitle}>{step.title}</h3>
+                {loading ? (
+                  // The body laid out invisibly (with fillers for the live
+                  // values) holds the step's height under the skeleton lines.
+                  <p className={`${styles.stepBody} ${styles.stepBodyPending}`} aria-hidden="true">
+                    <span className={styles.stepBodyLayout}>{promiseBodyLayout(step)}</span>
+                    <span className={styles.stepSkeleton}>
+                      <span className="sf-skeleton sf-skeleton--text" />
+                      <span className="sf-skeleton sf-skeleton--text" />
+                    </span>
+                  </p>
+                ) : (
+                  body && <p className={styles.stepBody}>{body}</p>
+                )}
+              </Reveal>
+            );
+          })}
+        </ol>
+      </div>
+    </section>
+  );
+};
 
 // ══════════════════════════════════════════════════════════════════════════════
 // HOME PAGE
@@ -339,6 +439,15 @@ const Home = () => {
   // Read before the first paint, so the rail never appears after the page.
   const [recentlyViewed] = useState(getRecentlyViewed);
   const addingAllRef = useRef(false);
+
+  // The closing half: null until read, each read starting once its section
+  // comes within a screen of the viewport.
+  const [brands, setBrands] = useState(null);
+  const [reviews, setReviews] = useState(null);
+  const [promiseData, setPromiseData] = useState(null);
+  const [brandsRef, brandsNear] = useNearViewport();
+  const [reviewsRef, reviewsNear] = useNearViewport();
+  const [promiseRef, promiseNear] = useNearViewport();
 
   // ── Data fetching ────────────────────────────────────────────────────────
 
@@ -373,6 +482,48 @@ const Home = () => {
       active = false;
     };
   }, []);
+
+  // Brands we carry: one catalogue read, its distinct brand names.
+  useEffect(() => {
+    if (!brandsNear) return undefined;
+    let active = true;
+    apiService.products
+      .getAll()
+      .catch(() => [])
+      .then((products) => {
+        if (active) setBrands(collectBrands(products));
+      });
+    return () => {
+      active = false;
+    };
+  }, [brandsNear]);
+
+  // From our customers: the featured products' approved reviews, once the
+  // featured list is known.
+  useEffect(() => {
+    if (!reviewsNear || loading) return undefined;
+    let active = true;
+    loadFeaturedReviews(featuredProducts)
+      .catch(() => [])
+      .then((list) => {
+        if (active) setReviews(list);
+      });
+    return () => {
+      active = false;
+    };
+  }, [reviewsNear, loading, featuredProducts]);
+
+  // Our promise: the store settings and shipping methods its copy quotes.
+  useEffect(() => {
+    if (!promiseNear) return undefined;
+    let active = true;
+    loadPromiseData().then((data) => {
+      if (active) setPromiseData(data);
+    });
+    return () => {
+      active = false;
+    };
+  }, [promiseNear]);
 
   // ── Handlers ─────────────────────────────────────────────────────────────
 
@@ -496,8 +647,42 @@ const Home = () => {
         </section>
       )}
 
-      {/* Prompt 12 */}
-      <WhyChooseUs />
+      {/* 8. Brands we carry: the catalogue's own brand names, as text */}
+      <BrandStrip
+        ref={brandsRef}
+        brands={brands || []}
+        loading={brands === null}
+        label={HOME_SECTIONS.brands.eyebrow}
+        headingId="home-brands-title"
+      />
+
+      {/* 9. As featured in: there is no data source for press or client names
+          yet (prompts/00_INDEX.md, "Open questions and deviations", item 7)
+          and the db.json schema must not be extended, so the slot is handed
+          an empty list and renders nothing. Pass real items from the API once
+          one exists; never hardcode names here. */}
+      <PressStrip items={[]} label={HOME_SECTIONS.press.eyebrow} headingId="home-press-title" />
+
+      {/* 10. From our customers (hidden when there are no approved reviews) */}
+      <CustomerReviews reviews={reviews} sectionRef={reviewsRef} />
+
+      {/* 11. Our promise */}
+      <PromiseSteps data={promiseData} sectionRef={promiseRef} />
+
+      {/* 12. A slow ribbon of brand phrases (decorative) */}
+      <Marquee items={MARQUEE_PHRASES} />
+
+      {/* 13. The closing CTA, directly above the footer's newsletter band */}
+      <CTASection
+        tone="navy"
+        eyebrow={CLOSING_CTA.eyebrow}
+        title={CLOSING_CTA.title}
+        line={CLOSING_CTA.line}
+        primary={CLOSING_CTA.primary}
+        secondary={CLOSING_CTA.secondary}
+        headingId="home-closing-title"
+        className={styles.closing}
+      />
     </div>
   );
 };

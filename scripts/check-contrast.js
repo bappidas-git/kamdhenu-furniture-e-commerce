@@ -235,6 +235,11 @@ const PAIRS = [
   ["Invalid field border (error) on surface", "--sf-color-error", "--sf-color-surface", LARGE],
   ["Selected menu item: ink on accent-soft over surface", "--sf-color-text", ["--sf-color-accent-soft", "--sf-color-surface"], AA],
   ["Accent badge (.sf-badge--accent): discount on discount-bg over page", "--sf-color-discount", ["--sf-color-discount-bg", "--sf-color-bg"], AA],
+  // Home review carousel (Prompt 12): sand slides, stars drawn in ink there
+  // (the gold star falls below 3:1 on sand).
+  ["Review slide: stars (ink) on sand (graphic)", "--sf-color-text", SAND, LARGE],
+  ["Review slide: empty star (border-strong) on sand (graphic)", "--sf-color-border-strong", SAND, LARGE],
+  ["Review slide: verified mark (success) on sand", "--sf-color-success", SAND, AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -277,6 +282,10 @@ const INFO = [
   // and why the hero scrim is --sf-color-scrim, not the backdrop token
   ["Hero: paper at 80% on scrim over white photo (not for text)", ["rgba(250, 247, 242, 0.8)", "--sf-color-scrim", "#ffffff"], ["--sf-color-scrim", "#ffffff"]],
   ["Hero: on-dark text with --sf-color-overlay as the scrim, white photo (not used)", "--sf-color-on-dark", ["--sf-color-overlay", "#ffffff"]],
+  // Prompt 12: why review slides draw their stars in ink, and how far a filled
+  // star stands from an empty one on the sand
+  ["Review slide: gold star on sand (not used)", "--sf-color-star", SAND],
+  ["Review slide: filled star (ink) vs empty star (border-strong) on sand", "--sf-color-text", ["--sf-color-border-strong", ...SAND]],
 ];
 
 // ---------------------------------------------------------------------------

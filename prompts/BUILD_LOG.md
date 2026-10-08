@@ -1525,3 +1525,125 @@ No change to `HeroSection`, `AssuranceStrip`, `ProductCard` / `PriceBlock` / `St
   - If the client prefers a bedroom set, the bed's mattress needs a size-free pairing (see Decisions).
 - **Trending:** "What people are *choosing*." describes the admin-curated `trending` flag. If that flag does not reflect real popularity, a neutral title such as "Pieces to *look at*" may be safer.
 - **Headings:** "Furniture for every *room*.", "Pieces we *recommend*.", and the carousel names "Featured pieces" / "Trending pieces" / "Recently viewed pieces".
+
+---
+
+## Prompt 12 — Home social proof, explainer and closing CTA
+
+**Date:** 2026-10-08. **Result:** the home page now closes with honest social proof and a clear ending. After Recently viewed come a "Brands we carry" strip built from the catalogue's own `brand` values, an "As featured in" slot that stays empty (there is no data source for it), a carousel of approved customer reviews of the featured pieces, a three-step "Our promise" explainer whose numbers come only from the shipping methods, the store settings and the returns policy, a slow ribbon of brand phrases, and a navy closing CTA directly above the footer's newsletter band. The interim "Why choose us" grid and its unbacked claims are gone. Reference: `prompts/DESIGN_SYSTEM.md` §22.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/pages/Home/Home.js` | Sections 8–13 (brands strip, press slot, `CustomerReviews`, `PromiseSteps`, marquee, closing CTA) and their three lazy reads. Removed: the interim `WhyChooseUs` component and the `@iconify/react`, `APP_NAME` and `WHY_CHOOSE_US` imports. Prompt 10/11 sections untouched. |
+| `src/pages/Home/Home.module.css` | The `.why*` rules removed; the promise-step rules and `section.closing` added. Tokens only. |
+| New `src/pages/Home/homeData.js` | The data rules: `collectBrands`, `selectReviews`, `loadFeaturedReviews`, `formatDeliveryDays`, `promiseValues`, `resolvePromiseBody`, `promiseBodyLayout`, `loadPromiseData`. |
+| New `src/hooks/useNearViewport.js` | The lazy-read trigger (callback ref + `near`), IntersectionObserver with a one-viewport `rootMargin`. |
+| New `src/components/storefront/BrandStrip.js` + `.module.css` | `BrandStrip` and the shared `WordmarkStrip` row. |
+| New `src/components/storefront/PressStrip.js` | The "As featured in" slot: `null` unless handed named items. |
+| New `src/components/storefront/ReviewCarousel.js` + `.module.css` | The review carousel (also exports `clampQuote`, `QUOTE_MAX_LENGTH`). |
+| New `src/components/ui/Marquee.js` + `.module.css` | The decorative phrase ribbon. |
+| `src/components/CTASection/CTASection.js` + `.module.css` | Revived (it was an orphan pink-gradient "Discover Amazing Deals" banner with 8 colour literals): props `eyebrow`, `title` (`*accent*`), `line`, `primary`, `secondary`, `tone="paper"|"sand"|"navy"`, `as`, `headingId`, `className`. Tokens only. |
+| `src/components/storefront/index.js`, `src/components/ui/index.js` | Export `ReviewCarousel`, `BrandStrip`, `PressStrip`; `Marquee`. |
+| `src/content/homeContent.js` | `HOME_SECTIONS.brands/reviews/press/promise`, `PROMISE_STEPS`, `MARQUEE_PHRASES`, `CLOSING_CTA` (copy below). |
+| `scripts/check-contrast.js` | Three review-slide pairs and two informational rows (DESIGN_SYSTEM §22.9). |
+| New tests | `homeData.test.js` (35), `BrandStrip.test.js` (10, incl. `PressStrip`), `ReviewCarousel.test.js` (13), `Marquee.test.js` (8), `CTASection.test.js` (9). `Home.test.js` 20 → 36: new API mocks, a controllable IntersectionObserver, the heading order without the interim grid, and 16 closing-half tests. |
+| `prompts/DESIGN_SYSTEM.md` | New §22; §16.4 (barrel) and §21.1 (rhythm) point to it. |
+
+No change to `SocialProof.js` (read only), `Footer`, `Newsletter`, `ProductCard`, Prompt 10/11 sections, `api.js`, `db.json` (SHA-256 identical) or any admin file. API functions used: `products.getAll`, `products.getReviews`, `shipping.getMethods`, `settings.get` (plus the page's existing reads).
+
+### Content added to `homeContent.js` (all proposed copy)
+
+- **Headings:** brands eyebrow "Brands we carry"; reviews "From our customers" / "Comfort, *in their words*." (carousel name "Customer reviews"); press "As featured in" (not shown); promise "Our promise" / "How it *works*.".
+- **`PROMISE_STEPS`** (images 1200 × 1500 placeholders in the neutral tones):
+  1. `payment`: "Order" / "Pay the way that suits you" / "Check out securely online with cards, UPI or net banking." + (COD on) "Or choose cash on delivery and pay when your furniture arrives."
+  2. `delivery`: "Delivery" / "Brought to your door" / "Standard delivery brings your order to your door in {days} business days." + "Orders {threshold} ship free."; fallback "We bring your order to your door."
+  3. `returns`: "After delivery" / "Time to settle in" / "Eligible pieces can be returned within {returns} days of delivery." + "If anything is not right, talk to us."
+  With the seeded data: "…in 7–10 business days. Orders above ₹9,999 ship free." and "…within 7 days of delivery." ("within 7 days of delivery" is the refund policy page's own wording.)
+- **`MARQUEE_PHRASES`:** "Made for living", "Chosen with care", "Comfort that lasts", "For every room", "At home, at work, outdoors".
+- **`CLOSING_CTA`:** "When you're ready" / "Find the piece that *fits*." / "Browse the full collection, or talk to us about the space you are furnishing." / "Shop the collection" → `/products`, "Talk to us" → `/support`.
+
+### Data rules
+
+- **Brands we carry:** one `products.getAll()` read, `collectBrands`: distinct non-empty `brand` values of the active products (case, spacing and punctuation ignored, so "A&S Urbanseat" and "A & S Urbanseat" are one), alphabetical, the store's own brand (`APP_NAME`) last and styled the same. Seeded: Carlton · Nilkamal · Winsome · A & S Urbanseat. Text only; no logos, no "trusted by". A failed read hides the strip.
+- **Review-sourcing rule:** `products.getReviews(id)` for the featured products already loaded (the page's `getFeatured(8)`: at most 8 distinct active products, in parallel, each `.catch(() => [])`), flattened; approved only (the endpoint's filter, and any review carrying another `status` is dropped again); at least 40 characters of text; reviews naming another product or repeating an id skipped; newest first by `createdAt`; at most 10; each carries its product's `{ id, name, slug }` for the link. Seeded result: 7 reviews from 5 featured products (none verified, so "Verified purchase" does not show on the home page with today's data; tests cover it). **Zero reviews (or every read failing) hides the whole section**, as the prompt suggested: an empty review block adds nothing. The component keeps its honest empty state ("No customer reviews yet.", muted eyebrow) for other pages.
+- **Our promise:** live values only, per step (`dataKey`): COD sentence only while `settings.payment.codEnabled` (`resolveTrustBadgeDetail("cod")`); `{days}` from the active method named "Standard…" (`estimatedDays` "7-10" → "7–10"; empty, "0" or text gives nothing); `{threshold}` is `resolveTrustBadgeDetail("freeShipping")` in sentence case ("above ₹9,999", the strip's, footer's and product page's amount); `{returns}` is `STOREFRONT_CONFIG.returnsWindowDays` only when it is > 0. A sentence whose value is missing is left out (never a guess); a step with nothing backed shows its plain `fallback`.
+
+### The hidden press slot
+
+`PressStrip` renders nothing unless it is handed at least one item with a name. `Home.js` hands it `[]`, with a comment pointing to `00_INDEX.md` §5 item 7: there is no press or client collection or settings field in `db.json`, and the schema must not be extended. No names are hardcoded anywhere. Checked with a temporary, uncommitted build passing two dummy names: the row renders under the brands strip, sharing its rule.
+
+### Lazy reads
+
+Each closing-half read starts when its own section comes within one viewport height (`useNearViewport`): the catalogue for the brands, the reviews (after the featured list has resolved), and settings + shipping methods for the promise. None of them is in the initial network (verified: 0 review reads and only Complete the space's catalogue read at load; then 1 catalogue read, 8 approved-review reads, settings and shipping on approach). While pending, each section holds its final height: the brands strip reserves the names' lines (two on phones), the reviews section shows skeleton slides tuned per width, each promise body is laid out invisibly (fillers for the values, `aria-hidden`) under two skeleton lines.
+
+### Marquee decision
+
+Included, between the promise steps and the closing CTA, as the brief's order puts it: a 48px hairline ribbon in eyebrow type, phrases only (no claims, numbers or offers), one pass through the phrases every 60s at any width. It pauses on hover (pointer devices) and while its control has focus, and it has a Pause/Play control, because WCAG 2.2.2 asks for a way to pause moving content that runs longer than five seconds (hover and focus alone leave touch users without one). Under reduced motion there is no track and no control; the phrases show as a still, centred list. The track is `aria-hidden`; screen readers get the phrases once, as a plain list.
+
+### `WHY_CHOOSE_US` status
+
+Removed from Home (component, `.why*` rules, imports). **Kept in `src/utils/constants.js`:** `src/pages/AboutUs/AboutUs.js` still imports and renders it (grep: lines 6 and 47). Prompt 28 should delete it when About stops using it; its claims ("Same-day and express delivery", "256-bit SSL encryption", "full refund guarantee", "24/7 Support") are not backed by the data.
+
+### Decisions
+
+- **Page order:** brands → (press) → reviews → promise → marquee → CTA, as in the brief's design list. The brands strip is a slim pause after Recently viewed.
+- **Strip hairlines:** the strips draw their own top and bottom rules and are not page `.section`s, so no rule doubles; two strips in a row share one (`.strip + .strip`).
+- **Closing CTA as a contained navy panel** (inside `.sf-container--wide`, radius sm), with `--sf-section-y` of paper above it and no bottom padding (`section.closing`; the element in the selector outweighs CTASection's own padding whatever the stylesheet order). The marquee's bottom rule then never sits on the navy edge, and the navy panel and the navy footer are separated by `.main-content`'s 80px (70px up to 768px). A full-bleed band would have left a paper stripe between two navy blocks. Navy uses the always-dark tokens, so it is identical in dark mode (on the navy-ink page it reads as a slightly lighter panel).
+- **Promise step order** is chronological (Order → Delivery → After delivery), and the bodies are sentence lists, so a missing value drops one sentence instead of the whole body.
+- **Review slides** quote the review `body` only (no `title`), show the date with the shared `formatDate(…, "short")` ("Sep 25, 2026"; en-US until Prompt 29), and use the product page's success tone for "Verified purchase".
+- **Dots** mark every slide in view (`aria-current="true"` on each), so clicking the last dot shows slides 5–7 lit rather than lighting an unexpected dot.
+- **The hidden marquee list keeps the phrases' casing** (`text-transform: none`): Chromium passes `text-transform` on to the accessibility tree (it exposed "MADE FOR LIVING"); visible eyebrows keep the site convention.
+
+### Deviations from the prompt, and why
+
+1. **The reviews section is paper, not a sand section.** DESIGN_SYSTEM §13 and Prompt 11's brief allow one sand section per page, and it is Complete the space (a Prompt 11 section this prompt must not touch). The sand moved onto the slides: each review is a sand panel on the paper section, with its stars in ink as §4 asks on sand (the gold star measures 2.91 : 1 there).
+2. **The brands' catalogue read is lazy too**, not added to the initial `Promise.all`: it is the heaviest read on the page, and implementation note 2's reason (keep the initial network light) applies to it as much as to the reviews. It still runs once, cached in state, with `.catch(() => [])`.
+3. **The marquee has a Pause/Play control** in addition to pausing on hover and focus (WCAG 2.2.2; see "Marquee decision").
+4. **Dots are 24px-wide, 44px-tall targets**, not 44 × 44: ten 44px dots plus the two buttons do not fit a 328px row. 24px wide meets WCAG 2.5.8 (24 × 24), the exception documented like the 32px chips (§16.8).
+5. **`{threshold}` reads "above ₹9,999"** (the resolver's string in sentence case) rather than a bare amount, so every surface prints the same amount from the same function.
+6. **The step image lift** (−4px) is kept as briefed, although §8 rules out lifts on cards: it moves the image, not the step, under `(hover: hover)` and only without reduced motion. The steps carry no links, so it is a hover cue (it also answers `:focus-within` should a link ever be added).
+7. **Additions:** `useNearViewport`, `homeData.js`, `WordmarkStrip`, `promiseBodyLayout`, the step `fallback` and `requires` keys, `HOME_SECTIONS` keys for the new headings, forced-colours rules (dots, CTA panel edge), and the component barrel exports.
+
+### Verification
+
+- `npm run build`: "Compiled successfully", no warnings. Gzip against the Prompt 11 baseline: JS 400.30 → 406.25 kB (+5.95), CSS 54.11 → 56.40 kB (+2.29).
+- `CI=true npm test -- --passWithNoTests`: 250 tests (159 + 91), exit 0, no React warnings.
+- **Mutation check:** 18 seeded faults, each caught by at least one test (files restored byte for byte), and a no-op control that survived: short reviews kept; unapproved reviews kept; own brand not last; oldest reviews first; more than eight review reads; COD always mentioned; threshold guessed; "0" days accepted; empty reviews shown; reviews read eagerly; catalogue read eagerly; press names hardcoded; verified on a truthy non-`true`; next never disabled; dots ignoring the scroll; marquee track exposed to assistive technology; ink button on navy; empty brands strip rendered.
+- `node scripts/check-contrast.js` passes (3 new pairs, 2 info rows); `node scripts/validate-db.js` passes; `db.json` SHA-256 unchanged.
+- Literal grep of every touched source: no hex, `rgb()`, `hsl()`, gradient or font-name literal (the only gradient in `Home.module.css` is Prompt 11's scrim mask; the placeholder URLs use the two permitted tones).
+- **Browser QA** (Playwright + Chromium; JSON Server on a scratch copy of `db.json`; mock-mode production builds): 109 scripted checks pass, covering 360/768/1024/1440px in both modes: no horizontal overflow; the four brand names; 1/2/3 review slides in view of 7; promise steps stacked / three columns; 4:5 step images; the navy panel (`rgb(11, 31, 63)` in both modes) ≥ 420px from 1024px; the CTA last, 80/70px above the footer; marquee 48px; brands strip 56px from 768px; no console errors; the network laziness above; a keyboard walk through the closing half (19 stops: 7 product links, 7 dots, previous, next, the marquee control, the two CTA links; every stop shows its ring and scrolls into view; buttons 44px; dots 24 × 44); the CDP accessibility tree (carousel group with its role description, 7 slide groups "Review N of 7", 7 dot buttons, previous disabled at the start, the brands region, no press region, the marquee list exposed once in its own casing, the closing region, the promise list of 3); reduced motion (still marquee list, no control, no step lift); hover (step image `translateY(-4px)`).
+- **Carousel and marquee interactions:** next → slides 4–6, next → 5–7 (next disabled), dot 2 → 2–4, previous → 1–3 (previous disabled), Enter on dot 7 → 5–7; the marquee runs (120s at 1440px: two copies per half), pauses on hover and while its control is focused (transform frozen), and the control pauses it until pressed again.
+- **Data follows the admin and settings** (scratch copy, restored afterwards): approving the pending "Bought four for the balcony" review and un-approving "Good set for our hotel lobby" in Admin → Reviews swaps them in the carousel after a reload; `codEnabled: false` removes the cash-on-delivery sentence (and restoring brings it back); `freeAbove: null` on Standard drops only the threshold sentence and keeps "7–10 business days".
+- **Laravel shape:** a non-mock production build against a stub answering `{ success, data, meta }` on `/products`, `/products/{id}/reviews`, `/settings`, `/shipping/methods` (and the page's other routes) shows the same brands, 7 slides, promise copy and CTA, with a clean console.
+- **Layout shift:** 0 while scrolling the whole page at 360 and 1440px and under reduced motion. Pending vs loaded heights: brands strip and promise steps identical at 360/768/1024/1440px; reviews within 4–31px. With every API call delayed 1.5s and a fast scroll, 0.007–0.015 in some runs, all from the rail cards above growing as their images load (pre-existing, below).
+- **Admin parity:** 28 screenshots (login, dashboard, Products, Reviews, Settings, Special Offers, Shipping; 1440 and 390px; light and dark) of the Prompt 11 build (two runs) and this one: all 28 identical to at least one baseline run (the two baseline runs differ from each other on 7, from load timing). No admin file, and nothing the admin imports, changed.
+- Screen readers (NVDA, VoiceOver) were not available in this environment.
+
+### Pre-existing issues noticed (not changed)
+
+- **Rail cards grow as their images load.** Featured, Complete the space and Trending each grow 33–39px when their `ProductCard` images arrive (measured identically on the Prompt 11 build). With a slow API and a fast scroll this now shows as a small shift of the closing half, which follows Trending (CLS 0.007–0.015 at a 1.5s delay). Prompt 13's card with a reserved image box removes it.
+- **Duplicate reads:** settings and shipping methods are read by the assurance strip, the footer and now (lazily) the promise steps; the full catalogue by Complete the space and (lazily) the brands strip. Prompt 32.
+- **Uppercase accessible names:** Chromium passes `text-transform: uppercase` into the accessibility tree, so every `.sf-eyebrow` (and the header's department row) is exposed in capitals. Prompt 31 may decide whether that matters for the eyebrow convention.
+- `formatDate` stays en-US ("Sep 25, 2026") because the admin shares it (Prompt 29 may add `formatDateIN`).
+
+### Notes for later prompts
+
+- **13:** the review carousel does not use `ProductCard`; reserving the card's 4:5 image box also removes the rail growth above.
+- **17:** `SocialProof` and `ReviewsSection` are untouched. `clampQuote` (ReviewCarousel) and the success-tone verified mark can be shared; the product page keeps showing the review titles the home slides leave out.
+- **28:** delete `WHY_CHOOSE_US` once About stops rendering it. The CTA's "Talk to us" goes to `/support`; the returns step says "within 7 days of delivery", as `/refund` does today.
+- **29:** all new section copy is in `homeContent.js`; the component microcopy defaults are in `ReviewCarousel` (previous/next, "Review N of M", "Verified purchase", empty and error lines), `Marquee` (pause/play) and `PressStrip`'s consumer label.
+- **30:** marquee one pass per 60s, linear, paused on hover/focus/control, none under reduced motion; step image lift 4px over `--sf-duration-slow`; `Reveal` per step 90ms apart and on the reviews container.
+- **31:** the dots' 24px width (WCAG 2.5.8) and `aria-current` on each slide in view; the marquee control; the closing half adds 19 tab stops with today's 7 reviews.
+- **32:** the closing half reads lazily (§22.2); candidates are a shared catalogue cache and shared settings/shipping reads.
+
+### Needs client confirmation
+
+- **Promise copy:** the three eyebrows, titles and sentences above (including "business days", "cards, UPI or net banking" and the unqualified cash-on-delivery line, which does not mention the ₹50,000 COD cap, as the strip does not).
+- **Closing CTA copy:** "When you're ready" / "Find the piece that *fits*." / "Browse the full collection, or talk to us about the space you are furnishing." / "Shop the collection", "Talk to us".
+- **Reviews copy:** "From our customers" / "Comfort, *in their words*."
+- **Marquee:** whether to keep it, and the five phrases.
+- **Brand names shown:** Carlton, Nilkamal and Winsome appear on the home page as brands carried (as in the catalogue data); confirm they may be named.
+- **Press / client logos:** whether any exist, and where their names, logos and permissions would come from (they need a data source before the slot can show anything).
+- **Photography:** three 4:5 photographs (1200 × 1500 or larger) for the promise steps: ordering, delivery, a furnished room.
