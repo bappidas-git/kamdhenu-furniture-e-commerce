@@ -7,6 +7,11 @@ import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { APP_DESCRIPTION } from "../../utils/constants";
 import { buildCartItem, getProductMinPrice } from "../../utils/helpers";
+import {
+  buildCategoryMap,
+  buildCategoryNav,
+  searchProducts,
+} from "../../components/SearchModal/searchData";
 import db from "../../../db.json";
 import Products from "./Products";
 
@@ -189,6 +194,21 @@ test("a search deep link titles the results and offers the query as a chip", asy
   fireEvent.click(within(chips()).getByRole("button", { name: "Remove search “chair”" }));
   await waitFor(() => expect(currentUrl()).toBe("/products"));
   expect(screen.getByRole("heading", { level: 1, name: "All furniture" })).toBeInTheDocument();
+});
+
+test("a search lists exactly what the search overlay counts, category names included", async () => {
+  const map = buildCategoryMap(CATEGORIES);
+  const { groups } = buildCategoryNav(CATEGORIES);
+  const overlay = searchProducts(PRODUCTS, map, groups, "office", "All");
+  renderAt("/products?search=office");
+  await waitForResults();
+  // The overlay's 20: the waiting chairs and benches match through their
+  // category's slug (office-essentials-waiting, office-premium-waiting), which
+  // the old name, tag, brand and description filter missed (it found 14).
+  expect(resultsText()).toBe(`Showing 1–12 of ${overlay.length} products`);
+  const names = screen.getAllByRole("article").map(articleName);
+  expect(names).toContain("2-Seater Waiting Chair");
+  expect(names.every((name) => overlay.some((p) => p.name === name))).toBe(true);
 });
 
 test("a legacy numeric category link is rewritten to its slug", async () => {

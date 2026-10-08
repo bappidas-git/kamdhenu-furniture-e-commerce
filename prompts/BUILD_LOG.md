@@ -2012,7 +2012,7 @@ Nothing else changed: `Header.js` and `BottomNav.js` (read only), `ProductCard`,
 
 ### Pre-existing issues noticed (not changed)
 
-- **The overlay and the listing count some searches differently.** The overlay's scoring also matches category names and slugs; the listing's `?search=` filter (`Products.js`) does not. For "office" the overlay finds 20 and "View all 20 results" lands on a listing of 14 (the six waiting chairs and benches sit under `office-…-waiting` categories); "table" 33 vs 30, "café" 10 vs 7; the other 27 queries tested agree. Both are kept as they are ("same scoring"; `Products.js` is out of scope). Aligning the listing's filter with the overlay (adding the category name and slug) is a small follow-up.
+- **The overlay and the listing counted some searches differently** (fixed by the follow-up below, at the owner's request). The overlay's scoring also matches category names and slugs; the listing's `?search=` filter (`Products.js`) did not. For "office" the overlay found 20 and "View all 20 results" landed on a listing of 14 (the six waiting chairs and benches sit under `office-…-waiting` categories); "table" 33 vs 30, "café" 10 vs 7.
 - **Legacy z-index literals above the modal layer:** `AddToCartBar` 1300 on phones (Prompt 16) and `CartDrawer` 1200/1300 (Prompt 18), plus the Profile toast 1300 (Prompt 21). The search overlay now sits above them; the auth modal (9999 until Prompt 20) does not need to.
 - **The cart drawer has no focus trap** (Prompt 18): Shift+Tab leaves it for the header behind.
 - **`aria-modal` alone:** Chromium still exposes the header behind an open overlay in its accessibility tree, as for the sidebar and sheets (the shared contract relies on `aria-modal`). Prompt 31 may add `inert` to the page behind every overlay.
@@ -2030,3 +2030,12 @@ Nothing else changed: `Header.js` and `BottomNav.js` (read only), `ProductCard`,
 ### Needs client confirmation
 
 None expected. Visible choices the client may want to see: "Popular" follows the admin's `trending` flag (the seeded six are listed above), and the copy listed under "29".
+
+### Follow-up: the listing's search matches the overlay
+
+The repository owner asked for this after the PR went up. The overlay's "View all N results" now always lands on N products.
+
+- **Change:** `searchData.js` exports `matchesSearch(product, query, categoryMap)`: a product matches when the overlay's `scoreProduct` gives it any positive score (the query in its name, tags, category name or slug, brand or short description; a blank query matches everything, as before). `Products.js` filters `?search=` with it (and `buildCategoryMap(categories)`) in place of its own name, description, brand, `category` string and tag test. That test was a subset of the overlay's rule, so every product it found is still found. Sorting, the other facets and the URL are unchanged; "Relevance" still keeps catalogue order rather than the overlay's ranking. The page imports the helper from the overlay's folder, as `SidebarMenu` imports `Header/groupCategoryTree`.
+- **Measured** over `db.json` for 258 queries (every word of the product names, tags, brands, category names and slugs, plus the 30 above): the listing now selects exactly the overlay's "All" results for all 258; before, 50 differed. Mostly these are plural or category words: "chairs" 5 vs 42, "tables" 1 vs 20, "sofas" 0 vs 5, "beds" 3 vs 9, "mirrors" 0 vs 4, and the leaf categories' slugs (`cafe-restaurant-chairs` 0 vs 10). In the browser (mock-mode production build), "office", "table", "café", "chair", "chairs", "almirah", "nilkamal", "sofa", "sofas", "tables", "mirrors" and "zzz" each show the same count in the overlay and on the listing that "View all" (or Enter) opens: "office" is now 20 and 20.
+- **Tests:** `searchData.test.js` +3 (a category match, a blank query, set equality with the overlay over ten seeded queries); `Products.test.js` +1 (`?search=office` lists the overlay's 20, the 2-Seater Waiting Chair among them). 368 tests pass. Three seeded faults (the old inline filter back, the category ignored, the query untrimmed) each failed a test; files restored byte for byte.
+- **Checks:** `npm run build` compiles with no warnings (JS −95 B gzip); ESLint is clean on the changed sources; `db.json` is unchanged.

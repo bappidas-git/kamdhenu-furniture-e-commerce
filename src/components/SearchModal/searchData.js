@@ -8,10 +8,11 @@ import { categoryParam, getMainMenuCategories } from "../../utils/categories";
 // relevance scoring of the search overlay. Prompt 15 moved them here from
 // SearchModal.js unchanged, so the overlay's markup and its rules can be read
 // (and tested) apart. Added alongside them: searchProducts() (the overlay's
-// runSearch pipeline as a pure function), removeRecentSearch() (a recent
-// chip's ×), getPopularSuggestions() and getDepartments() (data-derived
-// suggestions in place of the old demo TRENDING_SEARCHES list), and
-// peekSearchData() / clearSearchDataCache().
+// runSearch pipeline as a pure function), matchesSearch() (the same rule as
+// a yes/no, used by the product listing's ?search= filter),
+// removeRecentSearch() (a recent chip's ×), getPopularSuggestions() and
+// getDepartments() (data-derived suggestions in place of the old demo
+// TRENDING_SEARCHES list), and peekSearchData() / clearSearchDataCache().
 // =============================================================================
 
 // Category filter chips (and the slugs each one matches) are derived at runtime
@@ -250,6 +251,16 @@ export const searchProducts = (allProducts, categoryMap, groups, rawQuery, categ
     .filter((entry) => entry.score > 0 && matchesCategoryChip(entry.product, cat, entry.catInfo, groups))
     .sort((a, b) => b.score - a.score)
     .map((entry) => ({ ...entry.product, _catName: entry.catInfo.name }));
+};
+
+// Whether a product matches a query at all: any positive score, i.e. the
+// query occurs in its name, tags, category name or slug, brand or short
+// description. The product listing filters `?search=` with it, so the
+// overlay's "View all N results" lands on the same N products. A blank query
+// matches everything, as the listing has always treated one.
+export const matchesSearch = (product, rawQuery, categoryMap) => {
+  const lowerQuery = (rawQuery || "").toLowerCase().trim();
+  return scoreProduct(product, lowerQuery, resolveCategory(product, categoryMap)) > 0;
 };
 
 // ---------------------------------------------------------------------------

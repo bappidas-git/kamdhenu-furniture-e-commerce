@@ -14,6 +14,7 @@ import {
   getRecentSearches,
   loadSearchData,
   matchesCategoryChip,
+  matchesSearch,
   peekSearchData,
   removeRecentSearch,
   resolveCategory,
@@ -169,6 +170,35 @@ describe("searchProducts", () => {
 
   test("a blank query finds nothing", () => {
     expect(searchProducts([product(1)], map, groups, "   ", "All")).toEqual([]);
+  });
+});
+
+// ── The listing's yes/no (matchesSearch) ────────────────────────────────────
+
+describe("matchesSearch", () => {
+  const map = buildCategoryMap(TREE);
+
+  test("the query in the category's name or slug is a match, as in the scoring", () => {
+    const bench = product(1, { name: "Cushioned Bench", categoryId: 21 });
+    expect(matchesSearch(bench, "Waiting", map)).toBe(true);
+    expect(matchesSearch(bench, "  office-essentials ", map)).toBe(true);
+    expect(matchesSearch(bench, "bench", map)).toBe(true);
+    expect(matchesSearch(bench, "sofa", map)).toBe(false);
+  });
+
+  test("a blank query matches everything", () => {
+    expect(matchesSearch(product(1, { name: "" }), "   ", map)).toBe(true);
+  });
+
+  test("on the seeded catalogue it selects exactly what the overlay finds", () => {
+    const categories = db.categories.filter((c) => c.isActive !== false);
+    const seededMap = buildCategoryMap(categories);
+    const { groups } = buildCategoryNav(categories);
+    const ids = (list) => list.map((p) => p.id).sort((a, b) => a - b);
+    ["office", "table", "café", "chair", "chairs", "almirah", "nilkamal", "sofa", "sofas", "zzz"].forEach((query) => {
+      const overlay = ids(searchProducts(db.products, seededMap, groups, query, "All"));
+      expect(ids(db.products.filter((p) => matchesSearch(p, query, seededMap)))).toEqual(overlay);
+    });
   });
 });
 
