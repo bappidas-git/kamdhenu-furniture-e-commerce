@@ -1,64 +1,90 @@
+/* =============================================================================
+ * SocialProof — one quiet row (Prompt 16)
+ * =============================================================================
+ * Gold stars, then "4.6 · 12 reviews" in ink, sans 14px. As a jump to the
+ * reviews it is a button styled as a link: a stone underline under the text
+ * that turns caramel on hover, a 2px focus outline, a 44px-tall hit area.
+ * The empty state is muted text. Tokens only.
+ * ========================================================================== */
+
 .wrap {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+  min-height: 20px;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text);
+}
+
+.link {
+  position: relative;
   display: inline-flex;
   align-items: center;
   gap: var(--sf-space-2);
-  flex-wrap: wrap;
-  background: none;
-  border: none;
-  padding: 0;
   margin: 0;
-  font: inherit;
+  padding: 0;
+  border: 0;
+  background: none;
   color: inherit;
-  text-align: left;
-}
-
-.clickable {
+  font: inherit;
+  text-align: start;
   cursor: pointer;
-  border-radius: var(--sf-radius-sm);
+  -webkit-tap-highlight-color: transparent;
 }
 
-.clickable:hover .count {
-  color: var(--sf-color-primary);
-  text-decoration: underline;
+/* A 44px-tall target without moving the row. */
+.link::after {
+  content: "";
+  position: absolute;
+  inset: -12px -4px;
 }
 
-.clickable:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
-}
-
-.badge {
+.stars {
   display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  background: var(--sf-color-success);
-  color: var(--sf-color-primary-contrast);
-  font-weight: var(--sf-font-semibold);
-  border-radius: var(--sf-radius-sm);
-  padding: 2px 8px;
-  font-size: var(--sf-text-sm);
+  flex: none;
 }
 
-.badgeStar {
-  font-size: 0.85em;
+.text {
+  font-variant-numeric: tabular-nums;
 }
 
-.count {
+.figure {
+  font-weight: var(--sf-font-medium);
+}
+
+/* A middle dot between the figure and the count (decorative). */
+.dot::before {
+  content: "\00B7";
+  margin-inline: var(--sf-space-2);
   color: var(--sf-color-text-muted);
-  font-size: var(--sf-text-sm);
-  transition: color var(--sf-transition-fast);
+}
+
+.link .text {
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-border);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .link:hover .text {
+    text-decoration-color: var(--sf-color-accent);
+  }
+}
+
+.link:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 4px;
+  border-radius: 1px;
 }
 
 .empty {
   color: var(--sf-color-text-muted);
-  font-size: var(--sf-text-sm);
-  font-style: italic;
 }
 
-.sm .badge {
-  font-size: var(--sf-text-xs);
-  padding: 1px 6px;
-}
-.sm .count {
-  font-size: var(--sf-text-xs);
+.sm {
+  font-size: 0.8125rem; /* 13px */
 }

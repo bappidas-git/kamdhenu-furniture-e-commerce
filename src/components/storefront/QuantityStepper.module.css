@@ -1,59 +1,84 @@
+/* =============================================================================
+ * QuantityStepper — a 44px hairline pill (Prompt 16)
+ * =============================================================================
+ * Two 44px round buttons around the figure (sans 16px, 500, tabular). Hover is
+ * a sand fill; focus is the shared ring, which is not clipped (the pill does
+ * not hide its overflow). Tokens only.
+ * ========================================================================== */
+
 .stepper {
   display: inline-flex;
   align-items: center;
-  border: 1px solid var(--sf-color-border-strong);
+  flex: none;
+  border: var(--sf-hairline);
   border-radius: var(--sf-radius-pill);
-  background: var(--sf-color-surface);
-  overflow: hidden;
+  background-color: transparent;
 }
 
 .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: var(--sf-tap-target);
-  min-height: var(--sf-tap-target);
-  border: none;
-  background: transparent;
+  display: inline-grid;
+  place-items: center;
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  margin: -1px; /* sit on the pill's hairline, so the pill stays 44px tall */
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
   color: var(--sf-color-text);
   cursor: pointer;
-  transition: background var(--sf-transition-fast), color var(--sf-transition-fast);
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.btn:hover:not(:disabled) {
-  background: var(--sf-color-primary-soft);
-  color: var(--sf-color-primary);
-}
-
-.btn:active:not(:disabled) {
-  transform: scale(0.92);
+@media (hover: hover) {
+  .btn:hover:not(:disabled) {
+    background-color: var(--sf-color-sand);
+  }
 }
 
 .btn:focus-visible {
-  outline: none;
+  outline: 2px solid transparent;
+  outline-offset: 2px;
   box-shadow: var(--sf-shadow-focus);
 }
 
 .btn:disabled {
-  opacity: 0.4;
+  color: var(--sf-color-text-muted);
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 .value {
   min-width: 40px;
-  text-align: center;
-  font-weight: var(--sf-font-semibold);
+  font-family: var(--sf-font-sans);
   font-size: var(--sf-text-base);
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+  text-align: center;
   color: var(--sf-color-text);
   user-select: none;
 }
 
-/* small variant for dense surfaces (cart lines, bundles) */
-.sm .btn {
-  min-width: 32px;
-  min-height: 32px;
+.disabled .value {
+  color: var(--sf-color-text-muted);
 }
+
+/* Small variant for dense surfaces (cart lines, bundles): 32px. */
+.sm .btn {
+  width: 32px;
+  height: 32px;
+}
+
 .sm .value {
   min-width: 32px;
   font-size: var(--sf-text-sm);
+}
+
+@media (forced-colors: active) {
+  .btn:disabled {
+    color: GrayText;
+  }
 }

@@ -330,10 +330,10 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-header` | 50 | site header |
 | `--sf-z-megamenu` | 55 | mega-menu flyout (desktop) |
 | `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
-| `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar |
+| `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar (`AddToCartBar`, up to 768px; Prompt 16): above the bottom nav, which it covers while shown, below every drawer and modal (section 26.6) |
 | `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves |
 | `--sf-z-modal` | 1100 | modals (auth) |
-| `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal, including the legacy 1200/1300 layers still in the code (section 25.1) |
+| `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal, including the cart drawer's legacy 1200/1300 still in the code (section 25.1) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
 `--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested), `--sf-z-search` by Prompt 15 (1400, section 25.1). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
@@ -892,7 +892,7 @@ import { BottomDrawer } from "../../components/ui";
 
 - **14 (listing):** `BottomDrawer` covers the filter sheet's semantics: dialog, Escape, focus on the close button, focus back to the trigger, scroll lock. Its `footer` slot holds "Clear all" and "Show N results". The sheet's old `z-index: 1300` was there to beat a bottom nav at 1200 and is no longer needed.
 - **15 (search):** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's own restore becomes a no-op.
-- **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58).
+- **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58). Done in Prompt 16 (section 26.6).
 - **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`.
 - **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
 
@@ -1283,7 +1283,7 @@ import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 - **Markup:** `<nav aria-label="Breadcrumb"><ol>…</ol></nav>`. Items before the last are router `Link`s when they have a `link` (text otherwise). The last item is the current page: text with `aria-current="page"`, even when it has a `link`.
 - **Separators:** a "›" drawn by CSS before every item after the first, with `content: "\203A" / ""`, so screen readers skip it.
 - **Look:** sans 13px / `--sf-leading-normal`; links `--sf-color-text-muted`, ink with a 1px `--sf-color-accent` underline on hover; the current page ink at 500. It wraps on narrow screens (row gap 4px). Each link has a 44px-tall hit area (`::after`, inset −12px −4px) that does not move the row; focus is a 2px `--sf-color-focus` outline.
-- **Adoption:** Prompt 16 (product page: `items={[{ label: category.name, link }, { label: product.name }]}`) and Prompt 28 (content pages).
+- **Adoption:** Prompt 16 (product page: the category's full trail, then the product; section 26.2) and Prompt 28 (content pages).
 
 ### 24.2 Page header
 
@@ -1356,7 +1356,7 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 - A fixed, full-viewport surface in `--sf-color-bg` (paper; the navy-ink base in dark mode). No backdrop, blur or veil. It fades in over `--sf-duration` (`--sf-ease-out`) and out over `--sf-duration` (`--sf-ease-in-out`); under reduced motion it appears and goes at once.
 - **Two grid rows.** Row 1 is the top bar: `<BrandLogo height={28} />` (decorative here, `aria-hidden`) at the left of `.sf-container--wide`, 64px plus the top safe-area inset, a hairline below. The 44px "Close search" button sits over the bar's far end but comes last in the DOM, so Tab reaches it after the results. Row 2 scrolls (`overscroll-behavior: contain`; `scrollbar-gutter: stable` from 480px, so the column never shifts when results make it scroll).
 - **Column:** centred, `max-width: calc(64rem + 2 × --sf-gutter)` (three cards about the listing's width); 24px above the field on phones, `clamp(48px, 8vh, 80px)` from 768px; 64px plus the bottom inset below.
-- **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals still in the code: the cart drawer (1200/1300, until Prompt 18) and the product page's mobile `AddToCartBar` (1300, until Prompt 16). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
+- **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals that were in the code: the cart drawer (1200/1300, until Prompt 18) and the product page's mobile `AddToCartBar` (1300; Prompt 16 moved it to `--sf-z-stickybar`, section 26.6). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
 - **Progress hairline:** a 2px `--sf-color-accent` line along the top edge while the catalogue loads or a search is pending: the loading screen's grow-and-retract (2.4s, `--sf-ease-in-out`), still and full width under reduced motion. Drawn as a border, so forced-colours themes keep it. Decorative (`aria-hidden`).
 
 ### 25.2 The field
@@ -1409,3 +1409,98 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 ### 25.7 Contrast
 
 No new pairs. The overlay uses ink, secondary and muted text on the page, the control boundary (border-strong) and the accent (underline, caret, hairline) on the page, the focus ring, the primary and ghost buttons, the selected chip (primary-contrast on primary), and ink on sand and on primary-soft for the hover states, all already in section 14, and the card's own pairs (section 23.5).
+
+---
+
+## 26. Product page: the primary surface
+
+Written by Prompt 16. Files: `src/pages/ProductDetails/ProductDetails.js` + `.module.css` (the first screen; the tabs, bundle and related rail below are Prompt 17's), and in `src/components/storefront/`: `ProductGallery` (+ `ProductGallerySkeleton`), `VariantSelector`, `QuantityStepper`, `SocialProof`, `TrustBadges`, `DeliveryReturnsInfo` and `AddToCartBar`, each with its module and tests. `variantUtils.js` is unchanged.
+
+### 26.1 Layout
+
+| Width | Layout |
+|---|---|
+| < 980px | One column inside `.sf-container--wide`: the trail, the gallery (centred, its frame at most `max(280px, 75vh × 4/5)` wide, so a portrait tablet is not all photograph), then the buy box at full width |
+| ≥ 980px | 12 columns, 24px gap: the gallery in columns 1–7, the buy box in 8–12 with 48px (`--sf-space-12`) of padding on its left. The gallery fills its seven columns (no height cap: capping the 4:5 frame to short laptop screens left a hole between it and the buy box) |
+| ≥ 1024px | The gallery is sticky at `top: calc(var(--sf-header-height) + 24px)` |
+
+Page padding: 24px above the trail on phones, 32px from 768px; the trail then 16 / 24px above the grid; 48px below the grid. The buy box is a container (`container: pdp-info / inline-size`), so its action row follows its own width (26.4).
+
+### 26.2 Breadcrumb
+
+The shared `Breadcrumb` (section 24.1) with the category's **full trail**, then the product: Home › Plastic Furniture › Essentials › Shoe Racks › Covered Plastic Shoe Rack (every category linked with its canonical `?category=<slug>`).
+
+- **Data:** the page's existing `categories.getById(product.categoryId)`, then one `getById` per ancestor through `parentId` (at most six levels, cycle-safe). A failed or missing read leaves the leaf alone (or nothing, when the leaf read fails): Home › product. No new endpoint.
+- **Stability:** the trail's box holds two lines of the 13px trail (plus its 4px row gap) below 768px and one line from 768px, with a skeleton line while the reads run. Below 768px the current-page crumb (the product, named again by the `h1` just below) is visually hidden but stays for assistive technology, so the deepest seeded trail keeps to two lines at 320px. Measured: all 84 products fit their box at 320, 360, 768 and 1024px.
+
+### 26.3 Gallery (`ProductGallery`)
+
+```jsx
+import { ProductGallery, ProductGallerySkeleton } from "../../components/storefront";
+
+<ProductGallery images={images} alt={product.name} discount={discount} />
+// zoom (default STOREFRONT_CONFIG.gallery.zoom), fit="cover" | "contain", className
+```
+
+- **Frame:** 4:5 (`aspect-ratio`), sand, radius sm, a hairline drawn over the photograph's edge (`::after`). Every photograph is stacked in it; the active one is at full opacity and the change is a crossfade over `--sf-duration` (`--sf-ease-out`), instant under reduced motion. `object-fit: cover` by default; `fit="contain"` keeps whole photographs with sand around them, for real photography that needs it.
+- **Images:** `width="1200" height="1500"`, `decoding="async"`; the first `loading="eager"` and `fetchpriority="high"` (the page's largest paint), the others lazy. Only the shown image is named ("Name, view 2"); the others have empty alt.
+- **The one overlay:** "Sale" as `.sf-badge--paper` (brand ink on brand paper, 16.25 : 1 over any photograph) at the frame's top-left, when the caller's real `discount` is > 0. No percentage badge, no dots.
+- **Strip:** 56px square hairline thumbnails (inactive at 60% opacity; the active one with an ink border), a vertical strip beside the frame from 769px (it takes no height of its own and scrolls beside the frame when long) and a horizontal row under it below that, each with 6px of focus room. Hidden when there is one image.
+- **Keyboard:** the strip is a `tablist` with one tab stop (the selected thumbnail); the arrow keys (either axis), Home and End move it and the image follows. The frame is a focusable `group` ("Name, image 2 of 3") whose Left/Right arrows step through the images, wrapping (only when there is more than one image). Click and hover on a thumbnail still show its image.
+- **Zoom:** scale 2 at the cursor, for a mouse only (`pointerType`), so a tap never leaves the image zoomed; `cursor: zoom-in` under `(hover: hover) and (pointer: fine)`.
+- **Swipe:** on touch and pen, a horizontal swipe of 40px or more (and mostly horizontal) steps through the images; `touch-action: pan-y pinch-zoom` leaves vertical scrolling and pinch to the browser. The thumbnails stay the single-pointer alternative.
+- **Sizing hook:** `--gallery-max-width` on an ancestor caps the frame; the root is that wide plus the strip beside it, so the page can align it.
+- **Loading:** `ProductGallerySkeleton` draws the same frame and strip in sand; the page's skeleton puts it exactly where the loaded gallery lands (measured equal at 360 and 1440px).
+
+### 26.4 The buy box
+
+In order, with the gap above each:
+
+| Part | Spec |
+|---|---|
+| Eyebrow | the brand, else the category's name (a skeleton while it loads; the line is always held, so the title never moves): 12px, 500, 0.16em, uppercase, muted |
+| Title | `h1` `.sf-display-md` (28 → 36px, 1.1), ink; 12px |
+| Ratings row | `SocialProof` (26.5); 16px |
+| Price | `PriceBlock size="lg"` (section 23.3); the tax line waits for the settings (a no-break space holds its line), so no tax treatment is stated before the store's is known; 20px |
+| Summary | `shortDescription`, sans 16px / 1.6, secondary, 52ch; 20px |
+| Hairline | 24px above and below |
+| Variants | `VariantSelector` (26.5) |
+| Quantity and stock | `QuantityStepper` and the stock status, "In stock" (success), "Only N left" (warning) or "Out of stock" (error), sans 14px 500, from the page's derived values only; 24px after the variants |
+| Actions | 20px; see below |
+| SKU | "SKU: …" 12px muted (the chosen variant's); 12px |
+| Hairline | 24px above and below |
+| Promises | `TrustBadges variant="grid"` (26.5) |
+| Delivery & returns | `DeliveryReturnsInfo` (26.5); 32px |
+
+- **Actions:** `Add to cart` (`.sf-btn--primary --lg --block`; "Added" with a check that settles in over `--sf-duration` for 1.4s; "Out of stock" and disabled at zero stock), `Buy now` (`.sf-btn--ghost --lg`), and the wishlist heart (a 48px hairline circle, `aria-pressed`, "Save to wishlist" / "Remove from wishlist", filled caramel when saved). Below a 26rem (416px) buy box, Add to cart takes its own row and Buy now and the heart share the next; from 26rem (container query) the three share one row. 52px tall below 980px, 56px from 980px. No gradient, no lift: the ink primary turns navy on hover.
+- **Announcement:** a visually hidden polite status region says what the shopper chose when they change the variant: "5 shelves, ₹3,449.00, Only 4 left". It stays empty on load.
+- **Not touched:** the page's derived values (price, compare price, discount, SKU, stock, low-stock threshold, the quantity ceiling and its clamp, the reviews blend) and the cart wiring (the cart line, `addToCart(line, quantity, options)`, Buy now's `{ openDrawer: false }` and `/checkout`) are byte-identical to the code before this prompt.
+
+### 26.5 Components
+
+- **`VariantSelector`:** each attribute is an eyebrow with the chosen value beside it in ink, over 40px `.sf-chip` pills (ink fill when chosen, from the primitive's `[aria-checked="true"]`; a 44px hit area) or, for colour, shade and finish rows, 28px swatches (the data's `swatchHex`, a 1px `--sf-color-border-strong` boundary so a white swatch still shows on paper, a 2px ink ring 2px clear of the circle when chosen) in 44px targets. Sold out keeps its strike (a hairline across the chip; a paper line with control-tone edges across the swatch, so it reads on any colour) and is disabled; an option that only conflicts with another choice is dimmed and still snaps to a real variant. The chosen variant's note ("Only N left in this option" / "This option is out of stock") is kept. Keyboard: the ARIA radio-group pattern (one tab stop, the chosen option; the arrow keys, Home and End move the choice and skip sold-out options).
+- **`QuantityStepper`:** a 44px hairline pill with two 44px round buttons (sand on hover; the focus ring is not clipped) around the figure (sans 16px 500, tabular, a polite live region). It is a `group` named by `label` (default "Quantity"). The 32px `size="sm"` is kept.
+- **`SocialProof`:** one row: gold stars at 14px (12px at `sm`), then "4.6 · 12 reviews" in ink; with `onReviewsClick` it is a button styled as a link (a stone underline that turns caramel, a 2px focus outline, a 44px hit area) named "Rated 4.6 out of 5, 12 reviews". With no ratings it says "No reviews yet" in muted text, never "0.0".
+- **`TrustBadges`:** no tinted chips and no boxes: a 20px outline icon in the accent beside an eyebrow label in ink (tracking 0.1em up to 480px) over a 13px muted detail; a 2 × 2 grid (`variant="grid"`). A dynamic badge shows only while the live data backs it (no COD while it is switched off, no free shipping without a threshold, no returns at 0 days), the rule the footer and the assurance strip already follow; while `loading` it is a skeleton, so nothing is claimed early. Every badge keeps two lines' room, so the grid does not change height.
+- **`DeliveryReturnsInfo`:** a Playfair 20px `h2` ("Delivery & returns", `title` prop) over a list of facts between hairlines: each active method (name and window, "7–10 business days" with an en dash; cost and "Free above ₹X" on the right), then the COD line (with its cap), the returns line and the tax line, each only when the data has it; skeleton rows while `loading`; nothing when there is nothing to say.
+- **`AddToCartBar`:** see 26.6. Props: `anchorRef`, `price`, `currency`, `image`, `name`, `detail` (the chosen variant), `disabled`, `ctaLabel` ("Add to cart"), `onAddToCart`. The old `comparePrice` and `onBuyNow` props are gone (the bar shows the price alone and offers only Add to cart).
+
+### 26.6 The sticky bar
+
+- **When:** up to 768px, whenever the buy box's actions are out of view (the unchanged `IntersectionObserver`, `rootMargin: "0px 0px -10% 0px"`): below the fold on load, and again once they have scrolled past. Hidden, it is `aria-hidden` and its button leaves the tab order.
+- **Look:** paper (`--sf-color-bg`) with a top hairline, 64px plus the home-indicator inset, `--sf-gutter` sides: a 40px thumbnail (hairline edge), the name in Playfair 15px on one line, the price (sans 14px 500) with the chosen option after a dot (13px muted), and a compact 44px `.sf-btn--primary` (at least 7.75rem wide, so "Added" or "Out of stock" never moves the text). It slides up over `--sf-duration`. No shadow.
+- **Stacking:** `--sf-z-stickybar` (60), replacing the old `z-index: 1300`: above the bottom nav (`--sf-z-bottomnav`, 58), which it covers while shown, and below every drawer, sheet and modal (≥ 1000) and the search overlay (1400). Verified with `elementFromPoint` at 360px: the bar over the nav; the opened cart drawer over the bar.
+- **Keyboard:** while the bar is shown, `html` gets `scroll-padding-bottom: calc(64px + inset + 16px)` (an `html:has(.visible)` rule), so focused or scrolled-to content stops above the bar instead of under it. If keyboard focus (`:focus-visible`) lands on something the bar covers where it rests (the fixed bottom nav), the bar steps aside until focus moves on.
+
+### 26.7 States
+
+- **Loading:** the page's own layout in sand inside an `aria-busy` container: the trail line, the gallery skeleton, then the buy box's lines (eyebrow, two title lines, ratings, price and tax, two summary lines), the hairline, a chip row, the stepper and status, and the action buttons.
+- **Not found:** an in-app state (no redirect): the "Not found" eyebrow, the `h1` "We couldn't find that piece." (`.sf-display-md`), one line, and a primary "Browse all furniture" link to `/products`.
+
+### 26.8 Motion
+
+The gallery's crossfade (`--sf-duration`), the zoom's scale (`--sf-duration-slow`), the "Added" check (opacity and scale 0.6 → 1 over `--sf-duration`) and the sticky bar's slide (`--sf-duration`); all collapse under reduced motion. No lifts: the old hover lifts on the buttons, chips, swatches and thumbnails are gone. The page keeps its fade from before this prompt (Prompt 30's).
+
+### 26.9 Contrast
+
+No new pairs: the surface uses ink, secondary and muted text on the page; the accent (icons, the saved heart) and the focus ring on the page; the control boundary (swatches); the primary and ghost buttons and the selected chip; the gold stars on the page; success, warning and error text on the page; and brand ink on brand paper (the Sale chip), all already in section 14. In forced-colours mode the swatches keep their colours with a `Highlight` ring when chosen, the active thumbnail gets a `Highlight` border, and the sold-out strikes are kept in `CanvasText`.

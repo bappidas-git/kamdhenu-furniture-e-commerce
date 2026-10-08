@@ -1,9 +1,21 @@
+/* =============================================================================
+ * TrustBadges — eyebrow-style promises with outline icons (Prompt 16)
+ * =============================================================================
+ * No tinted chips and no boxes: a 20px outline icon in the accent beside an
+ * eyebrow label (12px, 500, uppercase, 0.16em, ink) over a muted 13px detail.
+ * Every badge keeps the room of both lines, so the 2 × 2 grid is the same
+ * height while the data loads, once it has loaded, and when a badge the data
+ * does not back drops out. Tokens only.
+ * ========================================================================== */
+
 .badges {
-  list-style: none;
+  --badge-label-line: calc(var(--sf-text-eyebrow) * 1.5);
+  --badge-detail-line: calc(0.8125rem * 1.5);
+  display: grid;
+  gap: var(--sf-space-5) var(--sf-space-6);
   margin: 0;
   padding: 0;
-  display: grid;
-  gap: var(--sf-space-3);
+  list-style: none;
 }
 
 .grid {
@@ -18,40 +30,78 @@
 
 .badge {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: var(--sf-space-3);
-  padding: var(--sf-space-3);
-  border: 1px solid var(--sf-color-border);
-  border-radius: var(--sf-radius-md);
-  background: var(--sf-color-surface);
+  min-width: 0;
 }
 
 .iconWrap {
   display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 38px;
-  height: 38px;
-  border-radius: var(--sf-radius-pill);
-  background: var(--sf-color-primary-soft);
-  color: var(--sf-color-primary);
+  flex: none;
+  margin-top: -1px;
+  color: var(--sf-color-accent);
+}
+
+.iconWrap svg {
+  display: block;
 }
 
 .text {
   display: flex;
   flex-direction: column;
-  line-height: 1.25;
   min-width: 0;
+  min-height: calc(var(--badge-label-line) + var(--badge-detail-line));
+  font-family: var(--sf-font-sans);
 }
 
 .label {
-  font-size: var(--sf-text-sm);
-  font-weight: var(--sf-font-semibold);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: 1.5;
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
   color: var(--sf-color-text);
 }
 
 .detail {
-  font-size: var(--sf-text-xs);
+  font-size: 0.8125rem; /* 13px */
+  line-height: 1.5;
   color: var(--sf-color-text-muted);
+}
+
+/* Small phones: tighter tracking, so most labels keep to one line. */
+@media (max-width: 480px) {
+  .badges {
+    column-gap: var(--sf-space-4);
+  }
+
+  .label {
+    letter-spacing: 0.1em;
+  }
+}
+
+/* ---- While the store data loads: skeleton bars in the same line boxes ---- */
+.iconSkeleton {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  margin-top: -1px;
+  border-radius: var(--sf-radius-pill);
+}
+
+.labelSkeleton,
+.detailSkeleton {
+  height: 10px;
+}
+
+.labelSkeleton {
+  width: 7.5em;
+  max-width: 100%;
+  margin-block: calc((var(--badge-label-line) - 10px) / 2);
+}
+
+.detailSkeleton {
+  width: 5em;
+  max-width: 80%;
+  margin-block: calc((var(--badge-detail-line) - 10px) / 2);
 }

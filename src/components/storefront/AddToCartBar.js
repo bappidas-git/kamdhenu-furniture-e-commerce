@@ -1,42 +1,63 @@
-import React, { useState, useEffect } from "react";
-import { formatCurrency } from "../../utils/helpers";
-import { PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
+import React, { useState, useEffect, useRef } from "react";
+import { formatCurrency, PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
 import styles from "./AddToCartBar.module.css";
 
 // =============================================================================
 // AddToCartBar — persistent mobile Add-to-Cart (mobile-first conversion)
 // =============================================================================
 // On phones the primary CTA must always be a thumb away. This bar pins the price
-// + "Add to Cart" to the bottom of the screen and reveals itself once the
+// + "Add to cart" to the bottom of the screen and reveals itself once the
 // in-page buy box scrolls out of view (tracked via IntersectionObserver on
 // `anchorRef`). It shows the REAL selected price and is disabled when the real
 // selection is out of stock — it asserts nothing the buy box doesn't.
 //
+// Look (Prompt 16): a 64px paper bar with a top hairline, up to 768px only:
+// a 40px thumbnail, the name (serif 15px, one line), the price and the chosen
+// option, and a compact 44px primary button. It sits at --sf-z-stickybar:
+// above the bottom nav (--sf-z-bottomnav), below every drawer and modal.
+//
+// Keyboard: while the bar is shown, the page keeps focused content clear of it
+// (scroll-padding in the stylesheet), and if keyboard focus lands on something
+// the bar covers (the fixed bottom nav), the bar steps aside until focus
+// moves on. Hidden, it is aria-hidden and its button leaves the tab order.
+//
 // Props:
 //   anchorRef    ref      element whose visibility toggles the bar (the buy box)
 //   price        number   current selected price (real)
-//   comparePrice number   optional
 //   currency     string
 //   image,name   string   small product thumbnail/label
+//   detail       string   optional, e.g. the chosen variant ("5 shelves")
 //   disabled     boolean  out of stock
-//   ctaLabel     string   default "Add to Cart"
+//   ctaLabel     string   default "Add to cart"
 //   onAddToCart  fn
-//   onBuyNow     fn       optional secondary
 // =============================================================================
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+// Keyboard focus only: a tap or click also focuses, but never needs this.
+const isKeyboardFocus = (el) => {
+  try {
+    return el.matches(":focus-visible");
+  } catch (e) {
+    return true;
+  }
+};
+
 const AddToCartBar = ({
   anchorRef,
   price = 0,
-  comparePrice = 0,
   currency = "INR",
   image,
   name,
+  detail,
   disabled = false,
-  ctaLabel = "Add to Cart",
+  ctaLabel = "Add to cart",
   onAddToCart,
-  onBuyNow,
 }) => {
   const [showBar, setShowBar] = useState(false);
   const [added, setAdded] = useState(false);
+  const [yielding, setYielding] = useState(false);
+  const barRef = useRef(null);
 
   // Reveal the bar only after the in-page buy box has scrolled away.
   useEffect(() => {
@@ -53,6 +74,42 @@ const AddToCartBar = ({
     return () => obs.disconnect();
   }, [anchorRef]);
 
+  // Step aside while keyboard focus sits on something the shown bar would
+  // cover (it is measured where the bar rests, at the bottom of the screen).
+  useEffect(() => {
+    if (!showBar) {
+      setYielding(false);
+      return undefined;
+    }
+    let frame = 0;
+    const covered = (target) => {
+      const bar = barRef.current;
+      if (!bar || !target || target === document.body || bar.contains(target)) return false;
+      if (typeof target.getBoundingClientRect !== "function" || !isKeyboardFocus(target)) return false;
+      const height = bar.offsetHeight;
+      if (!height) return false; // not displayed (wider screens)
+      const top = window.innerHeight - height;
+      const rect = target.getBoundingClientRect();
+      return rect.bottom > top && rect.top < window.innerHeight;
+    };
+    const onFocusIn = (e) => {
+      const target = e.target;
+      cancelAnimationFrame(frame);
+      // After the browser has scrolled the newly focused element into view.
+      frame = requestAnimationFrame(() => setYielding(covered(target)));
+    };
+    const onFocusOut = (e) => {
+      if (!e.relatedTarget) setYielding(false);
+    };
+    document.addEventListener("focusin", onFocusIn);
+    document.addEventListener("focusout", onFocusOut);
+    return () => {
+      cancelAnimationFrame(frame);
+      document.removeEventListener("focusin", onFocusIn);
+      document.removeEventListener("focusout", onFocusOut);
+    };
+  }, [showBar]);
+
   const handleAdd = () => {
     if (disabled) return;
     onAddToCart?.();
@@ -60,12 +117,13 @@ const AddToCartBar = ({
     setTimeout(() => setAdded(false), 1400);
   };
 
-  const hasCompare = comparePrice > price && price > 0;
+  const visible = showBar && !yielding;
 
   return (
     <div
-      className={`${styles.bar} ${showBar ? styles.visible : ""}`}
-      aria-hidden={!showBar}
+      ref={barRef}
+      className={cx(styles.bar, visible && styles.visible)}
+      aria-hidden={!visible}
     >
       <div className={styles.info}>
         {image && (
@@ -73,43 +131,47 @@ const AddToCartBar = ({
             className={styles.thumb}
             src={image || PLACEHOLDER_IMG}
             alt=""
+            width="40"
+            height="40"
+            loading="lazy"
+            decoding="async"
             onError={onImageError}
           />
         )}
-        <div className={styles.priceWrap}>
+        <div className={styles.text}>
           {name && <span className={styles.name}>{name}</span>}
           <span className={styles.priceRow}>
             <span className={styles.price}>{formatCurrency(price, currency)}</span>
-            {hasCompare && (
-              <span className={styles.compare}>
-                {formatCurrency(comparePrice, currency)}
-              </span>
+            {detail && (
+              <>
+                <span className={styles.dot} aria-hidden="true" />
+                <span className="sf-visually-hidden">, </span>
+                <span className={styles.detail}>{detail}</span>
+              </>
             )}
           </span>
         </div>
       </div>
-      <div className={styles.actions}>
-        {onBuyNow && (
-          <button
-            type="button"
-            className={styles.buyNow}
-            onClick={onBuyNow}
-            disabled={disabled}
-            tabIndex={showBar ? 0 : -1}
-          >
-            Buy Now
-          </button>
+      <button
+        type="button"
+        className={cx("sf-btn", "sf-btn--primary", styles.addBtn)}
+        onClick={handleAdd}
+        disabled={disabled}
+        tabIndex={visible ? 0 : -1}
+      >
+        {disabled ? (
+          "Out of stock"
+        ) : added ? (
+          <>
+            Added
+            <svg className={styles.check} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </>
+        ) : (
+          ctaLabel
         )}
-        <button
-          type="button"
-          className={`${styles.addBtn} ${added ? styles.addBtnDone : ""}`}
-          onClick={handleAdd}
-          disabled={disabled}
-          tabIndex={showBar ? 0 : -1}
-        >
-          {disabled ? "Out of Stock" : added ? "Added ✓" : ctaLabel}
-        </button>
-      </div>
+      </button>
     </div>
   );
 };
