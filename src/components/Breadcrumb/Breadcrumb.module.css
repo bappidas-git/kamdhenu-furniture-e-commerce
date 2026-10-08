@@ -1,16 +1,83 @@
-.breadcrumb { display: flex; align-items: center; gap: 8px; font-size: 0.875rem; padding: 12px 0; flex-wrap: wrap; }
-.dark { color: #94a3b8; }
-.link { color: #667eea; text-decoration: none; }
-.dark .link { color: #a855f7; }
-.link:hover { text-decoration: underline; }
-/* Touch-target sizing: grow the hit area without moving the row */
-@media (max-width: 768px) {
-  .link {
-    display: inline-block;
-    padding: 10px 2px;
-    margin: -10px 0;
+/* =============================================================================
+ * Breadcrumb — the shared trail (Prompt 14)
+ * =============================================================================
+ * Sans 13px. Links in the muted tone, ink with a caramel underline on hover;
+ * the current page in ink at 500. The "›" separators are drawn here, with an
+ * empty alternative text so they stay out of the accessibility tree. The
+ * trail wraps on narrow screens. Each link's hit area is 44px tall without
+ * moving the row. Tokens only (prompts/DESIGN_SYSTEM.md).
+ * ========================================================================== */
+
+.breadcrumb {
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem; /* 13px */
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.list {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  row-gap: var(--sf-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.item {
+  display: inline-flex;
+  align-items: baseline;
+  min-width: 0;
+}
+
+.item + .item::before {
+  content: "\203A";
+  content: "\203A" / "";
+  margin-inline: var(--sf-space-2);
+  color: var(--sf-color-text-muted);
+}
+
+.link,
+.text,
+.current {
+  overflow-wrap: anywhere;
+}
+
+.link {
+  position: relative;
+  color: var(--sf-color-text-muted);
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.25em;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+/* A 44px-tall target around the 19.5px line, without moving the row. */
+.link::after {
+  content: "";
+  position: absolute;
+  inset: -12px -4px;
+}
+
+@media (hover: hover) {
+  .link:hover {
+    color: var(--sf-color-text);
+    text-decoration-color: var(--sf-color-accent);
   }
 }
-.separator { color: #94a3b8; }
-.current { color: #475569; font-weight: 500; }
-.dark .current { color: #e2e8f0; }
+
+/* Inline links take an outline (a box-shadow would wrap across lines). */
+.link:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+  border-radius: 1px;
+}
+
+.current {
+  color: var(--sf-color-text);
+  font-weight: var(--sf-font-medium);
+}

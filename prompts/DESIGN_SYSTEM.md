@@ -1252,3 +1252,93 @@ The props are unchanged: `rating` (0–5, clamped), `size` (px, default 18), `la
 | Card disabled bar text (muted) on the 93% fill over a black photo | 4.89 | 6.72 | info |
 
 `scripts/check-contrast.js` gained two things for these rows: a `"--token@0.93"` layer (a token drawn at an opacity) and a `PAIRS_DARK_ONLY` list. Every other card pairing is already in §14: ink and muted text on page, surface and sand, the focus ring on the page, and primary-contrast on primary (the bar's hover).
+
+---
+
+## 24. Product listing and `Breadcrumb`
+
+Written by Prompt 14. Files: `src/pages/Products/Products.js` + `.module.css` (the page), `src/pages/Products/ProductListRow.js` + `.module.css` (the list view's row), `src/components/Breadcrumb/Breadcrumb.js` + `.module.css` (the shared trail).
+
+### 24.1 `Breadcrumb`
+
+```jsx
+import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
+
+<Breadcrumb
+  items={[
+    { label: "Furniture", link: "/products" },
+    { label: "Plastic Furniture", link: "/products?category=plastic-furniture" },
+    { label: "Essentials" },
+  ]}
+/>
+// → Home › Furniture › Plastic Furniture › Essentials
+```
+
+| Prop | Notes |
+|---|---|
+| `items` | `[{ label, link? }]`, the trail **after** Home (the component adds `{ label: "Home", link: "/" }` first). Empty labels and `null`s are skipped. |
+| `className` | appended to the `nav`'s class (the listing gives the phone trail a two-line minimum through it) |
+
+- **Markup:** `<nav aria-label="Breadcrumb"><ol>…</ol></nav>`. Items before the last are router `Link`s when they have a `link` (text otherwise). The last item is the current page: text with `aria-current="page"`, even when it has a `link`.
+- **Separators:** a "›" drawn by CSS before every item after the first, with `content: "\203A" / ""`, so screen readers skip it.
+- **Look:** sans 13px / `--sf-leading-normal`; links `--sf-color-text-muted`, ink with a 1px `--sf-color-accent` underline on hover; the current page ink at 500. It wraps on narrow screens (row gap 4px). Each link has a 44px-tall hit area (`::after`, inset −12px −4px) that does not move the row; focus is a 2px `--sf-color-focus` outline.
+- **Adoption:** Prompt 16 (product page: `items={[{ label: category.name, link }, { label: product.name }]}`) and Prompt 28 (content pages).
+
+### 24.2 Page header
+
+`padding-top: var(--sf-section-y)`, the breadcrumb, then the `h1` (`.sf-display-lg`, 16px below the trail on phones, 24px from 768px) and the introduction (sans `--sf-text-md` / `--sf-leading-body`, secondary, `max-width: 60ch`). The intro keeps room for three lines on phones and two from 768px (`min-height`), and on phones the trail keeps room for two lines: the catalogue's descriptions and leaf trails fit those, so the title sits at the same height on every listing.
+
+| Selection | `h1` | Intro | Trail (after Home) |
+|---|---|---|---|
+| none | "All furniture" | `APP_DESCRIPTION` | All furniture (current) |
+| one category | its name | its `description` | Furniture › each ancestor (linked) › the category |
+| several | "Sofas and Beds", "Sofas, Beds and 2 more" (a repeated name once) | — | Furniture › the title |
+| `search` set | "Results for “query”" | — | Furniture › [the category's trail, linked] › the title |
+
+While a deep-linked category waits for the tree, the trail, the title and the intro are skeletons laid in the line boxes the text will take.
+
+### 24.3 Layout
+
+| Width | Layout |
+|---|---|
+| ≥ 1024px | `.sf-container--wide`, 12 columns (gap `clamp(24px, 2.5vw, 40px)`): the filter rail in 1–3, the results in 4–12. The rail is sticky at `top: calc(var(--sf-header-height) + 24px)`, `max-height: calc(100vh - var(--sf-header-height) - 48px)`, scrolls on its own (`overscroll-behavior: contain`), and keeps 8px of focus room inside its scroll box. The layout is at least `100vh - 48px` tall, so the rail (whose `max-height` grows as the header compacts) never sets the row's height and a short listing's footer stays put while the page scrolls. |
+| < 1024px | One column. The rail is not shown; its filters open in `BottomDrawer` ("Filters" sheet, `maxHeight="85vh"`; footer: ghost "Clear all", primary "Show N results"). The sheet closes itself if the window grows to 1024px. |
+| < 768px | The toolbar sticks under the header (`top: var(--sf-header-height)`, `--sf-z-sticky`), edge to edge on paper with a hairline below. |
+
+Grid: three columns from 1024px, two below; column gap 24px from 768px and 16px below; row gap 40px / 32px (the cards carry text under the image). List view: one row per product between hairlines (24.6).
+
+### 24.4 Filters (the rail and the sheet render the same groups)
+
+- Each group is a `fieldset` with its `legend` as an `.sf-eyebrow` (floated, so it lays out as a block), hairlines between groups, 44px option rows (`.sf-check`, `.sf-radio`, `.sf-switch`, made full-width flex rows so counts align right).
+- **Category:** an outline built from `orderCategoriesHierarchically`, as nested lists (each level 16px further in), so assistive technology hears the hierarchy (leaf names repeat across tiers). Departments have a 44px plus/minus disclosure (`aria-expanded`, `aria-controls`; the sidebar's glyph). Counts are muted, tabular, `aria-hidden`, with a visually hidden ", N products" in the name. **Open rule:** a selection that arrives from elsewhere (mega-menu, breadcrumb, link, back/forward) opens exactly the departments it lies in; a change made on the page (a box, a chip, "Clear all") only ever opens more, so nothing folds under the pointer. It is applied in a layout effect, so the loaded outline paints open.
+- **Price:** "Min" / "Max" `.sf-field`s with `.sf-input` (`type="text" inputMode="numeric"`, digits and a point kept, a ₹ prefix drawn over the field), applied by "Apply price" or Enter; then the `PRICE_RANGES` as `.sf-chip`s with `aria-pressed` (pressing the one in force clears the price, as a second click on a rating does).
+- **Customer rating / Discount:** `.sf-radio` rows; a second press clears. The rating rows show `StarRating` in ink ("4 stars & up").
+- **Availability:** `.sf-switch` (`role="switch"`). **Brand:** `.sf-check` rows.
+- Radio-group names and ids carry the instance (rail / sheet), since both copies can be in the document.
+
+### 24.5 Toolbar and applied filters
+
+- **Results line** (`aria-live="polite"`, `aria-atomic`): sans 14px muted, figures ink 500.
+- **Sort:** a visible "Sort" label and an `.sf-select` (the `SORT_OPTIONS` labels). On phones it takes the row's remaining width with a tighter chevron and ends in an ellipsis if a label does not fit (only "Avg. Customer Rating", at 360px).
+- **Grid / list:** two 44px icon buttons in a `role="group"` named "View", `aria-pressed`; pressed = ink with a 1px underline (a border, so forced colours keep it).
+- **Filters** (below 1024px): a ghost button with the filters icon (hidden below 480px) and a `.sf-count` of the filters in force (the search is not counted), named "Filters, N applied"; `aria-haspopup="dialog"`, `aria-expanded`.
+- **Applied filters:** removable `.sf-chip`s above the results (`ul` "Applied filters"), each named "Remove <label>": the search ("“query”"), each category, the price ("₹1,000 – ₹5,000", "Under ₹500", "Above ₹5,000"), the rating ("4 stars & up"), the discount ("10% off or more"), "In stock only", each brand. Below 1024px a "Clear all" link follows when there are two or more (the rail has its own from 1024px). Chips keep a 44px-tall hit area.
+
+### 24.6 Results
+
+- **Cards:** the storefront `ProductCard` (`onAddToCart={(item) => addToCart(item)}`, `onToggleWishlist={toggleWishlist}`, `isWishlisted`); the first six enter with `Reveal` (`staggerDelay`), the rest render at once.
+- **"Only N left":** under a card (and in a row) when `0 < stock <= (Number(lowStockThreshold) || 5)`, the product page's rule; 12px, 500, `--sf-color-warning`.
+- **`ProductListRow`** (the list view; the card has no horizontal layout and stays Prompt 13's): a 4:5 thumbnail 160px wide (112px below 480px) with the card's keyline, chips ("Sold out", "Sale", "New", two at most) and placeholder fallback; the brand eyebrow and the serif name (20px) in one link (the thumbnail repeats it out of the tab order); the short description (15px, two lines); ink stars only with reviews; `PriceBlock size="md"` with its saving; the stock line; then a ghost "Add to cart" (`buildCartItem`; "Added" for 1.2s; "Sold out" and disabled at zero stock; named "Add to cart, <name>") and the 44px hairline wishlist disc (`aria-pressed`, the card's labels). Actions sit in a third column from 768px and under the text below it. `ProductListRowSkeleton` is its loading box.
+- **Loading:** `ProductCardSkeleton` (or row skeletons) × per page in the same grid, `aria-hidden`, in an `aria-busy` region. The loading region and the results region are separate elements (keyed), and a deep-linked category's chip is held by a skeleton pill, so the results replace the skeletons without anything moving.
+- **Error:** an `.sf-panel` with the serif title "We couldn't load the catalogue." (display-md), one line and a primary "Try again" (`fetchCatalog`).
+- **Empty:** on the page, the serif title "Nothing here yet.", one line (quoting the query when `search` is set) and a ghost "Clear all filters" when anything constrains the results.
+
+### 24.7 Pagination
+
+`nav aria-label="Pagination"` under a hairline, 48px below the results: "Per page" label + `.sf-select` (12 / 24 / 48) · ghost Previous / Next (`aria-label` "Previous page" / "Next page", chevrons, disabled at the ends) around the numbers · "Page X of Y". Numbers: sans 14px muted in 44px buttons named "Page N", separated by 16px hairlines (none around the ellipsis); the current page ink, 500, underlined, `aria-current="page"`. Phones: the numbers on one line, Previous and Next under them; the per-page select and page line are not shown (as before). A page change scrolls the results' top to `--sf-header-height` + 16px (smooth, instant under reduced motion).
+
+### 24.8 Landmarks and headings
+
+One `h1`; the rail is a region named by its "Filters" `h2`; the results are a region named "Results" (the page sits inside the app's `main`, so neither is an `aside` or a second `main`); the breadcrumb and the pagination are `nav`s; error and empty titles are `h2`s.
+
+No new colour pairs: the page uses ink, secondary and muted text on paper and sand, the warning text on paper, the accent and focus ring, the control boundary, the primary button and count disc, and the card's chips, all already in §14 and §23.5.

@@ -1789,3 +1789,154 @@ None expected. Two visible choices the client may want to see:
 
 - "New" is driven by the admin's existing "Hot" flag, as the brief says.
 - The card's stars are ink rather than gold, so they read on every background.
+
+---
+
+## Prompt 14 — Product listing page
+
+**Date:** 2026-10-08. **Result:** `/products` is now an editorial listing. It has generous air above a breadcrumb that walks every ancestor of the selected category, a serif title with the category's description, and a quiet hairline filter rail (a bottom sheet below 1024px). A restrained toolbar sits above removable applied-filter chips, three-column storefront `ProductCard`s (two on tablets and phones) or list rows, and hairline pagination. The URL scheme, the category rules (a parent includes its children, a legacy id is rewritten to the slug), every facet, sort and pagination rule, and the one catalogue read are the page's own logic, kept as they were. A script confirmed 28 of its blocks byte-identical. `Breadcrumb` is revived as the shared trail. Reference: `prompts/DESIGN_SYSTEM.md` §24.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/pages/Products/Products.js` | Restructured. Kept byte-identical: `SORT_OPTIONS`, `SORT_ALIASES`, `normalizeSort`, `PRICE_RANGES`, the rating/discount/per-page options, the URL reads, the filter state, `fetchCatalog`, the URL→state effect (canonical slugs, legacy-id rewrite), `syncUrlParams`, `resetToFirstPage`, `availableBrands`, `categoryCounts`, `orderedCategories`, `filteredProducts`, the pagination maths, `hasActiveFilters` / `hasAnyConstraint`, `clearAllFilters`, the price, sort, page, per-page, rating, discount, stock and brand handlers, `paginationRange` and the results-text variants. Changed on purpose: the page clamp, the category toggle and the scroll offset (see deviations); the old sheet effect (now `BottomDrawer`); the private card and its handlers (now `ProductCard`); the breadcrumb builder (now the ancestor trail). New: the header (title, intro, trail), the category outline, the applied-filter chips, the toolbar, list rows, the states, pagination markup, and the loading placeholders that keep the layout still. |
+| `src/pages/Products/Products.module.css` | Rewritten, tokens only. Its 37 local aliases (among them `--accent: var(--sf-color-primary)`), the 2 hex + 3 rgba values, the orange focus glow and the `top: 152px / 116px` sticky offsets are gone. |
+| New `src/pages/Products/ProductListRow.js` + `.module.css` | The list view's row (and `ProductListRowSkeleton`). |
+| `src/components/Breadcrumb/Breadcrumb.js` + `.module.css` | Revived: `items: [{ label, link? }]` after an automatic Home, `nav aria-label="Breadcrumb"` › `ol`, `aria-current="page"` on the last item, CSS-drawn "›" kept out of the accessibility tree, token styles, 44px hit areas. The `useTheme` dark class and 6 colour literals are gone. |
+| New tests | `Products.test.js` (26), `Breadcrumb.test.js` (5). |
+| `prompts/DESIGN_SYSTEM.md` | New §24 "Product listing and `Breadcrumb`". |
+
+Nothing else changed: no admin file, context, `api.js`, `src/utils/*`, `db.json` (SHA-256 unchanged), `ProductCard` / `PriceBlock` / `StarRating` or `BottomDrawer`.
+
+### Decisions
+
+- **List view: a page-local `ProductListRow`, not a `layout="list"` prop.** Prompt 13 added no list layout, and this prompt lists `ProductCard` under "do not touch", so the card and its 22 tests stay as they are. The row reuses `PriceBlock` and `StarRating` and the card's helpers (`buildCartItem`, `productPath`, `getProductMinPrice`, `onImageError`, `PLACEHOLDER_IMG`). It keeps the card's rules: data-only chips (two at most), stars only with reviews, quick add with "Added" for 1.2s, disabled "Sold out", and the heart's `aria-pressed` and labels. Layout: a 4:5 thumbnail 160px wide; the brand eyebrow and the 20px serif name in one link (the thumbnail repeats it outside the tab order); a two-line summary; `PriceBlock size="md"` with its saving; the stock line; ghost "Add to cart" and the wishlist disc.
+- **Mobile sheet: `BottomDrawer` (Prompt 09).** It provides everything the old sheet did: `role="dialog"`, `aria-modal`, Escape, focus to its Close button, focus back to the opener, and the body scroll lock. It also adds a portal, a focus trap and token motion. Its footer holds "Clear all" (ghost, disabled with nothing to clear, as before) and "Show N results" (primary). `maxHeight="85vh"` is kept from the old sheet, and its `z-index: 1300` is retired. Two additions on the page side: the Filters button focuses itself on click, so Safari (which does not focus clicked buttons) gets focus back too; and the sheet closes if the window grows to the rail's 1024px.
+- **Category outline.** The outline is nested lists, so the hierarchy is announced, and leaf names repeat across tiers ("Chairs with Arms" in Essentials and in Premium). Departments have a plus/minus disclosure. A selection arriving from elsewhere (mega-menu, breadcrumb, link, back/forward) opens exactly its departments. A change made on the page (a box, a chip, "Clear all") only ever opens more, so a department never folds under the pointer. This runs in a layout effect, so the loaded outline paints open.
+- **Titles.** None: "All furniture" with `APP_DESCRIPTION` as the intro (a Prompt 02 line already pending approval). One category: its name and `description`. Several: "Sofas and Beds", or "Sofas, Beds and 2 more", with no intro. `search`: "Results for “query”". The trail is Home › Furniture (`/products`) › each ancestor (linked) › the page; "Home › All furniture" with no category.
+- **Applied filters** as chips named "Remove <label>": the search, each category, the price ("₹1,000 – ₹5,000", "Under ₹500", "Above ₹5,000", built from the same bounds the filter reads), the rating, the discount, in stock, and each brand. Below 1024px a "Clear all" link follows two or more; the rail has its own.
+- **Reveal** on the first six cards only (`staggerDelay`); the rest render at once.
+- **Layout stability on a cold load** (the title and description need the category tree):
+  - The title, the trail and the intro are skeletons in the line boxes the text will take. The intro keeps two lines' room from 768px and three on phones, and on phones the trail keeps two lines' room.
+  - A deep-linked category's chip is held by a skeleton pill.
+  - The results region is keyed (loading vs results), so cards replace the skeletons rather than the skeletons' region moving.
+  - From 1024px the layout is at least `100vh - 48px` tall, so the rail (whose `max-height` grows as the header compacts) never sets the row height mid-scroll.
+
+### Deviations from the prompt, and why
+
+1. **The page clamp now waits for the catalogue (a pre-existing bug fixed).** The clamp ran while the product list was still empty, where every page past the first is out of range. So `/products?category=home-furniture&sort=price-low&page=2`, one of this prompt's deep links, landed on page 1 with `page` dropped from the URL. The baseline does the same ("Showing 1–12 of 29"). One guard (`if (loading || fetchError) return;`) fixes it: it now shows "13–24 of 29" with `page=2` kept, and an out-of-range page is still clamped once loaded.
+2. **`handleCategoryToggle` computes the next selection from the render's state instead of inside a state updater.** The old updater called `syncUrlParams` (a navigation) as a side effect. React can run updaters during render, and the new tests surfaced "Cannot update a component (`MemoryRouter`) while rendering a different component". Behaviour is unchanged.
+3. **Quick price ranges are toggle chips.** They carry `aria-pressed`, and pressing the range in force clears the price, as a second click on a rating does; before, a second click re-applied it. A pressed state that cannot be un-pressed would mislead screen readers.
+4. **Price fields** are `type="text" inputMode="numeric"`, keeping digits and a point (so "₹5,000" becomes 5000); they were `type="number"`. "Go" is now "Apply price", and Enter also applies (a `form`). Typing still filters live and Apply still sanitises, swaps inverted bounds and syncs the URL, as before.
+5. **Row gaps** are 40px (from 768px) and 32px (phones). The brief's 24px / 16px are the column gaps: cards carry text under the image, and 24px rows ran captions into the next row's photographs.
+6. **List thumbnails are 112px below 480px** (160px from 480px). At 360px a 160px thumbnail leaves the name about 150px.
+7. **The grid/list switch shows on phones too.** The old page hid it at ≤ 480px, where the toolbar had no room; the switch now sits beside the results line. The per-page select and "Page X of Y" stay hidden on phones, as before.
+8. **The Filters button shows from 768px to 1023px too.** The brief moves the rail into the sheet below 1024px; the old sheet only existed at ≤ 768px.
+9. **A search chip (new)** removes only `search` and keeps the other params. Before, only "Clear All Filters" removed a search.
+10. **"Only N left"** uses the product page's rule: `0 < stock <= (Number(lowStockThreshold) || 5)`, replacing the magic `<= 5`. The card does not render it (Prompt 13), so the page adds a 12px warning-toned line under a card, and the row shows it in its own text. No seeded product is low at product level (stock is the sum of variants); the tests cover the rule.
+11. **Landmarks:** the rail and the results are `section`s ("Filters" region, "Results" region). An `aside` inside the app's `main` is flagged by axe, and the old page nested a second `main`.
+12. **Unknown category tokens** get no chip and no title; all products show, as before. The rail's "Clear all" still clears them.
+13. **Copy:** "We couldn't load the catalogue." / "Please check your connection and try again." / "Try again"; "Nothing here yet." with one line per case (search quoted, filters, empty catalogue) / "Clear all filters"; "Show N results"; "Apply price". The sort labels are unchanged (Prompt 29).
+14. **The phone toolbar is compact.** The select gets every pixel the row can spare (no icon in the Filters button below 480px, and a tighter chevron), so all sort labels fit from 375px. At 360px only "Avg. Customer Rating" ends in an ellipsis.
+15. **The page-change scroll** lands the results' top at `--sf-header-height` + 16px. It is smooth by default and `"instant"` under reduced motion: `"auto"` would inherit the root's `scroll-behavior: smooth`.
+
+### Verification
+
+- **Build:** `npm run build` prints "Compiled successfully" with no warnings. Gzip against the Prompt 13 head built here: JS 407.25 → 409.08 kB (+1.83), CSS 57.26 → 57.77 kB (+0.51).
+- **Tests:** `CI=true npm test -- --passWithNoTests` runs 313 tests in 28 suites (282 + 31 new), exit 0, with no React warnings.
+  - `Products.test.js` (26) covers:
+    - the four deep links, the all-furniture header and the several-categories title;
+    - the outline's open rules;
+    - every facet against counts computed from `db.json`, and that the session-only facets stay out of the URL;
+    - Clear all keeping `per_page`;
+    - sort writes and the `popular` alias;
+    - pagination (numbers, ends, `aria-current`, per page, scroll) and the clamp;
+    - list rows, card wiring and the low-stock rule;
+    - loading, error with retry, and empty;
+    - the sheet (focus, count, Escape, focus return).
+  - `Breadcrumb.test.js` (5).
+- **Mutation check:** 14 seeded faults, each caught; files restored byte for byte. The faults:
+  - the clamp running while loading;
+  - no legacy-id rewrite;
+  - low stock back to `<= 5`;
+  - quick ranges that never clear;
+  - a rating that never clears;
+  - departments folding on page changes;
+  - Clear all dropping `per_page`;
+  - sort aliases ignored;
+  - a parent excluding its children;
+  - quick add bypassing the card's cart item;
+  - the price chip's label;
+  - the results line not live;
+  - the breadcrumb's `aria-current`;
+  - the current crumb rendered as a link.
+- **Static:** a literal grep of the six changed style and script files finds no hex, `rgb()`, `hsl()` or font name (`font-family` is only `var(--sf-font-*)`), and no `placehold.co`. `z-index` comes only from `--sf-z-sticky` (the row's chip layer uses a local `1` inside an isolated box). `node scripts/check-contrast.js` passes; there are no new pairs (§24). `node scripts/validate-db.js` passes.
+- **Browser QA** used Playwright and Chromium against JSON Server on a scratch copy of `db.json`, with mock-mode production builds of the baseline and of this branch.
+  - **Layout** (92 checks at 360, 768, 1024 and 1440px, both modes):
+    - no horizontal overflow and one `h1`;
+    - grid columns 2 / 2 / 3 / 3 with 16px / 24px gutters;
+    - the rail sticky at exactly header + 24px (192px at 1440, 236px at 1024) from 1024px, and the sheet below;
+    - the toolbar sticky at the header's 60px on phones only;
+    - 4:5 images;
+    - every control at least 44px tall (the chips and breadcrumb links through their hit areas);
+    - **axe-core 4.7: no violations in `<main>`**;
+    - a clean console.
+    - Measured: rail 232px at 1024px and 325px at 1440px; cards 156 / 341 / 217 / 317px.
+  - **Flows** (56 checks):
+    - every facet against data-computed counts, including Enter applying the price and chips removing their filter;
+    - every sort order against the data;
+    - per page 24; Next to page 2 with `aria-current` and the results landing at header + 16px;
+    - 160px list thumbnails;
+    - quick add reaching the header's cart ("Cart, 1 item") and the wishlist toggling;
+    - the rail's focus ring;
+    - phones: the toolbar sticking under the header, the sheet as a dialog with focus on Close, Tab trapped (40 presses), the live "Show 16 results", Escape and focus back to Filters, the scroll lock released, and the sheet closing at 1100px;
+    - the error panel and Try again recovering.
+  - **Deep links:**
+    - `?category=plastic-essentials-armchairs`: "Chairs with Arms", 3 products, trail Home › Furniture › Plastic Furniture › Essentials › Chairs with Arms.
+    - `?category=home-furniture&sort=price-low&page=2`: 13–24 of 29, URL kept.
+    - `?search=chair`: "Results for “chair”", 42 products.
+    - `?category=1`: rewritten to `?category=plastic-furniture`, 21 products.
+  - **CLS** (cold load of every category deep link with the API held 600ms):
+
+    | Width | Result |
+    |---|---|
+    | 768px, 1440px | 43 / 43 at 0 |
+    | 360px | 35 / 43 at 0; the other 8 measure 0.029 |
+    | 390px | 36 / 43 at 0 |
+    | 1024px | 0.034 on every page, the header's (see below) |
+
+    - The 8 at 360px are titles that wrap to two lines on a phone, which nothing knows before the tree loads.
+    - Baseline for comparison: 0.0115 on every listing at 1440px, and 0.139 at 1024px.
+    - `/products` and searches: 0.0004, a web-font swap of the title.
+    - Scrolling whole pages: 0.
+  - **Motion:** sampled per frame. The first six cards rise 20px over 0.9s and the seventh never moves. Under reduced motion there is no transform and the page-change scroll is instant.
+- **Admin parity:** 20 screenshots (login, dashboard, Products, Categories, Settings; 1440 and 390px; light and dark), baseline build against this one: **20 / 20 pixel-identical**.
+- **Laravel shape:** the data path is untouched (`products.getAll()` + `categories.getAll()` through `api.js`), so there is no JSON Server-only reliance.
+
+### Pre-existing issues noticed (not changed)
+
+- **Header (Prompt 07):** from 1024px to 1279px the department row wraps to two lines only when the header's own categories read lands. That moves `<main>` down 44px on every page at those widths (CLS 0.034; the home page measures the same). Reserving the two-line row before the read would fix it (Prompt 32).
+- **Cart drawer (Prompt 18):** it does not close on Escape.
+- **`getDeviceType`** in `helpers.js` now has no caller (the listing was its only user). It is left for Prompt 32's dead-code pass.
+- **Web fonts:** the swap moves the listing title about 7px on a cold load (CLS 0.0004). Size-adjusted fallbacks would remove it (Prompt 32).
+- **`PRICE_RANGES` are the boilerplate's.** "Under ₹500" matches no seeded product (the cheapest is ₹699), and "Above ₹5,000" covers 45 of 84. They are kept as specified; furniture-sized ranges are a merchandising choice.
+- **The URL→state effect** re-applies the URL's price to the fields whenever the categories change. It only matters for a price typed in the frame right after the catalogue arrives.
+
+### Notes for later prompts
+
+- **15 (search):** "View all results" lands on `/products?search=…`, titled "Results for “query”", with the query as a removable chip.
+- **16 (product page):** `import Breadcrumb from "../../components/Breadcrumb/Breadcrumb"`. Pass `items` after Home, for example ``[{ label: category.name, link: `/products?category=${categoryParam(category)}` }, { label: product.name }]``. For the full ancestor trail, `categoryTrail` (10 lines, in `Products.js`) can move to a shared module; `src/utils/categories.js` changes are additive-only.
+- **28:** content pages pass `items={[{ label: "About us" }]}`.
+- **29:** the listing's copy sits at the top of `Products.js` (`ALL_FURNITURE`, `FURNITURE_CRUMB`) and in its states. `SORT_OPTIONS` labels are unchanged ("Avg. Customer Rating" is the one that ellipsises at 360px).
+- **30:** Reveal runs on the first six cards; the sheet's motion is `BottomDrawer`'s; the page-change scroll is smooth (instant under reduced motion).
+- **31:** the list row's quick add is named "Add to cart, <name>" (label-in-name), unlike the card's "Add <name> to cart". The outline's repeated leaf names rely on the nested lists for context. NVDA and VoiceOver were not available here.
+- **32:** see the header CLS, the font swap and `getDeviceType` above.
+
+### Needs client confirmation
+
+None expected. Visible choices the client may want to see:
+
+- The "All furniture" introduction reuses `APP_DESCRIPTION` (already pending from Prompt 02).
+- The empty and error lines.
+- The quick price ranges (boilerplate values; see above).
