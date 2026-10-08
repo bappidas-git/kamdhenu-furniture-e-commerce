@@ -12,6 +12,7 @@ import {
 import { getProductMinPrice } from "../../utils/helpers";
 import { APP_DESCRIPTION } from "../../utils/constants";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
+import { buildCategoryMap, matchesSearch } from "../../components/SearchModal/searchData";
 import { ProductCard, ProductCardSkeleton, StarRating } from "../../components/storefront";
 import { BottomDrawer, Reveal, staggerDelay } from "../../components/ui";
 import ProductListRow, { ProductListRowSkeleton } from "./ProductListRow";
@@ -27,7 +28,8 @@ import styles from "./Products.module.css";
 // pagination.
 //
 // The data and the rules are the page's long-standing ones, kept as they
-// were: one catalogue read (products + categories), then client-side search,
+// were: one catalogue read (products + categories), then client-side search
+// (since Prompt 15, by the search overlay's rule, so its counts agree),
 // category scope (a parent includes its children), price, rating, discount,
 // stock and brand filters, sorting and pagination, all driven by the URL
 // (category, search, sort, page, per_page, min_price, max_price; written with
@@ -441,17 +443,12 @@ const Products = () => {
   const filteredProducts = useMemo(() => {
     let result = [...allProducts];
 
-    // Search
+    // Search — the search overlay's own rule (SearchModal/searchData.js), so
+    // its "View all N results" lands on these N products: the query in the
+    // name, tags, category name or slug, brand or short description.
     if (urlSearch) {
-      const q = urlSearch.toLowerCase().trim();
-      result = result.filter(
-        (p) =>
-          p.name?.toLowerCase().includes(q) ||
-          p.shortDescription?.toLowerCase().includes(q) ||
-          p.brand?.toLowerCase().includes(q) ||
-          p.category?.toLowerCase().includes(q) ||
-          p.tags?.some((t) => t.toLowerCase().includes(q))
-      );
+      const categoryMap = buildCategoryMap(categories);
+      result = result.filter((p) => matchesSearch(p, urlSearch, categoryMap));
     }
 
     // Categories — products carry a numeric `categoryId`; the selected tokens
