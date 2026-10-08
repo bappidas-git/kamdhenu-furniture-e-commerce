@@ -2218,3 +2218,209 @@ The repository owner asked for this after the PR went up. A legacy numeric URL (
 
   With `/products/11` held and the shopper moved on to `/products/lobby-set`, the late answer now changes nothing. Before, it redirected them to the shoe rack. No console errors. The app-level `ScrollToTop` still scrolls once more on the redirect's pathname change; the page's own scroll runs once.
 - **Checks:** 437 tests pass (`CI=true npm test -- --passWithNoTests`, exit 0, no console output). `npm run build` compiles with no warnings (JS +50 B gzip). ESLint finds nothing in `ProductDetails.js`; the test file's testing-library findings are the same 14 as before (the pattern most of the repo's tests follow). `db.json` is unchanged.
+
+---
+
+## Prompt 17 — Product details secondary
+
+**Date:** 2026-10-08. **Result:** below the product page's first screen, the two tabs (Description / Reviews) are gone. Their place is taken by anchored sections under a sticky "On this page" nav (Details · Specifications · Reviews):
+
+- an editorial details block: the description's prose beside a hairline specifications table, parsed from the description's own "Specifications:" paragraph and completed by the catalogue's fields, with units;
+- an honest reviews section: a 48px serif average, ink-on-sand rating bars and hairline-separated review articles, or "No reviews yet" with a line on where reviews come from;
+- the curated set, now "Complete the set." on a sand panel, ticking pieces in and out;
+- the related rail, now the site's one `ProductRail`.
+
+Reviews still come only from `products.getReviews` (approved), with no form and no sorting. The set still adds exactly the ticked pieces through the page's `addToCart`, and the related pieces still come from `getRelated`. The reviews blend no longer counts every review twice. Reference: `prompts/DESIGN_SYSTEM.md` §27.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/pages/ProductDetails/ProductDetails.js` | **Lower half rebuilt:** the in-page nav, the details and specifications sections, the reviews mount, the set and related mounts, `Reveal` per section. `activeTab`, `tabsRef` and the tab markup are gone, with no dead code left. `scrollToReviews` now jumps to the reviews section and focuses it. **Data:** the reviews live in one state keyed by product (`{ productId, status, list }`), replacing `reviews` / `reviewsLoading` / `reviewsError`. The blend counts the loaded reviews once (see Decisions). Reviews, related and set reads that settle after the shopper has moved on are dropped (`latestLoad`, as Prompt 16's loads do), and a new product starts without the previous one's set and related pieces. |
+| `src/pages/ProductDetails/ProductDetails.module.css` | The tab rules are replaced by the lower half: the nav, section rhythm and anchor offsets, the details grid, the prose, the hairline table and the tag pills. The first screen's rules are unchanged. |
+| New `src/pages/ProductDetails/productSpecs.js` | `buildSpecRows`, `formatWeight`, `formatDimensions`: the table's rows, their order, units and de-duplication. Page-local, pure. |
+| `src/utils/helpers.js` | **One addition:** `parseSpecifications(description)` → `{ body, specs }`. No existing export changed. |
+| `src/components/storefront/ReviewsSection.js` + module | Rewritten: an editorial section (forwarded ref, `id`, `eyebrow`, `title`, `className` props added; the data props unchanged). |
+| `src/components/storefront/FrequentlyBoughtTogether.js` + module | Rewritten as "Complete the set": the same props plus `eyebrow`, `title`, `className`. |
+| `src/components/storefront/RelatedProducts.js` | A thin wrapper: `SectionHeading` over `ProductRail`. `RelatedProducts.module.css` is deleted, because the wrapper needs no styles of its own. |
+| `src/components/storefront/ProductRail.js` | One comment line (it now is wrapped). |
+| `scripts/check-contrast.js` | Two pairs and two informational rows (DESIGN_SYSTEM §27.8). |
+| New tests | `helpers.test.js` (15), `productSpecs.test.js` (23), `ReviewsSection.test.js` (12), `FrequentlyBoughtTogether.test.js` (11), `RelatedProducts.test.js` (4). `ProductDetails.test.js` 25 → 43 (two tests updated for the new structure and the corrected count). |
+| `prompts/DESIGN_SYSTEM.md` | New §27; the §9 `--sf-z-sticky` row and §26's opening line updated. |
+| `STOREFRONT_UX_GUIDELINES.md` | Two sentences: the PDP counts each approved review once; the curated set's shopper-facing name and rules. |
+
+Not touched: the first screen, `ProductCard`, `ReviewModal`, `api.js`, `db.json` (SHA-256 unchanged), the tokens and every admin file.
+
+### Tabs or anchors: anchors
+
+The recommended design was taken: anchored sections under a sticky in-page nav.
+
+- **Why anchors.** Everything stays on the page. Nothing hides behind a control, the reviews no longer appear only after a click, and a shopper scrolling past the buy box reads the description, the table and the reviews in turn.
+- **The nav:** `nav aria-label="On this page"`, a list of plain links ("Reviews (N)" carries the count). It sticks under the header (`top: var(--sf-header-height)`, `--sf-z-sticky`) while those three sections pass, then leaves with them.
+- **A plain click:** it scrolls the section in under the header and the nav (smooth, instant under reduced motion) and moves focus to the section (`tabIndex={-1}`, no ring), so the next Tab continues from there. It adds no history entry and no hash.
+- **A modified click** (a new tab or window) is left to the browser.
+- **The ratings row** in the buy box (`scrollToReviews`) makes the same jump.
+- **Scroll offset:** the targets' `scroll-margin-top` is the header, the nav's 48px and 16px. A padded section subtracts its own padding, so its first line lands 16px under the nav.
+- **No scrollspy.** Details and Specifications sit side by side from 980px, so "the section in view" is ambiguous there. A highlight that picked one of them would contradict the link just clicked, so the links carry no current state.
+
+### The parser helper
+
+`parseSpecifications(description)` in `src/utils/helpers.js`:
+
+- It reads only the last paragraph (paragraphs split on blank lines), and only when that paragraph starts with "Specifications:" (case-insensitive).
+- Pairs split on "; " first, then each on its first ": ", so a value can hold a colon ("Sizes: Single: 36 × 78 in" gives the key `Sizes`).
+- A fragment with no "Key: " continues the value before it. CRLF line endings, extra blank lines, stray semicolons and spacing are tolerated.
+- Without the paragraph, or when it holds no pair, the whole description is the body and `specs` is `[]`.
+- Checked by hand in Node first (the implementation note's cases), then by its 15 tests. Every one of the 84 seeded descriptions gives two paragraphs of prose and 5–7 pairs.
+
+### The specifications table
+
+The rows, in order:
+
+1. The parsed pairs, in their own order.
+2. Brand, when set.
+3. SKU, the chosen variant's, following the selector.
+4. Weight: "6.8 kg".
+5. Dimensions: "62 × 33 × 98 cm", headed "Dimensions (L × W × H)". A partial record reads "L 57 × H 80 cm".
+6. Category: the leaf's name.
+7. Tags: sand pills, trimmed and de-duplicated, not links.
+
+- **Units** follow the admin's fields: "Weight (kg)" and "Length / Width / Height (cm)".
+- **Left out:** a field row that is empty (the admin saves a blank weight as 0), and a field row whose name a parsed pair already has (case- and spacing-insensitive). For example, the two mattresses, the three Winsome tables and the Nilkamal plastic sofa name their brand in the copy, so they show one Brand row, the copy's.
+- **Markup:** a `<table>` named by its `h2` (`aria-labelledby`), with `<th scope="row">`. The layout is fixed at 40 / 60: in the automatic layout the label column grew on phones and pushed "cm" onto a second line.
+
+### Decisions
+
+- **The reviews blend counts each review once (the decision Prompt 16 handed over).**
+  - **The bug:** the page added the product's `totalReviews` to the number of fetched reviews. The aggregate is worked out from those same approved reviews (backend docs, file 03 §8), and the seed agrees (the validator checks it). So every count was doubled:
+
+    | Product | Before | After |
+    |---|---|---|
+    | Covered Shoe Rack | "2 reviews" | 1 |
+    | Carlton Mattress | 4 | 2 |
+    | Wooden Sofa Set | "Based on 6 ratings" | 3 |
+
+  - **Now:** once the approved reviews have loaded, they are the count and the average. Until then, or if the read fails, the stored aggregate stands in. The ratings row, the nav's "Reviews (N)" and the summary use the same figures.
+  - **Under moderation:** the count follows the visible reviews. Approving the Wooden Sofa Set's pending review in Admin → Reviews gives "Based on 4 ratings" and a 4.5 average on the page, although the mock leaves the stored aggregate at 3. The old blend would have shown 7.
+  - The blend still lives in the page (guardrail 1). Guardrail 6 rules out invented totals.
+- **Late reads are dropped.**
+  - A reviews, related or set read started for an earlier product applies nothing when it settles.
+  - Before this, a slow read could show product A's reviews on product B, or B's anchor with A's companions; "Add N to cart" would then have added A's companions.
+  - A new product also starts without the previous product's set and rail. The set is keyed by product, so its ticks reset.
+- **Reviews layout:** from 980px, the heading, summary and bars sit in columns 1–5 and the articles in 7–12, the same 5 | 6 offset 1 grid as the details. The prompt's "summary row" is that block's figure, stars and basis on one line.
+- **Rating bars** are a list of five `role="img"` rows named "5 stars: 2 reviews" (singular forms where due). They are drawn as sand tracks with ink fills and show only once the reviews have loaded.
+- **The set shows what it will add.** "Add N to cart" hands `buildCartItem(p)` to the cart, the rule kept as specified, and that takes each piece's cheapest option. Each piece now names that option under its name ("This piece · Walnut", "Single"), so nothing is added unseen.
+- **The set's other rules:**
+  - The anchor is a ticked, disabled box, drawn at full strength: it is always in.
+  - The total is a polite, atomic live region.
+  - A sold-out piece (product `stock` 0, the card's rule, as on the home page) cannot be chosen and is left out of the total and of the add. The cart would otherwise accept a quantity of 1 at zero stock (`clampQty`).
+- **Heading order:** `h1` → `h2` "Delivery & returns" → "About this piece" → "Specifications" → "What customers say." (→ `h3` review titles) → "Complete the set." → "You may also like.". The details' two `h2`s are styled as eyebrows.
+
+### Deviations from the prompt, and why
+
+1. **The blend changed** (above): it no longer double-counts. It stays in the page.
+2. **The anchor offset includes the nav:** `scroll-margin-top` is `--sf-header-height` + 48px + 16px, not `--sf-header-height` + 16px, because the nav is sticky and would otherwise cover the first line of a target.
+3. **"Complete the *set*."** carries the accent and a period, as every serif heading on the site does (guardrail 4: one italic accent). The brief wrote "Complete the set".
+4. **Review copy:**
+   - The old empty line "No written reviews yet. Be the first to share your experience." invited an action this page does not offer. "No reviews yet" and the prompt's note replace it.
+   - The error reads "Reviews could not be loaded just now." with "Try again" (the site's wording since Prompts 12, 14 and 15), not "Sorry, we couldn't load reviews right now." with "Retry".
+   - The helpful line reads "N people found this helpful".
+   - Photo alt text no longer claims "from a verified buyer" on reviews that are not verified.
+5. **No avatar** on review cards. The brief's card lists none, and the gradient avatar goes with it (guardrail 2).
+6. **The set's additions:** the option line, the sold-out rule and the live total (Decisions).
+7. **`RelatedProducts.module.css` deleted:** the wrapper composes `SectionHeading` and `ProductRail` and needs no styles.
+8. **Additions:** the page-local `productSpecs.js`; tests for the helper, the rows and all three components; two contrast pairs; DESIGN_SYSTEM §27.
+
+### Verification
+
+- **Build:** `npm run build` prints "Compiled successfully" with no warnings. Against `HEAD`, both built in mock mode, gzip: JS 417.26 → 418.96 kB (+1.70), CSS 57.42 → 57.97 kB (+0.55).
+- **Tests:** `CI=true npm test -- --passWithNoTests` runs 520 tests in 42 suites (437 + 83), exit 0, with no React or act warnings.
+- **Mutation check:** 31 seeded faults, each caught by at least one test; the files were restored byte for byte (SHA-256). The faults covered:
+  - the blend: added together, or ignoring the aggregate while loading;
+  - late reads: reviews, and the set or related, applied; the previous set kept;
+  - jumps: no focus move, reduced motion ignored, modified clicks hijacked;
+  - a Details link without a body; the SKU row ignoring the variant; the set's read limit;
+  - the parser: splitting on the last ": ", reading the first paragraph, dropping continuations, keeping an unparsed paragraph out of the prose;
+  - the rows: case-sensitive de-duplication, a missing unit, a hint on partial records;
+  - the reviews: verified on a truthy flag, an average with no ratings, the empty line while loading, focus dropped on retry, wrong bar counts, the summary stars exposed;
+  - the set: unset companions unticked, sold-out pieces added, the ticks ignored, an invented discount, the anchor's photograph linked, the total not live;
+  - the related section rendering while empty.
+- **Static:**
+  - A grep of the eight touched style and script files finds no hex, `rgb()`, `hsl()`, gradient, font-name literal or `!important`; the only z-index is `--sf-z-sticky`.
+  - ESLint is clean on the changed sources. `node scripts/check-contrast.js` passes. `node scripts/validate-db.js` passes.
+  - `db.json` SHA-256 is unchanged. All QA ran on a scratch copy through `JSON_SERVER_DB`.
+- **Browser QA:** Playwright and Chromium. Every interaction run below scripts the same 25 checks:
+  - the nav's three links and no tablist;
+  - the nav sticking at the header's height on `--sf-z-sticky`;
+  - each jump landing 16px under the nav, moving focus to its section and adding no hash;
+  - the ratings-row jump;
+  - "Complete the set": unticking the mattress → "Total for 2 pieces ₹39,498.00" → "Add 2 to cart" puts exactly King Size Bed · Walnut and Wooden Bedside Table · Walnut in the cart;
+  - the related rail scrolling on Next;
+  - no horizontal overflow and no page errors.
+
+  Results, all passing:
+
+  | Build | Widths, modes | Checks |
+  |---|---|---|
+  | Dev server | 360, 768, 1024, 1440 light; 1440 dark; 1440 under reduced motion | 150 |
+  | Mock-mode production | 360, 768, 1024, 1440 light; 360 dark; 768 dark under reduced motion | 150 |
+  | Non-mock production (Laravel stub) | 1440 light | 25 |
+
+  - **Screenshots** in both modes at 360 and 1440 (also 768 and 1024 for layout): the details two-column from 980px and stacked below, the table, the rating bars, the set's tiles (rows on phones), the rail bleeding to the edge on phones.
+  - **Reviews states** (light and dark):
+    - reviewed with three reviews: the Wooden Sofa Set;
+    - a verified purchase: the Wooden Bedside Table's "✓ Verified purchase";
+    - unreviewed: the L-Shaped Sofa, "No reviews yet" and the note;
+    - loading: the request held;
+    - failed: the request aborted.
+  - **Error with the server really stopped:** JSON Server was killed mid-session. The reviews then say "Reviews could not be loaded just now." beside the stored summary, and "Try again" keeps focus on the section. After a restart, "Try again" brings the three reviews back.
+  - **A description without the paragraph:** the alna's description was cut to two paragraphs through JSON Server on the scratch copy, then restored. The page shows both paragraphs as prose and a table of the field rows only.
+  - **Admin → Reviews moderation:** approving the pending review in the admin UI shows it on the page (4 reviews, "Based on 4 ratings"). It was put back to pending afterwards.
+  - **Narrow screens:** at 320, 360 and 390px on four products there is no overflow, and the nav's three links fit from 320px.
+  - **axe-core 4.7 on `<main>`:** one minor best-practice result, `image-redundant-alt`, on the related rail's brandless "Steel Sofa-cum-Bed" `ProductCard` (pre-existing, below).
+  - **Keyboard:** 38 stops from the nav to the footer, every one with a visible ring. The lower half adds the 3 nav links, a photograph link and a checkbox per companion, "Add N to cart", then the rail.
+  - **ARIA snapshot** (Playwright):
+    - navigation "On this page";
+    - regions "About this piece", "Specifications" (a table of row headers), "What customers say." (list "Ratings by star" of five images, then a list of articles with `h3` titles), "Complete the set." (named checkboxes, the anchor `[checked] [disabled]`) and "You may also like." (group "Related pieces").
+
+    NVDA and VoiceOver were not available here.
+- **Laravel shape:** a non-mock production build against a stub answering `{ success, data, meta }`. It passes the same 25 checks, and the reviews' error and loading states behave the same. The stub logged only existing routes (`/products/slug/{slug}`, `/products/{id}/reviews`, `/products`, `/categories/{id}`, `/categories`, `/settings`, `/shipping/methods`, `/deals/config`) and no unknown route.
+- **Admin parity:** 16 screenshots (Dashboard, Products, Reviews, Settings; 1440 and 390px; light and dark) of the `HEAD` build and this one, remote images held.
+  - 15 are identical to a baseline run.
+  - The 16th, the light Dashboard at 390px, differs by at most 1/255 on 14 anti-aliased pixels.
+  - No admin file changed. The admin imports `helpers.js`, which only gained an export.
+
+### Pre-existing issues noticed (not changed)
+
+- **`ProductCard` (Prompt 13):** a brandless card's image alt repeats its link text (axe `image-redundant-alt`, best practice). Prompt 31.
+- **A failed product read reads as "not found":** with the server stopped, reloading a product page shows "We couldn't find that piece." (Prompt 16's state for any read error), although the piece exists.
+- **The set adds each piece's cheapest option** (the rule kept). The King Size Bed's curated mattress goes in as a Single, now visible in the set. A size-matched pairing, or an anchor that follows the chosen variant, is a merchandising and code decision (Prompt 11 noted the same).
+- **Copy against fields:** "Overall size" in the copy and the dimensions fields disagree slightly for products 2, 3, 5 and 6 (Slat-Back Plastic Armchair: copy 57 × 54 × 80 cm, fields 58 × 55 × 82 cm). Both show in the table, because the brief de-duplicates by name. For the client or Prompt 34; `db.json` is not this prompt's.
+- **Mock aggregates:** mock mode does not recompute a product's `rating` / `totalReviews` on moderation (the backend should, file 03 §8). The product page now follows the visible reviews; listing cards still show the stored aggregate.
+- **Header compaction:** from the top of a page at 1024px and up, the header is at rest when a jump starts and compacts during it, so the target lands up to 56px lower than intended (never under the nav). Jumps made further down land exactly.
+- **Smooth scrolling:** `html { scroll-behavior: smooth }` (`index.css`) is not switched off under reduced motion site-wide. The page's own jumps pass `"instant"` explicitly. Prompts 30 and 31.
+- **Two catalogue reads:** `getRelated` and `getFrequentlyBoughtTogether` each read the whole catalogue (`products.getAll`), so every product page makes two full reads. Prompt 32.
+
+### Notes for later prompts
+
+- **29 (copy):**
+  - `ProductDetails.js`: "On this page", "Details", "Specifications", "Reviews", "About this piece".
+  - `ReviewsSection`: the eyebrow and title, "Based on N ratings", "No reviews yet", the moderation note, "Verified purchase", "Anonymous", "N people found this helpful", "Reviews could not be loaded just now.", "Try again", "Loading reviews", "Ratings by star", "Customer photos", "Customer upload i of n".
+  - `FrequentlyBoughtTogether`: "Curated by us", "Complete the *set*.", "This piece", "Sold out", "Total for N pieces", "Add N to cart".
+  - `RelatedProducts`: "Related", "You may also *like*.", "Related pieces".
+- **30 (motion):** `Reveal` on each section (the table 90ms after the description); the nav links' colour and underline over `--sf-duration`; the jumps smooth, instant under reduced motion.
+- **31 (a11y):**
+  - The nav is links, and jumps move focus to the section (`tabIndex -1`, no ring).
+  - Bars are named images; the set's total is a polite live region.
+  - A site-wide `scroll-padding-top` would add to these `scroll-margin-top`s (and to every `--sf-header-height + 16px` anchor in §17.2): adjust one or the other.
+  - Screen readers are still to test.
+- **32 (performance):** the two catalogue reads above; the review photos are lazy and the set's thumbnails lazy with a reserved 4:5 box.
+- **34:** the copy-against-fields sizes above, and the moderation note's claim (below).
+
+### Needs client confirmation
+
+None expected. Visible choices the client may want to see:
+
+- **Section copy:** "About this piece", "What customers *say*.", "Curated by us" / "Complete the *set*.", "You may also *like*.".
+- **The empty-state note:** "Reviews come from verified orders and are published after moderation." That is true of the storefront's own path (Order History, delivered pieces, moderation). Admin → Reviews can also author reviews that are tied to no order; if the store uses that, the line should change.
+- **The set's cheapest option:** each piece is added in its cheapest option, now named in the set (above).

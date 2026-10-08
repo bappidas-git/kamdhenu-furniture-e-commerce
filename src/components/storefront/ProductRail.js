@@ -16,7 +16,7 @@ import styles from "./ProductRail.module.css";
 // A snap-scrolling row of ProductCards with hairline previous/next buttons and
 // a hairline progress line. The home page's Featured Collections
 // (FeaturedProducts), Trending and Recently viewed rails use it, and the
-// product page's RelatedProducts can wrap it (Prompt 17).
+// product page's RelatedProducts wraps it (Prompt 17).
 //
 // Cards per view: 4 from 1024px, 3.2 at 768–1023px, 2.2 on phones (6 / 4.3 /
 // 2.6 when `compact`). Below 1024px the track runs to the screen edges while

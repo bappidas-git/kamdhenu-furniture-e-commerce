@@ -148,6 +148,41 @@ export const slugify = (text) => {
     .replace(/-+$/, "");
 };
 
+// Splits a product description into its prose and the trailing
+// "Specifications: Key: Value; Key: Value" paragraph that ends the catalogue's
+// descriptions (prompts 03/04), so the product page can show the pairs as a
+// table. Only the last paragraph counts, and only when it starts with
+// "Specifications:". The pairs split on "; " first, then each on its first
+// ": ", so a value may hold a colon of its own ("Sizes: Single: 36 × 78 in");
+// a fragment with no "Key: " continues the value before it. A description
+// without that paragraph (or whose paragraph holds no pair) comes back whole,
+// with no specs. Pure: it reads the string and returns new values.
+//   parseSpecifications(description) → { body: string, specs: [{ key, value }] }
+export const parseSpecifications = (description) => {
+  const text =
+    typeof description === "string" ? description.replace(/\r\n?/g, "\n").trim() : "";
+  if (!text) return { body: "", specs: [] };
+
+  const paragraphs = text.split(/\n[^\S\n]*\n\s*/);
+  const match = /^specifications\s*:\s*([\s\S]*)$/i.exec(paragraphs[paragraphs.length - 1]);
+  if (!match) return { body: text, specs: [] };
+
+  const specs = [];
+  match[1].split(/\s*;\s*/).forEach((fragment) => {
+    const part = fragment.replace(/\s+/g, " ").trim();
+    if (!part) return;
+    const at = part.indexOf(": ");
+    if (at > 0) {
+      specs.push({ key: part.slice(0, at).trim(), value: part.slice(at + 2).trim() });
+    } else if (specs.length > 0) {
+      specs[specs.length - 1].value += `; ${part}`;
+    }
+  });
+  if (specs.length === 0) return { body: text, specs: [] };
+
+  return { body: paragraphs.slice(0, -1).join("\n\n").trim(), specs };
+};
+
 export const generateId = () => {
   return Date.now().toString(36) + Math.random().toString(36).substring(2);
 };

@@ -87,7 +87,10 @@ The components are designed so that **fake signals are hard to ship**:
 - **`ReviewsSection` renders only the approved reviews it's handed.** The API
   (`products.getReviews`) filters to `status: "approved"`, so unmoderated or
   rejected reviews can't appear. UGC photos render only when a real review has
-  them. Empty/error/loading states are honest.
+  them. Empty/error/loading states are honest. The PDP counts each approved
+  review once: the product's stored `rating`/`totalReviews` stand in only
+  until the approved reviews have loaded (they are worked out from the same
+  reviews, so adding the two would double every count).
 - **Urgency/scarcity is real.** "Only N left" is derived from the live variant/
   product stock and the product's **own** `lowStockThreshold` — never a hardcoded
   or invented number. There are no fake countdowns on the PDP.
@@ -102,7 +105,9 @@ The components are designed so that **fake signals are hard to ship**:
 - **"Frequently bought together" is a *curated bundle*, not a fabricated stat.**
   It is driven solely by the merchant's explicit `frequentlyBoughtTogetherIds`
   in the product data (a deliberate merchandising choice). With no curated ids,
-  the module renders nothing. It never implies invented co-purchase analytics.
+  the module renders nothing. It never implies invented co-purchase analytics:
+  on the PDP it is titled "Complete the set" under "Curated by us", names the
+  option each piece would be added in, and leaves sold-out pieces out.
 - **Trust badges are owner-attested *policies*** (genuine product, secure
   payment, returns) — legitimately configurable copy — **not** live demand/
   scarcity signals. Where a badge implies a number (free shipping, returns, COD),

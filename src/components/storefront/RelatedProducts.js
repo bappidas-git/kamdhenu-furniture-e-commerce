@@ -1,46 +1,50 @@
-import React from "react";
-import ProductCard from "./ProductCard";
-import styles from "./RelatedProducts.module.css";
+import React, { useId } from "react";
+import { Reveal, SectionHeading } from "../ui";
+import ProductRail from "./ProductRail";
 
 // =============================================================================
-// RelatedProducts — data-driven AOV carousel ("You may also like" / "Similar")
+// RelatedProducts — data-driven AOV carousel ("You may also like")
 // =============================================================================
-// A horizontally scrollable row of real products. It is purely data-driven: if
-// the caller has no real related products to pass, the whole section renders
-// nothing (no filler, no fabricated "recommended" items). Helpful, not pushy.
+// A section heading over the storefront's one product rail (ProductRail: snap
+// scrolling, hairline previous / next buttons, the progress line). Purely
+// data-driven: if the caller has no real related products to pass, the whole
+// section renders nothing (no filler, no fabricated "recommended" items).
 //
 // Props:
-//   title            string
-//   products         array   real products to recommend
-//   onAddToCart      fn
-//   onToggleWishlist fn
-//   isInWishlist     fn (productId) => boolean
+//   products         array   real products to recommend (products.getRelated)
+//   eyebrow, title   string  "Related", "You may also *like*." (one accent)
+//   railLabel        string  the carousel's accessible name
+//   onAddToCart      fn      (cartItem) => void   } passed to each ProductCard
+//   onToggleWishlist fn      (product) => void    }
+//   isInWishlist     fn      (productId) => boolean
+//   className        string  on the <section>
 // =============================================================================
 const RelatedProducts = ({
-  title = "You may also like",
   products = [],
+  eyebrow = "Related",
+  title = "You may also *like*.",
+  railLabel = "Related pieces",
   onAddToCart,
   onToggleWishlist,
   isInWishlist,
+  className,
 }) => {
-  const items = Array.isArray(products) ? products : [];
+  const headingId = `${useId()}related-title`;
+  const items = Array.isArray(products) ? products.filter(Boolean) : [];
   if (items.length === 0) return null;
 
   return (
-    <section className={styles.section} aria-label={title}>
-      <h2 className={styles.title}>{title}</h2>
-      <div className={styles.scroller}>
-        {items.map((p) => (
-          <div className={styles.cell} key={p.id}>
-            <ProductCard
-              product={p}
-              onAddToCart={onAddToCart}
-              onToggleWishlist={onToggleWishlist}
-              isWishlisted={isInWishlist ? isInWishlist(p.id) : false}
-            />
-          </div>
-        ))}
-      </div>
+    <section className={className} aria-labelledby={headingId}>
+      <Reveal>
+        <SectionHeading id={headingId} eyebrow={eyebrow} title={title} />
+        <ProductRail
+          products={items}
+          label={railLabel}
+          onAddToCart={onAddToCart}
+          onToggleWishlist={onToggleWishlist}
+          isInWishlist={isInWishlist}
+        />
+      </Reveal>
     </section>
   );
 };

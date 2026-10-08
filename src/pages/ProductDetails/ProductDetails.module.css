@@ -8,6 +8,11 @@
  * from 980px with the gallery in columns 1–7 (sticky from 1024px at
  * --sf-header-height + 24px) and the buy box in 8–12 with 48px of air on its
  * left; one column below 980px, the gallery first.
+ *
+ * Below the fold (Prompt 17): a sticky in-page nav over the details and
+ * specifications (the same 12 columns: 1–5 and 7–12) and the reviews, then
+ * the curated set and the related rail, with --sf-section-y and hairlines
+ * between them.
  * ═══════════════════════════════════════════════════════════════════════════ */
 
 .page {
@@ -316,102 +321,260 @@
   margin-top: var(--sf-space-8);
 }
 
-/* ── Tabs (Prompt 17 restyles them; only the scroll target is set here) ──── */
-.tabsSection {
-  margin-top: var(--sf-space-8);
-  scroll-margin-top: calc(var(--sf-header-height) + var(--sf-space-4));
+/* ── Below the fold (Prompt 17) ───────────────────────────────────────────── */
+/* Anchored sections under a sticky in-page nav, then the curated set and the
+   related rail. Sections carry --sf-section-y and a hairline between
+   neighbours; the set's sand panel stands in for the rule on either side of
+   it. The page's last section drops its bottom padding (the container's and
+   .main-content's make the footer's gap). */
+.below {
+  /* What an anchor target clears: the header, the sticky nav (while there is
+     one) and 16px. */
+  --pdp-nav-height: 0px;
+  --pdp-anchor-offset: calc(var(--sf-header-height) + var(--pdp-nav-height) + var(--sf-space-4));
 }
 
-.tabNav {
-  display: flex;
-  gap: var(--sf-space-2);
-  border-bottom: 1px solid var(--sf-color-border);
-  margin-bottom: var(--sf-space-6);
+.infoWithNav {
+  --pdp-nav-height: 48px;
+  --pdp-anchor-offset: calc(var(--sf-header-height) + var(--pdp-nav-height) + var(--sf-space-4));
 }
 
-.tabButton {
-  position: relative;
-  padding: var(--sf-space-3) var(--sf-space-5);
-  border: none;
-  background: none;
-  font-size: var(--sf-text-base);
-  font-weight: var(--sf-font-medium);
-  color: var(--sf-color-text-muted);
-  cursor: pointer;
-  transition: color var(--sf-transition-fast);
+.section {
+  padding-block: var(--sf-section-y);
 }
 
-.tabButton:hover {
-  color: var(--sf-color-text);
+.section + .section,
+.info + .section {
+  border-top: var(--sf-hairline);
 }
 
-.tabButtonActive {
-  color: var(--sf-color-primary);
+/* The page's last block ends at the footer's gap. */
+.below > .section:last-child,
+.info:last-child > .section:last-child {
+  padding-bottom: 0;
 }
 
-.tabButtonActive::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 2px;
-  background: var(--sf-color-primary);
-  border-radius: var(--sf-radius-pill);
+/* In-page jump targets: the text lands 16px under the header and the nav.
+   A padded section reaches past its own top padding to do so. */
+.target {
+  scroll-margin-top: var(--pdp-anchor-offset);
 }
 
-.tabButton:focus-visible {
+.section.target {
+  scroll-margin-top: calc(var(--pdp-anchor-offset) - var(--sf-section-y));
+}
+
+/* Targets take focus (tabIndex -1) without a ring: they are not controls. */
+.target:focus {
   outline: none;
-  box-shadow: var(--sf-shadow-focus);
-  border-radius: var(--sf-radius-sm);
 }
 
-.descriptionTab {
-  display: grid;
-  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
-  gap: var(--sf-space-8);
+/* ── In-page nav: hairline links that stay under the header ─────────────── */
+.pageNav {
+  position: sticky;
+  top: var(--sf-header-height);
+  z-index: var(--sf-z-sticky);
+  /* Edge to edge of the container, gutters included, on the page tone, so
+     what scrolls beneath never shows through. */
+  margin-inline: calc(-1 * var(--sf-gutter));
+  padding-inline: var(--sf-gutter);
+  background-color: var(--sf-color-bg);
+  box-shadow: inset 0 -1px 0 var(--sf-color-border);
 }
 
-.fullDescription h3,
-.specTable h3 {
-  margin: 0 0 var(--sf-space-3);
-  font-size: var(--sf-text-lg);
-  font-weight: var(--sf-font-semibold);
-  color: var(--sf-color-text);
-}
-
-.fullDescription p {
+.pageNavList {
+  display: flex;
+  gap: var(--sf-space-6);
   margin: 0;
-  line-height: var(--sf-leading-normal);
-  color: var(--sf-color-text-secondary);
+  padding: 0;
+  overflow-x: auto;
+  scrollbar-width: none;
+  list-style: none;
 }
 
-.specTable table {
+.pageNavList::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 768px) {
+  .pageNavList {
+    gap: var(--sf-space-10);
+  }
+}
+
+/* Inline-block, not flex: a flex item would drop the space before the count. */
+.pageNavLink {
+  display: inline-block;
+  height: var(--pdp-nav-height);
+  line-height: var(--pdp-nav-height);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+  color: var(--sf-color-text-secondary);
+  transition: color var(--sf-duration) var(--sf-ease-out),
+    box-shadow var(--sf-duration) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .pageNavLink:hover {
+    color: var(--sf-color-text);
+    box-shadow: inset 0 -1px 0 var(--sf-color-primary);
+  }
+}
+
+.pageNavLink:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: -2px;
+}
+
+.pageNavCount {
+  color: var(--sf-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Phones: a slightly tighter row and eyebrow, so the three links fit from
+   320px (the row still scrolls sideways if a long count ever needs it). */
+@media (max-width: 479.98px) {
+  .pageNavList {
+    gap: var(--sf-space-4);
+  }
+
+  .pageNavLink {
+    letter-spacing: 0.08em;
+  }
+}
+
+/* The first section after the nav: the strip already parts it from the
+   first screen, so half the rhythm above. */
+.pageNav + .section {
+  padding-top: calc(var(--sf-section-y) / 2);
+}
+
+.pageNav + .section.target {
+  scroll-margin-top: calc(var(--pdp-anchor-offset) - var(--sf-section-y) / 2);
+}
+
+/* ── Details: the description (columns 1–5) and its table (7–12) ────────── */
+.details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--sf-space-12);
+}
+
+@media (min-width: 980px) {
+  .details {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: var(--sf-space-6);
+    align-items: start;
+  }
+
+  .about {
+    grid-column: 1 / span 5;
+  }
+
+  .specs {
+    grid-column: 7 / span 6;
+  }
+
+  /* No description: the table takes the left of the grid. */
+  .specs:only-child {
+    grid-column: 1 / span 7;
+  }
+}
+
+.about,
+.specs {
+  min-width: 0;
+}
+
+.blockTitle {
+  margin: 0 0 var(--sf-space-6);
+}
+
+.prose p {
+  max-width: 60ch;
+  margin: 0;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-relaxed);
+  color: var(--sf-color-text-secondary);
+  overflow-wrap: break-word;
+}
+
+.prose p + p {
+  margin-top: 1em;
+}
+
+/* The hairline table: a rule above every row and under the last. A fixed
+   layout keeps the columns at 40 / 60 whatever the content. */
+.specTable {
   width: 100%;
+  table-layout: fixed;
   border-collapse: collapse;
+  font-family: var(--sf-font-sans);
+  line-height: var(--sf-leading-normal);
+}
+
+.specTable tr {
+  border-top: var(--sf-hairline);
+}
+
+.specTable tr:last-child {
+  border-bottom: var(--sf-hairline);
+}
+
+.specTable th,
+.specTable td {
+  padding: var(--sf-space-3) 0;
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.specTable th {
+  width: 40%;
+  padding-right: var(--sf-space-6);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-text-muted);
 }
 
 .specTable td {
-  padding: var(--sf-space-3);
-  border-bottom: 1px solid var(--sf-color-border);
-  font-size: var(--sf-text-sm);
-}
-
-.specLabel {
-  color: var(--sf-color-text-muted);
-  width: 40%;
-}
-
-.specValue {
+  font-size: 0.9375rem; /* 15px */
   color: var(--sf-color-text);
-  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
 }
 
-@media (max-width: 980px) {
-  .descriptionTab {
-    grid-template-columns: minmax(0, 1fr);
-    gap: var(--sf-space-6);
-  }
+/* Tags: quiet sand chips (not links). */
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 26px;
+  padding: 2px var(--sf-space-3);
+  border-radius: var(--sf-radius-pill);
+  background-color: var(--sf-color-sand);
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text-muted);
+}
+
+/* ── The curated set: its sand panel is the rule on either side ─────────── */
+/* No padding of its own: the sections before and after it give it room. */
+.bundle {
+  padding-block: 0;
 }
 
 /* ── Skeleton (the page's layout in sand) ────────────────────────────────── */
