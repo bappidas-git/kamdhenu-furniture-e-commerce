@@ -1,36 +1,59 @@
+/* =============================================================================
+ * StarRating — five SVG stars sized by the `size` prop (the root's font-size)
+ * =============================================================================
+ * Each star is 1em square: an empty star in the control-boundary tone (3:1 on
+ * page, surface and sand) with the filled star in --sf-color-star clipped to
+ * the star's share of the rating on top of it. Tokens only.
+ * ========================================================================== */
+
 .stars {
   display: inline-flex;
+  flex: none;
   align-items: center;
-  gap: 1px;
+  gap: 0.08em;
   line-height: 1;
 }
 
-/* Each star stacks an empty base with a clipped filled overlay so half stars
-   render crisply at any size without extra assets. */
 .star {
   position: relative;
-  display: inline-block;
-  line-height: 1;
+  display: block;
+  flex: none;
+  width: 1em;
+  height: 1em;
 }
 
-.starBase {
+.empty,
+.filled {
+  display: block;
+  width: 1em;
+  height: 1em;
+  fill: currentColor;
+}
+
+.empty {
   color: var(--sf-color-border-strong);
 }
 
-.starFull,
-.starHalf {
+/* The filled star keeps its full 1em width inside a clipping box as wide as
+   the star's share of the rating. */
+.fill {
   position: absolute;
-  top: 0;
-  left: 0;
+  inset: 0 auto 0 0;
   overflow: hidden;
+}
+
+.filled {
   color: var(--sf-color-star);
-  white-space: nowrap;
 }
 
-.starFull {
-  width: 100%;
-}
+/* Windows contrast themes force one text colour on both layers; keep filled
+   and empty stars apart with system colours. */
+@media (forced-colors: active) {
+  .empty {
+    color: GrayText;
+  }
 
-.starHalf {
-  width: 50%;
+  .filled {
+    color: CanvasText;
+  }
 }

@@ -321,11 +321,11 @@ test("a card's quick add sends the built cart item, quantity 1; the heart toggle
   await renderHome();
   const rail = screen.getByRole("group", { name: HOME_SECTIONS.featured.railLabel });
   const [first, second] = within(rail).getAllByRole("listitem");
-  fireEvent.click(within(first).getByRole("button", { name: "Add to Cart" }));
+  fireEvent.click(within(first).getByRole("button", { name: `Add ${FEATURED[0].name} to cart` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(FEATURED[0]), 1);
 
   expect(within(second).getByRole("button", { name: "Remove from wishlist" })).toBeInTheDocument();
-  fireEvent.click(within(first).getByRole("button", { name: "Add to wishlist" }));
+  fireEvent.click(within(first).getByRole("button", { name: "Save to wishlist" }));
   expect(toggleWishlist).toHaveBeenCalledWith(FEATURED[0]);
 });
 
@@ -395,9 +395,8 @@ test("without the anchor's slug, the first featured product with a bundle anchor
     ...productsFor(fallback.relatedProductIds),
   ].slice(0, 4);
   const cards = within(band).getAllByRole("listitem");
-  expect(cards.map((li) => within(li).getAllByRole("link")[1].textContent)).toEqual(
-    expected.map((p) => p.name)
-  );
+  expect(cards).toHaveLength(expected.length);
+  expected.forEach((p, i) => expect(within(cards[i]).getByRole("link", { name: p.name })).toBeInTheDocument());
 });
 
 test("is hidden with fewer than two companions", async () => {

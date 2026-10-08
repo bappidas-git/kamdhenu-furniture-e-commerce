@@ -158,9 +158,15 @@ const hex = (c) =>
   "#" + [c.r, c.g, c.b].map((x) => Math.round(x).toString(16).padStart(2, "0")).join("");
 
 // A layer is a token name, a literal colour, or an array [top, ..., bottom]
-// that is composited bottom-up (the bottom layer must be opaque).
+// that is composited bottom-up (the bottom layer must be opaque). "--token@0.9"
+// is the token drawn at 90% opacity (a fill under an `opacity`, e.g. the
+// product card's controls over photography).
 function layer(spec, map) {
-  const one = (s) => parseColor(s.startsWith("--") ? map[s] : s);
+  const one = (s) => {
+    const [name, alpha] = s.split("@");
+    const c = parseColor(name.startsWith("--") ? map[name] : name);
+    return alpha === undefined ? c : { ...c, a: c.a * parseFloat(alpha) };
+  };
   if (!Array.isArray(spec)) return one(spec);
   const stack = spec.map(one);
   let acc = stack[stack.length - 1];
@@ -240,6 +246,18 @@ const PAIRS = [
   ["Review slide: stars (ink) on sand (graphic)", "--sf-color-text", SAND, LARGE],
   ["Review slide: empty star (border-strong) on sand (graphic)", "--sf-color-border-strong", SAND, LARGE],
   ["Review slide: verified mark (success) on sand", "--sf-color-success", SAND, AA],
+  // Product card (Prompt 13): the heart / "+" discs and the quick-add bar are
+  // the page tone at 93% over the photograph; worst cases are a pure-black and
+  // a pure-white photograph. The caramel is the saved heart and the focus ring.
+  ["Card control text and glyphs on the page tone at 93% over a black photo", "--sf-color-text", ["--sf-color-bg@0.93", "#000000"], AA],
+  ["Card control text and glyphs on the page tone at 93% over a white photo", "--sf-color-text", ["--sf-color-bg@0.93", "#ffffff"], AA],
+  ["Card saved heart and bar focus ring (accent) on the 93% fill over a black photo", "--sf-color-accent", ["--sf-color-bg@0.93", "#000000"], LARGE],
+  ["Card saved heart and bar focus ring (accent) on the 93% fill over a white photo", "--sf-color-accent", ["--sf-color-bg@0.93", "#ffffff"], LARGE],
+  // The discs' focus ring is the caramel ring inside a page-tone ring.
+  ["Card disc focus ring (accent) on a black photo", "--sf-color-focus", "#000000", LARGE],
+  ["Card disc focus ring (accent) against its page-tone outer ring", "--sf-color-focus", "--sf-color-bg", LARGE],
+  ["Card stars (ink) on sand (graphic)", "--sf-color-text", SAND, LARGE],
+  ["Card empty star (border-strong) on page (graphic)", "--sf-color-border-strong", "--sf-color-bg", LARGE],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -263,11 +281,21 @@ const PAIRS_FIXED = [
   ["Hero: focus ring on scrim over white photo", "--sf-color-on-dark-accent", ["--sf-color-scrim", "#ffffff"], LARGE],
   // Home hero (Prompt 10): the paper-ghost CTA's 1px border is its boundary.
   ["Hero: paper-ghost CTA border (on-dark) on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], LARGE],
+  // Product card (Prompt 13): the Sale / New / Sold out chips over photography.
+  ["Card chip: brand paper on brand ink", "--sf-brand-paper", "--sf-brand-ink", AA],
 ];
 
 // Light mode only: the inline PLACEHOLDER_IMG SVG cannot read CSS variables.
 const PAIRS_LIGHT_ONLY = [
   ["Placeholder image text (muted on sand)", "--sf-color-text-muted", "--sf-color-sand", AA],
+  // Prompt 13: on a white photograph the caramel ring carries the card disc's
+  // focus in light mode, and its page-tone outer ring does in dark mode.
+  ["Card disc focus ring (accent) on a white photo", "--sf-color-focus", "#ffffff", LARGE],
+];
+
+// Dark mode only.
+const PAIRS_DARK_ONLY = [
+  ["Card disc focus ring's page-tone outer ring on a white photo", "--sf-color-bg", "#ffffff", LARGE],
 ];
 
 // Informational (no minimum): decorative hairlines.
@@ -286,6 +314,13 @@ const INFO = [
   // star stands from an empty one on the sand
   ["Review slide: gold star on sand (not used)", "--sf-color-star", SAND],
   ["Review slide: filled star (ink) vs empty star (border-strong) on sand", "--sf-color-text", ["--sf-color-border-strong", ...SAND]],
+  // Prompt 13: the card's page-tone keyline against the home page's sand band
+  // (it separates a sand photograph from the band; on the page it vanishes),
+  // why the fills are 93% rather than the brief's 90% / 92%, and the disabled
+  // "Sold out" bar (inactive controls are exempt from 1.4.3).
+  ["Card keyline (page tone) vs the sand band", "--sf-color-bg", ["--sf-color-sand", "--sf-color-bg"]],
+  ["Card saved heart (accent) on the page tone at 90% over a black photo (not used)", "--sf-color-accent", ["--sf-color-bg@0.9", "#000000"]],
+  ["Card disabled bar text (muted) on the 93% fill over a black photo", "--sf-color-text-muted", ["--sf-color-bg@0.93", "#000000"]],
 ];
 
 // ---------------------------------------------------------------------------
@@ -313,6 +348,9 @@ PAIRS_FIXED.forEach(([label, fg, bg, min]) => {
 });
 PAIRS_LIGHT_ONLY.forEach(([label, fg, bg, min]) => {
   rows.push([label, cell(evaluate(fg, bg, light), min), "n/a", min]);
+});
+PAIRS_DARK_ONLY.forEach(([label, fg, bg, min]) => {
+  rows.push([label, "n/a", cell(evaluate(fg, bg, dark), min), min]);
 });
 INFO.forEach(([label, fg, bg]) => {
   rows.push([label, cell(evaluate(fg, bg, light), null), cell(evaluate(fg, bg, dark), null), null]);

@@ -1164,3 +1164,91 @@ import { Marquee } from "../../components/ui";
 | Review slide: filled star (ink) vs empty star (border-strong) on sand | 4.58 | 3.83 | info |
 
 Every other pairing in this half is already in §14 and §16.8: ink, secondary and muted text on page and sand (the slides' product links are ink), accent-text on the page (the step numerals), the accent underline and the focus ring on sand, the control border on the page (the hollow dots), and the on-dark tokens, paper buttons and caramel ring on navy.
+
+---
+
+## 23. Product card, price block and stars
+
+Written by Prompt 13. Files: `src/components/storefront/ProductCard.js` (+ the `ProductCardSkeleton` export) + `.module.css`, `PriceBlock.js` + `.module.css`, `StarRating.js` + `.module.css`. All four are exported from `src/components/storefront`.
+
+### 23.1 `ProductCard`
+
+```jsx
+import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
+
+<ProductCard
+  product={product}                                   // required (a wishlist snapshot works as { ...item, id: item.productId, images: [item.image] })
+  onAddToCart={(cartItem) => addToCart(cartItem, 1)}  // omit to hide the quick add
+  onToggleWishlist={toggleWishlist}                   // omit to hide the heart
+  isWishlisted={isInWishlist(product.id)}
+  showAddToCart                                       // default true
+/>
+```
+
+The props are the pre-Prompt 13 props, unchanged. The card makes no API calls. Its quick add hands the page's handler `buildCartItem(product)`: the cheapest variant, line id `productId-variantId`, so it merges with a product-page add of the same variant.
+
+| Part | Spec |
+|---|---|
+| Root | `<article aria-labelledby>` (named by the product name); no border, shadow or fill; `isolation: isolate` keeps the overlay's z-index inside it |
+| Link | one router `Link` to `productPath(product)` around the image frame, the brand and the name. It is named by the name (`aria-labelledby`) and described by the brand (`aria-describedby`); focus is `--sf-shadow-focus` around the image and titles. No control is nested in it: the chips and buttons sit in a sibling layer laid over the frame (same width, 4:5), which lets clicks through to the image |
+| Image frame | 4:5 (`aspect-ratio`), sand while loading, radius sm, `object-fit: cover`. The `img` has alt = name, `width="1200" height="1500"`, `loading="lazy"`, `decoding="async"` and `onImageError` (the placeholder) |
+| Keyline | a 1px inset line in `--sf-color-bg` over the image edge, always on. It cannot be seen on the page, but where a card sits on another tone (the home page's sand band) it keeps a sand photograph, or the sand placeholder, from dissolving into the background |
+| Titles | 12px below the frame. Brand eyebrow: sans 11px, 500, 0.16em, uppercase, muted; one line with an ellipsis; omitted when empty. Name: Playfair 18px / 1.25, ink, `-webkit-line-clamp: 2` (only a name over 100 characters is also cut in the markup, with `truncateText`) |
+| Rating row | only when `totalReviews > 0`: 12px stars in ink and "(12)" in muted 12px; one accessible image, "Rated 4.5 out of 5, 12 reviews" (the visible count is `aria-hidden`) |
+| Price | `PriceBlock size="sm" showSavings={false}` (23.3) |
+| Chips | stacked at the image's top-left: "Sold out" (`stock === 0`), "Sale" (a real compare-at price: `getProductMinPrice(product).discount > 0`), "New" (`hot`), in that priority, two at most. `.sf-badge` at 10px, brand paper on brand ink in both modes (16.25 : 1) |
+| Wishlist | a 36px hairline disc at the top-right (a 44px target through `::after`): the page tone at 93% behind an ink outline heart, filled with the accent when saved; `aria-pressed`, "Save to wishlist" / "Remove from wishlist"; on hover the outline turns caramel |
+| Quick add, touch (the base layout) | a persistent 44px "+" disc at the image's bottom-right (the heart's disc), `aria-label="Add <name> to cart"`; a check for 1.2s after a tap |
+| Quick add, `(hover: hover)` | a 44px bar along the image's bottom edge: the page tone at 93%, "Add to cart" in ink (sans 14px, 500). It slides up (`--sf-duration`, `--sf-ease-out`) on card hover and on keyboard focus inside the card (`--qa`); focus left behind by a click does not keep it up once the pointer leaves (`:has(:focus-visible)`). Hover inverts it to `--sf-color-primary` with `--sf-color-primary-contrast` text; it reads "Added" for 1.2s after a click |
+| Sold out | the image at 60%; the quick add disabled and labelled "Sold out" (bar text muted, the disc at 50%) |
+| Hover, `(hover: hover)` | the image scales to 1.03 over `--sf-duration-slow` (`--sf-ease-out`); the second photograph (`images[1]`) fades in over it once loaded (mounted on the first mouse or pen hover, never on touch: lazy, `aria-hidden`, empty alt); the stone hairline appears around the image (opacity); the name's underline turns caramel while the link is hovered |
+| Focus | link: `--sf-shadow-focus`. Discs: the caramel ring inside a 2px page-tone ring (`0 0 0 2px focus, 0 0 0 4px bg`), so one of the two stands out on any photograph. Bar: a 2px inset caramel outline (an inset box-shadow would sit under its fill) |
+| Reduced motion | no scale and no slide; the bar appears by opacity; durations collapse to 0.01ms |
+| Forced colours | the chips and the bar carry a transparent outline the system draws; stars use `CanvasText` / `GrayText` |
+| Insets | 8px; 12px from 1024px |
+
+A card costs three tab stops (link, heart, quick add). With its View all, previous and next, an eight-card rail now costs 27 stops (35 before).
+
+**Over photography**, the controls use the page tone (`--sf-color-bg`, paper or navy-ink) at 93% opacity with text-tone glyphs. 93% is the least that keeps the caramel heart and the bar's focus ring at 3 : 1 on the fill over any photograph, from pure black to pure white, in both modes. The chips are a fixed ink-and-paper pairing, like any label on photography.
+
+### 23.2 `ProductCardSkeleton`
+
+`<ProductCardSkeleton className? />` is `aria-hidden`. It draws the 4:5 `.sf-skeleton--image` and three bars (brand, name, price) set in the line boxes of a card with a brand and a two-line name, so it is exactly that card's height at every width (measured equal at 360, 768, 1024 and 1440px). A card with a rating row is 20px taller; one without a brand is 20.5px shorter. Put `aria-busy` on the loading region.
+
+### 23.3 `PriceBlock`
+
+| Prop | Default | Notes |
+|---|---|---|
+| `price` | 0 | current price |
+| `comparePrice` | 0 | struck through only when higher than `price` (and `price` > 0) |
+| `currency` | `"INR"` | via `formatCurrency` |
+| `size` | `"lg"` | price / compare: sm 15 / 13px · md 18 / 15px · lg 24 / 16px |
+| `showSavings` | `size === "lg"` | the saving, in accent-text: "Save 12%" at sm and md (nothing when it rounds to 0%), "Save ₹400.00" at lg |
+| `taxNote` | — | a muted 12px line |
+
+All sans: the current price in ink at 500, the compare-at price muted with a 1px strike and a visually hidden "Was" before it. Figures are tabular and never break inside; the row wraps between them. The old inline "12% off" is gone; the opt-in saving replaces it.
+
+### 23.4 `StarRating`
+
+The props are unchanged: `rating` (0–5, clamped), `size` (px, default 18), `label`. It draws five inline SVG stars, each 1em (the root's font-size is `size`), 0.08em apart. Empty stars use `--sf-color-border-strong`; filled stars use `--sf-color-star`, each filled by exactly its share of the rating (4.3 fills four stars and 30% of the fifth). It is one `role="img"` named "Rated 4.3 out of 5", or `label`. To recolour the stars, set `--sf-color-star` on a parent: the card and the home review slides use ink.
+
+### 23.5 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Card control text and glyphs on the page tone at 93% over a black photo | 13.91 ✓ | 16.13 ✓ | 4.5:1 |
+| Card control text and glyphs on the page tone at 93% over a white photo | 16.32 ✓ | 13.40 ✓ | 4.5:1 |
+| Card saved heart and bar focus ring (accent) on the 93% fill over a black photo | 3.06 ✓ | 9.49 ✓ | 3:1 |
+| Card saved heart and bar focus ring (accent) on the 93% fill over a white photo | 3.59 ✓ | 7.89 ✓ | 3:1 |
+| Card disc focus ring (accent) on a black photo | 5.51 ✓ | 10.70 ✓ | 3:1 |
+| Card disc focus ring (accent) against its page-tone outer ring | 3.57 ✓ | 9.38 ✓ | 3:1 |
+| Card disc focus ring (accent) on a white photo | 3.81 ✓ | n/a | 3:1 |
+| Card disc focus ring's page-tone outer ring on a white photo | n/a | 18.41 ✓ | 3:1 |
+| Card stars (ink) on sand (graphic) | 14.64 ✓ | 12.52 ✓ | 3:1 |
+| Card empty star (border-strong) on page (graphic) | 3.54 ✓ | 3.45 ✓ | 3:1 |
+| Card chip: brand paper on brand ink (both modes) | 16.25 ✓ | 16.25 ✓ | 4.5:1 |
+| Card keyline (page tone) vs the sand band | 1.11 | 1.14 | info |
+| Card saved heart (accent) on the page tone at 90% over a black photo (not used) | 2.85 | 9.54 | info |
+| Card disabled bar text (muted) on the 93% fill over a black photo | 4.89 | 6.72 | info |
+
+`scripts/check-contrast.js` gained two things for these rows: a `"--token@0.93"` layer (a token drawn at an opacity) and a `PAIRS_DARK_ONLY` list. Every other card pairing is already in §14: ink and muted text on page, surface and sand, the focus ring on the page, and primary-contrast on primary (the bar's hover).

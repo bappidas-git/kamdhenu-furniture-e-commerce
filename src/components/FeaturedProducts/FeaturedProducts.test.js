@@ -101,13 +101,13 @@ test("renders the storefront ProductCard wired to the page's handlers", () => {
   renderFeatured({ onAddToCart, onToggleWishlist, isInWishlist });
   const items = screen.getAllByRole("listitem");
 
-  // The card's image and its name both link to the product.
+  // One link per card (its image and name) leads to the product.
   within(items[0])
     .getAllByRole("link", { name: "Featured 1" })
     .forEach((link) => expect(link).toHaveAttribute("href", "/products/featured-1"));
-  fireEvent.click(within(items[1]).getByRole("button", { name: "Add to Cart" }));
+  fireEvent.click(within(items[1]).getByRole("button", { name: "Add Featured 2 to cart" }));
   expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[1]));
-  fireEvent.click(within(items[0]).getByRole("button", { name: "Add to wishlist" }));
+  fireEvent.click(within(items[0]).getByRole("button", { name: "Save to wishlist" }));
   expect(onToggleWishlist).toHaveBeenCalledWith(PRODUCTS[0]);
   expect(within(items[2]).getByRole("button", { name: "Remove from wishlist" })).toBeInTheDocument();
 });

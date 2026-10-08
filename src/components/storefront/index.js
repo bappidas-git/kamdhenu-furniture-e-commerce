@@ -15,7 +15,7 @@ export { default as TrustBadges } from "./TrustBadges";
 export { default as ProductGallery } from "./ProductGallery";
 export { default as DeliveryReturnsInfo } from "./DeliveryReturnsInfo";
 export { default as AddToCartBar } from "./AddToCartBar";
-export { default as ProductCard } from "./ProductCard";
+export { default as ProductCard, ProductCardSkeleton } from "./ProductCard";
 export { default as ProductRail } from "./ProductRail";
 export { default as RelatedProducts } from "./RelatedProducts";
 export { default as FrequentlyBoughtTogether } from "./FrequentlyBoughtTogether";
