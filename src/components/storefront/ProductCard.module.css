@@ -1,148 +1,487 @@
-.card {
-  display: flex;
-  flex-direction: column;
-  background: var(--sf-color-surface);
-  border: 1px solid var(--sf-color-border);
-  border-radius: var(--sf-radius-lg);
-  overflow: hidden;
-  transition: transform var(--sf-transition-fast), box-shadow var(--sf-transition-fast),
-    border-color var(--sf-transition-fast);
-  height: 100%;
+/* =============================================================================
+ * ProductCard — the storefront's signature card (Prompt 13)
+ * =============================================================================
+ * Image-forward and quiet: no border, shadow or fill at rest. A 4:5 frame
+ * (sand while the photograph loads), then 12px below it the brand eyebrow,
+ * the serif name (two lines at most), the rating row and the price.
+ *
+ * One link (.link) wraps the frame and the titles. The chips, the wishlist
+ * toggle and the quick add live in .overlay, a sibling layer laid exactly
+ * over the frame (same width, same 4:5 ratio), so no control is nested in the
+ * link; the layer lets clicks through to the image except on its buttons.
+ *
+ * The base rules are the touch layout (a persistent 44px "+" circle), so a
+ * browser without the hover media feature still gets a working button.
+ * (hover: hover) turns the quick add into the "Add to cart" bar, revealed by
+ * --qa (0 hidden, 1 shown): on hover, and on keyboard focus inside the card.
+ * Over the photograph the controls are page-tone discs and a bar (paper /
+ * navy-ink at 93%) with text-tone glyphs, so the caramel heart and focus ring
+ * keep their contrast in both modes; the chips are a fixed ink-and-paper
+ * pairing, like any label on photography. A page-tone keyline keeps the image
+ * edge where a card sits on sand, and the stars are drawn in ink.
+ *
+ * Reduced motion: no scale and no slide, opacity changes only (instant, as the
+ * duration tokens collapse). Tokens only.
+ * ========================================================================== */
+
+/* Shared metrics: the skeleton reproduces the card's box from them. */
+.card,
+.skeleton {
+  --card-inset: var(--sf-space-2);
+  --card-brand-line: calc(var(--sf-text-2xs) * var(--sf-leading-normal)); /* 16.5px */
+  --card-name-size: 1.125rem; /* 18px */
+  --card-name-line: calc(var(--card-name-size) * var(--sf-leading-tight)); /* 22.5px */
+  --card-price-line: calc(0.9375rem * var(--sf-leading-tight)); /* PriceBlock "sm": 18.75px */
 }
 
-.card:hover {
-  transform: translateY(-4px);
-  box-shadow: var(--sf-shadow-md);
-  border-color: var(--sf-color-border-strong);
+@media (min-width: 1024px) {
+  .card {
+    --card-inset: var(--sf-space-3);
+  }
+}
+
+/* isolation keeps the overlay's z-index inside the card. */
+.card {
+  position: relative;
+  isolation: isolate;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  color: var(--sf-color-text);
+}
+
+/* ── The link: image and titles ───────────────────────────────────────── */
+
+.link {
+  display: block;
+  border-radius: var(--sf-radius-sm);
+  color: inherit;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.link:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+.frame {
+  position: relative;
+  display: block;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+
+/* Two lines over the photograph's edge. ::before, always on, is a keyline in
+   the page tone: on the page it cannot be seen, but where a card sits on
+   another tone (the home page's sand band) it keeps a sand-toned photograph,
+   or the sand placeholder, from dissolving into the background. ::after is
+   the hairline that appears on hover. */
+.frame::before,
+.frame::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.frame::before {
+  box-shadow: inset 0 0 0 1px var(--sf-color-bg);
+}
+
+.frame::after {
+  border: var(--sf-hairline);
+  opacity: 0;
+  transition: opacity var(--sf-duration) var(--sf-ease-out);
 }
 
 .media {
-  position: relative;
-  display: block;
-  aspect-ratio: 1 / 1;
-  background: var(--sf-color-surface-2);
+  position: absolute;
+  inset: 0;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
-.media img {
+.image {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  display: block;
 }
 
-.discountBadge {
+/* The second photograph: fades in over the first once it has loaded. */
+.alternate {
   position: absolute;
-  top: var(--sf-space-2);
-  left: var(--sf-space-2);
-  background: var(--sf-color-danger);
-  color: var(--sf-color-primary-contrast);
+  inset: 0;
+  opacity: 0;
+  transition: opacity var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+.soldOut .media {
+  opacity: 0.6;
+}
+
+.titles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-1);
+  padding-top: var(--sf-space-3);
+}
+
+.brand {
+  overflow: hidden;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--card-brand-line);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--sf-color-text-muted);
+}
+
+/* Two lines at most; the underline turns caramel when the link is hovered. */
+.name {
+  display: -webkit-box;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  font-family: var(--sf-font-display);
+  font-size: var(--card-name-size);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--card-name-line);
+  color: var(--sf-color-text);
+  overflow-wrap: anywhere;
+  text-decoration-line: underline;
+  text-decoration-color: transparent;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+/* ── Rating and price ─────────────────────────────────────────────────── */
+
+.meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-2);
+  margin-top: var(--sf-space-2);
+}
+
+/* Stars in ink: a card sits on paper, surface or sand, and the gold star
+   falls below 3 : 1 on sand (DESIGN_SYSTEM §4); StarRating reads the token. */
+.rating {
+  --sf-color-star: var(--sf-color-text);
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+}
+
+.ratingCount {
   font-size: var(--sf-text-xs);
-  font-weight: var(--sf-font-bold);
-  padding: 3px 8px;
-  border-radius: var(--sf-radius-pill);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-color-text-muted);
 }
 
-.wishlist {
+/* ── Over the image: chips, wishlist, quick add ───────────────────────── */
+
+.overlay {
   position: absolute;
-  top: var(--sf-space-2);
-  right: var(--sf-space-2);
+  top: 0;
+  left: 0;
+  z-index: 1;
+  width: 100%;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  pointer-events: none;
+}
+
+.chips {
+  position: absolute;
+  top: var(--card-inset);
+  left: var(--card-inset);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--sf-space-1);
+  /* Clear of the wishlist disc on the narrowest cards. */
+  max-width: calc(100% - 36px - 3 * var(--card-inset));
+}
+
+/* .sf-badge at 10px: brand paper on brand ink in both modes, like any label
+   on photography (16.25 : 1). */
+.chip {
+  --sf-badge-bg: var(--sf-brand-ink);
+  --sf-badge-fg: var(--sf-brand-paper);
+  min-height: 20px;
+  padding-block: var(--sf-space-1);
+  font-size: 0.625rem; /* 10px */
+  white-space: normal;
+  outline: 1px solid transparent; /* an edge in forced colours */
+}
+
+/* Shared by the heart disc and the touch "+" disc: a hairline circle over a
+   page-tone fill at 93%, the least that keeps the caramel heart and the
+   caramel focus ring at 3 : 1 on the fill over any photograph, black to
+   white, in both modes (scripts/check-contrast.js). */
+.wishlist,
+.quickAdd {
+  position: absolute;
+  isolation: isolate;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 34px;
-  height: 34px;
-  border: none;
-  border-radius: var(--sf-radius-pill);
-  background: var(--sf-color-surface);
-  color: var(--sf-color-text-muted);
-  box-shadow: var(--sf-shadow-sm);
+  padding: 0;
+  border: var(--sf-hairline);
+  border-radius: 50%;
+  background: none;
+  color: var(--sf-color-text);
   cursor: pointer;
-  transition: color var(--sf-transition-fast), transform var(--sf-transition-fast);
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.wishlist:hover {
-  transform: scale(1.08);
-  color: var(--sf-color-accent);
+.wishlist::before,
+.quickAdd::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: -1;
+  border-radius: inherit;
+  background-color: var(--sf-color-bg);
+  opacity: 0.93;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    opacity var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-.wishlist:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
+/* Over a photograph the halo can vanish (caramel on a white photo in dark
+   mode), so the discs' ring is the caramel ring inside a page-tone ring: on
+   any photograph one of the two stands out. */
+.wishlist:focus-visible,
+.quickAdd:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: 0 0 0 2px var(--sf-color-focus), 0 0 0 4px var(--sf-color-bg);
+}
+
+/* Wishlist: a 36px disc top-right, inside a 44px target. */
+.wishlist {
+  top: var(--card-inset);
+  right: var(--card-inset);
+  width: 36px;
+  height: 36px;
+}
+
+.wishlist::after {
+  content: "";
+  position: absolute;
+  inset: -5px;
+  border-radius: 50%;
+}
+
+.wishlist svg {
+  display: block;
+  width: 18px;
+  height: 18px;
 }
 
 .wishlisted {
   color: var(--sf-color-accent);
 }
 
-.body {
-  display: flex;
-  flex-direction: column;
-  gap: var(--sf-space-2);
-  padding: var(--sf-space-3);
-  flex: 1;
-}
-
-.brand {
-  font-size: var(--sf-text-xs);
-  color: var(--sf-color-text-muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-.name {
+/* Quick add, touch layout: a persistent 44px "+" disc at the bottom-right. */
+.quickAdd {
+  right: var(--card-inset);
+  bottom: var(--card-inset);
+  width: var(--sf-tap-target);
+  height: var(--sf-tap-target);
+  font-family: var(--sf-font-sans);
   font-size: var(--sf-text-sm);
   font-weight: var(--sf-font-medium);
-  color: var(--sf-color-text);
-  text-decoration: none;
-  line-height: var(--sf-leading-tight);
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+  line-height: 1;
+  letter-spacing: var(--sf-tracking-button);
+  white-space: nowrap;
+  outline: 1px solid transparent; /* an edge in forced colours */
+  outline-offset: -1px;
 }
 
-.name:hover {
-  color: var(--sf-color-primary);
+.quickAdd:active:not(:disabled)::before {
+  opacity: 1;
 }
 
-.rating {
-  display: inline-flex;
-  align-items: center;
-  gap: var(--sf-space-1);
-}
-
-.ratingCount {
-  font-size: var(--sf-text-xs);
-  color: var(--sf-color-text-muted);
-}
-
-.addBtn {
-  margin-top: auto;
-  min-height: var(--sf-tap-target);
-  border: 1px solid var(--sf-color-primary);
-  border-radius: var(--sf-radius-md);
-  background: var(--sf-color-primary-soft);
-  color: var(--sf-color-primary);
-  font-weight: var(--sf-font-semibold);
-  font-size: var(--sf-text-sm);
-  cursor: pointer;
-  transition: background var(--sf-transition-fast), color var(--sf-transition-fast);
-}
-
-.addBtn:hover:not(:disabled) {
-  background: var(--sf-color-primary);
-  color: var(--sf-color-primary-contrast);
-}
-
-.addBtn:focus-visible {
-  outline: none;
-  box-shadow: var(--sf-shadow-focus);
-}
-
-.addBtn:disabled {
-  opacity: 0.5;
+.quickAdd:disabled {
   cursor: not-allowed;
-  border-color: var(--sf-color-border-strong);
-  background: var(--sf-color-surface-2);
-  color: var(--sf-color-text-muted);
+}
+
+.quickAddLabel {
+  display: none;
+}
+
+.quickAddIcon {
+  display: inline-flex;
+}
+
+.quickAddIcon svg {
+  display: block;
+  width: 20px;
+  height: 20px;
+}
+
+.quickAdd:disabled .quickAddIcon {
+  opacity: 0.5;
+}
+
+/* ── Pointer devices ──────────────────────────────────────────────────── */
+
+@media (hover: hover) {
+  .card {
+    --qa: 0;
+  }
+
+  .card:hover,
+  .card:focus-within {
+    --qa: 1;
+  }
+
+  .card:hover .frame::after {
+    opacity: 1;
+  }
+
+  .card:hover .alternateReady {
+    opacity: 1;
+  }
+
+  .link:hover .name {
+    text-decoration-color: var(--sf-color-accent);
+  }
+
+  .wishlist:hover {
+    color: var(--sf-color-accent);
+  }
+
+  /* The quick add becomes a 44px bar along the image's bottom edge that
+     slides up when --qa is 1. */
+  .quickAdd {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: auto;
+    padding: 0 var(--sf-space-4);
+    border: 0;
+    border-radius: 0;
+    transform: translateY(calc((1 - var(--qa)) * 100%));
+    transition: transform var(--sf-duration) var(--sf-ease-out),
+      opacity var(--sf-duration) var(--sf-ease-out), color var(--sf-duration-fast) var(--sf-ease-out);
+  }
+
+  .quickAdd::before {
+    inset: 0;
+  }
+
+  .quickAddLabel {
+    display: inline;
+  }
+
+  .quickAddIcon {
+    display: none;
+  }
+
+  /* Hover inverts the bar: ink with paper text (off-white with navy-ink in
+     dark mode), the primary button's pairing. */
+  .quickAdd:hover:not(:disabled) {
+    color: var(--sf-color-primary-contrast);
+  }
+
+  .quickAdd:hover:not(:disabled)::before {
+    background-color: var(--sf-color-primary);
+    opacity: 1;
+  }
+
+  .quickAdd:disabled {
+    color: var(--sf-color-text-muted);
+  }
+
+  /* The bar runs edge to edge inside the clipped layer, so its ring is an
+     inset outline (an inset box-shadow would sit under the ::before fill). */
+  .quickAdd:focus-visible {
+    outline: 2px solid var(--sf-color-focus);
+    outline-offset: -2px;
+    box-shadow: none;
+  }
+}
+
+/* Focus a click leaves behind (on the heart or the bar) does not keep the bar
+   up once the pointer has left; keyboard focus does. */
+@supports selector(:has(:focus-visible)) {
+  @media (hover: hover) {
+    .card:focus-within:not(:hover):not(:has(:focus-visible)) {
+      --qa: 0;
+    }
+  }
+}
+
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .card:hover .media {
+    transform: scale(1.03);
+  }
+}
+
+/* Reduced motion: the bar appears and goes without moving. */
+@media (hover: hover) and (prefers-reduced-motion: reduce) {
+  .quickAdd {
+    transform: none;
+    opacity: var(--qa);
+  }
+}
+
+/* ── Skeleton ─────────────────────────────────────────────────────────── */
+/* The 4:5 block, then three bars in the line boxes of the brand, the first
+   of two name lines and the price: as tall as a card with a brand and a
+   two-line name (a rating row adds 20px). Flex, so no margins collapse. */
+
+.skeleton {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.skeletonBody {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding-top: var(--sf-space-3);
+}
+
+.skeletonLine {
+  flex: none;
+}
+
+.skeletonBrand {
+  width: 36%;
+  height: 8px;
+  margin-top: calc((var(--card-brand-line) - 8px) / 2);
+  margin-bottom: calc((var(--card-brand-line) - 8px) / 2 + var(--sf-space-1));
+}
+
+.skeletonName {
+  width: 82%;
+  height: 14px;
+  margin-top: calc((var(--card-name-line) - 14px) / 2);
+  margin-bottom: calc((var(--card-name-line) - 14px) / 2 + var(--card-name-line));
+}
+
+.skeletonPrice {
+  width: 44%;
+  height: 10px;
+  margin-top: calc(var(--sf-space-2) + (var(--card-price-line) - 10px) / 2);
+  margin-bottom: calc((var(--card-price-line) - 10px) / 2);
 }

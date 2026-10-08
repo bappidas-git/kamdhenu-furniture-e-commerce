@@ -7,7 +7,7 @@ import React, {
   useState,
 } from "react";
 import { useReducedMotion } from "framer-motion";
-import ProductCard from "./ProductCard";
+import ProductCard, { ProductCardSkeleton } from "./ProductCard";
 import styles from "./ProductRail.module.css";
 
 // =============================================================================
@@ -33,7 +33,7 @@ import styles from "./ProductRail.module.css";
 //   products          array   the products to show
 //   label             string  accessible name of the carousel
 //   labelledBy        string  id of a visible element naming it (instead of label)
-//   loading           boolean skeleton cards while the products load
+//   loading           boolean ProductCardSkeletons while the products load
 //   skeletonCount     number  default 4 (6 when compact)
 //   compact           boolean smaller cards, more per view
 //   onAddToCart       fn      (cartItem) => void   } passed to each ProductCard
@@ -169,12 +169,7 @@ const ProductRail = ({
         {loading
           ? Array.from({ length: count }, (_, index) => (
               <li key={index} className={styles.item} aria-hidden="true">
-                <span className="sf-skeleton sf-skeleton--image" />
-                <span className={styles.skeletonText}>
-                  <span className="sf-skeleton sf-skeleton--text" />
-                  <span className="sf-skeleton sf-skeleton--text" />
-                  <span className="sf-skeleton sf-skeleton--text" />
-                </span>
+                <ProductCardSkeleton />
               </li>
             ))
           : items.map((product, index) => (

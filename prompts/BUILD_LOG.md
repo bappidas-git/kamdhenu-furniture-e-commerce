@@ -1647,3 +1647,145 @@ Removed from Home (component, `.why*` rules, imports). **Kept in `src/utils/cons
 - **Brand names shown:** Carlton, Nilkamal and Winsome appear on the home page as brands carried (as in the catalogue data); confirm they may be named.
 - **Press / client logos:** whether any exist, and where their names, logos and permissions would come from (they need a data source before the slot can show anything).
 - **Photography:** three 4:5 photographs (1200 × 1500 or larger) for the promise steps: ordering, delivery, a furnished room.
+
+---
+
+## Prompt 13 — Product card
+
+**Date:** 2026-10-08. **Result:** the storefront's one product card is now image-forward and quiet. It shows a 4:5 photograph with no border, shadow or fill at rest, a brand eyebrow, the name in the display serif, the rating row only when there are real reviews, and a quiet sans price. It has data-only chips and a 36px wishlist disc. On pointer devices a hover scales the photograph, crossfades to the second one, draws a hairline and slides up an "Add to cart" bar; touch devices get a persistent "+" disc. Props, the `buildCartItem` payload, slug links and the honesty rules are unchanged, and every consumer renders the new card without changes. `PriceBlock` and `StarRating` were redesigned with it, and `ProductCardSkeleton` is exported for pages to show while loading. Reference: `prompts/DESIGN_SYSTEM.md` §23.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/storefront/ProductCard.js` + `.module.css` | Rewritten (DESIGN_SYSTEM §23.1). One `article` (`aria-labelledby` the name) holds one `Link` around the image frame, brand and name, plus a sibling overlay with the chips, the heart and the quick add. The second photograph, the "Added" state and the skeleton are new. Tokens only. |
+| `src/components/storefront/PriceBlock.js` + `.module.css` | Same props and defaults. Quiet sans figures (sm 15/13px, md 18/15px, lg 24/16px), a visually hidden "Was" before the struck price. The saving is opt-in as before (`showSavings`, default on lg) and now reads "Save 12%" (sm/md) or "Save ₹400.00" (lg); the inline "12% off" is gone. |
+| `src/components/storefront/StarRating.js` + `.module.css` | Same props and label. Inline SVG stars instead of the font's "★", each filled by its exact share of the rating; forced-colours rule. |
+| `src/components/storefront/index.js` | Also exports `ProductCardSkeleton`. |
+| `src/components/storefront/ProductRail.js` + `.module.css` | Follow-up requested after the PR went up: the loading branch renders `ProductCardSkeleton` in each `aria-hidden` list item, and the rail's own `.skeletonText` rule is gone (see "Follow-up" below). Nothing else in the rail changed. |
+| `scripts/check-contrast.js` | 11 card pairs and 3 informational rows; a `"--token@alpha"` layer syntax; the `PAIRS_DARK_ONLY` list its header already mentioned. |
+| New tests | `ProductCard.test.js` (22), `PriceBlock.test.js` (5), `StarRating.test.js` (5). |
+| Updated tests | `Home.test.js`, `FeaturedProducts.test.js`, `ProductRail.test.js`: the new labels ("Save to wishlist", "Add <name> to cart"), and one link per card instead of two. `ProductRail.test.js` also checks that each loading slot is `ProductCardSkeleton`. |
+| `prompts/DESIGN_SYSTEM.md` | New §23; §21.6 (the rail's loading state). |
+
+Nothing else changed. In particular the pages and components that render the card (`Home`, `FeaturedProducts`, `RelatedProducts`, `ProductDetails`), `helpers.js`, contexts, `api.js`, `db.json` (SHA-256 unchanged) and the admin are untouched; `ProductRail` changed only in its loading branch. `Products`, `SpecialOffers`, `Wishlist` and `SearchModal` still render their own private cards until Prompts 14, 19, 25 and 15 adopt this one.
+
+### The card
+
+- **Layout:** the 4:5 frame (sand while loading); 12px below it the brand eyebrow (omitted when empty), the name (two lines at most, CSS clamp), the rating row (`totalReviews > 0` only) and `PriceBlock size="sm" showSavings={false}`. The `img` has alt = name, `width="1200" height="1500"`, `loading="lazy"`, `decoding="async"` and `onImageError`.
+- **Chips** come from data alone: "Sold out" (`stock === 0`), "Sale" (`getProductMinPrice().discount > 0`, i.e. a real compare-at price; it replaces "12% OFF"), "New" (`hot`). They show in that priority, two at most, stacked top-left. Each is a 10px `.sf-badge` in brand paper on brand ink in both modes.
+- **Wishlist:** a 36px hairline disc top-right with a 44px target, `aria-pressed`, "Save to wishlist" / "Remove from wishlist", and a caramel fill when saved.
+- **Quick add:** `buildCartItem(product)` exactly as before. It reads "Added" for 1.2s (the disc shows a check). The cart toast and drawer still come from the page's handler and `CartContext`; the card adds no toast and no live region, and its accessible name stays "Add <name> to cart". A sold-out card disables it with "Sold out".
+- **Focus:** link, heart and quick add each show a ring (§23.1). Tab order per card: link, heart, quick add.
+
+### `ProductCardSkeleton`
+
+`import { ProductCardSkeleton } from "../../components/storefront";` renders `<ProductCardSkeleton className? />`. It is `aria-hidden` and draws the 4:5 image block plus three bars (brand, name, price) in the line boxes of a card with a brand and a two-line name. Measured in Chromium, its height equals that card's at 360, 768, 1024 and 1440px (272.41px at 360). A card with a rating row is 20px taller.
+
+### Hover and touch behaviour decisions
+
+- **The touch layout is the base CSS;** `(hover: hover)` upgrades it to the bar. A browser without the hover media feature keeps a working "+" button rather than a bar that never appears.
+- **One button, two presentations.** The quick add is a single `<button>` restyled by the media query. That keeps three tab stops per card (an eight-card rail drops from 35 stops to 27 including View all, previous and next) and one `aria-label` ("Add <name> to cart", as briefed for touch) in both modes.
+- **The bar is revealed by a custom property** (`--qa`): on card hover, and on keyboard focus inside the card, so keyboard users always see the control they are on. Under `@supports selector(:has(:focus-visible))`, focus left behind by a mouse click (on the heart or the bar) no longer keeps the bar up once the pointer leaves. Without `:has`, `:focus-within` still applies.
+- **The second photograph is mounted on the first mouse or pen hover,** not on render: "preload nothing" taken literally. No extra image request happens on touch devices or for cards never hovered. Once mounted it is a lazy `img` (`aria-hidden`, empty alt) that fades in only after its `onLoad`; a failed load removes it.
+- **Hover effects live under `(hover: hover)`,** so a tap never leaves a sticky hover. The scale is also under `(prefers-reduced-motion: no-preference)`. Under reduced motion the bar appears by opacity instead of sliding.
+
+### Decisions
+
+- **The brand sits inside the link,** between the image and the name, so the DOM order matches the visual stack. The link is named by the name only (`aria-labelledby`) and described by the brand (`aria-describedby`), so it is never announced as "Name Brand Name". The article is named by the name.
+- **Controls over photography use the page tone** (paper, or navy-ink in dark mode) with text-tone glyphs, so the caramel heart and focus ring contrast with their own fill in both modes. Chips are a fixed ink-and-paper pairing, the hero's rule for labels on photography (a light chip would vanish on a light photograph in dark mode).
+- **The bar's hover inverts it** to the primary pairing (ink with paper text; off-white with navy-ink in dark mode): a colour-only hover, like `.sf-btn--primary`.
+- **`PriceBlock` sizes:** sm is the briefed 15px; lg follows Prompt 16's brief ("sans 24px medium; compare struck muted; 'Save ₹X' in accent-text; tax note muted 12px"), so Prompt 16 can use it as is. The product page therefore already shows its price at 24px/500 with "Save ₹400.00" instead of 36px/600 with "12% off" and "You save ₹400.00". Home's "Complete the space" anchor (md) is 18px.
+- **`StarRating` fills each star by its exact share.** The old version drew any fraction as a half star, so 4.1 and 4.9 both looked like 4.5. `SocialProof`, `ReviewsSection` and the home review slides now show SVG stars with exact fills; their sizes and colours are unchanged.
+
+### Deviations from the prompt, and why
+
+1. **The fills over the photograph are 93%, not 90% (heart) / 92% (bar).** At 90%, the saved (caramel) heart measures 2.85 : 1 on its fill over a black photograph; at 92%, the bar's caramel focus ring measures 2.99 : 1. 93% is the least that keeps both at 3 : 1 over any photograph in both modes (`check-contrast.js`, §23.5). This follows the design system's own precedent of tuning the hero scrim to its worst case. The difference is not visible.
+2. **The discs' focus ring is the caramel ring inside a 2px page-tone ring,** not `--sf-shadow-focus`. In dark mode the caramel ring measures 1.96 : 1 over a white photograph; the navy-ink outer ring measures 18.41 : 1 there, and in light mode the caramel ring carries it (3.81 : 1). The link keeps `--sf-shadow-focus` (it sits on the page). The bar uses a 2px inset caramel outline, because its fill covers an inset box-shadow.
+3. **The card's stars are ink, not the gold `--sf-color-star`.** A card can sit on sand (home "Complete the space"), where gold measures 2.91 : 1 (§4: "On sand, show stars in ink"). The card cannot know its background, and ink passes everywhere (16.25 on paper, 14.64 on sand). The card sets `--sf-color-star` on its rating row only; the product page keeps gold.
+4. **An always-on page-tone keyline (1px, inset) over the image edge.** On Home's sand band the borderless sand placeholders dissolved into the band, leaving floating chips and hearts (screenshot-confirmed). The brief forbids touching the pages and asks that consumers render without changes, so the fix lives in the card: the line is the page colour, invisible on the page and visible on any other tone (1.11 : 1 on sand, enough to read as an edge with the placeholders). Prompt 11's handoff note asked for exactly this ("give their media a visible edge there").
+5. **The brand eyebrow is inside the card link** (the brief says the link wraps "only the image and name"), because it sits between them in the vertical stack. It is the link's description, not part of its name; the buttons stay outside.
+6. **"Added" is visual only.** The accessible name stays "Add <name> to cart": the cart toast already announces the add, and a name change on a focused button would announce it twice.
+7. **`ProductRail` now renders `ProductCardSkeleton` while loading,** although the rail is outside this prompt's file list. The PR first left it alone; the repository owner then asked for it. The rail's own skeleton had a 72px text block against the card's 104.25px body, so a rail grew when its cards replaced the skeletons (measurements under "Follow-up").
+8. **Tests and the contrast script** changed beyond the four listed files: three test files for the renamed labels, and `check-contrast.js` (DESIGN_SYSTEM §15 requires new pairs there).
+
+### Verification
+
+- **Build:** `npm run build` prints "Compiled successfully" with no warnings. Gzip against the Prompt 12 head built here: JS 411.31 → 412.34 kB (+1.02), CSS 56.40 → 57.28 kB (+0.88). The minified CSS keeps the `(hover: hover)`, reduced-motion and `@supports selector(:has())` rules intact (checked in the built file).
+- **Tests:** `CI=true npm test -- --passWithNoTests` runs 282 tests in 26 suites (250 + 32 new), exit 0, with no React warnings.
+- **Mutation check:** 19 seeded faults, each caught by the new tests; files restored byte for byte. The faults: chip priority; the two-chip cap; the rating honesty gate; the wishlist label; `aria-pressed`; a second photograph on touch; the 1.2s "Added"; sold-out not disabling; a different cart payload; Sale from any compare price; JS truncation at 48; the brand description; the link's name; savings on by default below lg; the "Was" label; lg stating the share; "Save 0%"; half-star rounding; no clamp.
+- **Static checks:** `node scripts/check-contrast.js` passes (11 new pairs, 3 info rows); `db.json` SHA-256 unchanged (QA ran on a scratch copy through `JSON_SERVER_DB`). A literal grep of the six component files finds no hex, `rgb()`, `hsl()`, gradient or font-name literal.
+- **Browser QA, dev server** (Playwright + Chromium, JSON Server on the scratch copy): 40 scripted checks pass. They cover:
+  - the featured rail's 8 cards: 4:5 frames, names of at most two lines, the image attributes, one link per card, no border or shadow, rating rows matching `totalReviews`;
+  - hover: scale `matrix(1.03…)`, hairline, bar up, the second photograph lazy, hidden and faded in after load; none mounted before a hover;
+  - quick add: "Added", then back after 1.2s; the drawer opened by the page; line `11-v1`; a product-page add of the same variant merging into one line with quantity 2;
+  - the heart: `aria-pressed` false → true, caramel fill; after a click and the pointer leaving, the bar goes down;
+  - keyboard: link → heart → quick add, a ring at every stop, the bar up while focus is inside;
+  - touch at 360: the 44px "+" disc at the image's bottom-right, a 36px heart with a 44px target, the check after a tap, no second photograph;
+  - reduced motion: the bar by opacity only, no scale;
+  - "Sold out", "Sale" and "New" from data, checked by setting stock to 0 on the scratch copy: sold out + sale + new shows "Sold out, Sale"; the image at 60%; a disabled "Sold out" button;
+  - chips matching the data on 10 related cards;
+  - a clean console.
+- **Production build** (mock mode, 17 checks):
+  - **CLS** with every placeholder image held back 1.5s while scrolling the home page: 0.0895 → 0 at 1440px and 0.1169 → 0 at 360px against the Prompt 12 build. The reserved 4:5 box removes the rail growth Prompts 11 and 12 recorded.
+  - **Widths** 360, 768, 1024 and 1440px on `/` (18 cards) and a product page (10): no horizontal overflow; every frame 4:5; every name at most two lines; chips clear of the heart.
+  - **Keyboard:** 26 stops through the featured rail after View all (8 × 3 + previous + next), each scrolled into view.
+  - **Other pages:** `/products`, `/special-offers`, `/wishlist`, a category listing and the search overlay render with clean consoles.
+- **Signed in** (`user@example.com`): the heart adds and removes a wishlist row through the API. A quick add plus a product-page add of the same variant shows one drawer line, "Cushioned Plastic Armchair · Marble Beige", ×2 (₹4,998.00) with the "Cart Updated" toast (screenshot).
+- **Other surfaces of `PriceBlock` and `StarRating`,** checked by screenshot in both modes: the product page's price ("₹2,499.00 ~~₹2,899.00~~ Save ₹400.00" and the tax note), `SocialProof` and the reviews summary with SVG stars, Home's review slides (ink stars on sand), and the "Complete the space" anchor price.
+- **Accessibility tree** (Playwright aria snapshot / CDP): `article "Covered Plastic Shoe Rack"` › `link "Covered Plastic Shoe Rack"` (description "NILKAMAL") with `img "Covered Plastic Shoe Rack"` inside, then `text "Sale"`, `button "Save to wishlist"`, `button "Add Covered Plastic Shoe Rack to cart"`, `img "Rated 4.0 out of 5, 1 review"` and `text "₹1,899.00 Was ₹2,199.00"`. Screen readers (NVDA, VoiceOver) were not available in this environment.
+- **Forced colours** (Chromium emulation): the chips are outlined; the focused bar is outlined and legible; filled and empty stars stay distinct.
+- **Admin parity:** 20 screenshots (login, dashboard, Products, Reviews, Special Offers; 1440 and 390px; light and dark), baseline build against this one: all 20 pixel-identical. No admin file, and nothing the admin imports, changed.
+- **Laravel shape:** no data code changed. The card receives its products from the pages and makes no calls, so there is no JSON Server-only path to test.
+
+### Follow-up: `ProductCardSkeleton` in `ProductRail`
+
+The repository owner asked for this after the PR went up.
+
+- **Change:** `ProductRail`'s loading branch renders `<ProductCardSkeleton />` in each `aria-hidden` list item: `skeletonCount` of them, 4 by default and 6 when compact. Its `.skeletonText` rule is removed.
+- **Test:** `ProductRail.test.js` now compares each loading slot's markup with `ProductCardSkeleton`'s. With the old skeleton restored the test fails; the file was then restored byte for byte.
+- **Measured** with Playwright against JSON Server on the scratch copy. The featured and trending reads were held until the loading rail had been measured, then released. Both the dev server and the mock-mode production build gave the same figures:
+
+  | Rail height, loading → loaded (px) | 360px | 768px | 1024px | 1440px |
+  |---|---|---|---|---|
+  | Every card with a brand, a two-line name, no rating and no compare-at price (before → after) | +32.25 → **0** | +32.25 → **0** | +32.25 → **0** | +32.25 → **0** |
+  | Featured, the catalogue as seeded | +68.50 → +36.25 | +52.25 → +20.00 | +52.25 → +20.00 | +29.75 → −2.50 |
+  | Trending, the catalogue as seeded | +48.50 → +16.25 | +32.25 → 0 | +32.25 → 0 | +9.75 → −22.50 |
+
+  What remains with real data comes from the content itself:
+  - a rating row (+20px);
+  - a compare-at price that wraps under the price on phones (+16.25px);
+  - names that all fit on one line at 1440px (−22.5px), against the skeleton's two-line box.
+
+  Across the eight rail-and-width cases the total movement drops from 325.5px to 117.5px. Trending at 1440px is the one case that moves more than before (−22.5 against +9.75).
+- **Checks:** 282 tests pass; `npm run build` compiles with no warnings (−18 B JS, −19 B CSS gzip); `check-contrast.js` passes; `db.json` is unchanged.
+
+### Pre-existing issues noticed (not changed)
+
+- **Cart drawer** (Prompt 18): it is not a `role="dialog"`; it still uses the old styling and purple accents.
+- **`RelatedProducts`' scroller** has no focus room, so the card link's focus ring is clipped at the scroller's top and left edges. The old card had no link focus style at all. Prompt 17's move to `ProductRail` (8px of focus room) fixes it.
+- **Uppercase accessible text:** Chromium passes `text-transform: uppercase` into the accessibility tree, so the brand description is exposed as "NILKAMAL". This is the eyebrow convention Prompt 12 flagged for Prompt 31.
+- **The product page's gallery badge** ("−13%", red) is Prompt 16's.
+
+### Notes for later prompts
+
+- **14 (listing):** render `<ProductCard … />` with `onAddToCart={(item) => addToCart(item)}`; the card builds the cart item. Use `ProductCardSkeleton` for the loading grid. The card has no `layout="list"` variant: for the list view, render a page-local row reusing `PriceBlock` and `StarRating` (as your brief allows), or add the prop in your prompt. "Only N left" is not on the card.
+- **15 (search):** omit `onAddToCart` (and `onToggleWishlist` if you like); the card then shows only its link and chips.
+- **16 (product page):** `PriceBlock size="lg"` already renders your brief's line: 24px/500 price, struck muted compare, "Save ₹X" in accent-text, 12px muted tax note. `StarRating` is SVG; pass `size={14}` for the quiet row.
+- **17:** wrapping `ProductRail` gives the related rail focus room, and its loading state already matches the card (`ProductCardSkeleton`).
+- **18 (cart drawer):** `PriceBlock size="sm"` draws unit price + struck compare; savings stay off unless `showSavings`.
+- **19 (offers):** the card's "Sale" chip is the only discount mark on it; render "You save ₹X" under the card as briefed. `PriceBlock` with `showSavings` would say "Save 12%" at sm.
+- **25 (wishlist):** pass `{ ...item, id: item.productId, images: [item.image] }`. Snapshots carry `hot` and `stock`, so "New" and "Sold out" work; with one image there is no crossfade.
+- **30 (motion):** the card's motion is a 1.03 scale over `--sf-duration-slow`, the alternate fade over `--sf-duration-slow`, the hairline and bar over `--sf-duration`, and the name underline over `--sf-duration-fast`. Under reduced motion there is no scale and no slide.
+- **31 (a11y):**
+  - The bar's visible "Add to cart" differs from its accessible name "Add <name> to cart" (as briefed); weigh WCAG 2.5.3 (an alternative is "Add to cart, <name>").
+  - The heart combines `aria-pressed` with a changing label (as briefed); the APG prefers a constant label for toggle buttons.
+  - Screen readers still to test.
+- **32 (performance):** the second photograph loads only on hover; card images are lazy with reserved boxes, with no `srcset` yet (single 1200 × 1500 URLs).
+
+### Needs client confirmation
+
+None expected. Two visible choices the client may want to see:
+
+- "New" is driven by the admin's existing "Hot" flag, as the brief says.
+- The card's stars are ink rather than gold, so they read on every background.

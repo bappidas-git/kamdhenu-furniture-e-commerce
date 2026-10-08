@@ -1,71 +1,89 @@
+/* =============================================================================
+ * PriceBlock — quiet sans prices on one baseline (Prompt 13)
+ * =============================================================================
+ * The current price in ink at weight 500, the compare-at price struck in the
+ * muted tone, the saving in accent-text. Figures are tabular and never break
+ * inside; the row wraps between them on narrow cards.
+ *   sm  15 / 13px  cards, cart lines
+ *   md  18 / 15px  feature blocks (home "Complete the space")
+ *   lg  24 / 16px  the product page, with a 12px tax note
+ * Tokens only.
+ * ========================================================================== */
+
 .block {
   display: flex;
   flex-direction: column;
   gap: var(--sf-space-1);
+  font-family: var(--sf-font-sans);
 }
 
 .row {
   display: flex;
-  align-items: baseline;
   flex-wrap: wrap;
-  gap: var(--sf-space-2);
+  align-items: baseline;
+  gap: 0 var(--sf-space-2);
+  line-height: var(--sf-leading-tight);
+}
+
+.price,
+.compare {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
 .price {
   color: var(--sf-color-price);
-  font-weight: var(--sf-font-bold);
-  letter-spacing: -0.01em;
+  font-weight: var(--sf-font-medium);
 }
 
 .compare {
   color: var(--sf-color-compare);
-  text-decoration: line-through;
   font-weight: var(--sf-font-normal);
-}
-
-.discount {
-  color: var(--sf-color-discount);
-  font-weight: var(--sf-font-semibold);
+  text-decoration-line: line-through;
+  text-decoration-thickness: 1px;
 }
 
 .savings {
   color: var(--sf-color-discount);
   font-weight: var(--sf-font-medium);
-  font-size: var(--sf-text-sm);
+  white-space: nowrap;
 }
 
 .taxNote {
   color: var(--sf-color-text-muted);
   font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
 }
 
 /* ---- sizes ---- */
-.lg .price {
-  font-size: var(--sf-text-3xl);
+.sm .price {
+  font-size: 0.9375rem; /* 15px */
 }
-.lg .compare {
-  font-size: var(--sf-text-lg);
-}
-.lg .discount {
-  font-size: var(--sf-text-md);
+.sm .compare,
+.sm .savings {
+  font-size: 0.8125rem; /* 13px */
 }
 
 .md .price {
-  font-size: var(--sf-text-xl);
+  font-size: 1.125rem; /* 18px */
 }
-.md .compare {
-  font-size: var(--sf-text-base);
-}
-.md .discount {
-  font-size: var(--sf-text-sm);
+.md .compare,
+.md .savings {
+  font-size: 0.9375rem; /* 15px */
 }
 
-.sm .price {
-  font-size: var(--sf-text-md);
+.lg {
+  gap: var(--sf-space-2);
 }
-.sm .compare {
+.lg .row {
+  gap: var(--sf-space-1) var(--sf-space-3);
+}
+.lg .price {
+  font-size: var(--sf-text-xl); /* 24px */
+}
+.lg .compare {
+  font-size: var(--sf-text-base);
+}
+.lg .savings {
   font-size: var(--sf-text-sm);
-}
-.sm .discount {
-  font-size: var(--sf-text-xs);
 }
