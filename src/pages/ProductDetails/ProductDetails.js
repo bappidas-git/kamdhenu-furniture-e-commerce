@@ -150,6 +150,12 @@ const ProductDetails = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   const tabsRef = useRef(null);
   const buyBoxRef = useRef(null); // anchor for the sticky mobile Add-to-Cart bar
+  // Numbers each product load; one that is no longer the latest (the shopper
+  // has moved on) applies nothing when it settles.
+  const latestLoad = useRef(0);
+  // The canonical slug a legacy-id redirect is moving to: that URL change
+  // renames the product already on screen, so it loads nothing.
+  const redirectingTo = useRef(null);
 
   // ── State ──────────────────────────────────────────────────────────────
   const [product, setProduct] = useState(null);
@@ -176,6 +182,8 @@ const ProductDetails = () => {
 
   // ── Fetch product ──────────────────────────────────────────────────────
   const fetchProduct = useCallback(async () => {
+    const load = ++latestLoad.current;
+    const isLatest = () => load === latestLoad.current;
     try {
       setLoading(true);
       setNotFound(false);
@@ -191,6 +199,8 @@ const ProductDetails = () => {
           : await apiService.products.getById(slug).catch(() => null);
       }
 
+      if (!isLatest()) return;
+
       if (!data) {
         setNotFound(true);
         return;
@@ -198,6 +208,7 @@ const ProductDetails = () => {
 
       // Canonicalise the URL to the slug form so old links never 404.
       if (data.slug && String(slug) !== String(data.slug)) {
+        redirectingTo.current = String(data.slug);
         navigate(`/products/${data.slug}`, { replace: true });
       }
 
@@ -240,16 +251,18 @@ const ProductDetails = () => {
         apiService.categories
           .getById(data.categoryId)
           .then((found) => {
+            if (!isLatest()) return;
             setCategory(found);
             if (!found) setCategoryTrail([]);
           })
-          .catch(() => setCategoryTrail([]));
+          .catch(() => isLatest() && setCategoryTrail([]));
       }
     } catch (error) {
+      if (!isLatest()) return;
       console.error("Error fetching product:", error);
       setNotFound(true);
     } finally {
-      setLoading(false);
+      if (isLatest()) setLoading(false);
     }
   }, [slug, navigate]);
 
@@ -306,9 +319,13 @@ const ProductDetails = () => {
   }, []);
 
   useEffect(() => {
+    // The legacy-id redirect keeps the product on screen: no reload, no jump.
+    const redirected = redirectingTo.current === slug;
+    redirectingTo.current = null;
+    if (redirected) return;
     fetchProduct();
     window.scrollTo(0, 0);
-  }, [fetchProduct]);
+  }, [fetchProduct, slug]);
 
   useEffect(() => {
     if (product) {

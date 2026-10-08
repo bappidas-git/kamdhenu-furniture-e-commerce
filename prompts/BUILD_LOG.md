@@ -2156,7 +2156,7 @@ Nothing else changed: `PriceBlock`, `StarRating`, `ProductCard`, `ReviewsSection
 - **The reviews blend counts each review twice.** `totalRatingsCount = product.totalReviews + reviews.length`, but `totalReviews` is already the count of approved reviews: the backend docs (file 03 §8) and Prompt 05's seed both say so. So the ratings row says "2 reviews" for the Covered Shoe Rack's one review, "4" for the Carlton Mattress's two and "6" for the Wooden Sofa Set's three. The old page showed the same counts ("2 Ratings & Reviews"), and "Based on N ratings" in the reviews tab uses the same figure. The average is unaffected while the aggregate matches the reviews. The prompt asks for the blend byte-identical, so it is unchanged. **It needs a decision:** Prompt 17 owns the reviews summary, and a two-line fix is to count the fetched reviews once they have loaded (and the aggregate only until then).
 - **Stock is stated twice when low.** The selector's "Only 4 left in this option" and the purchase row's "Only 4 left" repeat each other. The brief keeps both.
 - **The page-level fade** (`motion.div`, opacity 0 → 1 over 0.3s) delays the first paint of the gallery's eager image, the page's LCP (Prompts 30 and 32).
-- **A legacy-id link loads the product twice** (and its reviews, AOV and category reads), once by id and once after the canonical redirect.
+- **A legacy-id link loads the product twice** (and its reviews, AOV and category reads), once by id and once after the canonical redirect. Fixed in the follow-up below.
 - **No `scroll-padding-top` site-wide.** Tabbing backwards can leave focused elements under the sticky header (Prompt 31).
 - **The description tab's specification table** shows weight and dimensions without units ("6.8", "62 × 33 × 98") (Prompt 17).
 
@@ -2184,3 +2184,37 @@ None expected. Visible choices the client may want to see:
 - On phones the trail ends at the category.
 - The not-found line: "It may have been renamed, or it is no longer in our catalogue."
 - "Save to wishlist" as the heart's label, as on the cards.
+
+### Follow-up: a legacy link loads once
+
+The repository owner asked for this after the PR went up. A legacy numeric URL (`/products/11`) now loads the product once.
+
+- **Cause:** the canonical redirect (`navigate("/products/<slug>", { replace: true })`) changes `slug`, so `fetchProduct` (a `useCallback` on `slug`) changes and the load effect ran again. That second load showed the skeleton again, read the product by slug and repeated the reviews, AOV and category reads. The page stays mounted across the redirect (the route is not keyed), so a ref can tell the two URL changes apart.
+- **Change** (`ProductDetails.js` only):
+  - `fetchProduct` records the slug it redirects to (`redirectingTo`). The load effect skips that one URL change: no load and no `scrollTo`. The ref is cleared on every run, so a later visit to the same slug loads as usual.
+  - Each load is numbered (`latestLoad`). A load that is no longer the latest applies nothing when it settles: no product, no not-found, no redirect, no category, and it does not end the newer load's skeleton.
+  - Skipping the reload needs the second rule. A legacy read that settled after the shopper had moved on already sent them back to the old product (measured below). Without the reload, it could also leave the URL on the old product and the page on the new one. Such a read is now discarded. The rule also closes the same race between any two products. Before, a late failed read replaced a loaded product with "We couldn't find that piece.", and a late category read could put the previous product's category in the eyebrow and trail.
+  - Direct slug URLs, the slug ↔ id fallbacks, not-found, recently viewed and the redirect itself are unchanged.
+- **Tests:** `ProductDetails.test.js` 19 → 25. The legacy test now asserts:
+  - one product read and no read by slug;
+  - one reviews read and one each of the two AOV reads;
+  - one scroll.
+
+  New tests:
+  - the next two products load after a redirect, the second being the redirect's own slug;
+  - a legacy read that settles late, arriving or failing, changes nothing;
+  - a superseded read leaves the newer load's skeleton in place;
+  - the previous product's category read, arriving or failing late, is ignored.
+
+  All seven new or changed tests fail on the old page code; the other 18 pass. Nine seeded faults were all caught, and the file was restored byte for byte. The faults were: each of the five `latestLoad` guards and the effect's skip removed, the redirect target not recorded, the ref never cleared, and every load treated as the latest.
+- **Measured** in Chromium against JSON Server (scratch copy), mock-mode production builds before and after:
+
+  | `/products/11` | Before | After | Direct slug URL |
+  |---|---|---|---|
+  | Skeleton shown | 2 | **1** | 1 |
+  | API reads | 19 | **13** | 13 |
+  | Product reads | 2 | **1** | 1 |
+  | Reviews / category reads | 2 / 6 | **1 / 3** | 1 / 3 |
+
+  With `/products/11` held and the shopper moved on to `/products/lobby-set`, the late answer now changes nothing. Before, it redirected them to the shoe rack. No console errors. The app-level `ScrollToTop` still scrolls once more on the redirect's pathname change; the page's own scroll runs once.
+- **Checks:** 437 tests pass (`CI=true npm test -- --passWithNoTests`, exit 0, no console output). `npm run build` compiles with no warnings (JS +50 B gzip). ESLint finds nothing in `ProductDetails.js`; the test file's testing-library findings are the same 14 as before (the pattern most of the repo's tests follow). `db.json` is unchanged.

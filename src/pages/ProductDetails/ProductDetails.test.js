@@ -1,5 +1,5 @@
 import React from "react";
-import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
+import { MemoryRouter, Route, Routes, useLocation, useNavigate } from "react-router-dom";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
@@ -59,6 +59,8 @@ afterAll(() => {
 // ── The seeded data, served the way api.js serves it ───────────────────────
 const PRODUCTS = db.products;
 const product = (slug) => PRODUCTS.find((p) => p.slug === slug);
+const categoryOf = (slug) =>
+  db.categories.find((c) => String(c.id) === String(product(slug).categoryId));
 const notFoundError = () => Object.assign(new Error("Not found"), { response: { status: 404 } });
 const approvedReviews = (productId) =>
   db.reviews.filter((r) => String(r.productId) === String(productId) && r.status === "approved");
@@ -104,7 +106,18 @@ const LocationProbe = () => {
   return <span data-testid="location">{location.pathname}</span>;
 };
 
-const renderAt = (path) =>
+// A link elsewhere on the screen, so a test can move to another product while
+// the page stays mounted (as the header's links do).
+const GoTo = ({ to }) => {
+  const navigate = useNavigate();
+  return (
+    <button type="button" onClick={() => navigate(to)}>
+      Go to {to}
+    </button>
+  );
+};
+
+const renderAt = (path, { goTo } = {}) =>
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -114,6 +127,9 @@ const renderAt = (path) =>
             <>
               <ProductDetails />
               <LocationProbe />
+              {[].concat(goTo || []).map((to) => (
+                <GoTo key={to} to={to} />
+              ))}
             </>
           }
         />
@@ -205,11 +221,102 @@ test("a failed category read leaves Home › product, and the brand eyebrow stay
   expect(eyebrow()).toHaveTextContent("Nilkamal");
 });
 
-test("a legacy numeric id loads the product and redirects to the canonical slug", async () => {
+test("a legacy numeric id loads the product once and redirects to the canonical slug", async () => {
   renderAt("/products/11");
   await waitFor(() => expect(currentPath()).toBe("/products/covered-plastic-shoe-rack"));
   expect(await loaded()).toHaveTextContent("Covered Plastic Shoe Rack");
+  expect(apiService.products.getById).toHaveBeenCalledTimes(1);
   expect(apiService.products.getById).toHaveBeenCalledWith("11");
+  // The redirect only renames the URL of the product on screen: nothing is
+  // read again and the page does not jump.
+  expect(apiService.products.getBySlug).not.toHaveBeenCalled();
+  expect(apiService.products.getReviews).toHaveBeenCalledTimes(1);
+  expect(apiService.products.getRelated).toHaveBeenCalledTimes(1);
+  expect(apiService.products.getFrequentlyBoughtTogether).toHaveBeenCalledTimes(1);
+  expect(window.scrollTo).toHaveBeenCalledTimes(1);
+});
+
+test("after a legacy redirect, the next products load as usual", async () => {
+  renderAt("/products/11", {
+    goTo: ["/products/lobby-set", "/products/covered-plastic-shoe-rack"],
+  });
+  expect(await loaded()).toHaveTextContent("Covered Plastic Shoe Rack");
+  fireEvent.click(screen.getByRole("button", { name: "Go to /products/lobby-set" }));
+  await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Lobby Set"));
+  await loaded();
+  expect(currentPath()).toBe("/products/lobby-set");
+  expect(apiService.products.getBySlug).toHaveBeenCalledTimes(1);
+  expect(apiService.products.getBySlug).toHaveBeenCalledWith("lobby-set");
+
+  // Back to the product the redirect landed on: a real load this time.
+  fireEvent.click(screen.getByRole("button", { name: "Go to /products/covered-plastic-shoe-rack" }));
+  await waitFor(() =>
+    expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Covered Plastic Shoe Rack")
+  );
+  await loaded();
+  expect(apiService.products.getBySlug).toHaveBeenLastCalledWith("covered-plastic-shoe-rack");
+  expect(window.scrollTo).toHaveBeenCalledTimes(3);
+});
+
+test.each([
+  ["arrives", (read) => read.resolve(product("covered-plastic-shoe-rack"))],
+  ["fails", (read) => read.reject(notFoundError())],
+])("a legacy read that %s after the shopper has moved on changes nothing", async (_, settle) => {
+  const read = {};
+  apiService.products.getById.mockImplementationOnce(
+    () => new Promise((resolve, reject) => Object.assign(read, { resolve, reject }))
+  );
+  renderAt("/products/11", { goTo: "/products/lobby-set" });
+  fireEvent.click(screen.getByRole("button", { name: "Go to /products/lobby-set" }));
+  expect(await loaded()).toHaveTextContent("Lobby Set");
+
+  await act(async () => settle(read));
+  await flush();
+  expect(currentPath()).toBe("/products/lobby-set");
+  expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Lobby Set");
+  expect(apiService.products.getReviews).toHaveBeenCalledTimes(1);
+});
+
+test("a superseded read leaves the newer load's skeleton in place", async () => {
+  const legacy = {};
+  const next = {};
+  apiService.products.getById.mockImplementationOnce(
+    () => new Promise((resolve) => Object.assign(legacy, { resolve }))
+  );
+  apiService.products.getBySlug.mockImplementationOnce(
+    () => new Promise((resolve) => Object.assign(next, { resolve }))
+  );
+  renderAt("/products/11", { goTo: "/products/lobby-set" });
+  fireEvent.click(screen.getByRole("button", { name: "Go to /products/lobby-set" }));
+
+  await act(async () => legacy.resolve(product("covered-plastic-shoe-rack")));
+  expect(screen.queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+  expect(screen.getByText("Loading the product")).toBeInTheDocument();
+
+  await act(async () => next.resolve(product("lobby-set")));
+  expect(await loaded()).toHaveTextContent("Lobby Set");
+  expect(currentPath()).toBe("/products/lobby-set");
+});
+
+test.each([
+  ["arrives", (leaf) => leaf.resolve(categoryOf("covered-plastic-shoe-rack"))],
+  ["fails", (leaf) => leaf.reject(notFoundError())],
+])("the previous product's category read, if it %s late, is ignored", async (_, settle) => {
+  const leaf = {};
+  apiService.categories.getById.mockImplementationOnce(
+    () => new Promise((resolve, reject) => Object.assign(leaf, { resolve, reject }))
+  );
+  renderAt("/products/covered-plastic-shoe-rack", { goTo: "/products/lobby-set" });
+  expect(await title()).toHaveTextContent("Covered Plastic Shoe Rack");
+  fireEvent.click(screen.getByRole("button", { name: "Go to /products/lobby-set" }));
+  await waitFor(() => expect(screen.getByRole("heading", { level: 1 })).toHaveTextContent("Lobby Set"));
+  await loaded();
+  expect(trail()).toEqual(["Home", "Outdoor Furniture", "Lobby Set"]);
+
+  await act(async () => settle(leaf));
+  await flush();
+  expect(eyebrow()).toHaveTextContent("Outdoor Furniture");
+  expect(trail()).toEqual(["Home", "Outdoor Furniture", "Lobby Set"]);
 });
 
 test("an unknown slug shows the not-found state with a way back to the shop", async () => {
