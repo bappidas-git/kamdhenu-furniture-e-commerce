@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
 import { categoryParam } from "../../utils/categories";
-import { formatCurrency } from "../../utils/helpers";
+import { formatCurrency, parseSpecifications } from "../../utils/helpers";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
+import { Reveal, staggerDelay } from "../../components/ui";
 import {
   ProductGallery,
   ProductGallerySkeleton,
@@ -22,6 +23,7 @@ import {
   RelatedProducts,
   FrequentlyBoughtTogether,
 } from "../../components/storefront";
+import { buildSpecRows } from "./productSpecs";
 import styles from "./ProductDetails.module.css";
 
 // =============================================================================
@@ -38,11 +40,30 @@ import styles from "./ProductDetails.module.css";
 // full trail, then a 12-column grid with the gallery in seven columns (sticky
 // from 1024px) and the buy box in five: eyebrow, serif title, ratings row,
 // price, summary, variants, quantity and stock, actions, SKU, promises and the
-// delivery facts. One column below 980px, the gallery first. The tabs, the
-// bundle and the related rail below are Prompt 17's.
+// delivery facts. One column below 980px, the gallery first.
+//
+// Below it (Prompt 17), anchored sections instead of tabs, so nothing is
+// hidden behind a control: a sticky in-page nav ("On this page": Details ·
+// Specifications · Reviews) over the description and its specifications
+// table (parsed from the description, then the catalogue's own fields), and
+// the reviews; then the curated set and the related rail.
 // =============================================================================
 
 const cx = (...names) => names.filter(Boolean).join(" ");
+
+// The anchored sections below the first screen (the in-page nav's targets).
+const DETAILS_ID = "product-details";
+const SPECS_ID = "product-specifications";
+const REVIEWS_ID = "product-reviews";
+
+// An in-page jump: the target scrolls in under the header and the in-page
+// nav (its scroll-margin-top), smoothly unless motion is reduced, and takes
+// focus, so the next Tab continues from there rather than from the link.
+const jumpTo = (target, reduceMotion) => {
+  if (!target) return;
+  target.scrollIntoView({ behavior: reduceMotion ? "instant" : "smooth", block: "start" });
+  target.focus({ preventScroll: true });
+};
 
 // The category's ancestors, root first ([department, …, leaf]), read one level
 // at a time through the category endpoint the page already uses. A failed or
@@ -148,10 +169,12 @@ const ProductDetails = () => {
   const navigate = useNavigate();
   const { addToCart } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const tabsRef = useRef(null);
+  const reduceMotion = useReducedMotion();
+  const reviewsRef = useRef(null); // the reviews section: the ratings row's jump target
   const buyBoxRef = useRef(null); // anchor for the sticky mobile Add-to-Cart bar
   // Numbers each product load; one that is no longer the latest (the shopper
-  // has moved on) applies nothing when it settles.
+  // has moved on) applies nothing when it settles, nor do the reviews, related
+  // and bundle reads it started.
   const latestLoad = useRef(0);
   // The canonical slug a legacy-id redirect is moving to: that URL change
   // renames the product already on screen, so it loads nothing.
@@ -163,11 +186,14 @@ const ProductDetails = () => {
   const [notFound, setNotFound] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [activeTab, setActiveTab] = useState("description");
   const [added, setAdded] = useState(false);
-  const [reviews, setReviews] = useState([]);
-  const [reviewsLoading, setReviewsLoading] = useState(false);
-  const [reviewsError, setReviewsError] = useState(false);
+  // One product's approved reviews: status "loading", "loaded" or "error".
+  // A product whose reviews are not in here yet reads as loading.
+  const [reviewsState, setReviewsState] = useState({
+    productId: null,
+    status: "loading",
+    list: [],
+  });
   const [relatedProducts, setRelatedProducts] = useState([]);
   const [bundle, setBundle] = useState([]);
   const [category, setCategory] = useState(null);
@@ -244,9 +270,12 @@ const ProductDetails = () => {
         /* ignore localStorage errors */
       }
 
-      // A new product never shows the previous one's category or trail.
+      // A new product never shows the previous one's category or trail, nor
+      // its curated set or related pieces.
       setCategory(null);
       setCategoryTrail(data.categoryId ? null : []);
+      setBundle([]);
+      setRelatedProducts([]);
       if (data.categoryId) {
         apiService.categories
           .getById(data.categoryId)
@@ -270,35 +299,40 @@ const ProductDetails = () => {
   const fetchReviews = useCallback(async () => {
     const productId = product?.id;
     if (!productId) return;
+    const load = latestLoad.current;
+    const isLatest = () => load === latestLoad.current;
+    setReviewsState({ productId, status: "loading", list: [] });
     try {
-      setReviewsLoading(true);
-      setReviewsError(false);
       const data = await apiService.products.getReviews(productId);
-      setReviews(Array.isArray(data) ? data : []);
+      if (!isLatest()) return;
+      setReviewsState({ productId, status: "loaded", list: Array.isArray(data) ? data : [] });
     } catch (error) {
+      if (!isLatest()) return;
       console.error("Error fetching reviews:", error);
-      setReviews([]);
-      setReviewsError(true);
-    } finally {
-      setReviewsLoading(false);
+      setReviewsState({ productId, status: "error", list: [] });
     }
   }, [product?.id]);
 
   // ── Related + bundle (AOV) — real catalogue data only ───────────────────
   const fetchAov = useCallback(async () => {
     if (!product) return;
+    const load = latestLoad.current;
+    // A list that arrives after the shopper has moved on is dropped.
+    const keep = (setList) => (list) => {
+      if (load === latestLoad.current) setList(Array.isArray(list) ? list : []);
+    };
     const cfg = STOREFRONT_CONFIG.aov;
     if (cfg.relatedProducts) {
       apiService.products
         .getRelated(product, cfg.maxRelated)
-        .then(setRelatedProducts)
-        .catch(() => setRelatedProducts([]));
+        .then(keep(setRelatedProducts))
+        .catch(() => keep(setRelatedProducts)([]));
     }
     if (cfg.frequentlyBoughtTogether) {
       apiService.products
         .getFrequentlyBoughtTogether(product, cfg.maxBundle - 1)
-        .then(setBundle)
-        .catch(() => setBundle([]));
+        .then(keep(setBundle))
+        .catch(() => keep(setBundle)([]));
     }
   }, [product]);
 
@@ -381,14 +415,20 @@ const ProductDetails = () => {
   }, [maxQuantity]);
 
   // ── Reviews blend (consistent average across the page) ──────────────────
+  // The product's aggregate (`rating`, `totalReviews`) is worked out from its
+  // approved reviews, the very reviews getReviews returns (the backend docs,
+  // file 03 §8). So once those have loaded they are the count and the
+  // average; until then, or when the read fails, the aggregate stands in.
+  // (Adding the two together, as the page used to, counted each review twice.)
+  const reviewsStatus =
+    product && reviewsState.productId === product.id ? reviewsState.status : "loading";
+  const reviewsLoaded = reviewsStatus === "loaded";
+  const reviews = reviewsLoaded ? reviewsState.list : [];
   const baseRating = Number(product?.rating) || 0;
   const baseCount = Number(product?.totalReviews) || 0;
   const reviewSum = reviews.reduce((sum, r) => sum + (Number(r.rating) || 0), 0);
-  const totalRatingsCount = baseCount + reviews.length;
-  const displayAvg =
-    totalRatingsCount > 0
-      ? (baseRating * baseCount + reviewSum) / totalRatingsCount
-      : baseRating;
+  const totalRatingsCount = reviewsLoaded ? reviews.length : baseCount;
+  const displayAvg = reviewsLoaded ? reviewSum / Math.max(1, reviews.length) : baseRating;
 
   // ── Cart wiring ────────────────────────────────────────────────────────
   const handleAddToCart = useCallback(
@@ -432,10 +472,25 @@ const ProductDetails = () => {
     navigate("/checkout");
   }, [handleAddToCart, navigate]);
 
+  // The ratings row's jump to the reviews section.
   const scrollToReviews = useCallback(() => {
-    setActiveTab("reviews");
-    tabsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  }, []);
+    jumpTo(reviewsRef.current, reduceMotion);
+  }, [reduceMotion]);
+
+  // The in-page nav's links. A modified click (new tab or window) keeps the
+  // link's own behaviour; a plain one jumps without adding a history entry.
+  const handleSectionLink = useCallback(
+    (event) => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      const target = document.getElementById(event.currentTarget.hash.slice(1));
+      if (!target) return;
+      event.preventDefault();
+      jumpTo(target, reduceMotion);
+    },
+    [reduceMotion]
+  );
 
   // A variant chosen in the selector (the selection logic is the selector's).
   const handleVariantChange = useCallback((variant) => {
@@ -487,6 +542,21 @@ const ProductDetails = () => {
       ? "Exclusive of taxes — calculated at checkout"
       : "Inclusive of all taxes"
     : "\u00a0";
+
+  // Below the fold: the description's prose (its paragraphs split on blank
+  // lines) and the specifications table (the parsed pairs, then the fields).
+  const { body: descriptionBody, specs } = parseSpecifications(product.description);
+  const paragraphs = descriptionBody
+    .split(/\n\s*\n/)
+    .map((paragraph) => paragraph.trim())
+    .filter(Boolean);
+  const specRows = buildSpecRows({ specs, product, sku: currentSku, category });
+  const pageSections = [
+    paragraphs.length > 0 && { id: DETAILS_ID, label: "Details" },
+    specRows.length > 0 && { id: SPECS_ID, label: "Specifications" },
+    { id: REVIEWS_ID, label: "Reviews", count: totalRatingsCount },
+  ].filter(Boolean);
+  const hasPageNav = pageSections.length > 1;
 
   return (
     <motion.div
@@ -653,130 +723,134 @@ const ProductDetails = () => {
           </div>
         </div>
 
-        {/* ── Below the fold: tabs ──────────────────────────────────────── */}
-        <div className={styles.tabsSection} ref={tabsRef}>
-          <div className={styles.tabNav} role="tablist" aria-label="Product information">
-            <button
-              role="tab"
-              aria-selected={activeTab === "description"}
-              className={`${styles.tabButton} ${activeTab === "description" ? styles.tabButtonActive : ""}`}
-              onClick={() => setActiveTab("description")}
-            >
-              Description
-            </button>
-            <button
-              role="tab"
-              aria-selected={activeTab === "reviews"}
-              className={`${styles.tabButton} ${activeTab === "reviews" ? styles.tabButtonActive : ""}`}
-              onClick={() => setActiveTab("reviews")}
-            >
-              Reviews ({reviews.length})
-            </button>
-          </div>
-
-          <div className={styles.tabContent}>
-            {activeTab === "description" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-                className={styles.descriptionTab}
-              >
-                <div className={styles.fullDescription}>
-                  <h3>Product Description</h3>
-                  <p>{product.description || "No description available."}</p>
-                </div>
-
-                <div className={styles.specTable}>
-                  <h3>Specifications</h3>
-                  <table>
-                    <tbody>
-                      {product.brand && (
-                        <tr>
-                          <td className={styles.specLabel}>Brand</td>
-                          <td className={styles.specValue}>{product.brand}</td>
-                        </tr>
-                      )}
-                      {currentSku && (
-                        <tr>
-                          <td className={styles.specLabel}>SKU</td>
-                          <td className={styles.specValue}>{currentSku}</td>
-                        </tr>
-                      )}
-                      {product.weight && (
-                        <tr>
-                          <td className={styles.specLabel}>Weight</td>
-                          <td className={styles.specValue}>{product.weight}</td>
-                        </tr>
-                      )}
-                      {product.dimensions && (
-                        <tr>
-                          <td className={styles.specLabel}>Dimensions</td>
-                          <td className={styles.specValue}>
-                            {typeof product.dimensions === "object"
-                              ? [
-                                  product.dimensions.length,
-                                  product.dimensions.width,
-                                  product.dimensions.height,
-                                ]
-                                  .filter((v) => v != null && v !== "")
-                                  .join(" × ")
-                              : product.dimensions}
-                          </td>
-                        </tr>
-                      )}
-                      {category?.name && (
-                        <tr>
-                          <td className={styles.specLabel}>Category</td>
-                          <td className={styles.specValue}>{category.name}</td>
-                        </tr>
-                      )}
-                      {product.tags && product.tags.length > 0 && (
-                        <tr>
-                          <td className={styles.specLabel}>Tags</td>
-                          <td className={styles.specValue}>{product.tags.join(", ")}</td>
-                        </tr>
-                      )}
-                    </tbody>
-                  </table>
-                </div>
-              </motion.div>
+        {/* ── Below the fold (Prompt 17): anchored sections, no tabs ──────── */}
+        <div className={styles.below}>
+          {/* The in-page nav sticks under the header while the details,
+              specifications and reviews scroll past; this wrapper ends it. */}
+          <div className={cx(styles.info, hasPageNav && styles.infoWithNav)}>
+            {hasPageNav && (
+              <nav className={styles.pageNav} aria-label="On this page">
+                <ul className={styles.pageNavList}>
+                  {pageSections.map((section) => (
+                    <li key={section.id}>
+                      <a
+                        href={`#${section.id}`}
+                        className={styles.pageNavLink}
+                        onClick={handleSectionLink}
+                      >
+                        {section.label}
+                        {section.count > 0 && (
+                          <>
+                            {" "}
+                            <span className={styles.pageNavCount}>
+                              ({section.count.toLocaleString("en-IN")})
+                            </span>
+                          </>
+                        )}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
             )}
 
-            {activeTab === "reviews" && (
-              <motion.div
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.25 }}
-              >
-                <ReviewsSection
-                  reviews={reviews}
-                  displayAvg={displayAvg}
-                  totalRatingsCount={totalRatingsCount}
-                  loading={reviewsLoading}
-                  error={reviewsError}
-                  onRetry={fetchReviews}
-                />
-              </motion.div>
+            {(paragraphs.length > 0 || specRows.length > 0) && (
+              <div className={cx(styles.section, styles.details)}>
+                {paragraphs.length > 0 && (
+                  <section
+                    id={DETAILS_ID}
+                    tabIndex={-1}
+                    aria-labelledby={`${DETAILS_ID}-title`}
+                    className={cx(styles.target, styles.about)}
+                  >
+                    <Reveal>
+                      <h2 id={`${DETAILS_ID}-title`} className={cx("sf-eyebrow", styles.blockTitle)}>
+                        About this piece
+                      </h2>
+                      <div className={styles.prose}>
+                        {paragraphs.map((paragraph, index) => (
+                          <p key={index}>{paragraph}</p>
+                        ))}
+                      </div>
+                    </Reveal>
+                  </section>
+                )}
+
+                {specRows.length > 0 && (
+                  <section
+                    id={SPECS_ID}
+                    tabIndex={-1}
+                    aria-labelledby={`${SPECS_ID}-title`}
+                    className={cx(styles.target, styles.specs)}
+                  >
+                    <Reveal delay={paragraphs.length > 0 ? staggerDelay(1) : 0}>
+                      <h2 id={`${SPECS_ID}-title`} className={cx("sf-eyebrow", styles.blockTitle)}>
+                        Specifications
+                      </h2>
+                      <table className={styles.specTable} aria-labelledby={`${SPECS_ID}-title`}>
+                        <tbody>
+                          {specRows.map((row, index) => (
+                            <tr key={`${index}-${row.key}`}>
+                              <th scope="row">
+                                {row.key}
+                                {row.hint && ` (${row.hint})`}
+                              </th>
+                              <td>
+                                {row.tags ? (
+                                  <ul className={styles.tags}>
+                                    {row.tags.map((tag) => (
+                                      <li key={tag} className={styles.tag}>
+                                        {tag}
+                                      </li>
+                                    ))}
+                                  </ul>
+                                ) : (
+                                  row.value
+                                )}
+                              </td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </Reveal>
+                  </section>
+                )}
+              </div>
             )}
+
+            {/* Approved reviews only; written from Order History, moderated
+                in the admin, so there is no form here. */}
+            <ReviewsSection
+              ref={reviewsRef}
+              id={REVIEWS_ID}
+              className={cx(styles.section, styles.target)}
+              reviews={reviews}
+              displayAvg={displayAvg}
+              totalRatingsCount={totalRatingsCount}
+              loading={reviewsStatus === "loading"}
+              error={reviewsStatus === "error"}
+              onRetry={fetchReviews}
+            />
           </div>
+
+          {/* ── AOV: the curated set, then similar products (data-driven) ── */}
+          <FrequentlyBoughtTogether
+            key={product.id}
+            className={styles.bundle}
+            anchor={product}
+            companions={bundle}
+            onAddToCart={addToCart}
+            currency="INR"
+          />
+
+          <RelatedProducts
+            className={styles.section}
+            products={relatedProducts}
+            onAddToCart={addToCart}
+            onToggleWishlist={toggleWishlist}
+            isInWishlist={isInWishlist}
+          />
         </div>
-
-        {/* ── AOV: curated bundle, then similar products (data-driven) ──── */}
-        <FrequentlyBoughtTogether
-          anchor={product}
-          companions={bundle}
-          onAddToCart={addToCart}
-          currency="INR"
-        />
-
-        <RelatedProducts
-          title="You may also like"
-          products={relatedProducts}
-          onAddToCart={addToCart}
-          onToggleWishlist={toggleWishlist}
-          isInWishlist={isInWishlist}
-        />
       </div>
 
       {/* ── Sticky mobile Add-to-Cart (mobile-first) ──────────────────────── */}

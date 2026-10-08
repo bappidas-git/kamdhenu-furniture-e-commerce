@@ -258,6 +258,11 @@ const PAIRS = [
   ["Card disc focus ring (accent) against its page-tone outer ring", "--sf-color-focus", "--sf-color-bg", LARGE],
   ["Card stars (ink) on sand (graphic)", "--sf-color-text", SAND, LARGE],
   ["Card empty star (border-strong) on page (graphic)", "--sf-color-border-strong", "--sf-color-bg", LARGE],
+  // Product page, below the fold (Prompt 17): the rating bars draw an ink
+  // fill on a sand track; the curated set is a sand panel whose checkboxes
+  // keep their control boundary.
+  ["Reviews: rating bar fill (ink) on its sand track (graphic)", "--sf-color-text", SAND, LARGE],
+  ["Set: checkbox boundary (border-strong) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -321,6 +326,11 @@ const INFO = [
   ["Card keyline (page tone) vs the sand band", "--sf-color-bg", ["--sf-color-sand", "--sf-color-bg"]],
   ["Card saved heart (accent) on the page tone at 90% over a black photo (not used)", "--sf-color-accent", ["--sf-color-bg@0.9", "#000000"]],
   ["Card disabled bar text (muted) on the 93% fill over a black photo", "--sf-color-text-muted", ["--sf-color-bg@0.93", "#000000"]],
+  // Prompt 17: the empty rating-bar track is decoration (each bar is an
+  // image named by its count), and the set's thumbnail frame is a hairline
+  // over its edge so a sand photograph stays apart from the sand panel.
+  ["Reviews: empty rating-bar track (sand) vs page", SAND, "--sf-color-bg"],
+  ["Set: thumbnail hairline (stone) vs the sand panel", "--sf-color-border", SAND],
 ];
 
 // ---------------------------------------------------------------------------

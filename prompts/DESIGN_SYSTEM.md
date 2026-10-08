@@ -326,7 +326,7 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 
 | Token | Value | Layer |
 |---|---|---|
-| `--sf-z-sticky` | 40 | sticky in-page elements (filter rail, section nav) |
+| `--sf-z-sticky` | 40 | sticky in-page elements (the listing's filter rail and phone toolbar, the product page's in-page nav, §27.2) |
 | `--sf-z-header` | 50 | site header |
 | `--sf-z-megamenu` | 55 | mega-menu flyout (desktop) |
 | `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
@@ -1414,7 +1414,7 @@ No new pairs. The overlay uses ink, secondary and muted text on the page, the co
 
 ## 26. Product page: the primary surface
 
-Written by Prompt 16. Files: `src/pages/ProductDetails/ProductDetails.js` + `.module.css` (the first screen; the tabs, bundle and related rail below are Prompt 17's), and in `src/components/storefront/`: `ProductGallery` (+ `ProductGallerySkeleton`), `VariantSelector`, `QuantityStepper`, `SocialProof`, `TrustBadges`, `DeliveryReturnsInfo` and `AddToCartBar`, each with its module and tests. `variantUtils.js` is unchanged.
+Written by Prompt 16. Files: `src/pages/ProductDetails/ProductDetails.js` + `.module.css` (the first screen; what follows it is Prompt 17's, section 27), and in `src/components/storefront/`: `ProductGallery` (+ `ProductGallerySkeleton`), `VariantSelector`, `QuantityStepper`, `SocialProof`, `TrustBadges`, `DeliveryReturnsInfo` and `AddToCartBar`, each with its module and tests. `variantUtils.js` is unchanged.
 
 ### 26.1 Layout
 
@@ -1504,3 +1504,92 @@ The gallery's crossfade (`--sf-duration`), the zoom's scale (`--sf-duration-slow
 ### 26.9 Contrast
 
 No new pairs: the surface uses ink, secondary and muted text on the page; the accent (icons, the saved heart) and the focus ring on the page; the control boundary (swatches); the primary and ghost buttons and the selected chip; the gold stars on the page; success, warning and error text on the page; and brand ink on brand paper (the Sale chip), all already in section 14. In forced-colours mode the swatches keep their colours with a `Highlight` ring when chosen, the active thumbnail gets a `Highlight` border, and the sold-out strikes are kept in `CanvasText`.
+
+---
+
+## 27. Product page: below the first screen
+
+Written by Prompt 17. Files: `src/pages/ProductDetails/ProductDetails.js` + `.module.css` (the lower half), `src/pages/ProductDetails/productSpecs.js` (the table's rows), `parseSpecifications` in `src/utils/helpers.js`, and in `src/components/storefront/`: `ReviewsSection`, `FrequentlyBoughtTogether` and `RelatedProducts`, each with tests.
+
+### 27.1 Structure and rhythm
+
+Inside the page's `.sf-container--wide`, after the first screen:
+
+1. The **in-page nav** (27.2), sticky while the next two blocks scroll past;
+2. **Details**: the description and its specifications table (27.3);
+3. **Reviews** (27.4);
+4. **Complete the set**, the curated set on a sand panel (27.5), only when the product has curated companions;
+5. **You may also like**, the related rail (27.6), only when there are related products.
+
+- Sections are padded by `--sf-section-y`, with a full-width hairline between neighbours. The first section after the nav has half the top padding (the nav's strip already parts it from the first screen).
+- The set has no padding of its own and no rules: the section before and the one after give it room, and its sand panel stands in for the rule on either side.
+- The page's last block drops its bottom padding; the footer's gap is `.main-content`'s plus the container's 64px.
+- Every section is an `h2` (the details' two are eyebrow-styled); review titles are `h3`. Order: `h1` → `h2` "Delivery & returns" → "About this piece" → "Specifications" → "What customers say." (→ `h3` titles) → "Complete the set." → "You may also like.".
+
+### 27.2 The in-page nav (anchored sections, not tabs)
+
+- `nav aria-label="On this page"`, a list of links: "Details", "Specifications", "Reviews (N)" (N = the ratings count, muted, only when > 0). A link whose section is absent is left out, and with fewer than two the nav is not drawn. The old Description / Reviews tabs (and `activeTab`) are gone: everything is on the page, nothing hides behind a control.
+- **Sticky:** `top: var(--sf-header-height)`, `--sf-z-sticky`, on the page tone with an inset bottom hairline (the header closes with its own), spanning the container's gutters too. It belongs to a wrapper that ends after the reviews, so it leaves with them.
+- **Links:** 48px tall (`--pdp-nav-height`), eyebrow type (12px, 500, `--sf-tracking-eyebrow`; 0.08em below 480px), secondary text; on hover ink with a 1px ink underline (an inset shadow); focus a 2px `--sf-color-focus` outline inset 2px. 16px apart below 480px, 24px to 767px, 40px from 768px; the three fit from 320px, and the row scrolls sideways if a long count ever needs it.
+- **Jumps:** a plain click scrolls the section in (`scrollIntoView`, smooth; `"instant"` under reduced motion) and moves focus to it (`tabIndex={-1}`, no ring: it is not a control), so the next Tab continues from there. No history entry and no hash are added. A modified click (new tab or window) is left to the browser. The buy box's ratings row (`scrollToReviews`) makes the same jump to the reviews.
+- **Offsets:** targets carry `scroll-margin-top: var(--pdp-anchor-offset)` = `--sf-header-height` + the nav's 48px + 16px, so their first line lands 16px under the nav; a padded section subtracts its own top padding. From the top of the page at 1024px and up, the header is still at rest when a jump starts and compacts on the way, so the target lands up to 56px lower (never under the nav); jumps made further down land exactly.
+
+### 27.3 Details and the specifications table
+
+- **Layout:** from 980px (the first screen's grid) 12 columns, 24px gap: the description in 1–5 and the table in 7–12 (the table alone takes 1–7); one column below, the description first.
+- **About this piece:** an eyebrow `h2`, then the description's prose (`parseSpecifications(description).body`) split on blank lines into paragraphs: sans 16px / `--sf-leading-relaxed`, secondary, 60ch. No description, no section and no "Details" link (never a filler line).
+- **Specifications:** an eyebrow `h2` naming a `<table>` (`aria-labelledby`), `table-layout: fixed`: `th scope="row"` at 40% (sans 14px, muted, 400) and the value (15px ink, tabular figures), 12px above and below, a hairline above every row and under the last. Tags are sand pills (12px muted, radius pill), not links.
+- **Rows** (`buildSpecRows`): the parsed pairs in their order, then Brand (when set), SKU (the chosen variant's), Weight ("3.2 kg"), Dimensions ("57 × 54 × 80 cm", headed "Dimensions (L × W × H)"; a partial record reads "L 57 × H 80 cm"), Category (the leaf's name) and Tags (trimmed, each once). A field row is left out when it is empty (the admin saves a blank weight as 0) or when a parsed pair already has its name, compared without regard to case or spacing. Units follow the admin's fields (Weight (kg), Length/Width/Height (cm)).
+- **`parseSpecifications(description)`** → `{ body, specs }`: only the last paragraph, and only when it starts with "Specifications:"; pairs split on "; " first, then each on its first ": " (a value may hold a colon); a fragment with no "Key: " continues the value before it; CRLF, stray semicolons and spacing are tolerated. Without the paragraph (or with no pair in it), the whole description is the body and `specs` is `[]`.
+
+### 27.4 Reviews (`ReviewsSection`)
+
+```jsx
+<ReviewsSection
+  ref={reviewsRef}            // the <section>, focusable (tabIndex -1)
+  id="product-reviews"        // its heading is product-reviews-title
+  reviews={reviews}           // approved reviews (products.getReviews)
+  displayAvg={4.7}
+  totalRatingsCount={3}
+  loading={false}
+  error={false}
+  onRetry={fetchReviews}
+  className={styles.section}  // the page's padding, rule and scroll margin
+/>
+// eyebrow ("Reviews") and title ("What customers *say*.") can be set
+```
+
+- **Layout:** from 980px the heading, summary and bars in columns 1–5 and the reviews in 7–12; one column below.
+- **Summary:** the average to one place in Playfair at 48px (lining, tabular; "out of 5" visually hidden), the 18px gold stars (hidden from assistive technology: the figure says it), "Based on N rating(s)" in 14px muted. With no ratings the average is not shown at all: "No reviews yet" (the display-sm serif) and "Reviews come from verified orders and are published after moderation." (14px muted) take its place, once the read has settled.
+- **Rating bars:** a list named "Ratings by star", five rows 5 → 1, each `role="img"` named "5 stars: 2 reviews" (singular forms where due): the digit and a 10px star glyph, a 6px sand track with an ink fill as wide as its share (`--share`), the count in muted. Never the star colour. Only once the reviews have loaded and there is at least one.
+- **Reviews:** a list of hairline-separated `article`s, 32px either side of each rule: the name (15px, 500, ink; "Anonymous" when missing), "Verified purchase" (an eyebrow in `--sf-color-success` after a check mark, only when `isVerifiedPurchase === true`), the short date in a `<time>` (left out when it does not parse), 14px gold stars, the title as an `h3` (Playfair 18px, 500), the body (16px / 1.7, secondary, 60ch), customer photos (a list, 72px, lazy, "Customer upload 1 of 2"), and "N people found this helpful" (12px muted, only above 0).
+- **States:** loading shows two skeleton reviews in an `aria-busy` column with a visually hidden "Loading reviews" (the summary keeps the store's figure meanwhile); a failed read says "Reviews could not be loaded just now." with a ghost "Try again", which reads again and moves focus to the section. No sort control and no form: reviews are written from Order History for delivered pieces and published after moderation.
+- **The blend (the page):** the product's `rating` / `totalReviews` are worked out from its approved reviews, the very list `getReviews` returns. Once that list has loaded it is the count and the average; until then, or if the read fails, the aggregate stands in. (They used to be added together, which counted every review twice.) The reviews are kept per product, and a read that settles after the shopper has moved on is dropped.
+
+### 27.5 Complete the set (`FrequentlyBoughtTogether`)
+
+- **Data:** the merchant's `frequentlyBoughtTogetherIds` (`products.getFrequentlyBoughtTogether(product, maxBundle - 1)`, two at most today). A curation, so it is introduced as one ("Curated by us", "Complete the *set*."), never as "customers also bought". Nothing renders without companions.
+- **Panel:** `.sf-panel` (sand, radius sm) padded `clamp(24px, 4vw, 48px)`; the eyebrow and a `.sf-display-md` heading, 32px above the pieces.
+- **Pieces:** on phones, rows of a 72px thumbnail beside the text; from 600px a row of tiles (11rem, 12rem from 980px) with a "+" (Playfair 24px, muted) centred in the 40px gap. Thumbnails are 4:5 on sand with a hairline frame over the edge, so a sand photograph stays apart from the panel. The anchor's photograph is decoration (empty alt; it is this page); a companion's opens its page.
+- **Choosing:** each piece has a `.sf-check` row with its name in Playfair 16px. The anchor's box is ticked and disabled (drawn at full strength: it is part of the set); companions are ticked until the shopper unticks them (an unset choice reads as ticked, so companions that arrive late start ticked). Under the name, described by `aria-describedby`: "This piece", "Sold out" or the option that would be added (`buildCartItem` takes a piece's cheapest option, so the set says which), then the price (15px).
+- **Total and add:** "Total for N pieces" (14px secondary) and the sum of the chosen pieces' card prices (20px, tabular) in a polite, atomic live region; a primary "Add N to cart" (lg; full width on phones, beside the total at 600–979px, in columns 9–12 from 980px). It hands each chosen piece to `onAddToCart(buildCartItem(p))`, the page's `addToCart`. There is no bundle discount.
+- **Sold out:** a piece whose `stock` is 0 cannot be chosen: its box is unticked and disabled, and it is left out of the total and of the add (the card's rule, as on the home page). With nothing left to add the button is disabled.
+
+### 27.6 You may also like (`RelatedProducts`)
+
+A thin wrapper around the site's one rail: `SectionHeading` (eyebrow "Related", title "You may also *like*.") over `ProductRail` (label "Related pieces", the page's card handlers). It renders nothing without related products; the page reads them with `products.getRelated(product, 10)` (curated, then the same category, then tags and brand). Snap scrolling, the hairline previous/next buttons and the progress line are the rail's (§21.6). Its old scroller and stylesheet are gone.
+
+### 27.7 Motion
+
+`Reveal` on each section: the description, the table (90ms after it), the reviews, the set's panel and the related rail. The nav links' colour and underline change over `--sf-duration`, and the jumps scroll smoothly (instantly under reduced motion). Nothing else moves.
+
+### 27.8 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Reviews: rating bar fill (ink) on its sand track (graphic) | 14.64 ✓ | 12.52 ✓ | 3:1 |
+| Set: checkbox boundary (border-strong) on the sand panel | 3.19 ✓ | 3.27 ✓ | 3:1 |
+| Reviews: empty rating-bar track (sand) vs page | 1.11 | 1.27 | info |
+| Set: thumbnail hairline (stone) vs the sand panel | 1.29 | 1.50 | info |
+
+Every other pairing here is already in §14: ink, secondary and muted text on the page and on sand (the tags, the set), the gold stars on the page, the success tone on the page (the verified mark), the accent and the check mark on it, the focus ring on the page and on sand, and the primary and ghost buttons.
