@@ -2424,3 +2424,101 @@ None expected. Visible choices the client may want to see:
 - **Section copy:** "About this piece", "What customers *say*.", "Curated by us" / "Complete the *set*.", "You may also *like*.".
 - **The empty-state note:** "Reviews come from verified orders and are published after moderation." That is true of the storefront's own path (Order History, delivered pieces, moderation). Admin → Reviews can also author reviews that are tied to no order; if the store uses that, the line should change.
 - **The set's cheapest option:** each piece is added in its cheapest option, now named in the set (above).
+
+---
+
+## Prompt 18 — Cart drawer
+
+**Date:** 2026-10-08. **Result:** the cart is now a paper side panel on the right with a hairline edge. It holds a serif "Your cart" with the number of pieces, a free-delivery line over a 2px sand track that reads the live shipping methods, hairline-separated lines with a 4:5 thumbnail, the option, `PriceBlock`, a 36px stepper, the line total and a text "Remove", one quiet row of promises, and a footer that stays at the bottom with the subtotal, what delivery costs, "Taxes calculated at checkout", Checkout and "Continue shopping". It is a real modal dialog now: named, focus in and back out, Tab kept inside, Escape. All cart changes still go through `useCart`; the drawer computes no shipping charge, tax or discount. Reference: `prompts/DESIGN_SYSTEM.md` §28.
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/components/CartDrawer/CartDrawer.js` | Rewritten (408 → 605 lines, with the header comment). Kept: the props `open` / `onClose`; `useCart`'s `cartItems`, `updateQuantity`, `removeFromCart`, `getCartTotal`, `getCartItemCount`; the body scroll lock and the backdrop close; the stepper's rules; `productPath`, `PLACEHOLDER_IMG` and `onImageError`; `/checkout`. New: the dialog semantics with `useFocusTrap` and `useBodyScrollLock` (Prompt 09's helpers), the live delivery data, the promises, the focus hand-off after a removal, the close on route change, the portal. Removed: `FLAT_SHIPPING = 99`, the `FREE_SHIPPING_THRESHOLD` import, `useTheme` / `isDarkMode` (the tokens flip by themselves), `truncateText` (CSS clamps the name), the spring, the duplicate "View Cart" button, the icon-only trash and the stray "0" Prompt 11 reported. |
+| `src/components/CartDrawer/CartDrawer.module.css` | Rewritten, tokens only: 73 hex and 45 `rgba()` values → 0 (Prompt 01 counted 122), no blur, no gradient; z-index only `--sf-z-overlay`. |
+| New `src/components/CartDrawer/cartDelivery.js` | The delivery rules: `activeMethods`, `methodRate`, `freeDeliveryThreshold`, `deliveryEstimate`. Pure. |
+| New tests | `CartDrawer.test.js` (32, against the real `CartProvider`; only the network, auth and toasts are stubbed), `cartDelivery.test.js` (13). |
+| `prompts/DESIGN_SYSTEM.md` | New §28; the §9 `--sf-z-overlay` and `--sf-z-search` rows, §19.1, §19.5 and §25.1 no longer describe the drawer's old 1200/1300. |
+
+Nothing else changed: `CartContext.js`, `Header.js`, `Checkout.js`, `src/utils/constants.js` (`FREE_SHIPPING_THRESHOLD` stays for the header's utility line), `tokens.js`, `api.js`, `db.json` (SHA-256 unchanged) and every admin file are untouched.
+
+### The live-threshold rule, and `FLAT_SHIPPING`
+
+- **Before:** the drawer worked from the constant `FREE_SHIPPING_THRESHOLD` (₹9,999) and a local `FLAT_SHIPPING = 99` ("mirrors db.json Standard flatRate"). Prompt 05 changed that rate to ₹499, so below the threshold the drawer said ₹99 while checkout charged ₹499. Both are gone from the drawer.
+- **Now** (`cartDelivery.js`), read when the drawer first opens (`shipping.getMethods()` and `settings.get()`, kept for the session, a failed read tried again on the next opening), inactive methods dropped as checkout drops them:
+  - **threshold** = the lowest positive `freeAbove`. That is `resolveTrustBadgeDetail("freeShipping")`'s rule, the one the footer, the home strip and the product page print. The resolver decides whether a threshold exists; it returns display text ("Above ₹9,999"), so the amount is read by the same rule beside it, and `cartDelivery.test.js` checks that the two agree on the seeded methods and seven edge cases.
+  - **rate** = the flat rate of the method carrying that threshold; with no threshold, the lowest rate. An unknown rate is never borrowed from another method.
+  - A method free at any amount (`rateType: "free"`, or a ₹0 rate, which checkout charges as nothing) makes delivery **free outright**: the Delivery row says "Free" and no progress is drawn (there is nothing to unlock). Not in the brief; the seeded "Free Shipping" method is inactive today, but an admin could switch it on.
+  - Free means `subtotal >= threshold` on the pre-discount subtotal: checkout's rule (`freeAbove && subtotal >= freeAbove`), inclusive.
+- **Seeded result:** "Add ₹X more for free delivery" and "₹499.00 · free above ₹9,999.00" below ₹9,999; "Free delivery unlocked" and "Free" at or above it. With Standard's `freeAbove` cleared in Admin → Shipping, the indicator disappears and the row reads "₹499.00" (checked in the browser, then restored). No threshold is ever invented, and nothing is drawn before the methods have been read.
+
+### Decisions
+
+- **Focus-trap helper:** reused `src/components/ui/useFocusTrap.js` (Prompt 09) with `initialFocusRef` on the close button; no new helper. The hook records `document.activeElement` when `open` turns true and gives focus back to it, so a card's quick add, the product page's Add to cart and the header's cart button all get it back.
+- **Stepper:** its own 36px pill (`QuantityStepper` is 44px or 32px). Each button has a 44px target through `::after`. The buttons are named "Decrease quantity" / "Increase quantity" inside a group named "Quantity, <name>, <option>", so lines are told apart. Unavailable buttons use `aria-disabled`, not `disabled`, so a keyboard user who reaches the stock limit keeps focus on "+".
+- **The "+" rule** is the brief's ("`stock` is a number and `quantity >= stock`"). The old code also required `stock > 0`, so on a line saved at zero stock "+" stayed enabled, and the context let the quantity grow without limit (`clampQty` ignores a stock of 0). That line now cannot grow. `−` is unavailable at 1, as before.
+- **Remove** is a text button at the top right of the line, beside the name: "Remove" plus a visually hidden "<name>, <option>". The bottom row cannot hold the stepper, Remove and a line total at 360px, which would leave a 232px details column. The name takes the rest of the head row (two lines hold every seeded name at 360px; the longest is 39 characters).
+- **After a removal**, focus moves to the next line's Remove (the previous line's for the last one). When the cart is empty, focus moves to the empty message, so a screen reader reads "Your cart is empty.". A line that is folding away is `inert`.
+- **Links:** the name is a router link (the old name and thumbnail were an `h4` and a `div` with click handlers, out of reach for the keyboard). The thumbnail repeats the link for the pointer only. Links go to `productPath(line)`, which is `/products/<id>` because cart lines carry no slug (below), and the product page redirects that to the slug. A plain click closes the drawer as it navigates; a modified click leaves it open; a route change underneath closes it, as the sidebar and search do.
+- **Promises** wait for the settings read, so "Cash on Delivery" never pops in between the other two; after a failed read only "Secure payment" and "Easy returns · 7 days" show. The labels are the footer's.
+- **Formatting:** every amount in the drawer uses `formatCurrency` ("₹499.00 · free above ₹9,999.00"), like `PriceBlock`, the subtotal and the product page's delivery facts. The footer's and home strip's "Above ₹9,999" comes from the resolver's own string.
+- **Portal on `<body>`** (as `BottomDrawer`), and **`--sf-z-overlay`** for the backdrop and the panel.
+- **The empty state** links to `/products` ("Browse furniture", the brief's better target; it was `/`).
+
+### Deviations from the prompt, and why
+
+1. **The threshold amount is read beside the resolver, not parsed from it** (above). The resolver still decides whether there is one.
+2. **Free outright** when an active method is free at any amount (above).
+3. **The fill is scaled, not resized:** `transform: scaleX(share)` from the left over `--sf-duration-slow`. The design system animates only transform and opacity. The drawn width equals `min(100, subtotal / threshold × 100)%`.
+4. **The free-delivery block unfolds when it arrives late.** On the first opening the methods usually arrive while the panel slides in, so the block expands from no height (fading only under reduced motion) instead of pushing the lines down in one jump. When the methods are already known it is drawn at once. It folds away when the cart empties.
+5. **A skeleton in the Delivery row** while the methods are read (with "Loading" for screen readers), so the row never flips from a guess to the real value.
+6. **The dialog's description is the count** ("3 items").
+7. **"Remove" at the top right** rather than in the bottom row (360px fit, above).
+8. **Lines clip their content** (so the fold reaches 0) and reach 8px into the gutters, where the focus rings and hit areas at their edges fit. Checked by screenshot at 360px in both modes.
+9. **"1 day"** in the singular, if the returns window is ever 1.
+10. **Additions:** `cartDelivery.js`; the close on route change; the portal; `inert` on folding lines; the focus hand-off after a removal.
+
+### Verification
+
+- **Build:** `npm run build` prints "Compiled successfully" with no warnings. Gzip against `HEAD` built the same way: JS 413.8 → 414.9 kB (+1.1), CSS 57.97 → 57.09 kB (−0.88). Mock-mode builds: JS 418.96 → 420.16 kB, CSS 57.97 → 57.09 kB.
+- **Tests:** `CI=true npm test -- --passWithNoTests` runs 565 tests in 44 suites (520 + 45), exit 0, no console output. framer-motion's `height: "auto"` measurement calls `window.scrollTo` (it restores the window's own offset), which jsdom lacks, so the drawer test stubs it like `Products.test.js`.
+- **Mutation check:** 34 seeded faults, each caught by at least one test; both files restored byte for byte (SHA-256). The faults: the highest threshold; free methods ignored (twice); the lowest rate instead of the carrier's; inactive methods kept; free and unlocked strictly above the threshold; a read on every opening; no new read after a failure; progress before the read; a ₹99 fallback; the line not live; COD always; returns at 0 days; the old stock rule; "+" ignoring the stock; "−" not unavailable at 1; the figure not live; focus not handed to the next or the previous line; the empty message not focused; folding lines left in the tab order; modified clicks closing; route changes ignored; Escape ignored; the page not locked; the line total as the unit price; the subtotal from unit prices; lines counted instead of pieces; "1 items"; the empty state browsing home; the thumbnail in the tab order; a description while empty; the duplicate View Cart. The first pass missed two, both weak tests rather than faults: `fireEvent.click` does not move focus as a real click does, and the modified-click test asserted during the closing animation. Both were tightened and both faults are now caught.
+- **Static:** a grep of the four sources finds no hex, `rgb()`, `hsl()`, gradient or font-name literal (`font-family` is only `var(--sf-font-*)`); z-index only `--sf-z-overlay`. ESLint is clean on the sources; the test file has 3 `testing-library/no-node-access` findings (the aria-hidden backdrop and the `inert` wrapper, which have no role to query), fewer than the comparable suites (6–17). `node scripts/check-contrast.js` passes (no new pairs, §28.6); `node scripts/validate-db.js` passes; `db.json` SHA-256 unchanged (QA ran on a scratch copy through `JSON_SERVER_DB`).
+- **Browser QA** (Playwright + Chromium; JSON Server on the scratch copy; mock-mode production build): 110 scripted checks pass.
+  - **Opening:** a card's quick add (by keyboard) opens it with focus on "Close cart"; Escape closes and focus returns to that quick add. The product page's Add to cart opens it with the merged line. **Buy now never shows it:** a `MutationObserver` that was confirmed running (it saw the drawer when Add to cart opened it) counted 0, and the page landed on `/checkout`.
+  - **Quantities:** the Covered Shoe Rack's 5-shelf option (stock 4) goes up to 4; "+" is then unavailable, titled "No more stock available", and an extra press changes nothing; the context stored 4.
+  - **Threshold:** "Add ₹1,253.00 more for free delivery" at ₹8,746, the fill at 0.875; one "+" animates the fill to full over the next frames (0.88 → 1.00); the line turns "Free delivery unlocked" in the success tone; the 2px track; the Delivery row as above, read with a comma where the dot is.
+  - **Keyboard and links:** Tab runs close → name → Remove → − → + per line → Checkout → Continue shopping, then wraps; focus never left; the page is locked. "Continue shopping" closes on the same page; a name link lands on the product (`/products/4` → `/products/classic-plastic-chair`) and closes; Checkout lands on `/checkout` and closes; Remove hands focus on, the empty message takes it, "Browse furniture" lands on `/products`.
+  - **Widths and modes** (360, 768, 1024, 1440; light and dark): the panel is 360 / 440 / 440 / 440px wide, flush right, its footer at the viewport's bottom; no horizontal overflow; close 44 × 44, stepper 36 with 44px hit areas, Remove reachable 12px above and below its text, Checkout 52px; z-index 1000 and on top; paper `rgb(250, 247, 242)` / navy-ink `rgb(10, 20, 38)`; the bottom nav `inert` beneath (up to 768px); clean consoles.
+  - **Motion:** the panel slides in from x 1413 to 1000; a removed line folds 159 → 1px. Under reduced motion the panel never moves (transform `none` on every frame) and fades in, and a removed line keeps its 161px while it fades.
+  - **Admin round trip** (6 checks): with Standard's "Free Shipping Above" cleared in Admin → Shipping, the indicator is gone and Delivery reads "₹499.00"; with ₹9,999 restored, both return. The scratch copy was then put back to equal the repo's `db.json` in every collection.
+  - **Accessibility tree** (Playwright ARIA snapshot): dialog "Your cart" › heading level 2, "3 items", "Close cart", the free-delivery line, list "Your cart" of items (link, "Remove …", option, price with "Was …", group "Quantity, …" with "Decrease quantity" [disabled] at 1, "Line total …"), list "Our promises", the Subtotal and Delivery terms and definitions, "Taxes calculated at checkout", link "Checkout", "Continue shopping". The thumbnails are absent. NVDA and VoiceOver were not available here.
+  - **Focus rings:** screenshots at 360px of the close button, the name, Remove (at the line's right edge) and the stepper, in both modes: every ring complete.
+- **Laravel shape:** a non-mock production build against a stub answering `{ success, data, meta }` (7 checks): opening the drawer requested `/shipping/methods` and `/settings` once each and nothing on reopening; the same line, Delivery row, promises (with COD) and unlock.
+- **Admin parity:** 20 screenshots (login, dashboard, Products, Shipping, Settings; 1440 and 390px; light and dark) of `HEAD` and of this build: 20 / 20 byte-identical (two baseline runs were identical too). No admin file, and nothing the admin imports, changed.
+
+### Pre-existing issues noticed (not changed)
+
+- **The add toast covers the drawer's footer on phones.** `CartContext`'s "Added to Cart" toast (SweetAlert, bottom-end, 2s) sits over Checkout at 360px right after an add opens the drawer, as it did over the old drawer. The drawer itself now confirms the add; Prompts 29/30 could move toasts to the top on phones, or skip the add toast when the drawer opens.
+- **Cart lines carry no slug.** `normalizeCartItem` keeps a fixed set of fields and drops `buildCartItem`'s `slug`, so the drawer links to `/products/<id>` and the product page redirects to the slug. Keeping `slug` in the context would link straight to the canonical URL (`CartContext.js` was out of scope).
+- **COD and its cap.** The drawer shows "Cash on Delivery" whenever COD is enabled, as the footer and the product page do. Checkout offers it only up to ₹50,000 payable, so most sofa, bed and dining carts see the promise but not the option. A client decision (Prompt 10 asked the same of the home strip).
+- **Tax-inclusive prices.** The product page says "Prices inclusive of all taxes" when `settings.store.taxIncluded` is true, but checkout always adds GST on top. Not visible with today's `taxIncluded: false` (Prompt 26).
+- **Admin → Shipping's edit** saves the form fields with a PUT, so saving a method drops its `createdAt` (seen on the scratch copy). Admin untouched.
+- **The header's utility line** still reads `FREE_SHIPPING_THRESHOLD` (the brief keeps it there). If the admin changes the threshold, that line goes stale while the drawer, footer, home strip and product page follow the data.
+- **`--sf-z-search` (1400)** was raised to beat the old drawer; with the drawer and the sticky bar on tokens, `--sf-z-modal` would now do. Left as is; it is harmless.
+
+### Notes for later prompts
+
+- **20 (auth modal):** the drawer's dialog wiring (`useFocusTrap` with `initialFocusRef`, `useBodyScrollLock`, a portal, the overlay tokens) is the pattern to copy.
+- **26 (checkout):** the drawer mirrors `shippingCost`'s free-above rule and leaves the charge to checkout; if checkout's rule changes (rates, `rateType`), update `cartDelivery.js` too. See the tax-inclusive note above.
+- **29 (copy):** the drawer's strings are in `CartDrawer.js`: "Your cart", "N item(s)", "Close cart", "Add ₹X more for free delivery", "Free delivery unlocked", "Remove", "Decrease quantity" / "Increase quantity", "Quantity, …", "No more stock available", "Line total", "Our promises" and its three labels, "Subtotal", "Delivery", "Calculated at checkout", "Free", "free above ₹Y", "Taxes calculated at checkout", "Checkout", "Continue shopping", "Your cart is empty.", "Pieces you add will wait here until you are ready to check out.", "Browse furniture".
+- **30 (motion):** values in §28.5.
+- **31 (a11y):** the dialog is described by the count; the stepper uses `aria-disabled`; folding lines are `inert`; the empty message takes focus after the last removal. Screen readers are still to test.
+- **32 (performance):** the drawer adds one settings and one shipping read on its first opening; the footer and the home strip read the same data (a shared cache is a candidate).
+
+### Needs client confirmation
+
+- **Free delivery:** the ₹9,999 threshold and the ₹499 Standard rate (Prompt 05's placeholders) now drive the cart's "Add ₹X more for free delivery" and "₹499.00 · free above ₹9,999.00".
+- **COD in the cart** while orders above ₹50,000 cannot use it (above).
+- **Copy:** "Pieces you add will wait here until you are ready to check out." (new), and "Easy returns · 7 days" (the placeholder window).

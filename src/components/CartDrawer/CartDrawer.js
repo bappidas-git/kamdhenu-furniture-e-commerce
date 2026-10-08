@@ -1,407 +1,604 @@
-import React, { useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
+import { CloseOutlined } from "@mui/icons-material";
 import { useCart } from "../../hooks/useCart";
-import { useTheme } from "../../context/ThemeContext";
-import {
-  formatCurrency,
-  truncateText,
-  productPath,
-  PLACEHOLDER_IMG,
-  onImageError,
-} from "../../utils/helpers";
-import { FREE_SHIPPING_THRESHOLD } from "../../utils/constants";
+import apiService from "../../services/api";
+import { formatCurrency, productPath, PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
+import { STOREFRONT_CONFIG, TOKENS, resolveTrustBadgeDetail } from "../../theme/tokens";
+import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import PriceBlock from "../storefront/PriceBlock";
+import TRUST_ICONS from "../storefront/trustIcons";
+import { activeMethods, deliveryEstimate } from "./cartDelivery";
 import styles from "./CartDrawer.module.css";
 
-// Shipping shown while below the free threshold. Mirrors the Standard method's
-// flatRate in db.json; the free-shipping cutoff itself comes from the shared
-// FREE_SHIPPING_THRESHOLD constant (same source as Header + Checkout).
-const FLAT_SHIPPING = 99;
+// =============================================================================
+// CartDrawer — the cart (there is no cart page; checkout step 0 is the review)
+// =============================================================================
+//
+// A side panel on the right, opened by the header's cart button and by
+// CartContext.addToCart. From the top:
+//   • "Your cart" and the number of pieces, with a close button;
+//   • the free-delivery line and its progress hairline, from the live shipping
+//     methods (cartDelivery.js): "Add ₹X more for free delivery", or "Free
+//     delivery unlocked". Nothing is drawn until the methods have been read,
+//     and nothing at all when no method has a free-delivery threshold;
+//   • the lines: thumbnail, name, option, unit price, a quantity stepper, the
+//     line total and "Remove";
+//   • one quiet row of promises: Secure payment, Cash on Delivery (while
+//     settings.payment.codEnabled), Easy returns · N days (while
+//     STOREFRONT_CONFIG.returnsWindowDays > 0), by resolveTrustBadgeDetail's
+//     rules, as in the footer and on the product page;
+//   • a footer that stays at the bottom: the subtotal, what delivery costs,
+//     "Taxes calculated at checkout", Checkout and "Continue shopping".
+//
+// Data. Every change goes through useCart (updateQuantity clamps to the stock
+// the line knows of; removeFromCart; the toasts are the context's). The
+// subtotal is getCartTotal() and the count getCartItemCount(). Shipping
+// methods and store settings are read once, when the drawer first opens
+// (a failed read is tried again on the next opening), for display only: the
+// drawer never charges delivery, never computes taxes and never applies a
+// coupon; checkout does all three.
+//
+// Dialog behaviour (DESIGN_SYSTEM §19.1): role="dialog" aria-modal, named by
+// its title; focus starts on the close button, Tab stays inside, Escape and
+// the backdrop close it, focus returns to whatever opened it (useFocusTrap
+// keeps document.activeElement from the moment it opens), and the page behind
+// does not scroll. A plain click on a link closes it as it navigates; any
+// route change closes it too. Rendered in a portal on <body>.
+//
+// Motion: slides in over --sf-duration-slow with --sf-ease-out and leaves over
+// --sf-duration with --sf-ease-in-out; a removed line folds its height to 0.
+// Under reduced motion the panel and the lines only fade.
+// =============================================================================
 
-const CartDrawer = ({ open, onClose }) => {
-  const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
-  const {
-    cartItems,
-    updateQuantity,
-    removeFromCart,
-    getCartTotal,
-    getCartItemCount,
-  } = useCart();
+const { duration, easeOut, easeInOut } = TOKENS.motion;
 
-  const cart = cartItems || [];
-  const cartCount = getCartItemCount ? getCartItemCount() : 0;
-  const cartTotal = getCartTotal ? getCartTotal() : 0;
+// The free-delivery block: unfolds from no height; only fades under reduced
+// motion (MotionConfig leaves height animations alone, so this is explicit).
+const UNFOLD = {
+  initial: { height: 0, opacity: 0 },
+  animate: { height: "auto", opacity: 1, transition: { duration: duration.base, ease: easeOut } },
+  exit: { height: 0, opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
+};
+const FADE = {
+  initial: { opacity: 0 },
+  animate: { opacity: 1, transition: { duration: duration.base, ease: easeOut } },
+  exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
+};
 
-  const shippingCost = cartTotal >= FREE_SHIPPING_THRESHOLD ? 0 : FLAT_SHIPPING;
-  const amountToFreeShipping = Math.max(0, FREE_SHIPPING_THRESHOLD - cartTotal);
-  const shippingProgress = Math.min(
-    100,
-    (cartTotal / FREE_SHIPPING_THRESHOLD) * 100
-  );
+// A plain left click closes the drawer as the link navigates; a modified
+// click (new tab or window) leaves it open.
+const isPlainClick = (event) =>
+  !event.defaultPrevented &&
+  event.button === 0 &&
+  !event.metaKey &&
+  !event.altKey &&
+  !event.ctrlKey &&
+  !event.shiftKey;
 
-  // Lock body scroll while the drawer is open so the page behind it can't move.
+const itemsLabel = (count) => `${count} ${count === 1 ? "item" : "items"}`;
+const daysLabel = (days) => `${days} ${days === 1 ? "day" : "days"}`;
+const lineLabel = (line) => (line.variantName ? `${line.name}, ${line.variantName}` : line.name);
+
+// "+" is out of reach once a line holds all the stock it knows of.
+const atStockLimit = (line) => typeof line.stock === "number" && line.quantity >= line.stock;
+
+// A read that throws before it returns a promise still settles as a failure.
+const settle = (read) => Promise.resolve().then(read);
+
+// Shipping methods and store settings: read when the drawer first opens and
+// kept for the session. A read that failed is tried again on the next
+// opening. null until the first reads settle; then { methods, settings },
+// where a failed read is null.
+const useStoreData = (open) => {
+  const [data, setData] = useState(null);
+  const pending = useRef(false);
+  const mounted = useRef(true);
+
   useEffect(() => {
-    if (!open) return;
-    const previous = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    mounted.current = true;
     return () => {
-      document.body.style.overflow = previous;
+      mounted.current = false;
     };
-  }, [open]);
+  }, []);
 
-  const handleQuantityChange = (itemId, newQuantity) => {
-    if (newQuantity < 1) return;
-    updateQuantity(itemId, newQuantity);
-  };
+  const needsRead = data === null || data.methods === null || data.settings === null;
 
-  const handleRemoveItem = (itemId) => {
-    removeFromCart(itemId);
-  };
+  useEffect(() => {
+    if (!open || !needsRead || pending.current) return;
+    pending.current = true;
+    Promise.allSettled([
+      settle(() => apiService.shipping.getMethods()),
+      settle(() => apiService.settings.get()),
+    ]).then(([shipping, settings]) => {
+      pending.current = false;
+      if (!mounted.current) return;
+      setData((previous) => ({
+        methods:
+          (shipping.status === "fulfilled" && activeMethods(shipping.value)) ||
+          (previous && previous.methods) ||
+          null,
+        settings:
+          (settings.status === "fulfilled" && settings.value) ||
+          (previous && previous.settings) ||
+          null,
+      }));
+    });
+  }, [open, needsRead]);
 
-  const handleNavigate = (path) => {
-    onClose();
-    navigate(path);
-  };
+  return data;
+};
 
-  const themeClass = isDarkMode ? styles.dark : styles.light;
+// What the footer's "Delivery" row says. null while the methods are read.
+const describeDelivery = (store, estimate, subtotal) => {
+  if (!store) return null;
+  if (!estimate) return { text: "Calculated at checkout" };
+  const { threshold, rate } = estimate;
+  if (rate === 0 || (threshold !== null && subtotal >= threshold)) {
+    return { text: "Free", free: true };
+  }
+  if (rate === null) return { text: "Calculated at checkout" };
+  if (threshold === null) return { text: formatCurrency(rate) };
+  return { text: formatCurrency(rate), freeAbove: formatCurrency(threshold) };
+};
+
+const TrustIcon = ({ name }) => (
+  <svg
+    className={styles.trustIcon}
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {TRUST_ICONS[name]}
+  </svg>
+);
+
+const StepIcon = ({ plus }) => (
+  <svg
+    width="14"
+    height="14"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.75"
+    strokeLinecap="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {plus && <line x1="12" y1="5" x2="12" y2="19" />}
+    <line x1="5" y1="12" x2="19" y2="12" />
+  </svg>
+);
+
+const CartLine = ({ line, reduceMotion, onNavigate, onDecrease, onIncrease, onRemove, registerRemove }) => {
+  // While a removed line folds away it stays in the DOM: keep it out of the
+  // tab order and the accessibility tree.
+  const isPresent = useIsPresent();
+  const href = productPath(line);
+  const label = lineLabel(line);
+  const currency = line.currency || "INR";
+  const atMin = line.quantity <= 1;
+  const atMax = atStockLimit(line);
 
   return (
+    <motion.li
+      layout="position"
+      className={styles.line}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: duration.base, ease: easeOut }}
+      exit={
+        reduceMotion
+          ? { opacity: 0, transition: { duration: duration.base, ease: easeInOut } }
+          : { opacity: 0, height: 0, transition: { duration: duration.base, ease: easeInOut } }
+      }
+    >
+      {/* React 18 does not know `inert`; the empty string sets the attribute. */}
+      <div className={styles.lineInner} inert={isPresent ? undefined : ""}>
+        <Link to={href} className={styles.thumb} tabIndex={-1} aria-hidden="true" onClick={onNavigate}>
+          <img
+            src={line.image || PLACEHOLDER_IMG}
+            alt=""
+            width="72"
+            height="90"
+            loading="lazy"
+            decoding="async"
+            onError={onImageError}
+          />
+        </Link>
+
+        <div className={styles.details}>
+          <div className={styles.lineHead}>
+            <Link to={href} className={styles.name} onClick={onNavigate}>
+              {line.name}
+            </Link>
+            <button
+              ref={(element) => registerRemove(line.id, element)}
+              type="button"
+              className={`sf-btn sf-btn--link ${styles.remove}`}
+              onClick={() => onRemove(line.id)}
+            >
+              Remove<span className="sf-visually-hidden"> {label}</span>
+            </button>
+          </div>
+          {line.variantName && <p className={styles.variant}>{line.variantName}</p>}
+          <div className={styles.unitPrice}>
+            <PriceBlock price={line.price} comparePrice={line.comparePrice} currency={currency} size="sm" />
+          </div>
+
+          <div className={styles.lineFoot}>
+            <div className={styles.stepper} role="group" aria-label={`Quantity, ${label}`}>
+              <button
+                type="button"
+                className={styles.step}
+                aria-label="Decrease quantity"
+                aria-disabled={atMin || undefined}
+                onClick={() => onDecrease(line)}
+              >
+                <StepIcon />
+              </button>
+              <span className={styles.quantity} aria-live="polite" aria-atomic="true">
+                {line.quantity}
+              </span>
+              <button
+                type="button"
+                className={styles.step}
+                aria-label="Increase quantity"
+                aria-disabled={atMax || undefined}
+                title={atMax ? "No more stock available" : undefined}
+                onClick={() => onIncrease(line)}
+              >
+                <StepIcon plus />
+              </button>
+            </div>
+            <p className={styles.lineTotal}>
+              <span className="sf-visually-hidden">Line total </span>
+              {formatCurrency(line.price * line.quantity, currency)}
+            </p>
+          </div>
+        </div>
+      </div>
+    </motion.li>
+  );
+};
+
+const CartDrawer = ({ open, onClose }) => {
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
+  const { cartItems, updateQuantity, removeFromCart, getCartTotal, getCartItemCount } = useCart();
+
+  const lines = cartItems || [];
+  const isEmpty = lines.length === 0;
+  const count = getCartItemCount ? getCartItemCount() : 0;
+  const subtotal = getCartTotal ? getCartTotal() : 0;
+
+  const panelRef = useRef(null);
+  const closeRef = useRef(null);
+  const emptyRef = useRef(null);
+  const removeButtons = useRef(new Map());
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+  const titleId = useId();
+  const countId = useId();
+
+  useFocusTrap(panelRef, { active: open, onEscape: onClose, initialFocusRef: closeRef });
+  useBodyScrollLock(open);
+
+  const store = useStoreData(open);
+  const estimate = store ? deliveryEstimate(store.methods) : null;
+  const delivery = describeDelivery(store, estimate, subtotal);
+
+  // ---- Free-delivery progress (display only) ---------------------------------
+  const threshold = estimate ? estimate.threshold : null;
+  const showProgress = !isEmpty && threshold !== null;
+  const unlocked = showProgress && subtotal >= threshold;
+  const remaining = showProgress ? Math.max(0, threshold - subtotal) : 0;
+  const ratio = showProgress ? Math.min(1, Math.max(0, subtotal / threshold)) : 0;
+
+  // ---- Promises: shown once the store data has settled ----------------------
+  const trustItems = store
+    ? [
+        { id: "securePayment", icon: "lock", label: "Secure payment" },
+        resolveTrustBadgeDetail("cod", { settings: store.settings }) !== null && {
+          id: "cod",
+          icon: "cash",
+          label: "Cash on Delivery",
+        },
+        resolveTrustBadgeDetail("easyReturns") !== null && {
+          id: "easyReturns",
+          icon: "rotate",
+          label: "Easy returns",
+          detail: daysLabel(STOREFRONT_CONFIG.returnsWindowDays),
+        },
+      ].filter(Boolean)
+    : [];
+
+  // ---- Close when the route changes (links, back/forward) ------------------
+  const routeKey = location.pathname + location.search;
+  const lastRouteKey = useRef(routeKey);
+  useEffect(() => {
+    if (lastRouteKey.current === routeKey) return;
+    lastRouteKey.current = routeKey;
+    if (open) onCloseRef.current();
+  }, [routeKey, open]);
+
+  // ---- Focus after a removal -------------------------------------------------
+  // The next line's Remove takes focus (the previous one's for the last line);
+  // when the cart is empty, the empty-state message does.
+  const [focusEmpty, setFocusEmpty] = useState(false);
+  useEffect(() => {
+    if (!focusEmpty || !isEmpty) return;
+    setFocusEmpty(false);
+    if (emptyRef.current) emptyRef.current.focus();
+  }, [focusEmpty, isEmpty]);
+  useEffect(() => {
+    if (!open) setFocusEmpty(false);
+  }, [open]);
+
+  const registerRemove = useCallback((lineId, element) => {
+    if (element) removeButtons.current.set(lineId, element);
+    else removeButtons.current.delete(lineId);
+  }, []);
+
+  // ---- Actions -----------------------------------------------------------------
+  const onNavigate = (event) => {
+    if (isPlainClick(event)) onClose();
+  };
+
+  const handleDecrease = (line) => {
+    if (line.quantity <= 1) return;
+    updateQuantity(line.id, line.quantity - 1);
+  };
+
+  const handleIncrease = (line) => {
+    if (atStockLimit(line)) return;
+    updateQuantity(line.id, line.quantity + 1);
+  };
+
+  const handleRemove = (lineId) => {
+    const index = lines.findIndex((line) => line.id === lineId);
+    const neighbour = lines[index + 1] || lines[index - 1];
+    removeFromCart(lineId);
+    if (neighbour) {
+      const next = removeButtons.current.get(neighbour.id);
+      if (next) next.focus();
+    } else {
+      setFocusEmpty(true);
+    }
+  };
+
+  if (typeof document === "undefined") return null;
+
+  const panelMotion = reduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
+      }
+    : {
+        initial: { x: "100%" },
+        animate: { x: 0 },
+        exit: { x: "100%", transition: { duration: duration.base, ease: easeInOut } },
+      };
+
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <>
-          {/* Backdrop overlay */}
+        <React.Fragment key="cart-drawer">
           <motion.div
             className={styles.backdrop}
+            aria-hidden="true"
+            onClick={onClose}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.3 }}
-            onClick={onClose}
+            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
+            transition={{ duration: duration.slow, ease: easeOut }}
           />
-
-          {/* Drawer panel */}
-          <motion.aside
-            className={`${styles.drawer} ${themeClass}`}
-            initial={{ x: "100%" }}
-            animate={{ x: 0 }}
-            exit={{ x: "100%" }}
-            transition={{ type: "spring", damping: 30, stiffness: 300 }}
+          <motion.div
+            ref={panelRef}
+            className={styles.panel}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={count > 0 ? countId : undefined}
+            tabIndex={-1}
+            layoutRoot
+            transition={{ duration: duration.slow, ease: easeOut }}
+            {...panelMotion}
           >
-            {/* Header */}
             <div className={styles.header}>
-              <div className={styles.headerLeft}>
-                <svg
-                  className={styles.headerIcon}
-                  width="24"
-                  height="24"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <circle cx="9" cy="21" r="1" />
-                  <circle cx="20" cy="21" r="1" />
-                  <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                </svg>
-                <h2 className={styles.title}>Shopping Cart</h2>
-                {cartCount > 0 && (
-                  <span className={styles.itemCount}>{cartCount}</span>
+              <div className={styles.heading}>
+                <h2 id={titleId} className={`sf-display-sm ${styles.title}`}>
+                  Your cart
+                </h2>
+                {count > 0 && (
+                  <p id={countId} className={styles.count}>
+                    {itemsLabel(count)}
+                  </p>
                 )}
               </div>
               <button
-                className={styles.closeButton}
+                ref={closeRef}
+                type="button"
+                className={styles.close}
                 onClick={onClose}
                 aria-label="Close cart"
               >
-                <svg
-                  width="20"
-                  height="20"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                >
-                  <line x1="18" y1="6" x2="6" y2="18" />
-                  <line x1="6" y1="6" x2="18" y2="18" />
-                </svg>
+                <CloseOutlined />
               </button>
             </div>
 
-            {/* Free shipping progress bar */}
-            {cart.length > 0 && (
-              <div className={styles.shippingBanner}>
-                {amountToFreeShipping > 0 ? (
-                  <p className={styles.shippingText}>
-                    Add{" "}
-                    <strong>{formatCurrency(amountToFreeShipping)}</strong>{" "}
-                    more for <strong>free shipping</strong>
-                  </p>
-                ) : (
-                  <p className={styles.shippingText}>
-                    <svg
-                      className={styles.checkIcon}
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2.5"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
+            {/* Already known when the drawer opens: drawn at once. Arriving
+                later (the first opening): it unfolds, so the lines below move
+                down smoothly instead of jumping. */}
+            <AnimatePresence initial={false}>
+              {showProgress && (
+                <motion.div
+                  key="progress"
+                  className={styles.progress}
+                  {...(reduceMotion ? FADE : UNFOLD)}
+                >
+                  <div className={styles.progressInner}>
+                    <p
+                      className={unlocked ? `${styles.progressLine} ${styles.unlocked}` : styles.progressLine}
+                      aria-live="polite"
+                      aria-atomic="true"
                     >
-                      <polyline points="20 6 9 17 4 12" />
-                    </svg>
-                    You qualify for <strong>free shipping!</strong>
-                  </p>
-                )}
-                <div className={styles.progressBarTrack}>
-                  <motion.div
-                    className={styles.progressBarFill}
-                    initial={{ width: 0 }}
-                    animate={{ width: `${shippingProgress}%` }}
-                    transition={{ duration: 0.6, ease: "easeOut" }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* Cart items list */}
-            <div className={styles.itemsContainer}>
-              {cart.length === 0 ? (
-                <div className={styles.emptyState}>
-                  <motion.div
-                    className={styles.emptyStateInner}
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    transition={{ duration: 0.4, ease: "easeOut" }}
-                  >
-                    <svg
-                      className={styles.emptyIcon}
-                      width="80"
-                      height="80"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="1"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                    >
-                      <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-                      <line x1="3" y1="6" x2="21" y2="6" />
-                      <path d="M16 10a4 4 0 0 1-8 0" />
-                    </svg>
-                    <h3 className={styles.emptyTitle}>Your cart is empty</h3>
-                    <p className={styles.emptyText}>
-                      Looks like you haven't added anything to your cart yet.
+                      {unlocked ? (
+                        <>
+                          <svg
+                            className={styles.check}
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            aria-hidden="true"
+                            focusable="false"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                          Free delivery unlocked
+                        </>
+                      ) : (
+                        <>
+                          Add <span className={styles.amount}>{formatCurrency(remaining)}</span> more for
+                          free delivery
+                        </>
+                      )}
                     </p>
-                    <button
-                      className={styles.continueShoppingBtn}
-                      onClick={() => handleNavigate("/")}
-                    >
-                      Continue Shopping
-                    </button>
-                  </motion.div>
-                </div>
-              ) : (
-                <AnimatePresence initial={false}>
-                  {cart.map((item) => {
-                    const hasDiscount =
-                      item.comparePrice && item.comparePrice > item.price;
-                    const lineTotal = item.price * item.quantity;
-                    const atStockLimit =
-                      typeof item.stock === "number" &&
-                      item.stock > 0 &&
-                      item.quantity >= item.stock;
-                    const productHref = productPath(item);
-
-                    return (
-                      <motion.div
-                        key={item.id}
-                        className={styles.cartItem}
-                        layout
-                        initial={{ opacity: 0, x: 40 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        exit={{
-                          opacity: 0,
-                          x: -40,
-                          height: 0,
-                          marginBottom: 0,
-                          padding: 0,
-                          overflow: "hidden",
-                        }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <div
-                          className={styles.itemImage}
-                          onClick={() => handleNavigate(productHref)}
-                        >
-                          <img
-                            src={item.image || PLACEHOLDER_IMG}
-                            alt={item.name}
-                            onError={onImageError}
-                          />
-                        </div>
-
-                        <div className={styles.itemDetails}>
-                          <div className={styles.itemMeta}>
-                            <h4
-                              className={styles.itemName}
-                              onClick={() => handleNavigate(productHref)}
-                            >
-                              {truncateText(item.name, 45)}
-                            </h4>
-                            {item.variantName && (
-                              <span className={styles.itemVariant}>
-                                {item.variantName}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={styles.itemPricing}>
-                            <span className={styles.itemPrice}>
-                              {formatCurrency(item.price)}
-                            </span>
-                            {hasDiscount && (
-                              <span className={styles.itemComparePrice}>
-                                {formatCurrency(item.comparePrice)}
-                              </span>
-                            )}
-                          </div>
-
-                          <div className={styles.itemBottom}>
-                            <div className={styles.quantityControl}>
-                              <button
-                                className={styles.quantityBtn}
-                                onClick={() =>
-                                  handleQuantityChange(item.id, item.quantity - 1)
-                                }
-                                disabled={item.quantity <= 1}
-                                aria-label="Decrease quantity"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                >
-                                  <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                              </button>
-                              <span className={styles.quantityValue}>
-                                {item.quantity}
-                              </span>
-                              <button
-                                className={styles.quantityBtn}
-                                onClick={() =>
-                                  handleQuantityChange(item.id, item.quantity + 1)
-                                }
-                                disabled={atStockLimit}
-                                title={
-                                  atStockLimit ? "No more stock available" : undefined
-                                }
-                                aria-label="Increase quantity"
-                              >
-                                <svg
-                                  width="14"
-                                  height="14"
-                                  viewBox="0 0 24 24"
-                                  fill="none"
-                                  stroke="currentColor"
-                                  strokeWidth="2.5"
-                                >
-                                  <line x1="12" y1="5" x2="12" y2="19" />
-                                  <line x1="5" y1="12" x2="19" y2="12" />
-                                </svg>
-                              </button>
-                            </div>
-
-                            <span className={styles.lineTotal}>
-                              {formatCurrency(lineTotal)}
-                            </span>
-
-                            <button
-                              className={styles.removeBtn}
-                              onClick={() => handleRemoveItem(item.id)}
-                              aria-label="Remove item"
-                            >
-                              <svg
-                                width="16"
-                                height="16"
-                                viewBox="0 0 24 24"
-                                fill="none"
-                                stroke="currentColor"
-                                strokeWidth="2"
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                              >
-                                <polyline points="3 6 5 6 21 6" />
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                                <line x1="10" y1="11" x2="10" y2="17" />
-                                <line x1="14" y1="11" x2="14" y2="17" />
-                              </svg>
-                            </button>
-                          </div>
-                        </div>
-                      </motion.div>
-                    );
-                  })}
-                </AnimatePresence>
+                    <span className={styles.track} aria-hidden="true">
+                      <motion.span
+                        className={styles.fill}
+                        style={{ originX: 0 }}
+                        initial={{ scaleX: 0 }}
+                        animate={{ scaleX: ratio }}
+                        transition={{ duration: duration.slow, ease: easeOut }}
+                      />
+                    </span>
+                  </div>
+                </motion.div>
               )}
-            </div>
+            </AnimatePresence>
 
-            {/* Cart summary - sticky bottom */}
-            {cart.length > 0 && (
+            <motion.div className={styles.body} layoutScroll>
+              {isEmpty ? (
+                <motion.div
+                  className={styles.empty}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: duration.base, ease: easeOut }}
+                >
+                  <p ref={emptyRef} tabIndex={-1} className={`sf-display-sm ${styles.emptyTitle}`}>
+                    Your cart is empty.
+                  </p>
+                  <p className={styles.emptyLine}>
+                    Pieces you add will wait here until you are ready to check out.
+                  </p>
+                  <Link to="/products" className="sf-btn sf-btn--ghost" onClick={onNavigate}>
+                    Browse furniture
+                  </Link>
+                </motion.div>
+              ) : (
+                <>
+                  <ul className={styles.lines} aria-labelledby={titleId}>
+                    <AnimatePresence initial={false}>
+                      {lines.map((line) => (
+                        <CartLine
+                          key={line.id}
+                          line={line}
+                          reduceMotion={reduceMotion}
+                          onNavigate={onNavigate}
+                          onDecrease={handleDecrease}
+                          onIncrease={handleIncrease}
+                          onRemove={handleRemove}
+                          registerRemove={registerRemove}
+                        />
+                      ))}
+                    </AnimatePresence>
+                  </ul>
+
+                  {trustItems.length > 0 && (
+                    <ul className={styles.trust} aria-label="Our promises">
+                      {trustItems.map((item) => (
+                        <li key={item.id} className={styles.trustItem}>
+                          <TrustIcon name={item.icon} />
+                          <span>
+                            {item.label}
+                            {item.detail && (
+                              <>
+                                <span aria-hidden="true"> · </span>
+                                <span className="sf-visually-hidden">, </span>
+                                {item.detail}
+                              </>
+                            )}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </>
+              )}
+            </motion.div>
+
+            {!isEmpty && (
               <div className={styles.footer}>
-                <div className={styles.summarySection}>
-                  <div className={styles.summaryRow}>
-                    <span className={styles.summaryLabel}>Subtotal</span>
-                    <span className={styles.summaryValue}>
-                      {formatCurrency(cartTotal)}
-                    </span>
+                <dl className={styles.summary}>
+                  <div className={`${styles.summaryRow} ${styles.subtotal}`}>
+                    <dt>Subtotal</dt>
+                    <dd>{formatCurrency(subtotal)}</dd>
                   </div>
-                  <div className={styles.summaryRow}>
-                    <span className={styles.summaryLabel}>
-                      Estimated Shipping
-                    </span>
-                    <span
-                      className={`${styles.summaryValue} ${
-                        shippingCost === 0 ? styles.freeShipping : ""
-                      }`}
-                    >
-                      {shippingCost === 0
-                        ? "Free"
-                        : formatCurrency(shippingCost)}
-                    </span>
+                  <div className={`${styles.summaryRow} ${styles.delivery}`}>
+                    <dt>Delivery</dt>
+                    {delivery ? (
+                      <dd className={delivery.free ? styles.free : undefined}>
+                        {delivery.text}
+                        {delivery.freeAbove && (
+                          <>
+                            <span aria-hidden="true"> · </span>
+                            <span className="sf-visually-hidden">, </span>
+                            free above {delivery.freeAbove}
+                          </>
+                        )}
+                      </dd>
+                    ) : (
+                      <dd aria-busy="true">
+                        <span className="sf-visually-hidden">Loading</span>
+                        <span className={`sf-skeleton ${styles.deliverySkeleton}`} aria-hidden="true" />
+                      </dd>
+                    )}
                   </div>
-                </div>
-
-                <div className={styles.footerActions}>
-                  <button
-                    className={styles.viewCartBtn}
-                    onClick={() => handleNavigate("/checkout")}
-                  >
-                    View Cart
-                  </button>
-                  <button
-                    className={styles.checkoutBtn}
-                    onClick={() => handleNavigate("/checkout")}
-                  >
-                    Checkout
-                  </button>
-                </div>
+                </dl>
+                <p className={styles.taxNote}>Taxes calculated at checkout</p>
+                <Link
+                  to="/checkout"
+                  className={`sf-btn sf-btn--primary sf-btn--lg sf-btn--block ${styles.checkout}`}
+                  onClick={onNavigate}
+                >
+                  Checkout
+                </Link>
+                <button type="button" className={`sf-btn sf-btn--link ${styles.continue}`} onClick={onClose}>
+                  Continue shopping
+                </button>
               </div>
             )}
-          </motion.aside>
-        </>
+          </motion.div>
+        </React.Fragment>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
