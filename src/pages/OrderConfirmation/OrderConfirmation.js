@@ -117,8 +117,10 @@ export const headlineFor = (
 
 // The delivery fact. There is no estimate to give (the order does not store
 // its delivery method), so: the day a delivered order arrived (deliveredAt,
-// else updatedAt, as before), "shipped" for a shipped one, a plain "not
-// shipped" for a closed one, and what happens next for the rest.
+// else updatedAt, as before), "shipped" for a shipped one, "recalled" for a
+// parcel the admin's cancel brought back (shippingStatus "recalled"), "not
+// shipped" for a closed one that never left, and what happens next for the
+// rest.
 export const deliveryFor = (
   order,
   stage = orderStage(order),
@@ -129,7 +131,12 @@ export const deliveryFor = (
     return deliveredOn ? `Delivered on ${formatDate(deliveredOn)}.` : "Delivered.";
   }
   if (order.shippingStatus === "shipped") return "Your order has shipped.";
-  if (CLOSED_STAGES.includes(stage)) return "This order was not shipped.";
+  if (order.shippingStatus === "recalled") return "The shipment was recalled.";
+  if (CLOSED_STAGES.includes(stage)) {
+    return !order.shippingStatus || order.shippingStatus === "pending"
+      ? "This order was not shipped."
+      : "This order is closed.";
+  }
   return "We'll email tracking details when your order ships.";
 };
 
@@ -209,7 +216,6 @@ const OrderConfirmation = () => {
   const titleRef = useRef(null);
   const retryRef = useRef(null);
   const invoiceRef = useRef(null);
-  const copyTimer = useRef(null);
   const retrying = useRef(false);
   const revealingInvoice = useRef(false);
 
@@ -265,19 +271,26 @@ const OrderConfirmation = () => {
   const handleCopyOrderNumber = async () => {
     const text = order?.orderNumber || orderNumber;
     const copied = await copyToClipboard(String(text));
-    clearTimeout(copyTimer.current);
     setCopyNote((previous) => ({ key: previous.key + 1, text: copied ? "Copied" : "Couldn't copy", copied }));
-    copyTimer.current = setTimeout(() => setCopyNote((previous) => ({ ...previous, text: "", copied: false })), 2000);
   };
 
-  useEffect(() => () => clearTimeout(copyTimer.current), []);
+  // The note clears after two seconds. The timer lives here, so a new copy
+  // restarts the wait and leaving the page cancels it (a copy still pending
+  // when the page goes starts nothing).
+  useEffect(() => {
+    if (!copyNote.text) return undefined;
+    const timer = setTimeout(() => setCopyNote((previous) => ({ ...previous, text: "", copied: false })), 2000);
+    return () => clearTimeout(timer);
+  }, [copyNote.key, copyNote.text]);
 
   // "Print invoice": the invoice comes into view under the summary, then the
   // browser's print dialog opens once its logo has loaded (at most 3 seconds:
   // the store's name is printed beside it anyway). The print stylesheet
   // prints the invoice alone, so the browser's own Print prints it too.
   const handlePrintInvoice = () => {
-    revealingInvoice.current = !invoiceOpen;
+    // Kept until announced: a second press while the logo still loads
+    // replaces the first print request, not the news that it appeared.
+    revealingInvoice.current = revealingInvoice.current || !invoiceOpen;
     setInvoiceOpen(true);
     setPrintRequest((count) => count + 1);
   };
@@ -442,7 +455,7 @@ const OrderConfirmation = () => {
 
   // Badge text mirrors the order's real paymentStatus — never a hardcoded
   // "successful". Cash on delivery reads "Pay on delivery" only while the
-  // order can still arrive.
+  // order is still to arrive (not once delivered, nor on a closed order).
   const paymentStatusInfo = (() => {
     switch (order.paymentStatus) {
       case "paid":
@@ -457,7 +470,7 @@ const OrderConfirmation = () => {
         return { label: "Not charged", modifier: quiet };
       default:
         if (closed) return { label: "Not charged", modifier: quiet };
-        return order.paymentMethod === "cod"
+        return order.paymentMethod === "cod" && !isDelivered
           ? { label: "Pay on delivery", modifier: "sf-badge--info" }
           : { label: "Pending", modifier: "sf-badge--warning" };
     }
@@ -691,6 +704,9 @@ const OrderConfirmation = () => {
             paidAmount,
           }}
           payment={{ method: paymentMethodLabel(order.paymentMethod), status: paymentStatusInfo.label }}
+          // A closed order's paper says what became of it, so it never reads
+          // as a plain record of a standing sale.
+          outcome={closed ? headlineFor(order, stage, isPaymentPending) : null}
         />
 
         <p className="sf-visually-hidden" role="status">

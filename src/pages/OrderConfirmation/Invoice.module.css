@@ -111,6 +111,18 @@
   overflow-wrap: anywhere;
 }
 
+/* A closed order's outcome, boxed in ink so it reads first on paper too. */
+.outcome {
+  max-width: 22rem;
+  margin: 0;
+  padding: var(--sf-space-1) var(--sf-space-2);
+  border: 1px solid var(--invoice-ink);
+  border-radius: var(--sf-radius-sm);
+  color: var(--invoice-ink);
+  font-weight: var(--sf-font-semibold);
+  text-align: left;
+}
+
 /* ---- Bill to, ship to ----------------------------------------------------- */
 .parties {
   display: grid;

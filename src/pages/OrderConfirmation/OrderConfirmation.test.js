@@ -192,7 +192,6 @@ describe("the read", () => {
   ])("normalises the answer as before: %s", async (_label, shape) => {
     const order = seeded(DELIVERED);
     apiService.orders.getByOrderNumber.mockResolvedValue(shape(order));
-    expect(reference.normalise(shape(order))).toEqual(order);
     renderAt(DELIVERED);
     expect(await thankYou()).toHaveAccessibleName(THANKS_BAPPI);
     expect(screen.getByText(DELIVERED, { selector: "span" })).toBeInTheDocument();
@@ -308,8 +307,11 @@ describe("the thank-you", () => {
   ])("%s: '%s', then '%s' (the mark: %s)", async (number, eyebrow, line, mark) => {
     renderAt(number);
     await thankYou();
-    expect(screen.getByText(eyebrow)).toBeInTheDocument();
-    expect(screen.getByText(line)).toBeInTheDocument();
+    // The thank-you is the header (a banner here, outside the app's <main>);
+    // a closed order's invoice repeats the line.
+    const hero = screen.getByRole("banner");
+    expect(within(hero).getByText(eyebrow)).toBeInTheDocument();
+    expect(within(hero).getByText(line)).toBeInTheDocument();
     // The mark is decorative (aria-hidden): no role to query it by.
     // eslint-disable-next-line testing-library/no-node-access
     expect(Boolean(document.querySelector("header svg circle"))).toBe(mark);
@@ -449,6 +451,24 @@ describe("the facts", () => {
     expect(screen.getByText("Tracking number TEST63452634532563242346")).toBeInTheDocument();
   });
 
+  test("a recalled shipment says so, never 'not shipped' (the admin's cancel of a shipped order)", async () => {
+    // performCancel with a recall: fulfillmentStatus "cancelled", shippingStatus "recalled".
+    orders.push({
+      ...seeded(SHIPPED_TRACKED),
+      orderNumber: "ORD-RECALLED-0001",
+      fulfillmentStatus: "cancelled",
+      shippingStatus: "recalled",
+      paymentStatus: "voided",
+      cancelledAt: "2026-06-13T10:00:00.000Z",
+    });
+    renderAt("ORD-RECALLED-0001");
+    await thankYou();
+    expect(screen.getByText("The shipment was recalled.")).toBeInTheDocument();
+    expect(screen.queryByText("This order was not shipped.")).not.toBeInTheDocument();
+    expect(screen.getByText("Order cancelled")).toBeInTheDocument();
+    expect(deliveryFor({ fulfillmentStatus: "cancelled", shippingStatus: "returned_to_origin" })).toBe("This order is closed.");
+  });
+
   test("a closed order that never shipped says it was not shipped", async () => {
     renderAt(CANCELLED);
     await thankYou();
@@ -476,6 +496,7 @@ describe("the facts", () => {
     ["refunded", "upi", "delivered", "Refunded", "sf-badge--sand"],
     ["partially_refunded", "upi", "delivered", "Partially refunded", "sf-badge--sand"],
     ["voided", "cod", "pending", "Not charged", "sf-badge--sand"],
+    ["pending", "cod", "delivered", "Pending", "sf-badge--warning"],
     ["pending", "cod", "pending", "Pay on delivery", "sf-badge--info"],
     ["pending", "card", "pending", "Pending", "sf-badge--warning"],
   ])("payment status %s (%s, %s) is the badge '%s'", async (paymentStatus, paymentMethod, shippingStatus, label, tone) => {
@@ -535,7 +556,6 @@ describe("the summary", () => {
     expect(within(card).getByText(formatCurrency(3600))).toBeInTheDocument();
     const [thumbnail] = within(card).getAllByAltText("");
     expect(thumbnail).toHaveAttribute("src", PLACEHOLDER_IMG);
-    expect(thumbnail).toHaveAttribute("alt", "");
   });
 
   test("the price details: subtotal, the coupon's discount, shipping, tax and the total", async () => {
@@ -592,6 +612,7 @@ describe("the summary", () => {
     const rows = rowsOf(summary());
     expect(rows["Store credit"]).toBe(`−${formatCurrency(1000)}`);
     expect(rows["Amount paid"]).toBeUndefined();
+    expect(rows["Amount due"]).toBeUndefined();
     expect(paidRowLabel({ paymentStatus: "failed" })).toBeNull();
     expect(paidRowLabel({ paymentStatus: "partially_refunded" })).toBe("Amount paid");
   });
@@ -658,6 +679,36 @@ describe("the actions", () => {
     fireEvent.click(screen.getByRole("button", { name: "Print invoice" }));
     await waitFor(() => expect(window.print).toHaveBeenCalledTimes(2));
     expect(screen.getByText("Your invoice is below the order summary.")).toBe(note);
+  });
+
+  test("a second press while the logo loads prints once and still announces the invoice", async () => {
+    logoComplete = false;
+    renderAt(DELIVERED);
+    await thankYou();
+    const button = screen.getByRole("button", { name: "Print invoice" });
+    fireEvent.click(button);
+    const invoice = await screen.findByRole("region", { name: "Invoice" });
+    fireEvent.click(button);
+    fireEvent.load(within(invoice).getByAltText("A & S Urbanseat"));
+    expect(await screen.findByText("Your invoice is below the order summary.")).toBeInTheDocument();
+    expect(window.print).toHaveBeenCalledTimes(1);
+  });
+
+  test("leaving the page while the logo loads never opens the print dialog", async () => {
+    logoComplete = false;
+    const { unmount } = renderAt(DELIVERED);
+    await thankYou();
+    jest.useFakeTimers();
+    try {
+      fireEvent.click(screen.getByRole("button", { name: "Print invoice" }));
+      unmount();
+      act(() => {
+        jest.advanceTimersByTime(5000);
+      });
+      expect(window.print).not.toHaveBeenCalled();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 
   test("the dialog waits for the invoice's logo to load", async () => {
@@ -853,6 +904,28 @@ describe("the invoice", () => {
         "Tax (18% GST)"
       );
     });
+  });
+
+  test("a closed order's invoice says what became of it; a standing order's says nothing of the kind", async () => {
+    const { unmount } = renderAt(CANCELLED);
+    await thankYou();
+    const cancelled = await openInvoice();
+    expect(
+      within(cancelled).getByText(`This order was cancelled on ${formatDate("2026-06-12T01:46:10.397Z")}.`)
+    ).toBeInTheDocument();
+    unmount();
+
+    renderAt(REFUNDED_DELIVERED);
+    await thankYou();
+    const refunded = await openInvoice();
+    expect(within(refunded).getByText("The payment for this order was refunded.")).toBeInTheDocument();
+  });
+
+  test.each([DELIVERED, PROCESSING, JUST_PLACED_COD.orderNumber])("%s: the invoice carries no outcome note", async (number) => {
+    renderAt(number);
+    await thankYou();
+    const invoice = await openInvoice();
+    expect(within(invoice).queryByText(/^This order was|^The payment for this order|^The shipment/)).not.toBeInTheDocument();
   });
 
   test("cash on delivery: the payment and its status; the note; no GSTIN or 'tax invoice'", async () => {

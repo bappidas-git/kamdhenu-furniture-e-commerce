@@ -52,7 +52,7 @@ const AddressLines = ({ address }) =>
   );
 
 const Invoice = forwardRef(function Invoice(
-  { id, hidden, order, orderNumber, items = [], shippingAddress, totals, payment },
+  { id, hidden, order, orderNumber, items = [], shippingAddress, totals, payment, outcome = null },
   ref
 ) {
   const titleId = useId();
@@ -121,6 +121,10 @@ const Invoice = forwardRef(function Invoice(
                 </div>
               )}
             </dl>
+            {/* A cancelled, returned, failed or refunded order says so on the
+                paper (the page's own sentence), so the invoice never reads as
+                a standing sale. */}
+            {outcome && <p className={styles.outcome}>{outcome}</p>}
           </div>
         </header>
 
