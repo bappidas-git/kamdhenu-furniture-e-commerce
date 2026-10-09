@@ -277,6 +277,16 @@ const PAIRS = [
   // primary-contrast on the error fill, the solid-error badge row above. Its
   // hover is color-mix(in srgb, error 85%, text): the text tone at 15% over it.
   ["Danger button hover (primary-contrast on error mixed 15% toward the text)", "--sf-color-primary-contrast", ["--sf-color-text@0.15", "--sf-color-error"], AA],
+  // Addresses and Change password (Prompt 22): the address form is a sand
+  // panel (its messages and invalid borders sit on the sand; the read-only
+  // country is a sand field inside it, a double layer in dark mode); the
+  // strength meter's segments and the checklist's checks are graphics on the
+  // card surface (the word beside the meter carries its meaning).
+  ["Address form: field error text and invalid border (error) on the sand panel", "--sf-color-error", SAND, AA],
+  ["Address form: read-only country (ink) on its sand fill over the sand panel", "--sf-color-text", ["--sf-color-sand", ...SAND], AA],
+  ["Password: meter segment, warning tone, on the card surface (graphic)", "--sf-color-warning", "--sf-color-surface", LARGE],
+  ["Password: meter segment, info tone, on the card surface (graphic)", "--sf-color-info", "--sf-color-surface", LARGE],
+  ["Password: meter segment and checklist check, success tone, on the card surface", "--sf-color-success", "--sf-color-surface", LARGE],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.

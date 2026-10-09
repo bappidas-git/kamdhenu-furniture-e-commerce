@@ -666,7 +666,7 @@ Appended after the shared SweetAlert block and scoped `body.light:not(.admin-are
 
 - **Popup:** `--swal2-background` surface, `--swal2-color` ink, `--swal2-border` hairline, `--swal2-border-radius` radius md, `--sf-shadow-lg`; title in Playfair 22px 500; body sans 15px secondary; icons at 75% (`--swal2-icon-zoom`); backdrop `--sf-color-overlay`.
 - **Buttons:** 44px, sans 14px 500. Confirm = ink with paper text, navy on hover (white in dark mode). Cancel = ghost (1px ink inset border, `--sf-color-primary-soft` hover). Focus = `--sf-shadow-focus`. Press 0.99.
-- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out" uses it; the address delete in `Profile.js` (Prompt 22), the order cancel in `OrderHistory.js` (Prompt 24) and "Clear all" in `WishlistContext.js` still pass a hex.
+- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out" and, since Prompt 22, the address delete in `Profile.js` (§32.4) use it; the order cancel in `OrderHistory.js` (Prompt 24) and "Clear all" in `WishlistContext.js` still pass a hex.
 - **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
 - **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
 - **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation).
@@ -1813,7 +1813,7 @@ Every other pairing is already in §14 and §16.8: ink, secondary and muted text
 
 ## 31. Account shell and Profile
 
-Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses, Change password and Store credit sections stay the boilerplate's until Prompts 22 and 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
+Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Store credit section stays the boilerplate's until Prompt 23; the Addresses and Change password sections are §32, since Prompt 22), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
 
 ### 31.1 Using the shell
 
@@ -1903,7 +1903,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 ### 31.8 `.sf-btn--danger`
 
 - In `storefront-base.css`: `--sf-btn-bg` and `--sf-btn-border` are `--sf-color-error`, `--sf-btn-fg` is `--sf-color-primary-contrast` (paper on brick, 6.26 : 1; navy-ink on the dark-mode salmon, 8.00 : 1). Hover: `color-mix(in srgb, var(--sf-color-error) 85%, var(--sf-color-text))` (7.38 / 8.90 : 1), declared inside `@supports`, so a browser without `color-mix()` keeps the resting fill. A press keeps the hover fill, by touch and keyboard too (where no hover applies): otherwise SweetAlert's own `:active` rule, which outweighs the primitive's resting fill, would flash its confirm colour (navy) through.
-- **On a SweetAlert confirm:** `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`. SweetAlert 11 writes its button rules inside `:where()`, so the primitive's colours, hover, press and focus ring win, while the storefront theme still sets the 44px height and the type (§16.6). Prompts 22 (the address delete) and 24 (the order cancel) can use it as it is.
+- **On a SweetAlert confirm:** `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`. SweetAlert 11 writes its button rules inside `:where()`, so the primitive's colours, hover, press and focus ring win, while the storefront theme still sets the 44px height and the type (§16.6). The address delete uses it since Prompt 22 (§32.4); Prompt 24 (the order cancel) can use it as it is.
 
 ### 31.9 Keyboard and focus
 
@@ -1914,7 +1914,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 
 ### 31.10 Motion
 
-`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (the legacy sections keep their own slide until Prompts 22 and 23). Under reduced motion: opacity only, instant scrolling.
+`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (the legacy wallet section keeps its own slide until Prompt 23; Addresses and Change password reveal like the Profile card, §32.6). Under reduced motion: opacity only, instant scrolling.
 
 ### 31.11 New contrast pairs
 
@@ -1923,3 +1923,82 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 | Danger button hover (primary-contrast on error mixed 15% toward the text) | 7.38 ✓ | 8.90 ✓ | 4.5:1 |
 
 Every other pairing is already in §14 and §16.8: ink, secondary and muted text on the page and the surface, the caramel bar and the focus ring on the page and the surface (graphics), the selected chip (primary-contrast on primary), the field boundary and its error border, the error and success tones on the surface (the toast's glyphs: "Field error text on surface", "Ticket: 'Copied'"), ink and secondary text on sand (the guest panel), the primary and ghost buttons, and primary-contrast on the solid error fill (the danger button at rest: "Badge text on solid error fill"). In forced-colours mode the rail's bar and the toast's frame are borders, and the current chip is `Highlight`.
+
+---
+
+## 32. Addresses and Change password
+
+Written by Prompt 22. Files: `src/pages/Profile/Profile.js` + `.module.css` (the `addresses` and `password` sections of `/profile`, inside the account shell of §31). No new tokens and no new primitives: the delete confirm uses §31.8's `.sf-btn--danger`, the Show / Hide control and the strength meter follow the auth modal's (§30.4), and the inline errors follow the Profile form's (§31.6). The address shape saved is exactly the one Checkout, Orders and `db.json` read.
+
+### 32.1 Addresses: the section and the cards
+
+- **Heading row:** the `h2` "Addresses" (`.sf-display-sm`) with a muted line under it, "Your default address is selected for you at checkout." (14px; true: checkout preselects the default address); "Add address" (`.sf-btn--ghost`) on the right, under them when the row runs out of room. It shows while the form is closed and at least one address exists; with none, the empty state carries the action.
+- **Cards:** a `<ul>` grid, two columns from 601px and one up to 600px, 20px gaps. Each `<li>` is a `.sf-card--hairline` with 20px of padding (`--sf-card-padding`):
+  - an `h3`: the label as an `.sf-eyebrow` ("Address" when a legacy row has none) and, on the default card, an `.sf-badge--ink` "Default", which is part of the heading's name ("Home Default");
+  - the name (sans 15px, 500, ink; a legacy `fullName` when the row has no names), the lines (14px secondary: "line 1, line 2" / "city, state PIN", a legacy `zipCode` read too / the country) and the phone (14px muted, tabular figures, after a hidden "Phone:");
+  - a hairline, then the actions as `.sf-btn--link` text buttons: "Set as default" (not on the default card), "Edit" and "Delete" (the error tone, its underline too on hover; `aria-haspopup="dialog"`). Each button's name carries its card after the visible text, from a hidden suffix ("Edit Home address at 123 Main Street", GOV.UK's pattern), so a list of cards never reads as a row of bare "Edit"s and the visible word still starts the name. Each keeps the primitive's 44px hit area (14px above and below the text, inside the row's padding and the card's), 20px apart; the card's text block grows, so the action rows of two cards side by side line up.
+  - The default card carries a 2px caramel bar on its left edge (`border-left` in `--sf-color-accent`, so forced colours keep it); its padding gives the extra pixel back so its text lines up with its neighbour's.
+- The cards keep the saved order: setting a default never moves a card.
+- **No address yet:** a sand `.sf-panel`: "No addresses yet." (`.sf-display-sm`), "Add an address to make checkout faster." (16px secondary) and a primary "Add your first address" (full width up to 480px).
+
+### 32.2 The address form
+
+- A `<form noValidate>` named by its heading, on a sand `.sf-panel` (padding `clamp(20px, 3vw, 32px)`) above the cards, 24px between its parts. The heading is an `h3`, "Add an address" / "Edit address", sans 17px 600 (a UI heading, §5.4).
+- **"Address type":** a `role="radiogroup"` named by its visible label, three `.sf-chip` buttons with `role="radio"` and `aria-checked` (Home, Work, Other). One chip is in the tab order: the chosen one, or the first when a saved label is none of the three (that label is kept on save unless another is chosen). Arrow keys move and choose, wrapping; Home and End jump to the ends. The chosen chip is the primitive's ink chip; unchosen chips take the surface tone so they read as controls on the sand. Each keeps a 44px hit area (`::after`, 6px above and below the 32px pill). Forced colours: the chosen chip is `Highlight`.
+- **Fields** (`.sf-field`, visible labels, no placeholders; two columns, one up to 600px):
+
+| Field | `type` | `autocomplete` | Also |
+|---|---|---|---|
+| First name, Last name | `text` | `given-name`, `family-name` | `required`, `autocapitalize="words"`; side by side |
+| Phone number | `tel` | `tel` | `inputmode="tel"`, `required`; hint "10-digit mobile number"; full width |
+| Address line 1 | `text` | `address-line1` | `required`; hint "House or flat number, building and street"; full width |
+| Address line 2 (optional) | `text` | `address-line2` | hint "Landmark or area"; full width |
+| City, State | `text` | `address-level2`, `address-level1` | `required`, `autocapitalize="words"` |
+| Postal code | `text` | `postal-code` | `inputmode="numeric"`, `required`; hint "6-digit PIN" |
+| Country | `text` | `country-name` | read-only "India" (sand); hint "Currently shipping within India only" |
+
+- **"Set as default address":** an `.sf-check` row. When the save will make the address the default whatever the box says (the first address, or the only one being edited), the box is checked and disabled, described by the hint "Your only address is always the default." (indented under its text).
+- **Actions** under a hairline: "Save address" (`.sf-btn--primary`; "Saving…" while the request runs, `aria-disabled` with `data-busy`, so focus stays on it and further presses are ignored) and "Cancel" (`.sf-btn--ghost`, unavailable while saving); stacked full width up to 600px.
+- **Validation (the rules are unchanged):** the required fields (first and last name, line 1, city, state, postal code; trimmed), then the phone through `isValidPhone`. On submit every failing field gets its message: "First name is required", "Last name is required", "Phone number is required" or "Enter a valid 10-digit mobile number", "Address line 1 is required", "City is required", "State is required", "Postal code is required" (`aria-invalid`, `aria-describedby` = hint, then message). Focus moves to the first failing field in form order, scrolled to 16px under the sticky header when the header covers it (§31.6). The toast keeps the first rule's message ("Please fill in all required address fields." / "Please enter a valid 10-digit Indian mobile number."). Nothing is sent and the values stay. Typing in a field clears its own message; the messages go when the form closes or opens on another address. The postal code has no pattern check (the old rule is "required"); its hint says what is expected.
+- **Save (unchanged):** `updateUser({ addresses })` with the whole array. The row is canonical (`id, label, firstName, lastName, phone, addressLine1, addressLine2, city, state, postalCode, country, isDefault`; names and phone trimmed; `id` kept on an edit, generated for a new row); the first address is the default; a default clears the others; when no row would be the default, the first becomes it. Edit still reads a legacy `fullName` (split into first and last) and `zipCode`.
+
+### 32.3 Focus as the addresses change
+
+| After | Focus moves to |
+|---|---|
+| "Add address", "Add your first address", "Edit" | the form's heading (a reading position, no ring), brought under the sticky header if the form opened out of view |
+| Cancel, or a save | what opened the form: that card's "Edit", else "Add address" (or "Add your first address" when no address is left) |
+| A delete | the heading of the card that took the deleted one's place, else the one before it, else the empty state's line |
+| "Set as default" | the same card's heading, which now reads "… Default" (its button has gone) |
+
+A focus move is requested together with the change that needs it (a counter state bumped in the same batch), so it runs after the render that shows the change, never after an earlier one. Each move uses `preventScroll` and scrolls only when the target is under the header or outside the window (§31.9).
+
+### 32.4 The delete confirm
+
+SweetAlert, unchanged words: "Delete this address?" / "This address will be removed from your account." (the warning icon), "Delete" / "Keep", with `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor` (§31.8): `rgb(162, 56, 43)` with paper text in light mode, `rgb(236, 148, 131)` with navy-ink text in dark mode, 44px. A delete of the address being edited closes the form; a form open on a later address follows that address up the list (so its save replaces the right row). Deleting the default promotes the first remaining address, as before.
+
+### 32.5 Change password
+
+- The Profile card's frame (`.sf-card--hairline`, padding `clamp(20px, 4vw, 40px)`): the `h2` "Change password" and a single-column `<form noValidate>`, at most 440px wide, 24px between fields. A hidden `autocomplete="username"` field carries the account's email, so password managers file the new password under the right account.
+- **Fields:** Current password (`current-password`), New password (`new-password`), Confirm new password (`new-password`); `type="password"`, `required`, `autocapitalize="none"`, `autocorrect="off"`, no spellcheck; 44px.
+- **Show / Hide:** the auth modal's control (§30.4): a text button inside the field's right edge, the full 44px height, 13px 500 secondary with a stone underline (accent on hover), an inset focus outline; the field keeps 72px of room for it. Its name follows its text ("Show current password" / "Hide current password"; "… new password", "… password confirmation"), with `aria-controls` on its field and no `aria-pressed` (§30.4's reasoning: a toggle must keep its name, and a fixed name would not contain the visible "Hide"). A visually hidden polite line says "Current password shown." / "… hidden.". A successful change hides every password again.
+- **Strength meter** (while there is a new password): four 2px segments with 4px gaps, stone when empty, filled up to the level in `--sf-color-error` / `-warning` / `-info` / `-success` (Weak, Fair, Good, Strong), read from `data-level` (no inline colour). The score and thresholds are the boilerplate's (8 and 12 characters, an uppercase, a lowercase, a digit, a special character; ≤ 2 Weak, ≤ 4 Fair, 5 Good, 6 Strong). The word sits at the right of the segments (12px 500 secondary, "Password strength:" visually hidden before it) in a polite live line that stays in the page, so the row keeps its height before the first keystroke; it is part of the field's description.
+- **Checklist** "A strong password has" (13px): "At least 8 characters", "One uppercase letter", "One lowercase letter", "One number", "One special character". Display only, as before: the form enforces the 8-character minimum alone. A rule that passes shows a check in `--sf-color-success` and ink text; one that does not yet shows a small ring and muted text; the state is in hidden text too (", done" / ", not yet"). Not a live region (it would speak on every keystroke).
+- **Validation (the rules, their order and their toasts are unchanged):** the current password is required, the new one has at least 8 characters, the confirmation matches. Messages: "Enter your current password"; "Enter a new password" / "New password must be at least 8 characters"; "Confirm your new password" / "Passwords do not match". Focus moves to the first failing field; typing clears a field's own message. The confirmation also says "Passwords do not match" on its own once it has been left with a value that differs (the old form said it while typing), and any mismatch message goes as soon as the two match.
+- **Submit (unchanged):** `apiService.auth.changePassword({ currentPassword, newPassword, confirmPassword })`, as typed (never trimmed). "Update password" reads "Updating…" while the request runs (busy, not disabled). Success: the toast "Password updated successfully.", the fields cleared, every password hidden. Failure: "Failed to change password. Please check your current password.", the values kept. In mock mode the API reports success without storing anything (unchanged; the page shows what the API reports).
+
+### 32.6 Motion
+
+`Reveal` on the Addresses section and on the Change password card (the Profile card's fade and 20px rise; opacity only under reduced motion). The old sideways slides are gone. Colour changes only: the meter's segments over `--sf-duration`, Show / Hide over `--sf-duration-fast`. Focus scrolls are instant under reduced motion.
+
+### 32.7 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Address form: field error text and invalid border (error) on the sand panel | 5.65 ✓ | 6.29 ✓ | 4.5:1 |
+| Address form: read-only country (ink) on its sand fill over the sand panel | 14.64 ✓ | 10.60 ✓ | 4.5:1 |
+| Password: meter segment, warning tone, on the card surface (graphic) | 5.31 ✓ | 8.21 ✓ | 3:1 |
+| Password: meter segment, info tone, on the card surface (graphic) | 7.08 ✓ | 7.95 ✓ | 3:1 |
+| Password: meter segment and checklist check, success tone, on the card surface | 6.34 ✓ | 7.84 ✓ | 3:1 |
+
+Every other pairing is already in §14, §16.8 and §31.11: ink, secondary and muted text on the page, the surface and the sand; the field boundary on the surface and on the sand ("Set: checkbox boundary on the sand panel"); the focus ring on the sand and the surface; the error tone on the surface (Delete, the meter's weak segment: "Field error text on surface"); the caramel bar on the surface ("Accent on surface"); the ink badge, the chosen chip and the primary button (primary-contrast on primary); the danger confirm and its hover (§31.11). In forced-colours mode the meter's segments are `GrayText` / `CanvasText`, the chosen chip is `Highlight`, and the default card's bar is a border.
