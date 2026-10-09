@@ -1,18 +1,39 @@
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
+import React, { forwardRef, useEffect, useMemo, useRef, useState } from "react";
+import { Link } from "react-router-dom";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
 import { useWishlist } from "../../context/WishlistContext";
 import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
-import {
-  formatCurrency,
-  getProductMinPrice,
-  getDefaultCartVariant,
-  buildCartItem,
-  productPath,
-} from "../../utils/helpers";
+import { getProductMinPrice, getDefaultCartVariant, buildCartItem } from "../../utils/helpers";
+import { TOKENS } from "../../theme/tokens";
+import AccountLayout from "../../components/account/AccountLayout";
+import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
 import styles from "./Wishlist.module.css";
+
+// =============================================================================
+// Wishlist (/wishlist) — prompts/DESIGN_SYSTEM.md §35
+// =============================================================================
+// The saved pieces, inside the account shell (<AccountLayout active=
+// "wishlist">: the eyebrow "Saved", the serif h1 "Your wishlist", the count).
+// Guests keep a working wishlist on this device: the same header without the
+// account rail (it would show no identity), and a sand banner with "Sign in"
+// above whichever state applies.
+//
+// Each piece is the storefront ProductCard, without its heart (everything
+// here is saved). Its quick add puts the cheapest variant in the cart, the
+// line the old "Add to Cart" added. Under the card: the stock line, then the
+// wishlist's own actions, "Move to cart" (adds it, then it leaves the
+// wishlist silently 300ms later) and "Remove". A toolbar sorts the pieces and
+// clears them all.
+//
+// What did not change: every read and write is WishlistContext's or
+// CartContext's (removeFromWishlist, with { silent: true } for a move;
+// clearWishlist and its confirm; addToCart with buildCartItem's line), so are
+// the guest storage and the merge on sign-in; SORT_OPTIONS and getSortedItems;
+// the stock rule (the stock of the variant "Add to cart" adds; unknown counts
+// as in stock); the 300ms dim before a piece leaves; the banner opening the
+// auth dialog.
+// =============================================================================
 
 const SORT_OPTIONS = [
   { value: "dateDesc", label: "Recently Added" },
@@ -22,36 +43,184 @@ const SORT_OPTIONS = [
   { value: "ratingHigh", label: "Highest Rated" },
 ];
 
-const StarRating = ({ rating, count }) => {
-  const fullStars = Math.floor(rating || 0);
-  const hasHalf = (rating || 0) - fullStars >= 0.5;
-  const emptyStars = 5 - fullStars - (hasHalf ? 1 : 0);
+// How long a piece dims before it leaves (Remove, Move to cart).
+const REMOVE_DELAY_MS = 300;
+const LEAVING_OPACITY = 0.5;
+// Skeleton pieces while the account's list loads: the device's own count
+// when it has one (it is usually the account's), within these bounds.
+const SKELETON_MIN = 3;
+const SKELETON_MAX = 6;
+// Frames a focus move waits for a closing dialog or drawer to leave the page,
+// or for its target to render (about a second).
+const FOCUS_WAIT_FRAMES = 60;
 
-  return (
-    <div className={styles.starRating}>
-      {[...Array(fullStars)].map((_, i) => (
-        <span key={`full-${i}`} className={styles.starFull}>&#9733;</span>
-      ))}
-      {hasHalf && <span className={styles.starHalf}>&#9733;</span>}
-      {[...Array(emptyStars)].map((_, i) => (
-        <span key={`empty-${i}`} className={styles.starEmpty}>&#9733;</span>
-      ))}
-      {count !== undefined && (
-        <span className={styles.reviewCount}>({count?.toLocaleString() || 0})</span>
-      )}
-    </div>
-  );
+const { duration, easeOut, easeInOut } = TOKENS.motion;
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+const pieces = (count) => `${count} ${count === 1 ? "piece" : "pieces"}`;
+
+// Stock of what "Add to Cart" adds: the default (cheapest) variant when the
+// product has variants, else the product itself. Unknown stock (older saved
+// rows) is treated as in stock, as before; the line under the card then says
+// nothing, since there is nothing known to say (the product page's rule).
+export const describeStock = (item) => {
+  const defaultVariant = getDefaultCartVariant(item);
+  const stockValue = defaultVariant ? defaultVariant.stock : item.stock;
+  const inStock = stockValue == null || stockValue === "" || Number(stockValue) > 0;
+  const known = !(stockValue == null || stockValue === "");
+  return {
+    stockValue,
+    inStock,
+    label: known ? (inStock ? "In stock" : "Out of stock") : null,
+  };
 };
 
+// A saved row as the storefront card reads it (DESIGN_SYSTEM §23.1): the
+// product id under `id` and the photograph under `images`. Its `stock` is the
+// stock rule's, so the card's "Sold out" and its quick add follow the same
+// rule as the line under it and "Move to cart". buildCartItem() of this
+// object is buildCartItem({ ...item, id: item.productId }), the old line, for
+// every product (the tests compare the two across the catalogue).
+export const toCardProduct = (item) => {
+  const { stockValue, inStock } = describeStock(item);
+  return {
+    ...item,
+    id: item.productId,
+    images:
+      Array.isArray(item.images) && item.images.length > 0
+        ? item.images
+        : [item.image].filter(Boolean),
+    stock: inStock ? stockValue : 0,
+  };
+};
+
+// The sticky header's visible height (§17.2), and moving focus without
+// leaving its target under it ("instant", not "auto", under reduced motion:
+// the root's scroll-behavior is smooth).
+const headerHeight = () =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height")) || 0;
+
+const focusAndReveal = (element, reduceMotion) => {
+  element.focus({ preventScroll: true });
+  const rect = element.getBoundingClientRect();
+  if (rect.top < headerHeight() || rect.bottom > window.innerHeight) {
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + rect.top - headerHeight() - TOKENS.space[4]),
+      behavior: reduceMotion ? "instant" : "smooth",
+    });
+  }
+};
+
+// ---------------------------------------------------------------------------
+// One saved piece: the card, the stock line and the wishlist's actions. A
+// motion.li that forwards its ref, so AnimatePresence's popLayout can lift a
+// leaving piece out of the grid while it fades and the others close the gap.
+// While it fades it is inert: out of the tab order and the accessibility
+// tree, and no click lands on it.
+// ---------------------------------------------------------------------------
+const SavedPiece = forwardRef(function SavedPiece(
+  { item, leaving, reduceMotion, onQuickAdd, onMove, onRemove },
+  ref
+) {
+  const isPresent = useIsPresent();
+  // The card's product, built once per row.
+  const { product, stock } = useMemo(
+    () => ({ product: toCardProduct(item), stock: describeStock(item) }),
+    [item]
+  );
+  const name = item.name || "this piece";
+
+  return (
+    <motion.li
+      ref={ref}
+      className={cx(styles.item, leaving && styles.leaving)}
+      data-saved-piece={String(item.productId)}
+      data-exiting={isPresent ? undefined : ""}
+      // React 18 does not know `inert`; the empty string sets the attribute.
+      inert={isPresent ? undefined : ""}
+      layout={!reduceMotion}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: leaving ? LEAVING_OPACITY : 1 }}
+      exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
+      transition={{
+        duration: duration.base,
+        ease: easeOut,
+        opacity: { duration: duration.fast, ease: easeOut },
+      }}
+    >
+      <ProductCard product={product} onAddToCart={onQuickAdd} />
+
+      {stock.label && (
+        <p className={cx(styles.stock, stock.inStock ? styles.stockIn : styles.stockOut)}>
+          {stock.label}
+        </p>
+      )}
+
+      <div className={styles.actions}>
+        <button
+          type="button"
+          className={cx("sf-btn sf-btn--ghost", styles.move)}
+          data-action="move"
+          disabled={!stock.inStock}
+          aria-disabled={leaving || undefined}
+          aria-label={`Move to cart, ${name}`}
+          onClick={() => onMove(item)}
+        >
+          Move to cart
+        </button>
+        <button
+          type="button"
+          className={cx("sf-btn", styles.remove)}
+          data-action="remove"
+          aria-disabled={leaving || undefined}
+          aria-label={`Remove ${name} from wishlist`}
+          onClick={() => onRemove(item.productId)}
+        >
+          Remove
+        </button>
+      </div>
+    </motion.li>
+  );
+});
+
 const Wishlist = () => {
-  const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
   const { wishlistItems, isLoading, removeFromWishlist, clearWishlist } = useWishlist();
-  const { addToCart } = useCart();
-  const { user, isLoading: authLoading, openAuthModal } = useAuth();
+  const { addToCart, isCartOpen } = useCart();
+  const { user, isLoading: authLoading, openAuthModal, authModalOpen } = useAuth();
+  const reduceMotion = useReducedMotion();
 
   const [sortBy, setSortBy] = useState("dateDesc");
-  const [removingId, setRemovingId] = useState(null);
+  // Pieces dimmed for REMOVE_DELAY_MS before they leave. The ref answers at
+  // once (a second press before the next render is ignored); the state paints.
+  const [leavingIds, setLeavingIds] = useState([]);
+  const leaving = useRef(new Set());
+  // The account whose saved list is known to have loaded (see `pending`).
+  const [settledFor, setSettledFor] = useState(() => (authLoading ? undefined : user));
+  // A focus move, made once the change it follows is on screen.
+  const [focusRequest, setFocusRequest] = useState(null);
+
+  const titleRef = useRef(null);
+  const listRef = useRef(null);
+  const emptyRef = useRef(null);
+  const sortedIds = useRef([]);
+  const lastCount = useRef(null);
+  const sawGuest = useRef(false);
+  const handledRequest = useRef(null);
+
+  // On every sign-in, and on every reload with a session, WishlistContext
+  // reads the account's list and merges the device's into it (isLoading).
+  // Until that read has settled, the list on the device may not be the
+  // account's, so the page shows its skeleton (after the session restore,
+  // below), instead of flashing an empty or a partial list first. The one
+  // render the context's flag cannot cover is the first with a new account,
+  // before its effect has started the read: `settledFor` covers it. It
+  // catches up in the same effect pass in which the context sets isLoading,
+  // so no frame falls between the two.
+  useEffect(() => {
+    if (!authLoading) setSettledFor(user);
+  }, [authLoading, user]);
+  const pending = authLoading || isLoading || (Boolean(user) && settledFor !== user);
 
   const getSortedItems = () => {
     const items = [...wishlistItems];
@@ -75,310 +244,301 @@ const Wishlist = () => {
     }
   };
 
-  const handleRemove = async (e, productId) => {
-    e.stopPropagation();
-    setRemovingId(productId);
-    // Small delay to let exit animation play
-    setTimeout(() => {
-      removeFromWishlist(productId);
-      setRemovingId(null);
-    }, 300);
+  const markLeaving = (productId, isLeaving) => {
+    if (isLeaving) leaving.current.add(productId);
+    else leaving.current.delete(productId);
+    setLeavingIds(Array.from(leaving.current));
   };
 
-  const handleAddToCart = (e, item) => {
-    e.stopPropagation();
+  // Focus follows the work, as in the cart drawer: once a piece has left, the
+  // same control on the piece that took its place (else the one before it)
+  // takes focus; the effect below picks that piece when it moves focus, from
+  // the order on screen now. When the last piece leaves, the empty state's
+  // line does (the effect on the count below).
+  const focusNeighbour = (productId, control) => {
+    setFocusRequest({ to: "piece", from: productId, control, order: sortedIds.current });
+  };
+
+  const handleRemove = (productId) => {
+    if (leaving.current.has(productId)) return;
+    markLeaving(productId, true);
+    // Small delay to let the card dim before it goes
+    setTimeout(() => {
+      focusNeighbour(productId, "remove");
+      removeFromWishlist(productId);
+      markLeaving(productId, false);
+    }, REMOVE_DELAY_MS);
+  };
+
+  const handleAddToCart = (item) => {
     // Same normalized line shape as card/PDP quick-adds (same default variant
     // and id scheme) so a wishlist add merges into the existing cart line. The
     // wishlist row's product id lives in `productId`, not `id`.
     addToCart(buildCartItem({ ...item, id: item.productId }), 1);
   };
 
-  const handleMoveToCart = async (e, item) => {
-    e.stopPropagation();
-    handleAddToCart(e, item);
-    setRemovingId(item.productId);
+  // The card's quick add hands over buildCartItem() of the card's product,
+  // which is the line handleAddToCart builds (see toCardProduct).
+  const handleQuickAdd = (cartItem) => addToCart(cartItem, 1);
+
+  const handleMoveToCart = (item) => {
+    if (leaving.current.has(item.productId)) return;
+    handleAddToCart(item);
+    markLeaving(item.productId, true);
     setTimeout(() => {
+      focusNeighbour(item.productId, "move");
       // Silent: keeps the "Added to Cart" toast on screen instead of
       // replacing it with a "Removed" toast mid-move.
       removeFromWishlist(item.productId, { silent: true });
-      setRemovingId(null);
-    }, 300);
+      markLeaving(item.productId, false);
+    }, REMOVE_DELAY_MS);
   };
 
-  const handleProductClick = (item) => {
-    // Wishlist rows carry the slug (with a productId fallback) so the link is
-    // canonical; productPath resolves whichever is present.
-    navigate(productPath(item));
+  const handleClearAll = () => {
+    // Unavailable while the account's list loads: a clear would race the
+    // merge. The confirm, the clear and the toast are the context's.
+    if (pending) return;
+    clearWishlist();
   };
+
+  const count = wishlistItems.length;
+
+  // The last piece has left (Remove, Move to cart, Clear all): focus moves
+  // to the empty state's line, unless it has somewhere to be already.
+  useEffect(() => {
+    if (pending) return;
+    const previous = lastCount.current;
+    lastCount.current = count;
+    if (previous > 0 && count === 0) setFocusRequest({ to: "empty" });
+  }, [pending, count]);
+
+  // A guest who signs in from the banner: the banner and its "Sign in" (the
+  // dialog's opener) are gone, so focus moves to the page's h1 once the
+  // dialog has left (the account pages' pattern, §31.5).
+  useEffect(() => {
+    if (authLoading) return;
+    if (!user) {
+      sawGuest.current = true;
+      return;
+    }
+    if (!sawGuest.current) return;
+    sawGuest.current = false;
+    setFocusRequest({ to: "title" });
+  }, [authLoading, user]);
+
+  // Make a requested focus move once nothing holds the page: it waits while
+  // the cart drawer (opened by Move to cart) or the auth dialog is open, then
+  // for any dialog to finish leaving (the drawer, the auth dialog,
+  // SweetAlert's confirm) and for its target to render. It never takes focus
+  // from somewhere it has gone on purpose: only from nowhere (<body>, or an
+  // element that has left the page) or from the piece that just left.
+  useEffect(() => {
+    const request = focusRequest;
+    if (!request || handledRequest.current === request || isCartOpen || authModalOpen) {
+      return undefined;
+    }
+
+    const targetOf = () => {
+      if (request.to === "title") return titleRef.current;
+      if (request.to === "empty") return emptyRef.current;
+      const list = listRef.current;
+      if (!list) return null;
+      // The piece that took the left piece's place: the next one in the order
+      // it left from, else the one before it, passing over pieces that are
+      // dimming or fading out themselves.
+      const staying = Array.from(list.querySelectorAll("[data-saved-piece]:not([data-exiting])"));
+      const at = request.order.indexOf(request.from);
+      const candidates = [
+        ...request.order.slice(at + 1),
+        ...request.order.slice(0, Math.max(at, 0)).reverse(),
+      ];
+      for (const id of candidates) {
+        if (id === request.from || leaving.current.has(id)) continue;
+        const piece = staying.find(
+          (element) => element.getAttribute("data-saved-piece") === String(id)
+        );
+        if (!piece) continue;
+        const preferred = piece.querySelector(`[data-action="${request.control}"]`);
+        return preferred && !preferred.disabled
+          ? preferred
+          : piece.querySelector('[data-action="remove"]');
+      }
+      return null;
+    };
+
+    const focusIsFree = () => {
+      const active = document.activeElement;
+      if (!active || active === document.body || !active.isConnected) return true;
+      if (request.from === undefined) return false;
+      const piece = active.closest("[data-saved-piece]");
+      return Boolean(piece) && piece.getAttribute("data-saved-piece") === String(request.from);
+    };
+
+    let frame = 0;
+    let waited = 0;
+    const attempt = () => {
+      frame = 0;
+      const target = targetOf();
+      const dialogOpen = Boolean(document.querySelector('[aria-modal="true"]'));
+      if ((dialogOpen || !target) && waited < FOCUS_WAIT_FRAMES) {
+        waited += 1;
+        frame = window.requestAnimationFrame(attempt);
+        return;
+      }
+      handledRequest.current = request;
+      if (target && target.isConnected && focusIsFree()) focusAndReveal(target, reduceMotion);
+    };
+    frame = window.requestAnimationFrame(attempt);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [focusRequest, isCartOpen, authModalOpen, reduceMotion]);
+
+  // The session restore settles on the first render: nothing to show before
+  // (as Profile). Whether the account rail or the guest banner belongs on
+  // the page is not known yet, and either arriving under a page already
+  // drawn would push it aside or down.
+  if (authLoading) return null;
 
   const sortedItems = getSortedItems();
+  sortedIds.current = sortedItems.map((item) => item.productId);
 
-  // Guests keep a fully working wishlist (saved on this device) — the same
-  // open access as the heart toggles on cards/PDP. This banner is the single
-  // login entry point and opens the global AuthModal (there is no /login
-  // route); on login the local items merge into the account's wishlist.
-  // Hidden while the session restore is pending so it doesn't flash on reload.
-  const guestBanner = !user && !authLoading && (
-    <motion.div
-      className={styles.guestBanner}
-      initial={{ opacity: 0, y: -8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-    >
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-      <p className={styles.guestBannerText}>
-        Your wishlist is saved on this device. Log in to sync it across devices.
-      </p>
+  const isGuest = !user;
+  const countLine = !pending && count > 0 ? pieces(count) : null;
+  const skeletonCount = Math.min(SKELETON_MAX, Math.max(SKELETON_MIN, count));
+
+  // Guests keep a fully working wishlist (saved on this device), the same
+  // open access as the hearts on cards and the product page. The banner is
+  // the page's way to sign in: it opens the global auth dialog (there is no
+  // /login route), and on sign-in WishlistContext merges these pieces into
+  // the account's.
+  const guestBanner = isGuest && (
+    <div className={cx("sf-panel sf-panel--hairline", styles.banner)}>
+      <div className={styles.bannerText}>
+        <p className={cx("sf-display-sm", styles.bannerTitle)}>Saved on this device.</p>
+        <p className={styles.bannerLine}>Sign in to keep your wishlist across devices.</p>
+      </div>
       <button
-        className={styles.guestBannerBtn}
+        type="button"
+        className={cx("sf-btn sf-btn--primary", styles.bannerAction)}
         onClick={() => openAuthModal("login")}
+        aria-haspopup="dialog"
       >
-        Log In
+        Sign in
       </button>
-    </motion.div>
-  );
-
-  // Loading state
-  if (isLoading) {
-    return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.container}>
-          <div className={styles.header}>
-            <h1 className={styles.title}>My Wishlist</h1>
-          </div>
-          <div className={styles.grid}>
-            {[...Array(8)].map((_, i) => (
-              <div key={i} className={styles.skeletonCard}>
-                <div className={styles.skeletonImage} />
-                <div className={styles.skeletonBody}>
-                  <div className={styles.skeletonLine} style={{ width: "75%" }} />
-                  <div className={styles.skeletonLine} style={{ width: "50%" }} />
-                  <div className={styles.skeletonLine} style={{ width: "35%" }} />
-                  <div className={styles.skeletonLine} style={{ width: "100%", height: "36px" }} />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  // Empty wishlist
-  if (!wishlistItems || wishlistItems.length === 0) {
-    return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.container}>
-          {guestBanner}
-          <div className={styles.header}>
-            <div className={styles.headerLeft}>
-              <h1 className={styles.title}>My Wishlist</h1>
-              <span className={styles.itemCount}>(0 items)</span>
-            </div>
-          </div>
-          <motion.div
-            className={styles.emptyState}
-            initial={{ opacity: 0, y: 30 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <div className={styles.emptyHeart}>
-              <svg width="80" height="80" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-              </svg>
-            </div>
-            <h2 className={styles.emptyTitle}>Your wishlist is empty</h2>
-            <p className={styles.emptyText}>
-              Save the items you love to come back to them later.
-            </p>
-            <button
-              className={styles.shopButton}
-              onClick={() => navigate("/products")}
-            >
-              Start Shopping
-            </button>
-          </motion.div>
-        </div>
-      </div>
-    );
-  }
-
-  // Wishlist with items
-  return (
-    <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.container}>
-        {guestBanner}
-        {/* Header */}
-        <motion.div
-          className={styles.header}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.4 }}
-        >
-          <div className={styles.headerLeft}>
-            <h1 className={styles.title}>My Wishlist</h1>
-            <span className={styles.itemCount}>
-              ({wishlistItems.length} {wishlistItems.length === 1 ? "item" : "items"})
-            </span>
-          </div>
-          <div className={styles.headerActions}>
-            {/* Sort Dropdown */}
-            <div className={styles.sortWrapper}>
-              <label htmlFor="wishlist-sort" className={styles.sortLabel}>
-                Sort by:
-              </label>
-              <select
-                id="wishlist-sort"
-                className={styles.sortSelect}
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-              >
-                {SORT_OPTIONS.map((opt) => (
-                  <option key={opt.value} value={opt.value}>
-                    {opt.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-            <button
-              className={styles.clearAllBtn}
-              onClick={clearWishlist}
-              title="Clear all items"
-            >
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="3 6 5 6 21 6" />
-                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-              </svg>
-              Clear All
-            </button>
-          </div>
-        </motion.div>
-
-        {/* Product Grid */}
-        <div className={styles.grid}>
-          <AnimatePresence mode="popLayout">
-            {sortedItems.map((item, index) => {
-              const priceInfo = getProductMinPrice(item);
-              const hasDiscount = priceInfo.discount > 0;
-              // Stock of what "Add to Cart" would add: the default (cheapest)
-              // variant when the product has variants, else the product itself.
-              // Unknown stock (older saved rows) is treated as in-stock.
-              const defaultVariant = getDefaultCartVariant(item);
-              const stockValue = defaultVariant ? defaultVariant.stock : item.stock;
-              const inStock =
-                stockValue == null || stockValue === "" || Number(stockValue) > 0;
-
-              return (
-                <motion.div
-                  key={item.productId}
-                  className={`${styles.card} ${removingId === item.productId ? styles.cardRemoving : ""}`}
-                  layout
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.85, y: 20 }}
-                  transition={{ duration: 0.3, delay: index * 0.03 }}
-                  onClick={() => handleProductClick(item)}
-                >
-                  {/* Image Section */}
-                  <div className={styles.imageWrapper}>
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className={styles.productImage}
-                      loading="lazy"
-                    />
-
-                    {/* Discount Badge */}
-                    {hasDiscount && (
-                      <span className={styles.discountBadge}>
-                        -{priceInfo.discount}%
-                      </span>
-                    )}
-
-                    {/* Remove / Heart Toggle */}
-                    <button
-                      className={styles.removeBtn}
-                      onClick={(e) => handleRemove(e, item.productId)}
-                      aria-label="Remove from wishlist"
-                      title="Remove from wishlist"
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <line x1="18" y1="6" x2="6" y2="18" />
-                        <line x1="6" y1="6" x2="18" y2="18" />
-                      </svg>
-                    </button>
-                  </div>
-
-                  {/* Info Section */}
-                  <div className={styles.cardBody}>
-                    {/* Brand */}
-                    {item.brand && (
-                      <span className={styles.brand}>{item.brand}</span>
-                    )}
-
-                    {/* Name */}
-                    <h3 className={styles.productName}>{item.name}</h3>
-
-                    {/* Rating */}
-                    {item.rating > 0 && (
-                      <StarRating rating={item.rating} count={item.totalReviews} />
-                    )}
-
-                    {/* Price */}
-                    <div className={styles.priceRow}>
-                      <span className={styles.salePrice}>
-                        {formatCurrency(priceInfo.sellingPrice, "INR")}
-                      </span>
-                      {hasDiscount && (
-                        <span className={styles.originalPrice}>
-                          {formatCurrency(priceInfo.originalPrice, "INR")}
-                        </span>
-                      )}
-                    </div>
-
-                    {/* Stock Status */}
-                    <div className={styles.stockStatus}>
-                      {inStock ? (
-                        <span className={styles.inStock}>In Stock</span>
-                      ) : (
-                        <span className={styles.outOfStock}>Out of Stock</span>
-                      )}
-                    </div>
-
-                    {/* Action Buttons */}
-                    <div className={styles.cardActions}>
-                      <button
-                        className={styles.addToCartBtn}
-                        onClick={(e) => handleAddToCart(e, item)}
-                        disabled={!inStock}
-                      >
-                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <circle cx="9" cy="21" r="1" />
-                          <circle cx="20" cy="21" r="1" />
-                          <path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6" />
-                        </svg>
-                        Add to Cart
-                      </button>
-                      <button
-                        className={styles.moveToCartBtn}
-                        onClick={(e) => handleMoveToCart(e, item)}
-                        disabled={!inStock}
-                      >
-                        Move to Cart
-                      </button>
-                    </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </AnimatePresence>
-        </div>
-      </div>
     </div>
   );
+
+  const toolbar = (pending || count > 0) && (
+    <div className={styles.toolbar}>
+      <div className={styles.sort}>
+        <label htmlFor="wishlist-sort" className={styles.sortLabel}>
+          Sort by
+        </label>
+        <select
+          id="wishlist-sort"
+          className={cx("sf-select", styles.sortSelect)}
+          value={sortBy}
+          onChange={(e) => setSortBy(e.target.value)}
+        >
+          {SORT_OPTIONS.map((opt) => (
+            <option key={opt.value} value={opt.value}>
+              {opt.label}
+            </option>
+          ))}
+        </select>
+      </div>
+      <button
+        type="button"
+        className={cx("sf-btn sf-btn--link", styles.clearAll)}
+        onClick={handleClearAll}
+        aria-label="Clear all saved pieces"
+        aria-haspopup="dialog"
+        aria-disabled={pending || undefined}
+      >
+        Clear all
+      </button>
+    </div>
+  );
+
+  let results;
+  if (pending) {
+    // The pieces' own boxes (the card's skeleton, the stock line, the
+    // actions), so the loaded grid lands where the skeleton was.
+    results = (
+      <div aria-busy="true">
+        <p className="sf-visually-hidden">Loading your wishlist</p>
+        <ul className={styles.grid} aria-hidden="true">
+          {Array.from({ length: skeletonCount }, (_, i) => (
+            <li key={i} className={styles.item}>
+              <ProductCardSkeleton />
+              <span className={cx("sf-skeleton", styles.skeletonStock)} />
+              <span className={styles.actions}>
+                <span className={cx("sf-skeleton", styles.skeletonMove)} />
+                <span className={cx("sf-skeleton", styles.skeletonRemove)} />
+              </span>
+            </li>
+          ))}
+        </ul>
+      </div>
+    );
+  } else if (count > 0) {
+    results = (
+      <ul ref={listRef} className={styles.grid} aria-label="Saved pieces">
+        <AnimatePresence mode="popLayout" initial={false}>
+          {sortedItems.map((item) => (
+            <SavedPiece
+              key={item.productId}
+              item={item}
+              leaving={leavingIds.includes(item.productId)}
+              reduceMotion={reduceMotion}
+              onQuickAdd={handleQuickAdd}
+              onMove={handleMoveToCart}
+              onRemove={handleRemove}
+            />
+          ))}
+        </AnimatePresence>
+      </ul>
+    );
+  } else {
+    results = (
+      <div className={styles.empty}>
+        {/* A reading position (focus lands here when the last piece leaves),
+            not a control: no ring. */}
+        <h2 ref={emptyRef} tabIndex={-1} className={cx("sf-display-md", styles.emptyTitle)}>
+          Nothing saved yet.
+        </h2>
+        <p className={styles.emptyText}>Use the heart on any piece to save it for later.</p>
+        <Link to="/products" className={cx("sf-btn sf-btn--primary", styles.emptyAction)}>
+          Browse furniture
+        </Link>
+      </div>
+    );
+  }
+
+  return (
+    <AccountLayout
+      active="wishlist"
+      eyebrow="Saved"
+      title="Your wishlist"
+      titleRef={titleRef}
+      description={
+        // The line keeps its height while the count is unknown or zero, so
+        // the page does not move when it arrives.
+        <span className={styles.count} aria-hidden={countLine ? undefined : "true"}>
+          {countLine || " "}
+        </span>
+      }
+    >
+      <div className={styles.content}>
+        {guestBanner}
+        {toolbar}
+        {results}
+      </div>
+    </AccountLayout>
+  );
 };
+
+export { SORT_OPTIONS, REMOVE_DELAY_MS };
 
 export default Wishlist;

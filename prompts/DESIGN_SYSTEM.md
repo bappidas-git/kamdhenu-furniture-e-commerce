@@ -1813,7 +1813,7 @@ Every other pairing is already in §14 and §16.8: ink, secondary and muted text
 
 ## 31. Account shell and Profile
 
-Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses and Change password sections are §32, since Prompt 22; the Store credit section is §33, since Prompt 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24, §34) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
+Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses and Change password sections are §32, since Prompt 22; the Store credit section is §33, since Prompt 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24, §34) and Wishlist (`/wishlist`, Prompt 25, §35) adopt the same shell.
 
 ### 31.1 Using the shell
 
@@ -2180,3 +2180,85 @@ The info row is why the quiet badge is outlined on the panel. Every other pairin
 - **Badges and chips keyed by the configs' `className`s,** so a status's tone follows `STATUS_CONFIG` / `REVIEW_STATUS` without a second mapping of the statuses.
 - **The progress line never runs ahead of the data:** no estimated dates, no step beyond the derived status, one sentence for a closed order.
 - **The confirm states what the cascade does** (the external refund, the store credit back), and focus starts on "Keep order".
+
+---
+
+## 35. Wishlist
+
+Written by Prompt 25. Files: `src/pages/Wishlist/Wishlist.js` + `.module.css` (`/wishlist`, inside the account shell of §31). No new tokens and no new primitives: the pieces are §23's `ProductCard` (and `ProductCardSkeleton`), the header and the rail are §31's shell, the toolbar and the actions are §16's primitives, the grid is the listing's (§24.3). Every read and write is `WishlistContext`'s or `CartContext`'s, unchanged except for the merge's upload rule (35.9): the guest list in `localStorage["wishlist"]`, the merge on sign-in, `removeFromWishlist` (`{ silent: true }` for a move), `clearWishlist` and its confirm, `addToCart` with `buildCartItem`'s line. `SORT_OPTIONS` and `getSortedItems` are the old page's, verbatim.
+
+### 35.1 Structure
+
+- `<AccountLayout active="wishlist" eyebrow="Saved" title="Your wishlist" titleRef description={count}>`. The count is the description line: "3 pieces" / "1 piece" (14px muted, tabular figures). While the count is unknown (loading) or zero, the line holds a no-break space (hidden from assistive technology), so the header keeps its height in every state.
+- Signed in: the rail (from 901px) or the chip row, with Wishlist current. Guests: the same header without the nav (the shell leaves it out without a user; it would show no identity).
+- The content, `clamp(24px, 3vw, 32px)` apart: the guest banner (guests, once the session restore has settled), the toolbar (while loading, and once there are pieces), then the skeleton, the pieces or the empty state.
+- Headings and landmarks: the shell's `h1` is the page's; the empty state's title is an `h2`. The pieces are a `<ul>` named "Saved pieces"; each card is an `article` named by the product. No region or landmark of its own (the shell sits in the app's `<main>`).
+
+### 35.2 The guest banner
+
+A hairline sand panel (`.sf-panel.sf-panel--hairline`, padding `clamp(20px, 3vw, 32px)`): "Saved on this device." (`.sf-display-sm`, a paragraph: a note, not a section heading) over "Sign in to keep your wishlist across devices." (16px secondary, 52ch), and a primary "Sign in" (`openAuthModal("login")`, `aria-haspopup="dialog"`). Text and button share a row from 600px; below that the button sits under the text, full width up to 480px. Nothing else on it (the dialog has its own "Create account" tab).
+
+### 35.3 The toolbar
+
+- Left: a visible `<label>` "Sort by" (14px muted) and `#wishlist-sort`, an `.sf-select` (44px) with `SORT_OPTIONS`' labels, unchanged ("Recently Added", "Oldest First", "Price: Low to High", "Price: High to Low", "Highest Rated"). On phones the select takes the room left; every label fits at 360px.
+- Right: "Clear all", an `.sf-btn--link` in `--sf-color-error` (its underline turns the error tone on hover), `aria-label="Clear all saved pieces"`, `aria-haspopup="dialog"`, a 44px hit area through the primitive's `::after`. It calls `clearWishlist()`, whose confirm ("Clear wishlist?", "Clear All" / "Keep Items") is the context's, unchanged; it still passes a hex `confirmButtonColor` (§16.6: `WishlistContext.js` is not this page's to edit).
+- While the account's list loads, "Clear all" is `aria-disabled` and does nothing: a clear then would race the merge.
+
+### 35.4 The pieces
+
+- **Grid:** two columns, three from 1024px; column gaps 16 / 24px (from 768px), row gaps 32 / 40px, as the listing (the pieces carry text under their photographs). `position: relative`, so `AnimatePresence`'s `popLayout` can lift a leaving piece out of the flow. Measured piece widths: 156px at 360, 341px at 768 (no rail), 217px in the 1024px account column, 276px at 1440.
+- **Each piece** (`<li>`, an inline-size container, a flex column as tall as its row): the `ProductCard`, the stock line, then the actions at the piece's foot (`margin-top: auto`), so the actions of a row line up whatever the cards above them hold (a rating row, a brand, a two-line name).
+- **The card:** `product = toCardProduct(row)` (built once per row with `useMemo`): `{ ...row, id: row.productId, images: [row.image] }` (a row's own `images` win when it has some; no image leaves the card's placeholder), with `stock` set by the stock rule below. `onAddToCart={(line) => addToCart(line, 1)}`: the card's quick add hands over `buildCartItem(product)`, which equals the line the old "Add to Cart" built, `buildCartItem({ ...row, id: row.productId })`, for every product in the catalogue (tested): the cheapest variant, line id `productId-variantId`, so it merges with a product-page add. No `onToggleWishlist`: every piece here is saved, so the card shows no heart. Its chips ("Sold out", "Sale", "New"), stars, price, 4:5 photograph, placeholder fallback and focus ring are the card's own.
+- **The stock rule** (the old page's, verbatim): the stock of what "Add to cart" adds, the default (cheapest) variant's when the product has variants, else the product's; unknown (`null`, `""`) counts as in stock. The line under the card says "In stock" (`--sf-color-success`) or "Out of stock" (`--sf-color-error`), 12px, 500, the product page's words and tones; **nothing when the stock is unknown** (the product page's rule: nothing known, nothing claimed), while the actions stay available as before. The card's `stock` is `0` exactly when the rule says out of stock (otherwise the rule's own value), so its "Sold out" chip, its disabled "Sold out" quick add and the line always agree, also when the cheapest variant alone is sold out or the stock arrives as text.
+- **Actions:** "Move to cart", `.sf-btn--ghost`, 44px, disabled when out of stock, named "Move to cart, <name>"; "Remove", a 44px `.sf-btn` text button (secondary text, stone underline; ink with a caramel underline on hover), named "Remove <name> from wishlist". Side by side (Move to cart takes the room) from a 14rem piece; a narrower piece (two columns on a phone, three in the 1024px account column) stacks them: Move to cart across the piece, Remove centred under it. No live region of the page's own: the context's and the cart's toasts say what happened.
+- **Move to cart:** `addToCart(buildCartItem({ ...row, id: row.productId }), 1)` (the cart opens its drawer), then the piece dims for 300ms and leaves through `removeFromWishlist(productId, { silent: true })` (no "Removed" toast over "Added to Cart"). **Remove:** the piece dims for 300ms, then `removeFromWishlist(productId)` (the "Removed" toast). While a piece dims, its actions are `aria-disabled`, it takes no pointer events, and a second press on it does nothing (it used to add a second unit, or remove twice).
+
+### 35.5 States
+
+| State | When | What shows |
+|---|---|---|
+| Session restore | the first render of a load, while `AuthContext` restores the session (`isLoading`) | nothing (the page returns `null`, as Profile does): whether the rail or the banner belongs on the page is not known yet, and either arriving beside or above a page already drawn would move it |
+| Loading | the account's read after a sign-in or a reload with a session (`WishlistContext`'s `isLoading`); the first render with a new account, before the context has started that read | the toolbar ("Clear all" unavailable) over 3 to 6 skeleton pieces (the device's count, within those bounds): `ProductCardSkeleton`, then the stock line's and the actions' boxes, `aria-hidden`, in an `aria-busy` wrapper with a hidden "Loading your wishlist"; no count |
+| Pieces | at least one | the toolbar, the grid |
+| Empty | none | on the page: "Nothing saved yet." (`.sf-display-md`, the `h2`, `tabIndex -1`), "Use the heart on any piece to save it for later." (16px secondary), a primary link "Browse furniture" to `/products` (full width up to 480px); no toolbar, no count |
+
+The guest banner sits above whichever state applies. A reload with a session goes nothing → the rail over the skeleton → the account's pieces, never through an empty state or the device's own list first (the old page showed empty → device list → skeleton → list); a guest's reload goes nothing → the banner over the pieces; arriving from another page once the account's list has loaded shows the pieces at once, with no skeleton frame.
+
+Cold-load layout shift (Chromium, 900px-tall window, production build), at 1440 / 360px: 0.0005 / 0.0066 signed in, 0.0005 / 0.0084 as a guest (the old page: 0.031 / 0.055 signed in, 0 / 0 as a guest). What remains is the Playfair swap nudging the `h1` by a few pixels and, at 360px, the footer: while the restore renders nothing, its top sits 10px inside the window (`.main-content`'s `min-height: calc(100vh - 70px)` assumes a 70px header; the phone header is 60px), under the fixed bottom bar, and the page then pushes it down. Profile does the same; the rule is global (`App.css`).
+
+### 35.6 Focus
+
+| After | Focus moves to |
+|---|---|
+| Remove | the next piece's Remove (else the previous piece's); the empty state's `h2` when none is left |
+| Move to cart | nowhere while the cart drawer is open (it holds focus); once it has closed, the next piece's Move to cart (else the previous one's; its Remove when it is sold out); the `h2` when none is left |
+| Clear all, confirmed | the empty state's `h2`, once the confirm has left |
+| Sign in from the banner | the `h1`, once the dialog has left (§31.5) |
+
+- A move waits while the cart drawer or the auth dialog is open (`isCartOpen`, `authModalOpen`), then for any `[aria-modal="true"]` to leave the page and for its target to render (at most 60 frames). It only takes focus from nowhere (`<body>`, an element that has left the page) or from the piece that just left, never from somewhere the shopper has put it.
+- The neighbour is chosen when focus moves, from the order on screen when the piece left, passing over pieces dimming or fading out themselves, so two removals pressed together end on the piece that stays.
+- A piece fading out is `inert` (`data-exiting`): out of the tab order and the accessibility tree, with no clicks.
+- Each move uses `preventScroll` and scrolls only when the target is under the sticky header or outside the window (§31.9). The `h1` and the empty state's `h2` are reading positions with no ring; the controls show their primitives' rings.
+
+### 35.7 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| A piece leaving | dims to 0.5 over `--sf-duration-fast` for the 300ms; then fades out over `--sf-duration` (`--sf-ease-in-out`), lifted out of the grid (`popLayout`) | the same fades |
+| The other pieces | glide into the gap (framer `layout`) over `--sf-duration` (`--sf-ease-out`); a new sort order glides the same way | no movement (`layout` off) |
+| A piece coming back (a failed removal restored by the context) | fades in over `--sf-duration-fast` | the same fade |
+| First paint (the skeleton, then the pieces) | no entrance | — |
+
+The last piece leaving switches to the empty state at once (the grid and its fade go with it), as before.
+
+### 35.8 Contrast
+
+No new pairs: ink, secondary and muted text on the page and on sand (the count, the label, Remove, the banner), the success and error tones on the page (the stock line, "Clear all"), the field boundary and the focus ring on the page and on sand, the primary and ghost buttons, and the card's own pairs (§23.5) are all in §14, §16.8 and §23.5.
+
+### 35.9 Decisions to keep
+
+- **The card's `stock` is the page's stock rule**, not the snapshot's sum, so the card and the page can never disagree about whether a piece can be added.
+- **Unknown stock claims nothing** but stays addable (the old behaviour), as on the product page.
+- **No heart on the wishlist's cards**; removing is the page's own "Remove", named after its piece.
+- **The merge uploads only what the device saved itself** (`WishlistContext`, an approved exception to the fixed context logic). On a sign-in or a reload with a session, a row with a local id (saved as a guest, or an upload that failed) is uploaded. A row the API had confirmed that the account no longer has was removed elsewhere (on another device or tab, one by one or with Clear all), or belongs to another account, and it is dropped, never uploaded again. A row confirmed while the merge's read is in flight stays.
+- **Snapshots:** in JSON Server mode a row is the snapshot taken when the piece was saved (price, stock, variants), and the page shows it as stored; the Laravel API nests the live product under each row and `WishlistContext` flattens it. Setting a product's stock to 0 in `products` does not reach a saved row in JSON Server mode (`scripts/validate-db.js` checks the seeded snapshots against the catalogue).
