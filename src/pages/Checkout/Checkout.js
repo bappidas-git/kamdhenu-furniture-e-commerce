@@ -4,7 +4,7 @@ import { motion, AnimatePresence, useIsPresent, useReducedMotion } from "framer-
 import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
 import { useOrder } from "../../context/OrderContext";
-import apiService from "../../services/api";
+import apiService, { getErrorMessage } from "../../services/api";
 import { IS_MOCK_API } from "../../services/baseURL";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import TRUST_ICONS from "../../components/storefront/trustIcons";
@@ -27,9 +27,10 @@ import styles from "./Checkout.module.css";
 // storeCreditApplied, amountPayable, fullyCovered), the COD rules (codEnabled,
 // codMinOrder, codMaxOrder, codAvailable), the effects (the wallet balance,
 // the prefill, the scroll to the top on every step, the COD → card fallback,
-// the credit clamp, the coupon's auto-removal), applyCoupon, removeCoupon,
-// handleNext, placeOrder (the payload, clearCart({ silent: true }) and the
-// confirmation route) and handleAddressChange.
+// the credit clamp, the coupon's auto-removal), applyCoupon (one approved
+// change, below), removeCoupon, handleNext, placeOrder (the payload,
+// clearCart({ silent: true }) and the confirmation route) and
+// handleAddressChange.
 //
 // Three additions, each documented in prompts/BUILD_LOG.md (Prompt 26):
 //   • the two store reads note when they have settled (.finally), so the page
@@ -40,6 +41,12 @@ import styles from "./Checkout.module.css";
 //     panel follows from processing ending without an order placed, which is
 //     what both of its failure paths (createOrder reporting a failure, or a
 //     throw) leave behind.
+//
+// One change the owner asked for (BUILD_LOG, Prompt 26, "Approved change"):
+//   • applyCoupon shows the reason the Laravel API gives for a refused coupon
+//     (getErrorMessage reads it from the response) instead of axios' "Request
+//     failed with status code 422"; a mock-mode refusal, a plain Error, and a
+//     network error read as before.
 // =============================================================================
 
 const STEPS = ["Cart", "Shipping", "Payment", "Review"];
@@ -512,7 +519,9 @@ const Checkout = () => {
       const coupon = await apiService.coupons.validate(couponCode.trim(), subtotal);
       setCouponApplied(coupon);
     } catch (e) {
-      setCouponError(e.message || "Invalid coupon");
+      // The Laravel API refuses with an HTTP error whose body carries the
+      // reason (getErrorMessage reads it); a mock-mode refusal is a plain Error.
+      setCouponError(e.response ? getErrorMessage(e) : e.message || "Invalid coupon");
       setCouponApplied(null);
     }
   };

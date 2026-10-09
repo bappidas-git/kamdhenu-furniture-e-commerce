@@ -28,7 +28,20 @@ jest.mock("../../services/api", () => ({
     orders: { create: jest.fn(), getByUserId: jest.fn() },
     cart: { getCart: jest.fn(), addToCart: jest.fn(), removeFromCart: jest.fn() },
   },
-  getErrorMessage: (error) => error?.message,
+  // Mirrors getErrorMessage in api.js (the real module pulls in axios's ESM
+  // build, which this Jest setup does not transform): the reason from a
+  // Laravel error response, else the first field error, else the message.
+  getErrorMessage: (error) => {
+    const data = error?.response?.data;
+    if (data) {
+      if (data.message) return data.message;
+      if (data.errors) {
+        const first = Object.values(data.errors)[0];
+        return Array.isArray(first) ? first[0] : first;
+      }
+    }
+    return error?.message || "An error occurred";
+  },
 }));
 jest.mock("sweetalert2", () => ({ __esModule: true, default: { fire: jest.fn(() => Promise.resolve({})) } }));
 let mockIsMock = true;
@@ -398,6 +411,49 @@ describe("the coupon", () => {
     fireEvent.change(field(), { target: { value: "WELCOME50" } });
     expect(screen.queryByText("Minimum order amount is ₹5000")).not.toBeInTheDocument();
     expect(field()).not.toHaveAttribute("aria-invalid");
+  });
+
+  // An axios error as the Laravel API's refusals arrive: a 4xx whose body
+  // carries the reason.
+  const httpError = (status, data) =>
+    Object.assign(new Error(`Request failed with status code ${status}`), { response: { status, data } });
+
+  test("a refusal from the Laravel API shows the server's reason, not axios' status line", async () => {
+    mockIsMock = false;
+    apiService.coupons.validate.mockRejectedValueOnce(
+      httpError(422, { success: false, message: "This coupon needs an order of at least ₹5000." })
+    );
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    fireEvent.change(field(), { target: { value: "WELCOME500" } });
+    apply();
+    expect(await screen.findByText("This coupon needs an order of at least ₹5000.")).toBeInTheDocument();
+    expect(screen.queryByText(/Request failed with status code/)).not.toBeInTheDocument();
+    expect(field()).toHaveAttribute("aria-invalid", "true");
+  });
+
+  test("a Laravel refusal with only field errors shows the first of them", async () => {
+    mockIsMock = false;
+    apiService.coupons.validate.mockRejectedValueOnce(httpError(422, { errors: { code: ["This coupon has expired."] } }));
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    fireEvent.change(field(), { target: { value: "FESTIVE25" } });
+    apply();
+    expect(await screen.findByText("This coupon has expired.")).toBeInTheDocument();
+  });
+
+  test("an unreachable server keeps the error's own message (there is no response to read)", async () => {
+    apiService.coupons.validate.mockRejectedValueOnce(new Error("Network Error"));
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    fireEvent.change(field(), { target: { value: "WELCOME500" } });
+    apply();
+    expect(await screen.findByText("Network Error")).toBeInTheDocument();
+  });
+
+  test("a refusal with no message at all still says “Invalid coupon” (as before)", async () => {
+    apiService.coupons.validate.mockRejectedValueOnce(new Error(""));
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    fireEvent.change(field(), { target: { value: "WELCOME500" } });
+    apply();
+    expect(await screen.findByText("Invalid coupon")).toBeInTheDocument();
   });
 
   test("Enter applies; the applied line shows the saving, the summary the discount, and focus follows", async () => {

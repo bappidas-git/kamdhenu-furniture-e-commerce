@@ -2291,7 +2291,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 ### 36.4 Step 1: the cart
 
 - **Lines:** the drawer's row (§28.2) without links: a 72 × 90 sand thumbnail with a hairline frame (`PLACEHOLDER_IMG` + `onImageError`, lazy, `alt=""`), the name in the serif (17px), "Remove" (13px secondary `.sf-btn--link`, named "Remove <name>, <option>"), the option, "₹X each", then the 36px hairline quantity pill ("Decrease quantity" / "Increase quantity" in a group named "Quantity, <name>, <option>"; − unavailable at 1, + unavailable at the line's stock with "No more stock available"; `aria-disabled`, so focus stays) and the line total.
-- **Coupon** (max 28rem): a `<form noValidate>` with the label "Coupon code", the field (typed in capitals, `aria-invalid` and `aria-describedby` once a press was refused) and a ghost "Apply"; Enter applies. The message slot `#checkout-coupon-message` is a polite live region; errors use `.sf-field__error`. Applied: a hairline surface row "✓ WELCOME500 applied −₹500.00" (", capped at ₹2,000.00" when the cap bit) and "Remove" (named "Remove coupon WELCOME500"). The auto-removal note does not mark the field.
+- **Coupon** (max 28rem): a `<form noValidate>` with the label "Coupon code", the field (typed in capitals, `aria-invalid` and `aria-describedby` once a press was refused) and a ghost "Apply"; Enter applies. The message slot `#checkout-coupon-message` is a polite live region; errors use `.sf-field__error` and carry the API's own words: the mock's text in JSON Server mode ("Minimum order amount is ₹5000"), the server's reason from the response with the Laravel API (never axios' status line). Applied: a hairline surface row "✓ WELCOME500 applied −₹500.00" (", capped at ₹2,000.00" when the cap bit) and "Remove" (named "Remove coupon WELCOME500"). The auto-removal note does not mark the field.
 - **Guests:** a hairline sand panel, "Sign in to check out." (`.sf-display-sm`) / "Your orders, their tracking and your saved addresses stay with your account.", a ghost "Sign in" and a link button "Create an account" (both `aria-haspopup="dialog"`, opening the auth dialog's tabs); the primary reads "Sign in to continue" and opens the dialog too.
 
 ### 36.5 Step 2: shipping
@@ -2374,7 +2374,7 @@ Everything else (ink, secondary and muted text on the page, surface and sand; th
 
 ### 36.13 Decisions to keep
 
-- **The logic is frozen.** The order math, the rules, the effects and the payload are the old page's, verbatim (a script compares 24 blocks with `main`). Only three additions: the settled flags for the loading states, the tightened phone and PIN checks, and the failure alert (BUILD_LOG Prompt 26).
+- **The logic is frozen.** The order math, the rules, the effects and the payload are the old page's, verbatim (a script compares 24 blocks with `main`). Only three additions: the settled flags for the loading states, the tightened phone and PIN checks, and the failure alert; and one change the owner approved, the coupon's refusal message in Laravel mode (BUILD_LOG Prompt 26).
 - **Promises come only from data:** settings (COD), shipping methods (delivery), config (returns). No gateway claim in mock mode, no badges, no timers.
 - **The failure alert waits for OrderContext's dialog** (it sets `aria-hidden` on the page), so the message is announced, not lost behind it.
 - **Busy, not disabled:** the primary stays focusable while an order is placed.
