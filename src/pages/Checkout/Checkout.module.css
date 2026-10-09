@@ -1,225 +1,1385 @@
-.container { max-width: 1200px; margin: 0 auto; padding: 24px 16px 80px; min-height: calc(100vh - 200px); }
-.dark { color: #e2e8f0; }
-.breadcrumb { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; font-size: 0.875rem; color: #64748b; }
-.breadcrumb a { color: #667eea; text-decoration: none; }
-/* Touch-target sizing: grow the breadcrumb hit area without moving the row */
-@media (max-width: 768px) {
-  .breadcrumb a { display: inline-block; padding: 10px 2px; margin: -10px 0; }
+/* =============================================================================
+ * Checkout (Prompt 26, prompts/DESIGN_SYSTEM.md §36)
+ * =============================================================================
+ * A minimal header (the breadcrumb, the serif h1, a hairline stepper) over two
+ * columns from 901px: the step in 7, the order summary in 5, sticky 24px
+ * under the header (--sf-header-height). Up to 900px one column, the summary
+ * first as an "Order summary · ₹X" disclosure. Up to 600px the stepper's
+ * labels give way to one "Step 2 of 4 · Shipping" line, fields stack and the
+ * primary action runs full width.
+ *
+ * Hairlines carry the structure (the stepper's segments, the rows, the
+ * blocks); amounts that matter are in the serif; the store-credit panel is
+ * the one sand surface. Tokens only: every colour, size step and duration is
+ * a --sf-* variable, so dark mode and reduced motion follow by themselves.
+ * ========================================================================== */
+
+.page {
+  width: 100%;
+  max-width: var(--sf-container);
+  margin-inline: auto;
+  padding: clamp(var(--sf-space-6), 4vw, var(--sf-space-12)) var(--sf-gutter) calc(var(--sf-section-y) / 2);
 }
-.dark .breadcrumb { color: #94a3b8; }
 
-/* Step Indicator */
-.stepIndicator { display: flex; justify-content: center; align-items: center; margin-bottom: 32px; gap: 0; }
-.step { display: flex; align-items: center; gap: 8px; }
-.stepCircle { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #d1d5db; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 600; color: #94a3b8; transition: all 0.3s; flex-shrink: 0; }
-.activeStep .stepCircle { border-color: #667eea; background: #667eea; color: #fff; }
-.completedStep .stepCircle { border-color: #10b981; background: #10b981; color: #fff; }
-.stepLabel { font-size: 0.85rem; font-weight: 500; color: #94a3b8; white-space: nowrap; }
-.activeStep .stepLabel { color: #667eea; }
-.completedStep .stepLabel { color: #10b981; }
-.stepLine { width: 40px; height: 2px; background: #d1d5db; margin: 0 8px; }
-.completedStep .stepLine { background: #10b981; }
-@media (max-width: 640px) { .stepLabel { display: none; } .stepLine { width: 24px; } }
+/* ---- Header ----------------------------------------------------------------- */
 
-/* Layout */
-.checkoutLayout { display: grid; grid-template-columns: 1fr 360px; gap: 32px; }
-@media (max-width: 900px) { .checkoutLayout { grid-template-columns: 1fr; } }
-/* Grid items default to min-width:auto, which would let a long nowrap product
-   title force the column wider than the viewport on small screens. */
-.mainContent, .sidebar { min-width: 0; }
+.header {
+  margin-bottom: clamp(var(--sf-space-6), 4vw, var(--sf-space-10));
+}
 
-.sectionTitle { font-size: 1.3rem; font-weight: 700; margin-bottom: 20px; }
-.subTitle { font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; }
+.title {
+  margin: var(--sf-space-4) 0 0;
+  color: var(--sf-color-text);
+}
 
-/* Cart Items */
-.cartItems { display: flex; flex-direction: column; gap: 12px; margin-bottom: 24px; }
-.cartItem { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: #fff; border: 1px solid #e2e8f0; }
-.dark .cartItem { background: #1e293b; border-color: #334155; }
-.cartItemImage { width: 64px; height: 64px; border-radius: 8px; object-fit: cover; background: #f1f5f9; flex-shrink: 0; }
-.cartItemInfo { flex: 1; min-width: 0; }
-.cartItemInfo h4 { font-size: 0.9rem; font-weight: 600; margin-bottom: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.variant { font-size: 0.8rem; color: #94a3b8; }
-.itemPrice { font-size: 0.85rem; font-weight: 500; color: #667eea; }
-.quantityControls { display: flex; align-items: center; gap: 0; border: 1px solid #d1d5db; border-radius: 6px; overflow: hidden; }
-.dark .quantityControls { border-color: #475569; }
-.quantityControls button { width: 28px; height: 28px; border: none; background: #f1f5f9; cursor: pointer; font-size: 1rem; font-weight: 600; color: inherit; }
-.dark .quantityControls button { background: #0f172a; color: #e2e8f0; }
-.quantityControls span { width: 28px; text-align: center; font-size: 0.85rem; font-weight: 500; }
-.itemSubtotal { font-weight: 700; font-size: 0.95rem; white-space: nowrap; min-width: 80px; text-align: right; }
-.removeBtn { background: none; border: none; font-size: 1.3rem; color: #94a3b8; cursor: pointer; padding: 0 4px; }
-.removeBtn:hover { color: #ef4444; }
-@media (max-width: 640px) { .itemSubtotal { display: none; } .cartItemImage { width: 48px; height: 48px; } }
-/* Comfortable touch targets for the line-item controls on phones. */
-@media (max-width: 768px) {
-  .quantityControls button { width: 40px; height: 40px; }
-  .quantityControls span { width: 30px; }
-  .removeBtn { min-width: 44px; min-height: 44px; padding: 0 8px; }
+.progress {
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+/* Four hairline segments: done = ink, current = a 2px caramel underline,
+   upcoming = stone. The serif numeral and the eyebrow label sit on them. */
+.stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sf-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.stepperItem {
+  display: flex;
+  align-items: baseline;
+  gap: var(--sf-space-3);
+  min-width: 0;
+  padding-bottom: var(--sf-space-3);
+  border-bottom: 1px solid var(--sf-color-border);
+  color: var(--sf-color-text-muted);
+  transition: color var(--sf-duration) var(--sf-ease-out), border-color var(--sf-duration) var(--sf-ease-out);
+}
+
+.stepperItem[data-state="done"] {
+  border-bottom-color: var(--sf-color-primary);
+  color: var(--sf-color-text);
+}
+
+/* One pixel of padding gives back the second pixel of the line, so the
+   current step's text stays level with the others. */
+.stepperItem[data-state="current"] {
+  padding-bottom: calc(var(--sf-space-3) - 1px);
+  border-bottom: 2px solid var(--sf-color-accent);
+  color: var(--sf-color-text);
+}
+
+.stepperNumber {
+  flex: none;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  line-height: 1;
+  font-variant-numeric: lining-nums;
+}
+
+.stepperLabel {
+  min-width: 0;
+  overflow: hidden;
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.stepperCompact {
+  display: none;
+}
+
+.dot {
+  margin-inline: 0.5em;
+  color: var(--sf-color-text-muted);
+}
+
+/* ---- Layout ------------------------------------------------------------------- */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: var(--sf-space-6);
+  align-items: start;
+}
+
+.main {
+  min-width: 0;
+}
+
+/* ---- The order summary -------------------------------------------------------
+   One element for both looks: from 901px the toggle is gone and the body always
+   shows; up to 900px the toggle opens and closes the body. */
+.summary {
+  position: relative;
+  min-width: 0;
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
+}
+
+/* Focusable only while it scrolls (a short window): keyboard users can then
+   scroll it with the arrow keys. */
+.summary:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+}
+
+.summaryToggle {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  width: 100%;
+  min-height: 56px;
+  margin: 0;
+  padding: 0 var(--sf-space-5);
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background: transparent;
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: 0.9375rem;
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.summaryToggle:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: -2px;
+}
+
+.summaryToggleLabel {
+  flex: 1;
+  font-weight: var(--sf-font-medium);
+}
+
+.summaryToggleAmount {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
+.summaryChevron {
+  flex: none;
+  color: var(--sf-color-text-secondary);
+  transition: transform var(--sf-duration) var(--sf-ease-in-out);
+}
+
+.summaryToggle[aria-expanded="true"] .summaryChevron {
+  transform: rotate(180deg);
+}
+
+.summaryBody {
+  display: none;
+  padding: var(--sf-space-5);
+  border-top: var(--sf-hairline);
+}
+
+.summaryBody[data-open="true"] {
+  display: block;
+}
+
+.summaryTitle {
+  margin: 0 0 var(--sf-space-4);
+  color: var(--sf-color-text);
+}
+
+/* Up to 900px the toggle names the summary; the heading stays for assistive
+   technology (it names the region). */
+@media (max-width: 900px) {
+  .summaryTitle {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    border: 0;
+    white-space: nowrap;
+  }
+}
+
+.summaryLines {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.summaryLine {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  padding: var(--sf-space-3) 0;
+  border-bottom: var(--sf-hairline);
+}
+
+.summaryLine:first-child {
+  border-top: var(--sf-hairline);
+}
+
+.summaryLineText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.summaryLineName {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+.summaryLineMeta {
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.summaryLineTotal {
+  flex: none;
+  font-size: var(--sf-text-sm);
+  font-variant-numeric: tabular-nums;
+  color: var(--sf-color-text);
+  white-space: nowrap;
+}
+
+.moreItems {
+  margin: var(--sf-space-2) 0 0;
+  font-size: 0.8125rem;
+  color: var(--sf-color-text-muted);
+}
+
+.totals {
+  display: grid;
+  gap: var(--sf-space-2);
+  margin: var(--sf-space-5) 0 0;
+}
+
+.totalsRow {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
+}
+
+.totalsRow dt {
+  min-width: 0;
+}
+
+.totalsRow dd {
+  margin: 0;
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* Savings speak in the discount (caramel) voice, label and figure alike. */
+.saving,
+.totalsRow.saving dd {
+  color: var(--sf-color-discount);
+}
+
+.totalRow {
+  margin-top: var(--sf-space-2);
+  padding-top: var(--sf-space-3);
+  border-top: var(--sf-hairline);
+  color: var(--sf-color-text);
+  font-weight: var(--sf-font-medium);
+}
+
+.totalRow dd {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-normal);
+  line-height: 1;
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.free,
+.totalsRow dd.free {
+  color: var(--sf-color-success);
+  font-weight: var(--sf-font-medium);
+}
+
+/* The promises: outline icons in the accent beside 11px uppercase labels,
+   the cart drawer's row, one per line. */
+.cues {
+  display: grid;
+  gap: var(--sf-space-3);
+  margin: var(--sf-space-6) 0 0;
+  padding: var(--sf-space-5) 0 0;
+  border-top: var(--sf-hairline);
+  list-style: none;
+}
+
+.cue {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+.cueIcon {
+  display: inline-flex;
+  flex: none;
+  margin-top: 1px;
+  color: var(--sf-color-accent);
+}
+
+/* A figure the store reads have not given yet. */
+.pending {
+  display: inline-block;
+  width: 4.5rem;
+  height: 0.875rem;
+  vertical-align: middle;
+}
+
+.pendingLarge {
+  width: 6rem;
+  height: 1.125rem;
+}
+
+.pendingToggle {
+  width: 5rem;
+  height: 1rem;
+}
+
+@media (min-width: 901px) {
+  .layout {
+    grid-template-columns: minmax(0, 7fr) minmax(0, 5fr);
+    column-gap: clamp(var(--sf-space-8), 4vw, var(--sf-space-16));
+  }
+
+  .main {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  /* Sticky 24px under the header; in a window too short for it, it scrolls on
+     its own (and then takes focus, see .summary:focus-visible). */
+  .summary {
+    grid-column: 2;
+    grid-row: 1;
+    position: sticky;
+    top: calc(var(--sf-header-height) + var(--sf-space-6));
+    max-height: calc(100vh - var(--sf-header-height) - var(--sf-space-12));
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+    scrollbar-color: var(--sf-color-border) transparent;
+  }
+
+  .summaryToggle {
+    display: none;
+  }
+
+  .summaryBody,
+  .summaryBody[data-open] {
+    display: block;
+    padding: clamp(var(--sf-space-5), 2.5vw, var(--sf-space-8));
+    border-top: 0;
+  }
+}
+
+/* ---- The step panel ------------------------------------------------------------ */
+
+.panel {
+  min-width: 0;
+}
+
+.panelInner {
+  min-width: 0;
+}
+
+/* Focus lands here on every step change (tabIndex -1): a reading position,
+   not a control, so no ring. */
+.stepTitle {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.stepTitle:focus {
+  outline: none;
+}
+
+.stepIntro {
+  margin: var(--sf-space-1) 0 0;
+  font-size: var(--sf-text-sm);
+  color: var(--sf-color-text-muted);
+}
+
+/* Fieldsets: a sans UI heading as the legend (floated, so it lays out as a
+   block), then the controls. */
+.group {
+  min-width: 0;
+  margin: clamp(var(--sf-space-6), 3vw, var(--sf-space-8)) 0 0;
+  padding: 0;
+  border: 0;
+}
+
+.legend {
+  float: left;
+  width: 100%;
+  margin: 0 0 var(--sf-space-4);
+  padding: 0;
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-md);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+.legend + * {
+  clear: both;
+}
+
+.groupError {
+  margin-top: var(--sf-space-3);
+}
+
+.groupError:focus {
+  outline: none;
+}
+
+.groupError a {
+  font-size: inherit;
+}
+
+/* ---- Step 1: the cart ------------------------------------------------------------- */
+
+.lines {
+  margin: var(--sf-space-6) 0 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--sf-hairline);
+}
+
+.line {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: var(--sf-space-4);
+  padding: var(--sf-space-5) 0;
+  border-bottom: var(--sf-hairline);
+}
+
+.thumb {
+  position: relative;
+  display: block;
+  width: 72px;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+}
+
+.thumb img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--sf-hairline);
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.lineBody {
+  display: flex;
+  flex-direction: column;
+  gap: var(--sf-space-1);
+  min-width: 0;
+}
+
+.lineHead {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+}
+
+.lineName {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-family: var(--sf-font-display);
+  font-size: 1.0625rem;
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+/* A quiet text button (the .sf-btn--link primitive gives it a 44px target). */
+.lineRemove,
+.couponRemove {
+  --sf-btn-fg: var(--sf-color-text-secondary);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  flex: none;
+  font-size: 0.8125rem;
+  font-weight: var(--sf-font-normal);
+}
+
+.lineRemove {
+  margin-top: 2px;
+}
+
+.lineVariant,
+.lineUnit {
+  margin: 0;
+  font-size: var(--sf-text-xs);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.lineFoot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  margin-top: var(--sf-space-3);
+}
+
+.lineTotal {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* The cart drawer's stepper: a 36px hairline pill, 44px targets. */
+.qty {
+  display: inline-flex;
+  align-items: center;
+  flex: none;
+  height: 36px;
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-pill);
+}
+
+.qtyButton {
+  position: relative;
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  margin: -1px; /* sit on the pill's hairline */
+  padding: 0;
+  border: 0;
+  border-radius: var(--sf-radius-pill);
+  background-color: transparent;
+  color: var(--sf-color-text);
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.qtyButton::after {
+  content: "";
+  position: absolute;
+  inset: -4px;
+}
+
+@media (hover: hover) {
+  .qtyButton:hover:not([aria-disabled="true"]) {
+    background-color: var(--sf-color-sand);
+  }
+}
+
+.qtyButton:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+/* aria-disabled rather than disabled, so focus stays on a button that has
+   just reached its limit. */
+.qtyButton[aria-disabled="true"] {
+  color: var(--sf-color-text-muted);
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.qtyValue {
+  min-width: 28px;
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  text-align: center;
+  font-variant-numeric: tabular-nums;
 }
 
 /* Coupon */
-.couponSection { padding: 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; margin-bottom: 20px; }
-.dark .couponSection { background: #0f172a; border-color: #334155; }
-.couponSection h3 { font-size: 0.95rem; font-weight: 600; margin-bottom: 10px; }
-.couponForm { display: flex; gap: 8px; }
-/* min-width:0 lets flex shrink the input below its ~20ch intrinsic width, else
-   the Apply button is pushed past the 320px viewport edge. */
-.couponForm input { flex: 1; min-width: 0; padding: 8px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9rem; background: #fff; font-family: inherit; }
-.dark .couponForm input { background: #1e293b; border-color: #475569; color: #e2e8f0; }
-.couponForm button { padding: 8px 20px; border-radius: 8px; border: none; background: #667eea; color: #fff; font-weight: 600; cursor: pointer; font-family: inherit; }
-.couponApplied { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: 8px; background: #ecfdf5; color: #059669; }
-.dark .couponApplied { background: #064e3b; color: #6ee7b7; }
-.couponApplied button { background: none; border: none; color: #ef4444; cursor: pointer; font-weight: 500; font-family: inherit; }
-.couponError { color: #ef4444; font-size: 0.8rem; margin-top: 6px; }
-.couponCapNote { font-style: normal; font-size: 0.8rem; opacity: 0.85; }
+.coupon {
+  max-width: 28rem;
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
 
-.loginPrompt { text-align: center; padding: 20px; border-radius: 10px; background: #fef3c7; color: #92400e; }
-.dark .loginPrompt { background: #78350f; color: #fde68a; }
-.loginPrompt p { margin: 0 0 12px; }
-.loginPromptBtn { padding: 10px 24px; border: none; border-radius: 8px; background: #92400e; color: #fff; font-size: 0.875rem; font-weight: 600; cursor: pointer; font-family: inherit; transition: opacity 0.2s; }
-.loginPromptBtn:hover { opacity: 0.88; }
-.dark .loginPromptBtn { background: #fde68a; color: #78350f; }
+.couponForm {
+  display: grid;
+  gap: var(--sf-space-2);
+}
 
-/* Address */
-.savedAddresses { margin-bottom: 20px; }
-.savedAddresses h3 { font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-.addressCard { display: flex; gap: 12px; padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; margin-bottom: 8px; transition: border-color 0.2s; }
-.dark .addressCard { border-color: #334155; }
-.selectedAddress { border-color: #667eea; background: #eef2ff; }
-.dark .selectedAddress { border-color: #a855f7; background: rgba(168,85,247,0.1); }
-.addressCard input { flex-shrink: 0; margin-top: 4px; }
-.addressCard strong { display: block; margin-bottom: 4px; font-size: 0.9rem; }
-.addressCard p { font-size: 0.85rem; color: #64748b; margin: 0; }
-.dark .addressCard p { color: #94a3b8; }
-.newAddressBtn { background: none; border: 2px dashed #d1d5db; border-radius: 10px; padding: 12px; width: 100%; cursor: pointer; color: #667eea; font-weight: 600; font-family: inherit; font-size: 0.9rem; }
+.couponRow {
+  display: flex;
+  gap: var(--sf-space-2);
+}
 
-.addressForm { margin-bottom: 20px; }
-.formRow { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-@media (max-width: 480px) { .formRow { grid-template-columns: 1fr; } }
-.formGroup { display: flex; flex-direction: column; gap: 4px; margin-bottom: 12px; }
-.formGroup label { font-size: 0.85rem; font-weight: 500; color: #475569; }
-.dark .formGroup label { color: #94a3b8; }
-.formGroup input, .formGroup select { padding: 10px 12px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.9rem; background: #fff; font-family: inherit; }
-.dark .formGroup input, .dark .formGroup select { background: #0f172a; border-color: #475569; color: #e2e8f0; }
-.formGroup input:focus, .formGroup select:focus { outline: none; border-color: #667eea; }
-.inputError { border-color: #ef4444 !important; }
-.fieldError { color: #ef4444; font-size: 0.75rem; }
-.readOnly { background: #f1f5f9 !important; color: #64748b !important; cursor: not-allowed; }
-.dark .readOnly { background: #1e293b !important; color: #94a3b8 !important; }
+.couponInput {
+  flex: 1;
+  min-width: 0;
+  letter-spacing: 0.06em;
+}
 
-/* Shipping Methods */
-.shippingMethods { display: flex; flex-direction: column; gap: 8px; }
-.shippingOption { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; transition: border-color 0.2s; }
-.dark .shippingOption { border-color: #334155; }
-.selectedShipping { border-color: #667eea; background: #eef2ff; }
-.dark .selectedShipping { border-color: #a855f7; background: rgba(168,85,247,0.1); }
-.shippingOption input { flex-shrink: 0; }
-.shippingOption strong { display: block; font-size: 0.9rem; }
-.shippingOption p { font-size: 0.8rem; color: #64748b; margin: 2px 0 0; }
-.dark .shippingOption p { color: #94a3b8; }
-.shippingPrice { margin-left: auto; font-weight: 700; color: #10b981; white-space: nowrap; }
-.shippingEmpty { font-size: 0.9rem; color: #64748b; padding: 12px; border: 1px dashed #d1d5db; border-radius: 10px; }
-.dark .shippingEmpty { color: #94a3b8; border-color: #475569; }
+.couponApplied {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sf-space-5);
+  padding: var(--sf-space-3) var(--sf-space-4);
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
+}
 
-/* Payment */
-.paymentMethods { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
-.paymentOption { display: flex; gap: 12px; align-items: center; padding: 14px; border-radius: 10px; border: 2px solid #e2e8f0; cursor: pointer; transition: border-color 0.2s; }
-.dark .paymentOption { border-color: #334155; }
-.selectedPayment { border-color: #667eea; background: #eef2ff; }
-.dark .selectedPayment { border-color: #a855f7; background: rgba(168,85,247,0.1); }
-.paymentOption input { flex-shrink: 0; }
-.paymentIcon { font-size: 1.3rem; }
-.paymentOption strong { display: block; font-size: 0.9rem; }
-.paymentOption p { font-size: 0.8rem; color: #64748b; margin: 2px 0 0; }
-.dark .paymentOption p { color: #94a3b8; }
-.cardForm, .upiForm, .bankForm { padding: 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; }
-.dark .cardForm, .dark .upiForm, .dark .bankForm { background: #0f172a; border-color: #334155; }
-.disabledPayment { opacity: 0.55; cursor: not-allowed; }
-.disabledPayment input { cursor: not-allowed; }
-.codInfo { padding: 12px; border-radius: 8px; background: #fef3c7; color: #92400e; font-size: 0.9rem; }
-.dark .codInfo { background: #78350f; color: #fde68a; }
-.codInfo p { margin: 0; }
+.couponAppliedText {
+  display: flex;
+  flex: 1;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-1) var(--sf-space-2);
+  min-width: 0;
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text);
+}
 
-/* Review & Confirm */
-.reviewItems { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
-.reviewItem { display: flex; align-items: center; gap: 12px; padding: 12px; border-radius: 10px; background: #fff; border: 1px solid #e2e8f0; }
-.dark .reviewItem { background: #1e293b; border-color: #334155; }
-.reviewItemImage { width: 56px; height: 56px; border-radius: 8px; object-fit: cover; background: #f1f5f9; flex-shrink: 0; }
-.reviewItemInfo { flex: 1; min-width: 0; }
-.reviewItemInfo h4 { font-size: 0.9rem; font-weight: 600; margin: 0 0 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.reviewItemQty { font-size: 0.8rem; color: #64748b; margin: 2px 0 0; }
-.dark .reviewItemQty { color: #94a3b8; }
-.reviewGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
-.reviewBlock { padding: 16px; border-radius: 10px; background: #f8fafc; border: 1px solid #e2e8f0; }
-.dark .reviewBlock { background: #0f172a; border-color: #334155; }
-.reviewBlock p { font-size: 0.85rem; color: #64748b; margin: 0 0 4px; }
-.dark .reviewBlock p { color: #94a3b8; }
-.reviewBlockHeader { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-.reviewBlockHeader h3 { font-size: 0.95rem; font-weight: 600; margin: 0; }
-.reviewBlockHeader button { background: none; border: none; color: #667eea; font-weight: 600; font-size: 0.85rem; cursor: pointer; font-family: inherit; padding: 0; }
-.reviewName { font-weight: 600; color: inherit !important; }
-.reviewShippingCost { font-weight: 700; color: #10b981 !important; }
+.couponAppliedText:focus {
+  outline: none;
+}
 
-/* Nav Buttons */
-.navButtons { display: flex; justify-content: space-between; gap: 12px; margin-top: 24px; }
-.backBtn { padding: 12px 24px; border-radius: 10px; border: 2px solid #d1d5db; background: transparent; font-weight: 600; cursor: pointer; font-size: 0.95rem; color: inherit; font-family: inherit; }
-.dark .backBtn { border-color: #475569; }
-.backBtn:disabled { opacity: 0.5; cursor: not-allowed; }
-.primaryBtn { flex: 1; padding: 12px 24px; border-radius: 10px; border: none; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; font-weight: 700; font-size: 1rem; cursor: pointer; transition: all 0.3s; font-family: inherit; text-decoration: none; display: inline-block; text-align: center; }
-.primaryBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
-.primaryBtn:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+.couponCheck {
+  display: inline-flex;
+  color: var(--sf-color-success);
+}
 
-/* Sidebar.
-   Sticky offset must clear the fixed header: 140px tall on desktop, 104px on
-   tablet (901–1024px; below 900px the layout is single-column and not sticky). */
-.sidebar { position: sticky; top: 152px; align-self: start; }
-@media (max-width: 1024px) { .sidebar { top: 116px; } }
-.summaryCard { padding: 24px; border-radius: 14px; background: #fff; border: 1px solid #e2e8f0; }
-.dark .summaryCard { background: #1e293b; border-color: #334155; }
-.summaryCard h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 16px; }
-.summaryItems { margin-bottom: 12px; }
-.summaryItem { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 4px 0; color: #475569; }
-.dark .summaryItem { color: #94a3b8; }
-.summaryItem span:first-child { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-right: 12px; }
-.moreItems { font-size: 0.8rem; color: #94a3b8; margin-top: 4px; }
-.summaryDivider { height: 1px; background: #e2e8f0; margin: 12px 0; }
-.dark .summaryDivider { background: #334155; }
-.summaryRow { display: flex; justify-content: space-between; padding: 4px 0; font-size: 0.9rem; }
-.discount { color: #10b981; }
-.totalRow { font-size: 1.1rem; font-weight: 700; padding-top: 8px; }
-.trustBadges { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; margin-top: 16px; font-size: 0.8rem; color: #64748b; }
-.dark .trustBadges { color: #94a3b8; }
+.couponCode {
+  font-weight: var(--sf-font-semibold);
+  letter-spacing: 0.06em;
+}
 
-/* Empty State */
-.emptyState { text-align: center; padding: 80px 20px; }
-.emptyIcon { font-size: 4rem; margin-bottom: 16px; }
-.emptyState h2 { font-size: 1.5rem; margin-bottom: 8px; }
-.emptyState p { color: #64748b; margin-bottom: 24px; }
-.dark .emptyState p { color: #94a3b8; }
+.couponSaving {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-discount);
+  font-variant-numeric: tabular-nums;
+}
 
-/* ── Store Credit (Payment step) ─────────────────────────────────────────── */
-.storeCreditSection { padding: 16px; border-radius: 10px; background: #f5f3ff; border: 1px solid #ddd6fe; margin-bottom: 20px; }
-.dark .storeCreditSection { background: #2e1065; border-color: #5b21b6; }
-.storeCreditHeader { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
-.storeCreditInfo { display: flex; align-items: center; gap: 10px; }
-.storeCreditWalletIcon { font-size: 1.5rem; }
-.storeCreditSection h3 { font-size: 0.95rem; font-weight: 600; margin: 0; }
-.storeCreditBalance { font-size: 0.85rem; color: #6d28d9; margin: 2px 0 0; }
-.dark .storeCreditBalance { color: #c4b5fd; }
-.storeCreditToggle { display: inline-flex; align-items: center; gap: 8px; font-size: 0.875rem; font-weight: 600; color: #6d28d9; cursor: pointer; }
-.dark .storeCreditToggle { color: #c4b5fd; }
-.storeCreditToggle input { width: 16px; height: 16px; accent-color: #7c3aed; cursor: pointer; }
-.storeCreditApply { margin-top: 14px; padding-top: 14px; border-top: 1px dashed #c4b5fd; }
-.dark .storeCreditApply { border-top-color: #6d28d9; }
-.storeCreditAmountRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 12px; flex-wrap: wrap; }
-.storeCreditAmountRow label { font-size: 0.85rem; font-weight: 500; }
-.storeCreditInputWrap { display: flex; align-items: center; gap: 6px; background: #fff; border: 1px solid #d1d5db; border-radius: 8px; padding: 4px 4px 4px 10px; }
-.dark .storeCreditInputWrap { background: #1e293b; border-color: #475569; }
-.storeCreditCurrency { color: #6b7280; font-weight: 600; }
-.storeCreditInputWrap input { width: 110px; border: none; outline: none; font-size: 0.9rem; background: transparent; font-family: inherit; color: inherit; }
-.storeCreditInputWrap button { padding: 6px 12px; border: none; border-radius: 6px; background: #7c3aed; color: #fff; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; }
-.storeCreditSummaryRow { display: flex; justify-content: space-between; font-size: 0.875rem; padding: 4px 0; }
-.storeCreditApplied { font-weight: 600; color: #059669; }
-.dark .storeCreditApplied { color: #6ee7b7; }
-.storeCreditPayable { font-weight: 700; }
-.fullyCoveredNote { padding: 14px 16px; border-radius: 10px; background: #ecfdf5; color: #047857; font-size: 0.9rem; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
-.dark .fullyCoveredNote { background: #064e3b; color: #6ee7b7; }
+.couponCap {
+  font-size: 0.8125rem;
+  color: var(--sf-color-text-muted);
+}
+
+.couponMessage > p {
+  margin: var(--sf-space-2) 0 0;
+}
+
+/* The guest's way in */
+.guest {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-4) var(--sf-space-6);
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+}
+
+.guestText {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.guestTitle {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.guestLine {
+  max-width: 46ch;
+  margin: var(--sf-space-2) 0 0;
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.guestActions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-3) var(--sf-space-6);
+}
+
+/* ---- Step 2: shipping ------------------------------------------------------------ */
+
+/* Saved addresses: hairline radio cards, two columns from 601px. */
+.addressOptions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sf-space-3);
+}
+
+.addressCard {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  min-width: 0;
+  padding: var(--sf-space-4);
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.addressCard input {
+  margin-top: 1px;
+}
+
+.addressCard.checked {
+  border-color: var(--sf-color-primary);
+}
+
+@media (hover: hover) {
+  .addressCard:not(.checked):hover {
+    border-color: var(--sf-color-border-strong);
+  }
+}
+
+/* "A new address" spans the row: a slim choice, not an empty card. */
+.addressNew {
+  grid-column: 1 / -1;
+  align-items: center;
+  padding-block: var(--sf-space-3);
+}
+
+.addressText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
+}
+
+.addressEyebrow {
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+.addressName {
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+.addressLine {
+  overflow-wrap: anywhere;
+}
+
+.addressMeta {
+  color: var(--sf-color-text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* The new-address form */
+.fields {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sf-space-5) var(--sf-space-4);
+}
+
+.optional {
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-text-muted);
+}
+
+/* Delivery and payment methods: hairline radio rows; the chosen one carries a
+   2px caramel bar (a border, so forced colours keep it). */
+.methods {
+  border-top: var(--sf-hairline);
+}
+
+.method {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  width: 100%;
+  min-width: 0;
+  padding: var(--sf-space-4) var(--sf-space-3);
+  border-bottom: var(--sf-hairline);
+  border-left: 2px solid transparent;
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.method input {
+  margin-top: 1px;
+}
+
+.method.checked {
+  border-left-color: var(--sf-color-accent);
+}
+
+.methodText {
+  display: grid;
+  flex: 1;
+  gap: 2px;
+  min-width: 0;
+}
+
+.methodName {
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+}
+
+.methodMeta {
+  font-size: 0.8125rem;
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.methodAside {
+  display: grid;
+  flex: none;
+  justify-items: end;
+  gap: 2px;
+  text-align: right;
+}
+
+.methodCost {
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.methodCost.free {
+  color: var(--sf-color-success);
+}
+
+.unavailable .methodName {
+  color: var(--sf-color-text-muted);
+}
+
+.loadingLine {
+  margin: 0 0 var(--sf-space-3);
+  font-size: var(--sf-text-sm);
+  color: var(--sf-color-text-muted);
+}
+
+.methodSkeleton {
+  align-items: center;
+}
+
+.skeletonRadio {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+}
+
+.skeletonName {
+  width: min(9rem, 100%);
+  height: 0.875rem;
+}
+
+.skeletonMeta {
+  width: min(7rem, 100%);
+  height: 0.75rem;
+  margin-top: var(--sf-space-1);
+}
+
+.skeletonCost {
+  flex: none;
+  width: 4rem;
+  height: 0.875rem;
+}
+
+.methodsEmpty {
+  margin: 0;
+  padding: var(--sf-space-4);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
+}
+
+/* ---- Step 3: payment ------------------------------------------------------------- */
+
+/* Store credit: the one sand panel, the balance in the serif. */
+.credit {
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+}
+
+.creditHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sf-space-4) var(--sf-space-6);
+}
+
+.creditFigure {
+  min-width: 0;
+}
+
+.creditEyebrow {
+  margin: 0;
+}
+
+.creditBalance {
+  margin: var(--sf-space-1) 0 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-sm);
+  line-height: var(--sf-leading-heading);
+  color: var(--sf-color-text);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.creditHint {
+  margin: var(--sf-space-1) 0 0;
+  font-size: 0.8125rem;
+  color: var(--sf-color-text-muted);
+}
+
+.creditSwitch {
+  font-weight: var(--sf-font-medium);
+}
+
+.creditApply {
+  margin-top: var(--sf-space-5);
+  padding-top: var(--sf-space-5);
+  border-top: var(--sf-hairline);
+}
+
+.creditField {
+  max-width: 26rem;
+}
+
+.creditRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-3) var(--sf-space-5);
+}
+
+.creditInputWrap {
+  position: relative;
+  flex: 1 1 9rem;
+  max-width: 14rem;
+}
+
+.currency {
+  position: absolute;
+  top: 50%;
+  left: var(--sf-space-4);
+  color: var(--sf-color-text-muted);
+  font-size: 0.9375rem;
+  line-height: 1;
+  transform: translateY(-50%);
+  pointer-events: none;
+}
+
+.creditInput {
+  padding-left: var(--sf-space-8);
+  font-variant-numeric: tabular-nums;
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.creditInput::-webkit-inner-spin-button,
+.creditInput::-webkit-outer-spin-button {
+  margin: 0;
+  -webkit-appearance: none;
+}
+
+.creditRows {
+  display: grid;
+  gap: var(--sf-space-2);
+  max-width: 26rem;
+  margin: var(--sf-space-5) 0 0;
+}
+
+.creditRowLine {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  font-size: var(--sf-text-sm);
+  color: var(--sf-color-text-secondary);
+}
+
+.creditRowLine dd {
+  margin: 0;
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.creditRowLine dd.saving {
+  color: var(--sf-color-discount);
+}
+
+.strong {
+  font-weight: var(--sf-font-semibold);
+}
+
+/* A message on its semantic tint, with a glyph (never colour alone). */
+.covered,
+.codInfo,
+.orderAlert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  margin: var(--sf-space-5) 0 0;
+  padding: var(--sf-space-3) var(--sf-space-4);
+  border-radius: var(--sf-radius-sm);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+.covered {
+  background-color: var(--sf-color-success-bg);
+  color: var(--sf-color-success);
+  font-weight: var(--sf-font-medium);
+}
+
+.codInfo {
+  background-color: var(--sf-color-info-bg);
+  color: var(--sf-color-info);
+}
+
+.orderAlert {
+  background-color: var(--sf-color-error-bg);
+  color: var(--sf-color-error);
+  font-weight: var(--sf-font-medium);
+}
+
+.coveredIcon,
+.codIcon,
+.orderAlertIcon {
+  display: inline-flex;
+  flex: none;
+  margin-top: 1px;
+}
+
+/* Card, UPI and bank details */
+.subform {
+  margin-top: var(--sf-space-5);
+  padding: clamp(var(--sf-space-4), 3vw, var(--sf-space-6));
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
+}
+
+.subformTitle {
+  margin: 0 0 var(--sf-space-4);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-semibold);
+  color: var(--sf-color-text);
+}
+
+.gatewayNote {
+  margin: var(--sf-space-3) 0 0;
+  font-size: 0.8125rem;
+  color: var(--sf-color-text-muted);
+}
+
+/* ---- Step 4: review ---------------------------------------------------------------- */
+
+.reviewBlocks {
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  border-top: var(--sf-hairline);
+}
+
+.reviewBlock {
+  padding: var(--sf-space-5) 0;
+  border-bottom: var(--sf-hairline);
+}
+
+.reviewBlockHead {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  margin-bottom: var(--sf-space-2);
+}
+
+.reviewBlockTitle {
+  margin: 0;
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+.reviewText {
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+  overflow-wrap: anywhere;
+}
+
+.reviewText p {
+  margin: 0;
+}
+
+.reviewStrong {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+.reviewText .free {
+  color: var(--sf-color-success);
+}
+
+/* The facts beside the Place order button */
+.facts {
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+.factsAmount {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+  margin: 0;
+}
+
+.factsLabel {
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+.factsValue {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  line-height: 1;
+  color: var(--sf-color-text);
+  font-variant-numeric: lining-nums tabular-nums;
+  white-space: nowrap;
+}
+
+.factsList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2) var(--sf-space-5);
+  margin: var(--sf-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.fact {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+  font-size: 0.8125rem;
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-secondary);
+}
+
+.factIcon {
+  display: inline-flex;
+  flex: none;
+  color: var(--sf-color-accent);
+}
+
+/* ---- Actions --------------------------------------------------------------------- */
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--sf-space-4) var(--sf-space-6);
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  padding-top: clamp(var(--sf-space-5), 3vw, var(--sf-space-6));
+  border-top: var(--sf-hairline);
+}
+
+.back {
+  --sf-btn-fg: var(--sf-color-text-secondary);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  margin-right: auto;
+}
+
+.primary {
+  min-width: 12rem;
+}
+
+/* Busy (placing the order): unavailable, but in full ink with a progress
+   cursor, and focus stays on it (the auth modal's busy state). */
+.primary[data-busy] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* ---- Empty cart ---------------------------------------------------------------- */
+
+.empty {
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-3);
+  max-width: 40rem;
+  padding: clamp(var(--sf-space-6), 4vw, var(--sf-space-10));
+}
+
+.emptyTitle {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.emptyTitle:focus {
+  outline: none;
+}
+
+.emptyText {
+  margin: 0;
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.emptyAction {
+  margin-top: var(--sf-space-2);
+}
+
+/* ---- Breakpoints ---------------------------------------------------------------- */
+
+@media (min-width: 601px) {
+  .addressOptions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .fields {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 600px) {
+  /* The labels stay for assistive technology; one compact line shows them. */
+  .stepperLabel {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    margin: -1px;
+    padding: 0;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    border: 0;
+  }
+
+  .stepper {
+    gap: var(--sf-space-1);
+  }
+
+  .stepperCompact {
+    display: block;
+    margin: var(--sf-space-3) 0 0;
+    font-size: var(--sf-text-eyebrow);
+    font-weight: var(--sf-font-medium);
+    line-height: var(--sf-leading-normal);
+    letter-spacing: var(--sf-tracking-eyebrow);
+    text-transform: uppercase;
+    color: var(--sf-color-text-secondary);
+  }
+
+  .actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .back {
+    align-self: flex-start;
+    margin-right: 0;
+  }
+
+  .primary {
+    width: 100%;
+    min-width: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .emptyAction {
+    width: 100%;
+  }
+}
+
+/* ---- Forced colours (Windows contrast themes) ------------------------------------- */
+@media (forced-colors: active) {
+  .stepperItem[data-state="upcoming"] {
+    border-bottom-color: GrayText;
+    color: GrayText;
+  }
+
+  .stepperItem[data-state="current"] {
+    border-bottom-color: Highlight;
+  }
+
+  .addressCard.checked,
+  .method.checked {
+    border-color: Highlight;
+  }
+
+  .covered,
+  .codInfo,
+  .orderAlert {
+    border: 1px solid CanvasText;
+  }
+}
