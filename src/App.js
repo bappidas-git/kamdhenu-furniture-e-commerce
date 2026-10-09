@@ -3,7 +3,6 @@ import {
   BrowserRouter as Router,
   Routes,
   Route,
-  Navigate,
 } from "react-router-dom";
 import CssBaseline from "@mui/material/CssBaseline";
 import { AnimatePresence, MotionConfig } from "framer-motion";
@@ -41,6 +40,7 @@ import Support from "./pages/Support/Support";
 import AboutUs from "./pages/AboutUs/AboutUs";
 import SpecialOffers from "./pages/SpecialOffers/SpecialOffers";
 import Wishlist from "./pages/Wishlist/Wishlist";
+import NotFound from "./pages/NotFound/NotFound";
 
 // Admin Pages
 import AdminLogin from "./pages/Admin/AdminLogin";
@@ -127,7 +127,9 @@ function App() {
                                 <Route path="/terms" element={<TermsOfService />} />
                                 <Route path="/cookies" element={<CookiePolicy />} />
                                 <Route path="/refund" element={<RefundPolicy />} />
-                                <Route path="*" element={<Navigate to="/" replace />} />
+                                {/* Any other URL: the 404 page, inside the storefront
+                                    shell (until Prompt 28 it redirected to "/"). */}
+                                <Route path="*" element={<NotFound />} />
                               </Routes>
                             </AnimatePresence>
                           </main>

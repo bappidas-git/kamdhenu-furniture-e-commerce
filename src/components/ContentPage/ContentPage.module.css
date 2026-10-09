@@ -1,0 +1,86 @@
+/* =============================================================================
+ * ContentPage — the content pages' shared frame (prompts/DESIGN_SYSTEM.md §38)
+ * =============================================================================
+ * --sf-section-y of air above the trail (the listing's and the account's
+ * page-header rhythm), the eyebrow, the serif h1 12px below it, the intro, a
+ * hairline under the header, and the closing contact line under a hairline.
+ * The container (narrow 720px or the default 1280px) comes from the
+ * .sf-container primitives. Tokens only.
+ * ========================================================================== */
+
+.page {
+  padding-top: var(--sf-section-y);
+  padding-bottom: calc(var(--sf-section-y) / 2);
+}
+
+.trail {
+  margin-bottom: var(--sf-space-4);
+}
+
+@media (min-width: 768px) {
+  .trail {
+    margin-bottom: var(--sf-space-6);
+  }
+}
+
+.header {
+  margin-bottom: clamp(var(--sf-space-8), 5vw, var(--sf-space-12));
+  padding-bottom: clamp(var(--sf-space-8), 5vw, var(--sf-space-12));
+  border-bottom: var(--sf-hairline);
+}
+
+.eyebrow {
+  margin: 0;
+}
+
+.title {
+  margin: var(--sf-space-3) 0 0;
+  color: var(--sf-color-text);
+}
+
+/* Focus may land here (a reading position, not a control), so no ring. */
+.title:focus {
+  outline: none;
+}
+
+.intro {
+  max-width: 60ch;
+  margin: var(--sf-space-5) 0 0;
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+/* "Questions? Contact us or email …": quiet, between hairlines. The links are
+   inline in a sentence (WCAG 2.5.8's inline exception), styled as prose links. */
+.contact {
+  max-width: var(--sf-measure);
+  margin: clamp(var(--sf-space-12), 6vw, var(--sf-space-16)) 0 0;
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.contact a {
+  color: var(--sf-color-text);
+  overflow-wrap: anywhere;
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-accent);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+  transition: text-decoration-thickness var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .contact a:hover {
+    text-decoration-thickness: 2px;
+  }
+}
+
+.contact a:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: 2px;
+  border-radius: 1px;
+}

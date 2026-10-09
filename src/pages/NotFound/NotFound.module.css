@@ -1,0 +1,22 @@
+/* =============================================================================
+ * NotFound — the storefront's 404 (prompts/DESIGN_SYSTEM.md §38.8)
+ * =============================================================================
+ * The ContentPage frame on the narrow column; this module only lays out the
+ * two actions (side by side, full width and stacked up to 480px). Tokens only.
+ * ========================================================================== */
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-3);
+}
+
+@media (max-width: 480px) {
+  .actions {
+    flex-direction: column;
+  }
+
+  .actions > * {
+    width: 100%;
+  }
+}

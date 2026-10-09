@@ -1,146 +1,494 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
+import React, { useEffect, useRef, useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { useReducedMotion } from "framer-motion";
+import ContentPage from "../../components/ContentPage/ContentPage";
+import ContactFacts from "../../components/ContentPage/ContactFacts";
+import { Reveal } from "../../components/ui";
 import { useAuth } from "../../context/AuthContext";
 import apiService from "../../services/api";
-import { SUPPORT_EMAIL, SUPPORT_PHONE } from "../../utils/constants";
+import { TOKENS } from "../../theme/tokens";
+import { SUPPORT_CATEGORIES, SUPPORT_EMAIL } from "../../utils/constants";
 import { isEmailValid, isValidPhone } from "../../utils/helpers";
 import styles from "./Support.module.css";
 
+// =============================================================================
+// /support — Contact us (prompts/DESIGN_SYSTEM.md §38.6)
+// =============================================================================
+// Two columns from 900px (5 / 7): how to reach the store (ContactFacts with
+// the address, the reply line, quick links), and the form. The form sends
+// exactly what it always sent, apiService.leads.createContact(formData) with
+// { name, email, phone, orderNumber, category, subject, message }, under the
+// same rules (name, email, subject and a message of 20+ characters required;
+// a phone, when given, an Indian mobile number).
+//
+// Prefill: `?order=<orderNumber>` fills the order number and `?category=<value>`
+// chooses the topic when it is one of SUPPORT_CATEGORIES (Order History's
+// "Return or exchange" sends `?order=…&category=returns`; the confirmation
+// page's Help link sends `?order=…`). A signed-in shopper's name and email
+// fill in too, never over anything typed.
+//
+// A failed submit: every failing field says why (aria-invalid, its message in
+// aria-describedby) and focus moves to the first, brought under the sticky
+// header (if it already had focus, a hidden status line reads its message).
+// Sending: "Sending…", aria-disabled, focus kept on the button. A failed
+// request: a role="alert" line above the button, the values kept. Sent: the
+// form gives way to a sand panel (role="status") that takes focus; "Send
+// another message" brings the form back with focus on its heading.
+// =============================================================================
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+export const MESSAGE_MIN_LENGTH = 20;
+
+export const EMPTY_FORM = {
+  name: "",
+  email: "",
+  phone: "",
+  orderNumber: "",
+  category: "general",
+  subject: "",
+  message: "",
+};
+
+// Form order: the first failing field in this order takes focus.
+const FIELD_ORDER = ["name", "email", "phone", "orderNumber", "category", "subject", "message"];
+const CATEGORY_VALUES = SUPPORT_CATEGORIES.map((category) => category.value);
+
+// The prefill a URL asks for: { orderNumber?, category? }. An unknown topic is
+// ignored (the select keeps "general"), and an order number is trimmed and
+// kept to a sane length.
+export const prefillFromParams = (params) => {
+  const prefill = {};
+  const order = String(params.get("order") ?? "").trim();
+  if (order) prefill.orderNumber = order.slice(0, 64);
+  const category = String(params.get("category") ?? "").trim();
+  if (CATEGORY_VALUES.includes(category)) prefill.category = category;
+  return prefill;
+};
+
+// The old page's rules, one message per field.
+export const validateContact = (form) => {
+  const errors = {};
+  if (!form.name.trim()) errors.name = "Enter your name";
+  if (!form.email.trim()) errors.email = "Enter your email address";
+  else if (!isEmailValid(form.email)) errors.email = "Enter a valid email address, like name@example.com";
+  if (form.phone.trim() && !isValidPhone(form.phone)) errors.phone = "Enter a valid 10-digit mobile number";
+  if (!form.subject.trim()) errors.subject = "Enter a subject";
+  if (!form.message.trim()) errors.message = "Write your message";
+  else if (form.message.trim().length < MESSAGE_MIN_LENGTH) {
+    errors.message = `Write at least ${MESSAGE_MIN_LENGTH} characters`;
+  }
+  return errors;
+};
+
+const SEND_FAILED = `We couldn’t send your message. Please try again, or email us at ${SUPPORT_EMAIL}.`;
+
+// The sticky header's visible height (§17.2), and a scroll that brings a
+// field to 16px under it ("instant" under reduced motion: the root's
+// scroll-behavior is smooth).
+const headerHeight = () =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height")) || 0;
+
+const focusAndReveal = (element, reduceMotion, box = element) => {
+  element.focus({ preventScroll: true });
+  const rect = box.getBoundingClientRect();
+  if (rect.top < headerHeight() || rect.bottom > window.innerHeight) {
+    window.scrollTo({
+      top: Math.max(0, window.scrollY + rect.top - headerHeight() - TOKENS.space[4]),
+      behavior: reduceMotion ? "instant" : "smooth",
+    });
+  }
+};
+
+const userName = (user) =>
+  [user?.firstName, user?.lastName]
+    .filter((part) => typeof part === "string" && part.trim())
+    .map((part) => part.trim())
+    .join(" ");
+
+const CheckGlyph = () => (
+  <svg className={styles.glyph} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="10.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M7.5 12.5l3 3 6-6.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
+const AlertGlyph = () => (
+  <svg className={styles.glyph} viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+    <circle cx="12" cy="12" r="10.25" fill="none" stroke="currentColor" strokeWidth="1.5" />
+    <path d="M12 7v6.5" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+    <circle cx="12" cy="16.75" r="1" fill="currentColor" />
+  </svg>
+);
+
+// One labelled field: the label (with "(optional)"), the control, an optional
+// hint and the field's message. `children` renders the control itself.
+const Field = ({ id, label, optional, hint, error, wide, children }) => (
+  <div className={cx("sf-field", wide && styles.wide)}>
+    <label className="sf-field__label" htmlFor={id}>
+      {label}
+      {optional && <span className={styles.optional}> (optional)</span>}
+    </label>
+    {children}
+    {hint && (
+      <p id={`${id}-hint`} className="sf-field__hint">
+        {hint}
+      </p>
+    )}
+    {error && (
+      <p id={`${id}-error`} className="sf-field__error">
+        {error}
+      </p>
+    )}
+  </div>
+);
+
+// aria-describedby for a field: its hint, then its message.
+const describedBy = (id, { hint, error, extra } = {}) =>
+  [hint && `${id}-hint`, extra, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
+
 const Support = () => {
-  const { isDarkMode } = useTheme();
   const { user } = useAuth();
-  const [formData, setFormData] = useState({
-    name: "", email: "", phone: "", orderNumber: "",
-    category: "general", subject: "", message: "",
-  });
+  const [searchParams] = useSearchParams();
+  const reduceMotion = useReducedMotion();
+  const orderParam = searchParams.get("order") ?? "";
+  const categoryParam = searchParams.get("category") ?? "";
+
+  const [formData, setFormData] = useState(() => ({ ...EMPTY_FORM, ...prefillFromParams(searchParams) }));
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState("");
+  const [focusTarget, setFocusTarget] = useState(null);
+  const [announcement, setAnnouncement] = useState("");
 
-  // Pre-fill the email for logged-in users once the auth context resolves,
-  // without clobbering anything they may have already typed.
+  const fieldRefs = useRef({});
+  const successRef = useRef(null);
+  const formTitleRef = useRef(null);
+  const sendingRef = useRef(false);
+  const announceTimer = useRef(null);
+
+  useEffect(() => () => clearTimeout(announceTimer.current), []);
+
+  // A new deep link fills the order number and the topic (an unchanged one
+  // changes nothing, so nothing typed is lost to a re-render).
   useEffect(() => {
-    if (user?.email) {
-      setFormData((prev) => (prev.email ? prev : { ...prev, email: user.email }));
-    }
+    const prefill = prefillFromParams(
+      new URLSearchParams([
+        ["order", orderParam],
+        ["category", categoryParam],
+      ])
+    );
+    if (Object.keys(prefill).length) setFormData((prev) => ({ ...prev, ...prefill }));
+  }, [orderParam, categoryParam]);
+
+  // A signed-in shopper's name and email, once the session is known, without
+  // replacing anything already typed.
+  useEffect(() => {
+    if (!user) return;
+    const name = userName(user);
+    setFormData((prev) => ({
+      ...prev,
+      name: prev.name || name,
+      email: prev.email || user.email || "",
+    }));
   }, [user]);
 
-  const categories = [
-    { value: "general", label: "General Inquiry" },
-    { value: "order", label: "Order Related" },
-    { value: "shipping", label: "Shipping & Delivery" },
-    { value: "returns", label: "Returns & Refunds" },
-    { value: "product", label: "Product Information" },
-    { value: "payment", label: "Payment Issues" },
-    { value: "account", label: "Account & Login" },
-    { value: "other", label: "Other" },
-  ];
+  // Focus moves after the render that shows its target, so the target is read
+  // as it now is: the first failing field with its message ("field:<name>"),
+  // the sent panel, or the form's heading when the form comes back.
+  useEffect(() => {
+    if (!focusTarget) return;
+    if (focusTarget.startsWith("field:")) {
+      const input = fieldRefs.current[focusTarget.slice("field:".length)];
+      if (input) focusAndReveal(input, reduceMotion, input.closest(".sf-field") || input);
+    }
+    if (focusTarget === "success" && successRef.current) successRef.current.focus();
+    if (focusTarget === "form" && formTitleRef.current) formTitleRef.current.focus();
+    setFocusTarget(null);
+  }, [focusTarget, reduceMotion]);
 
-  const handleChange = (e) => {
-    const { name, value } = e.target;
+  const handleChange = (event) => {
+    const { name, value } = event.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
     if (errors[name]) setErrors((prev) => ({ ...prev, [name]: "" }));
   };
 
-  const validate = () => {
-    const newErrors = {};
-    if (!formData.name.trim()) newErrors.name = "Name is required";
-    if (!formData.email.trim()) newErrors.email = "Email is required";
-    else if (!isEmailValid(formData.email)) newErrors.email = "Invalid email";
-    if (formData.phone.trim() && !isValidPhone(formData.phone))
-      newErrors.phone = "Enter a valid 10-digit mobile number";
-    if (!formData.subject.trim()) newErrors.subject = "Subject is required";
-    if (!formData.message.trim()) newErrors.message = "Message is required";
-    else if (formData.message.trim().length < 20) newErrors.message = "At least 20 characters";
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
-  };
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+    if (sendingRef.current) return;
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
+    const nextErrors = validateContact(formData);
+    setErrors(nextErrors);
+    setSubmitError("");
+    const firstInvalid = FIELD_ORDER.find((key) => nextErrors[key]);
+    if (firstInvalid) {
+      // Focus on the field reads its message. When the field already has
+      // focus (Enter pressed in it), nothing would be read, so the hidden
+      // status line says the message instead, for five seconds.
+      if (document.activeElement === fieldRefs.current[firstInvalid]) {
+        setAnnouncement(nextErrors[firstInvalid]);
+        clearTimeout(announceTimer.current);
+        announceTimer.current = setTimeout(() => setAnnouncement(""), 5000);
+      }
+      setFocusTarget(`field:${firstInvalid}`);
+      return;
+    }
+
+    sendingRef.current = true;
     setIsSubmitting(true);
     try {
       await apiService.leads.createContact(formData);
       setIsSubmitted(true);
-      setFormData({ name: "", email: "", phone: "", orderNumber: "", category: "general", subject: "", message: "" });
+      setFormData({ ...EMPTY_FORM, name: userName(user), email: user?.email || "" });
+      setFocusTarget("success");
     } catch {
-      setErrors({ submit: "Failed to send. Please try again." });
+      setSubmitError(SEND_FAILED);
     } finally {
+      sendingRef.current = false;
       setIsSubmitting(false);
     }
   };
 
-  if (isSubmitted) {
-    return (
-      <div className={`${styles.container} ${isDarkMode ? styles.dark : ""}`}>
-        <motion.div className={styles.successCard} initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-          <div className={styles.successIcon}>&#10003;</div>
-          <h2>Message Sent!</h2>
-          <p>Thank you for reaching out. We'll respond within 24 hours.</p>
-          <button className={styles.primaryBtn} onClick={() => setIsSubmitted(false)}>Send Another</button>
-        </motion.div>
-      </div>
-    );
-  }
+  const sendAnother = () => {
+    setIsSubmitted(false);
+    setErrors({});
+    setFocusTarget("form");
+  };
+
+  const fieldProps = (name, { hint, extra } = {}) => {
+    const id = `support-${name}`;
+    return {
+      id,
+      name,
+      value: formData[name],
+      onChange: handleChange,
+      ref: (element) => {
+        fieldRefs.current[name] = element;
+      },
+      "aria-invalid": errors[name] ? "true" : undefined,
+      "aria-describedby": describedBy(id, { hint, error: errors[name], extra }),
+    };
+  };
+
+  const messageLength = formData.message.trim().length;
 
   return (
-    <div className={`${styles.container} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.breadcrumb}><Link to="/">Home</Link> <span>/</span> <span>Support</span></div>
-      <motion.div className={styles.header} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-        <h1>Contact Support</h1>
-        <p>We're here to help with any questions or concerns.</p>
-      </motion.div>
-      <div className={styles.content}>
-        <motion.div className={styles.contactInfo} initial={{ x: -30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-          <div className={styles.infoCard}><div className={styles.infoIcon}>&#9993;</div><h3>Email Us</h3><p>{SUPPORT_EMAIL}</p><span>Response within 24 hrs</span></div>
-          <div className={styles.infoCard}><div className={styles.infoIcon}>&#9742;</div><h3>Call Us</h3><p>{SUPPORT_PHONE}</p><span>Mon-Sat, 9am-8pm IST</span></div>
-          <div className={styles.infoCard}><div className={styles.infoIcon}>&#128172;</div><h3>Live Chat</h3><p>Chat with our team</p><span>Available 24/7</span></div>
-          <div className={styles.quickLinks}><h3>Quick Links</h3><Link to="/help">FAQs</Link><Link to="/orders">Track Order</Link><Link to="/refund">Refund Policy</Link></div>
-        </motion.div>
-        <motion.form className={styles.form} onSubmit={handleSubmit} initial={{ x: 30, opacity: 0 }} animate={{ x: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-          <h2>Send a Message</h2>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Full Name *</label>
-              <input type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Your name" className={errors.name ? styles.inputError : ""} />
-              {errors.name && <span className={styles.error}>{errors.name}</span>}
+    <ContentPage
+      width="default"
+      crumb="Contact us"
+      eyebrow="Contact us"
+      title="Talk to *us*."
+      intro="Questions about a piece, an order or a delivery? Send us a message, or reach us by phone or WhatsApp."
+      contact={false}
+    >
+      <div className={styles.layout}>
+        <section className={styles.facts} aria-labelledby="support-facts-title">
+          <h2 id="support-facts-title" className={cx("sf-display-sm", styles.columnTitle)}>
+            Reach us directly
+          </h2>
+          <ContactFacts address />
+          {/* CONFIRM (client): a reply-time promise; until then, this line. */}
+          <p className={styles.replyLine}>We reply during working hours.</p>
+
+          <p className={cx("sf-eyebrow", styles.quickTitle)} id="support-quick-title">
+            Quick answers
+          </p>
+          <ul className={styles.quickLinks} aria-labelledby="support-quick-title">
+            <li>
+              <Link to="/help" className="sf-btn sf-btn--link">
+                Help centre
+              </Link>
+            </li>
+            <li>
+              <Link to="/orders" className="sf-btn sf-btn--link">
+                Track an order
+              </Link>
+            </li>
+            <li>
+              <Link to="/refund" className="sf-btn sf-btn--link">
+                Returns & refunds
+              </Link>
+            </li>
+          </ul>
+        </section>
+
+        <div className={styles.formColumn}>
+          {isSubmitted ? (
+            <div
+              ref={successRef}
+              className={cx("sf-panel", styles.success)}
+              role="status"
+              tabIndex={-1}
+            >
+              <span className={styles.successMark}>
+                <CheckGlyph />
+              </span>
+              <h2 className={cx("sf-display-sm", styles.successTitle)}>Message sent.</h2>
+              <p className={styles.successLine}>
+                Thank you for writing to us. We reply during working hours.
+              </p>
+              <button type="button" className={cx("sf-btn sf-btn--ghost", styles.again)} onClick={sendAnother}>
+                Send another message
+              </button>
             </div>
-            <div className={styles.formGroup}>
-              <label>Email *</label>
-              <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="your@email.com" className={errors.email ? styles.inputError : ""} />
-              {errors.email && <span className={styles.error}>{errors.email}</span>}
-            </div>
-          </div>
-          <div className={styles.formRow}>
-            <div className={styles.formGroup}>
-              <label>Phone</label>
-              <input type="tel" name="phone" value={formData.phone} onChange={handleChange} placeholder="+91 9876543210" className={errors.phone ? styles.inputError : ""} />
-              {errors.phone && <span className={styles.error}>{errors.phone}</span>}
-            </div>
-            <div className={styles.formGroup}><label>Order Number</label><input type="text" name="orderNumber" value={formData.orderNumber} onChange={handleChange} placeholder="ORD-XXXXXX" /></div>
-          </div>
-          <div className={styles.formGroup}>
-            <label>Category</label>
-            <select name="category" value={formData.category} onChange={handleChange}>{categories.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}</select>
-          </div>
-          <div className={styles.formGroup}>
-            <label>Subject *</label>
-            <input type="text" name="subject" value={formData.subject} onChange={handleChange} placeholder="Brief description" className={errors.subject ? styles.inputError : ""} />
-            {errors.subject && <span className={styles.error}>{errors.subject}</span>}
-          </div>
-          <div className={styles.formGroup}>
-            <label>Message *</label>
-            <textarea name="message" value={formData.message} onChange={handleChange} placeholder="Describe your issue..." rows={5} className={errors.message ? styles.inputError : ""} />
-            {errors.message && <span className={styles.error}>{errors.message}</span>}
-          </div>
-          {errors.submit && <div className={styles.submitError}>{errors.submit}</div>}
-          <button type="submit" className={styles.primaryBtn} disabled={isSubmitting}>{isSubmitting ? "Sending..." : "Send Message"}</button>
-        </motion.form>
+          ) : (
+            <Reveal className={cx("sf-card sf-card--hairline", styles.card)}>
+              <form
+                className={styles.form}
+                onSubmit={handleSubmit}
+                noValidate
+                aria-labelledby="support-form-title"
+              >
+                <h2
+                  id="support-form-title"
+                  ref={formTitleRef}
+                  tabIndex={-1}
+                  className={cx("sf-display-sm", styles.columnTitle, styles.formTitle)}
+                >
+                  Send us a message
+                </h2>
+
+                <div className={styles.fields}>
+                  <Field id="support-name" label="Full name" error={errors.name}>
+                    <input
+                      {...fieldProps("name")}
+                      className="sf-input"
+                      type="text"
+                      autoComplete="name"
+                      autoCapitalize="words"
+                      required
+                    />
+                  </Field>
+
+                  <Field id="support-email" label="Email address" error={errors.email}>
+                    <input
+                      {...fieldProps("email")}
+                      className="sf-input"
+                      type="email"
+                      inputMode="email"
+                      autoComplete="email"
+                      autoCapitalize="none"
+                      autoCorrect="off"
+                      spellCheck={false}
+                      required
+                    />
+                  </Field>
+
+                  <Field
+                    id="support-phone"
+                    label="Phone number"
+                    optional
+                    hint="10-digit mobile number"
+                    error={errors.phone}
+                  >
+                    <input
+                      {...fieldProps("phone", { hint: true })}
+                      className="sf-input"
+                      type="tel"
+                      inputMode="tel"
+                      autoComplete="tel"
+                    />
+                  </Field>
+
+                  <Field
+                    id="support-orderNumber"
+                    label="Order number"
+                    optional
+                    hint="From your order confirmation or My orders"
+                    error={errors.orderNumber}
+                  >
+                    <input
+                      {...fieldProps("orderNumber", { hint: true })}
+                      className="sf-input"
+                      type="text"
+                      autoComplete="off"
+                      autoCapitalize="characters"
+                      spellCheck={false}
+                    />
+                  </Field>
+
+                  <Field id="support-category" label="Topic" wide>
+                    <select {...fieldProps("category")} className="sf-select">
+                      {SUPPORT_CATEGORIES.map((category) => (
+                        <option key={category.value} value={category.value}>
+                          {category.label}
+                        </option>
+                      ))}
+                    </select>
+                  </Field>
+
+                  <Field id="support-subject" label="Subject" error={errors.subject} wide>
+                    <input
+                      {...fieldProps("subject")}
+                      className="sf-input"
+                      type="text"
+                      autoComplete="off"
+                      required
+                    />
+                  </Field>
+
+                  <div className={cx("sf-field", styles.wide)}>
+                    <label className="sf-field__label" htmlFor="support-message">
+                      Message
+                    </label>
+                    <textarea
+                      {...fieldProps("message", { hint: true, extra: "support-message-count" })}
+                      className="sf-textarea"
+                      rows={6}
+                      required
+                    />
+                    <div className={styles.messageMeta}>
+                      <p id="support-message-hint" className="sf-field__hint">
+                        At least {MESSAGE_MIN_LENGTH} characters.
+                      </p>
+                      <p
+                        id="support-message-count"
+                        className={cx(
+                          "sf-field__hint",
+                          styles.count,
+                          messageLength >= MESSAGE_MIN_LENGTH && styles.countMet
+                        )}
+                      >
+                        {messageLength} {messageLength === 1 ? "character" : "characters"}
+                      </p>
+                    </div>
+                    {errors.message && (
+                      <p id="support-message-error" className="sf-field__error">
+                        {errors.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <p className="sf-visually-hidden" role="status">
+                  {announcement}
+                </p>
+
+                {/* Always in the page, so the failure is announced when it arrives. */}
+                <div role="alert">
+                  {submitError && (
+                    <p className={styles.alert}>
+                      <AlertGlyph />
+                      <span>{submitError}</span>
+                    </p>
+                  )}
+                </div>
+
+                <button
+                  type="submit"
+                  className={cx("sf-btn sf-btn--primary", styles.submit)}
+                  aria-disabled={isSubmitting ? "true" : undefined}
+                  data-busy={isSubmitting ? "true" : undefined}
+                >
+                  {isSubmitting ? "Sending…" : "Send message"}
+                </button>
+              </form>
+            </Reveal>
+          )}
+        </div>
       </div>
-    </div>
+    </ContentPage>
   );
 };
 

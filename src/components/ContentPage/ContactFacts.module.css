@@ -1,0 +1,64 @@
+/* =============================================================================
+ * ContactFacts — the store's contact facts (prompts/DESIGN_SYSTEM.md §38.6)
+ * =============================================================================
+ * Each fact: an eyebrow term over a 16px value. "stack": a column with
+ * hairlines between facts (the Support page's left column). "row": as many
+ * columns as fit, from 220px each (the Help centre's contact block). The
+ * links keep .sf-btn--link's 44px hit area at the text's own size. Tokens only.
+ * ========================================================================== */
+
+.facts {
+  margin: 0;
+}
+
+.fact {
+  min-width: 0;
+}
+
+.term {
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+.value {
+  margin: var(--sf-space-1) 0 0;
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text);
+  overflow-wrap: anywhere;
+}
+
+/* .sf-btn--link at the value's size and weight; it may wrap (a long email). */
+.link {
+  font-size: inherit;
+  font-weight: var(--sf-font-normal);
+  letter-spacing: normal;
+  line-height: inherit;
+  text-align: left;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.stack .fact {
+  padding-block: var(--sf-space-4);
+  border-bottom: var(--sf-hairline);
+}
+
+.stack .fact:first-child {
+  padding-top: 0;
+}
+
+.stack .fact:last-child {
+  border-bottom: 0;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13.75rem), 1fr));
+  gap: var(--sf-space-6) clamp(var(--sf-space-6), 3vw, var(--sf-space-10));
+}

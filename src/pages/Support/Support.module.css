@@ -1,71 +1,200 @@
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 24px 16px 80px;
-  min-height: calc(100vh - 200px);
+/* =============================================================================
+ * /support — Contact us (prompts/DESIGN_SYSTEM.md §38.6)
+ * =============================================================================
+ * One column up to 899px (the facts, then the form); from 900px a 12-column
+ * grid with the facts in 1–5 and the form in 6–12. The form is a hairline
+ * card of .sf-fields, two columns from 601px. Messages follow the auth
+ * modal's: a tint, a glyph in currentColor, 14px text. Tokens only.
+ * ========================================================================== */
+
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: clamp(var(--sf-space-12), 6vw, var(--sf-space-16));
 }
-.dark { color: #e2e8f0; }
-.breadcrumb { display: flex; gap: 8px; align-items: center; margin-bottom: 24px; font-size: 0.875rem; color: #64748b; }
-.breadcrumb a { color: #667eea; text-decoration: none; }
-.breadcrumb a:hover { text-decoration: underline; }
-/* Touch-target sizing: grow the breadcrumb hit area without moving the row */
-@media (max-width: 768px) {
-  .breadcrumb a { display: inline-block; padding: 10px 2px; margin: -10px 0; }
+
+@media (min-width: 900px) {
+  .layout {
+    grid-template-columns: repeat(12, minmax(0, 1fr));
+    column-gap: clamp(var(--sf-space-6), 3vw, var(--sf-space-12));
+    align-items: start;
+  }
+
+  .facts {
+    grid-column: 1 / span 5;
+  }
+
+  .formColumn {
+    grid-column: 6 / span 7;
+  }
 }
-.dark .breadcrumb { color: #94a3b8; }
-.header { text-align: center; margin-bottom: 40px; }
-.header h1 { font-size: 2rem; font-weight: 700; margin-bottom: 8px; }
-.header p { color: #64748b; font-size: 1.1rem; }
-.dark .header p { color: #94a3b8; }
-/* minmax(0,…) tracks + min-width:0 items: bare fr tracks inherit the form
-   fields' intrinsic widths (~20ch each), overflowing 320px and 820px wide
-   viewports. */
-.content { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 2fr); gap: 32px; }
-@media (max-width: 768px) { .content { grid-template-columns: minmax(0, 1fr); } }
-.contactInfo { display: flex; flex-direction: column; gap: 16px; min-width: 0; }
-.infoCard { padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; }
-.dark .infoCard { background: #1e293b; border-color: #334155; }
-.infoIcon { font-size: 1.5rem; margin-bottom: 8px; }
-.infoCard h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-.infoCard p { font-size: 0.95rem; color: #667eea; font-weight: 500; }
-.infoCard span { font-size: 0.8rem; color: #94a3b8; }
-.quickLinks { padding: 20px; border-radius: 12px; background: #fff; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 8px; }
-.dark .quickLinks { background: #1e293b; border-color: #334155; }
-.quickLinks h3 { font-size: 1rem; font-weight: 600; margin-bottom: 4px; }
-.quickLinks a { color: #667eea; text-decoration: none; font-size: 0.9rem; }
-.quickLinks a:hover { text-decoration: underline; }
-/* Touch-target sizing for the stacked quick links on phones */
-@media (max-width: 768px) {
-  .quickLinks { gap: 0; }
-  .quickLinks a { padding: 10px 0; }
+
+.facts,
+.formColumn {
+  min-width: 0;
 }
-.form { padding: 32px; border-radius: 16px; background: #fff; border: 1px solid #e2e8f0; min-width: 0; }
-.dark .form { background: #1e293b; border-color: #334155; }
-.form h2 { font-size: 1.5rem; font-weight: 600; margin-bottom: 24px; }
-.formRow { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
-@media (max-width: 576px) { .formRow { grid-template-columns: minmax(0, 1fr); } }
-.formGroup { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; min-width: 0; }
-.formGroup label { font-size: 0.875rem; font-weight: 500; color: #475569; }
-.dark .formGroup label { color: #94a3b8; }
-.formGroup input, .formGroup select, .formGroup textarea {
-  width: 100%; min-width: 0;
-  padding: 10px 14px; border-radius: 8px; border: 1px solid #d1d5db; font-size: 0.95rem;
-  background: #f9fafb; transition: border-color 0.2s; font-family: inherit;
+
+.columnTitle {
+  margin: 0 0 var(--sf-space-6);
+  color: var(--sf-color-text);
 }
-.dark .formGroup input, .dark .formGroup select, .dark .formGroup textarea { background: #0f172a; border-color: #475569; color: #e2e8f0; }
-.formGroup input:focus, .formGroup select:focus, .formGroup textarea:focus { outline: none; border-color: #667eea; box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1); }
-.inputError { border-color: #ef4444 !important; }
-.error { color: #ef4444; font-size: 0.8rem; }
-.submitError { color: #ef4444; font-size: 0.9rem; margin-bottom: 12px; text-align: center; }
-.primaryBtn {
-  width: 100%; padding: 12px 24px; border: none; border-radius: 10px; font-size: 1rem; font-weight: 600;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: #fff; cursor: pointer; transition: all 0.3s;
+
+.replyLine {
+  margin: var(--sf-space-4) 0 0;
+  padding-top: var(--sf-space-4);
+  border-top: var(--sf-hairline);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
 }
-.primaryBtn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px rgba(102, 126, 234, 0.3); }
-.primaryBtn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-.successCard { max-width: 480px; margin: 80px auto; text-align: center; padding: 48px 32px; border-radius: 16px; background: #fff; border: 1px solid #e2e8f0; }
-.dark .successCard { background: #1e293b; border-color: #334155; }
-.successIcon { width: 64px; height: 64px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 2rem; margin: 0 auto 20px; }
-.successCard h2 { font-size: 1.5rem; margin-bottom: 8px; }
-.successCard p { color: #64748b; margin-bottom: 24px; }
-.dark .successCard p { color: #94a3b8; }
+
+.quickTitle {
+  margin: var(--sf-space-10) 0 0;
+}
+
+/* The links' 44px hit areas reach 14px above and below the text, so rows
+   stay 32px apart and never overlap. */
+.quickLinks {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-8) var(--sf-space-6);
+  margin: var(--sf-space-5) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* The form card. */
+.card {
+  padding: clamp(var(--sf-space-5), 4vw, var(--sf-space-10));
+}
+
+.form {
+  margin: 0;
+}
+
+/* Focus lands here when the form comes back (a reading position, no ring). */
+.formTitle:focus {
+  outline: none;
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-6) var(--sf-space-5);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.optional {
+  font-weight: var(--sf-font-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.messageMeta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: var(--sf-space-1) var(--sf-space-4);
+}
+
+.messageMeta p {
+  margin: 0;
+}
+
+.count {
+  font-variant-numeric: tabular-nums;
+}
+
+.countMet {
+  color: var(--sf-color-text-secondary);
+}
+
+/* The alert slot stays in the accessibility tree while empty (so the failure
+   is announced when it arrives); empty, it takes no room. */
+.alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--sf-space-3);
+  margin: var(--sf-space-6) 0 0;
+  padding: var(--sf-space-3) var(--sf-space-4);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-error-bg);
+  color: var(--sf-color-error);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+.glyph {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+}
+
+.submit {
+  margin-top: var(--sf-space-8);
+}
+
+/* Sending: the label says so, and the button keeps its full ink (the auth
+   modal's busy state) rather than the disabled 50%. */
+.submit[data-busy="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* Sent: the sand panel takes the form's place and takes focus (a reading
+   position, no ring). */
+.success {
+  padding: clamp(var(--sf-space-6), 5vw, var(--sf-space-12));
+}
+
+.success:focus {
+  outline: none;
+}
+
+.successMark {
+  display: inline-flex;
+  color: var(--sf-color-success);
+}
+
+.successMark .glyph {
+  width: 28px;
+  height: 28px;
+  margin: 0;
+}
+
+.successTitle {
+  margin: var(--sf-space-4) 0 0;
+  color: var(--sf-color-text);
+}
+
+.successLine {
+  max-width: 46ch;
+  margin: var(--sf-space-3) 0 0;
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.again {
+  margin-top: var(--sf-space-8);
+}
+
+@media (max-width: 600px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .submit,
+  .again {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .alert {
+    border: 1px solid CanvasText;
+  }
+}

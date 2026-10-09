@@ -398,13 +398,13 @@ Copy these literally. Prompt 34 verifies they still match.
 | Pre-paint script `document.body.style.backgroundColor` (= `colors.js` `background.default`) | light `#faf7f2`, dark `#0a1426` |
 | Loading screen | light: `#faf7f2` + light logo + progress hairline `#ae773d`; dark: `#0a1426` + white logo + hairline `#ddb185` |
 | `db.json` `banners[].gradient` (must stay a string) | `#0b1f3f` |
-| `ErrorBoundary` fallbacks | `var(--sf-color-bg, #faf7f2)`, `var(--sf-color-text, #1c1a17)`, `var(--sf-font-display, Georgia, serif)` |
+| `ErrorBoundary` fallbacks (§38.9), each written `var(--sf-<token>, <value>)` | light (`FALLBACK.light`): bg `#faf7f2`, surface `#ffffff`, sand `#f1ebe1`, border `#d9d0c3`, text `#1c1a17`, secondary `#4d463e`, primary `#1c1a17`, primary-hover `#0b1f3f`, primary-contrast `#faf7f2`, primary-soft `rgba(28, 26, 23, 0.06)`, focus `#ae773d`; dark (`FALLBACK.dark`): bg `#0a1426`, surface `#111d34`, sand `rgba(243, 238, 230, 0.06)`, border `rgba(243, 238, 230, 0.14)`, text `#f3eee6`, secondary `#cfc6b9`, primary `#f3eee6`, primary-hover `#ffffff`, primary-contrast `#0a1426`, primary-soft `rgba(243, 238, 230, 0.08)`, focus `#ddb185`; both: `--sf-font-display` → `Georgia, serif`, `--sf-font-sans` → `system-ui, sans-serif`, `--sf-text-display-md` → `2rem`, `--sf-text-base` → `1rem`, `--sf-text-sm` → `0.875rem`, `--sf-tap-target` → `44px`, `--sf-radius-md` → `4px`, `--sf-radius-sm` → `2px`. `ErrorBoundary.test.js` compares every colour with `storefront-tokens.css`. |
 
 ---
 
 ## 13. Usage rules
 
-**Tokens only.** No hex, `rgb()` or font-family literals in components. Allowed exceptions: the two `PLACEHOLDER_IMG` values, `var(--token, fallback)` in `ErrorBoundary`, glyph SVGs drawn with `currentColor`, and the static files in section 12.
+**Tokens only.** No hex, `rgb()` or font-family literals in components. Allowed exceptions: the two `PLACEHOLDER_IMG` values, `var(--token, fallback)` in `ErrorBoundary` (its light and dark `FALLBACK` sets, section 12 and §38.9; it is also the one component that writes a `<style>` element, for the hover and focus states inline styles cannot express), glyph SVGs drawn with `currentColor`, and the static files in section 12.
 
 **Buttons.**
 - Primary: ink background (`--sf-color-primary`), paper text (`--sf-color-primary-contrast`), hover `--sf-color-primary-hover` (navy; white in dark mode).
@@ -2496,3 +2496,169 @@ Everything else is in §14, §16.8, §34.10 and §36.12: ink, secondary and mute
 - **The invoice is always in the page** (hidden on screen until "Print invoice"), so Ctrl+P prints the invoice, never the screen layout; on screen it is paper in both themes; in print it is ink on paper.
 - **The print rules are scoped by `:has(.invoice)` and a named page,** so no other page, and never the admin, prints differently.
 - **The invoice's figures come from the page,** so the summary and the invoice can never disagree; its tax label names a rate only when the rate adds up to the order's tax.
+
+## 38. Content pages: About, Help centre, Support, policies, 404 and the crash fallback
+
+Written by Prompt 28. Files: `src/components/ContentPage/` (`ContentPage.js`, the shared frame; `PolicyPage.js`, one policy; `ContactFacts.js`, the store's contact facts; each with its `.module.css`), `src/components/FAQ/` (revived and rebuilt), `src/content/legalContent.js` (the four policies as data), the pages `AboutUs`, `HelpCenter`, `Support`, `PrivacyPolicy`, `TermsOfService`, `CookiePolicy`, `RefundPolicy` and the new `NotFound`, and `src/components/ErrorBoundary/ErrorBoundary.js`. No new tokens and no new primitives: the pages are built from §16's containers, eyebrows, display type, `.sf-prose`, fields, buttons, cards and panel, and §24.1's `Breadcrumb`. Copy lives in content modules (`brandContent.js` for About; `constants.js` for `FAQ_ITEMS`, `HELP_TOPICS` and `SUPPORT_CATEGORIES`; `legalContent.js` for the policies); the pages hold layout only. The four policy pages' own stylesheets are gone (they share `PolicyPage.module.css`).
+
+### 38.1 The frame (`ContentPage`)
+
+```jsx
+<ContentPage crumb="Privacy policy" eyebrow="Policies" title="Privacy policy" intro="…" meta={…}>
+  …the page…
+</ContentPage>
+```
+
+| Prop | Notes |
+|---|---|
+| `crumb` | the trail's label for this page (Home › crumb); `null` leaves the trail out (the 404) |
+| `eyebrow` | `.sf-eyebrow` above the `h1` |
+| `title` | a string, with an optional `*accent*` word (`renderAccent`), or a node |
+| `intro` | the line under the `h1` |
+| `meta` / `extra` | nodes at the end of the header: the policies' review line; the Help centre's search |
+| `width` | `"narrow"` (`--sf-container-narrow`, 720px: the policies and the 404) or `"default"` (the 1280px container: About, Help centre, Support) |
+| `contact` | `false` leaves the closing contact line out |
+| `titleRef` | a ref to the `h1` (it then takes `tabIndex="-1"`, a reading position with no ring) |
+
+- **Rhythm:** `--sf-section-y` above the trail and half of it below the page; the trail, then 16px (24px from 768px) to the header: the eyebrow, the `h1` (`.sf-display-lg`, 12px below), the intro (`--sf-text-md` / `--sf-leading-body`, secondary, 60ch, 20px below), then `meta` and `extra`. A hairline closes the header, with `clamp(32px, 5vw, 48px)` above and below it.
+- **Headings:** one `h1` per page, the frame's; every page section is an `h2`. The header is a plain `<header>` inside `<main>` (no landmark).
+- **The closing contact line** (`ContactNote`, also exported): "Questions? Contact us or email info@…", 15px secondary on `--sf-measure`, a hairline above it and `clamp(48px, 6vw, 64px)` of air before. Its links are prose links (ink, a 1px accent underline, 2px on hover, the 2px focus outline); inline in a sentence, they take WCAG 2.5.8's inline exception.
+
+| Page | Route | Width | Trail | Eyebrow | `h1` | Contact line |
+|---|---|---|---|---|---|---|
+| About | `/about` | default | Our story | Our story | Furniture made to be *lived* with. | yes |
+| Help centre | `/help` | default | Help centre | Help centre | How can we help? | no (its own contact block) |
+| Support | `/support` | default | Contact us | Contact us | Talk to *us*. | no (it is the contact page) |
+| Privacy | `/privacy` | narrow | Privacy policy | Policies | Privacy policy | yes |
+| Terms | `/terms` | narrow | Terms of service | Policies | Terms of service | yes |
+| Cookies | `/cookies` | narrow | Cookie policy | Policies | Cookie policy | yes |
+| Returns | `/refund` | narrow | Returns & refunds | Policies | Returns & refunds | yes |
+| 404 | any other storefront URL | narrow | none | Page not found | This page has moved or never existed. | no |
+
+### 38.2 The policies as data (`legalContent.js`)
+
+- **A document:** `{ id, crumb, eyebrow: "Policies", title, intro, draft, sections: [{ id, heading, blocks }] }`, exported by name (`PRIVACY_POLICY`, `TERMS_OF_SERVICE`, `COOKIE_POLICY`, `REFUND_POLICY`) and in `LEGAL_DOCUMENTS`, keyed by route. A section's `id` is its heading's anchor (`/terms#governing-law`).
+- **Blocks:** `{ type: "p", text }`, `{ type: "list", items }` (a `<ul>`), `{ type: "steps", items }` (an `<ol>`), `{ type: "table", caption, columns, rows }`.
+- **Rich text:** a string, or an array of strings, `{ label, to }` (a router link), `{ label, href }` (a `mailto:` or `tel:` link) and `{ placeholder }` (a visible blank: "to be confirmed" inside a sentence, "To be confirmed" in a table cell).
+- **Facts come from one place:** the returns window from `STOREFRONT_CONFIG.returnsWindowDays` (also the FAQ's and the footer's); the email and phone from `constants.js`; "based in Assam, India". Nothing is invented: no refund timings, delivery windows or reply times; an unknown fact is a blank.
+- **Review:** every claim the client must approve carries a `// CONFIRM:` comment (listed in BUILD_LOG, Prompt 28). `draft: true` prints "Draft for legal review" on the page; set it to `false` once a document is approved.
+
+### 38.3 `PolicyPage`
+
+- **The frame on the narrow column.** Under the intro, 16px below it, the meta line (14px muted): "Last reviewed: {`POLICY_LAST_UPDATED`}", and while the document is a draft a dot divider and "Draft for legal review" (500). A visually hidden ". " separates the two for screen readers.
+- **The sections** are `.sf-prose` (17px / 1.7 secondary on 66ch; a serif `h2` at display-sm with a hairline above it, except the first; accent-underlined links; muted list markers). Each section is a `Reveal` (`as="section"`). The `h2` carries the section's `id` and `scroll-margin-top: calc(var(--sf-header-height) + 16px)`, so a deep link lands under the sticky header.
+- **Tables** (the cookie types; how refunds are paid): a real `<table>` named by a visually hidden `<caption>`; `<th scope="col">` heads in eyebrow type (12px uppercase, tracked, muted) over a 1px ink rule; each row's first cell a `<th scope="row">` in ink 500; other cells 15px secondary; hairlines between rows; 12px block padding, 16px between columns. The wrapper scrolls only if a cell can never wrap (neither table does, down to 320px).
+- **The placeholder blank:** sand fill, muted text, radius sm, 0.4em inline padding, `box-decoration-break: clone` so a wrapped blank stays two blanks; a dashed `CanvasText` border in forced colours. It reads as "fill this in", never as a promise.
+- **Print:** a section not yet scrolled into view still carries `Reveal`'s inline `opacity: 0`, so `@media print` sets `opacity: 1` and `transform: none` on the sections (`!important`, needed against the inline style).
+
+### 38.4 `FAQ`
+
+```jsx
+<FAQ query={search} idPrefix="help-faq" emptyMessage={…} />
+```
+
+| Prop | Notes |
+|---|---|
+| `items` | `[{ id, question, answer, link?: { label, to } }]`; default `FAQ_ITEMS` |
+| `query` | filters by `filterFaqs` (exported): the trimmed query, case-insensitive, in the question or the answer; blank keeps every item |
+| `idPrefix` | keeps ids unique when two lists share a page (default `"faq"`) |
+| `headingLevel` | 2 to 6, default 3 (the list sits under the page's `h2`) |
+| `emptyMessage` | a node shown when nothing matches (default "No questions match your search.") |
+
+- **Markup:** each question is a heading holding a `<button type="button">` with `aria-expanded` and `aria-controls`; the answer is a `role="region"` labelled by the button and `inert` while closed (React 18 sets it as `inert=""`), so a closed answer is out of the tab order and the accessibility tree. One answer is open at a time; pressing an open question closes it. An optional `link` renders under the answer as `.sf-btn--link`.
+- **Look:** hairline rows (above the list and under each row). The question: Playfair `--sf-text-lg` (20px) 500, ink, 20px block padding, at least 44px tall; focus is `--sf-shadow-focus` on the row (radius sm). The toggle: a 12px plus drawn by two 1px bars in `currentColor` (ink; accent on hover), whose upright bar turns flat (90° → 180°) for a minus. The answer: 16px / 1.7 secondary, 62ch, 20px below it. The link row keeps 16px above and 24px below for its 44px hit area inside the clipped panel; the panel's inner box has 8px of inline room so a focus outline is never clipped.
+- **Empty:** the message on a hairline, 24px of padding.
+- **Forced colours:** the bars in `CanvasText`.
+
+### 38.5 Help centre (`/help`)
+
+- **The search** (the frame's `extra`, 32px under the intro, at most 34rem): `<form role="search" aria-label="Help centre">` with the visible label "Search the questions" and a `type="search"` `.sf-input` (placeholder "Delivery, returns, GST…", `enterKeyHint="search"`). Typing filters the questions as you go; submitting does nothing more (Enter keeps the page). Under it a polite `role="status"` hint, in a reserved line so nothing moves: "1 question matches “GST”.", "<n> questions match “<query>”.", "No questions match “trampoline”."; empty while the field is.
+- **Layout:** from 1024px a 12-column grid, "Common questions" in columns 1 to 7 and "Browse by topic" in 9 to 12 (both `h2`, `.sf-display-sm`); below 1024px the topics follow the questions, two columns from 600px.
+- **Common questions:** `FAQ` with `idPrefix="help-faq"` and all 11 `FAQ_ITEMS`. With no match: "Try another word, or ask us directly." and the link "Send us your question" (`/support`).
+- **Topics** (`HELP_TOPICS`): hairline cards (radius sm, 20px padding, at least 44px): the title in Playfair 20px, one 14px secondary line, a 16px arrow (muted). On hover the border turns ink and the arrow turns accent and steps 4px right; focus is `--sf-shadow-focus`.
+
+| Topic | Line | Opens |
+|---|---|---|
+| Orders & delivery | Track an order, and see what happens after you buy. | `/orders` |
+| Returns & refunds | How to return a piece, and how refunds are paid. | `/refund` |
+| Payments | A question about a payment, a charge or an invoice. | `/support?category=payment` |
+| Your account | Your details, saved addresses, password and store credit. | `/profile` |
+| Privacy & security | How we collect, use and protect your information. | `/privacy` |
+| Offers | Pieces on offer now, and codes to use at checkout. | `/special-offers`, only while the deals page is on (`useDealsConfig()`, once loaded: the header's rule) |
+
+- **"Still need help?"** closes the page under a hairline: the `h2`, "Send us a message, call, or write to us on WhatsApp.", a primary "Send us a message" (`/support`) and `ContactFacts layout="row"` (from 1024px the head takes columns 1 to 4 and the facts 6 to 12).
+
+### 38.6 Support (`/support`) and `ContactFacts`
+
+**`ContactFacts`** is a `<dl>`: Email (`mailto:`), Phone (`tel:` through `telHref`, which keeps the digits and the plus sign), WhatsApp ("Message us on WhatsApp", a new tab announced as "(opens in a new tab)", `rel="noopener noreferrer"`; only while `SOCIAL_LINKS.WHATSAPP` is set), Hours (`SUPPORT_HOURS`) and, with `address`, Address (`SUPPORT_ADDRESS`). Each fact: an eyebrow `<dt>` over a 16px ink value; the links are `.sf-btn--link` at the value's size and weight (their 44px hit area kept), free to wrap. `layout="stack"` puts hairlines between the facts (Support); `layout="row"` fits as many columns as the width allows, each at least 13.75rem (Help centre). Every value comes from `constants.js`, as in the header and footer. Nothing promises a reply time.
+
+**The page:**
+
+- **Layout:** stacked up to 899px (the facts, then the form); from 900px a 12-column grid, the facts in columns 1 to 5 and the form in 6 to 12.
+- **The facts column:** the `h2` "Reach us directly", `ContactFacts address`, "We reply during working hours." (14px muted under a hairline; the client has not confirmed a reply time), then "Quick answers" (an eyebrow naming the list) with three `.sf-btn--link`s: Help centre, Track an order (`/orders`), Returns & refunds (`/refund`), 32px between rows so the hit areas never overlap.
+- **The form:** a hairline card (`.sf-card--hairline`, padding `clamp(20px, 4vw, 40px)`), the `<form>` named by its `h2` "Send us a message". `.sf-field`s in two columns from 601px (one below): Full name (`autocomplete="name"`); Email address (`type="email"`, `inputmode="email"`, `autocomplete="email"`, no autocapitalise, autocorrect or spellcheck); Phone number (optional) (`type="tel"`, hint "10-digit mobile number"); Order number (optional) (hint "From your order confirmation or My orders"); then full width Topic (`.sf-select`, `SUPPORT_CATEGORIES`: General question, An order, Delivery, Returns & refunds, A product, Payments, Your account, Something else), Subject and Message (`.sf-textarea`, six rows, "At least 20 characters." with a count of the trimmed characters on the right, tabular, muted until 20 is reached). "(optional)" is muted at normal weight.
+- **Prefill:** `?order=` fills the order number (trimmed, at most 64 characters) and `?category=` the topic when it is one of `SUPPORT_CATEGORIES` (Order History's "Return or exchange" sends both; the confirmation page sends `?order=`). A signed-in shopper's name and email fill in too, never over anything typed.
+- **Validation** (on submit; `noValidate`): "Enter your name"; "Enter your email address" / "Enter a valid email address, like name@example.com"; "Enter a valid 10-digit mobile number" (only when a phone is given); "Enter a subject"; "Write your message" / "Write at least 20 characters". Each failing field takes `aria-invalid` and its message (`.sf-field__error`, after the hint in `aria-describedby`); focus moves to the first after the render that shows the messages.
+- **Sending:** "Sending…", `aria-disabled="true"` and `data-busy` (full ink, `cursor: progress`; the auth modal's busy state); focus stays on the button and a second press is ignored.
+- **A failed request:** an always-present `role="alert"` slot above the button receives "We couldn’t send your message. Please try again, or email us at info@…" (error on the error tint, 14px, a glyph; a `CanvasText` border in forced colours). The values stay.
+- **Sent:** the card gives way to a sand `.sf-panel` (`role="status"`, `tabIndex="-1"`, focused without a ring): a 28px check in `--sf-color-success`, the `h2` "Message sent.", "Thank you for writing to us. We reply during working hours." and a ghost "Send another message" (full width up to 600px), which brings the form back, empty (the shopper's name and email again when signed in), with focus on its `h2`.
+- **The request is the old one:** `apiService.leads.createContact(formData)` with `{ name, email, phone, orderNumber, category, subject, message }`, as typed (JSON Server: `POST /leads` with `type: "contact"`; Laravel: `POST /leads/contact`, 02_API_ENDPOINTS §M).
+
+### 38.7 About (`/about`)
+
+- **The header:** "Our story", `ABOUT_HEADLINE` ("Furniture made to be *lived* with."), `ABOUT_INTRO`.
+- **Two story blocks** (`ABOUT_STORY`, each a region named by its `h2`): stacked up to 767px; from 768px a 6fr | 5fr grid, centred, the gap `clamp(32px, 6vw, 96px)`, the second block mirrored (text left, image right); `--sf-section-y` between them (the home page's story blocks, §21.4). The image: 4:5 in a sand slot, radius sm, `object-fit: cover`, `width` and `height` set, lazy, `onImageError`. The text: an eyebrow with its rule, the `h2` (`.sf-display-md`, one accent word), then 17px / 1.7 secondary paragraphs on 48ch. The images are placeholders (1200 × 1500 in the placeholder tones) whose `alt` says so ("Placeholder for a photograph of the workshop") until the client's photographs replace them.
+- **"What we care about"** (`ABOUT_VALUES`) under a hairline: the eyebrow, the `h2` "Three things we *hold* to.", then three values (one column; three from 768px), each under a 24px × 1px caramel rule: an `h3` (`.sf-display-sm`) and a 16px secondary line on 40ch.
+- **The close** (`ABOUT_CLOSING`) under a hairline: one serif line at display-sm (34ch) and a ghost "Browse the collection" (`/products`; full width up to 480px), then the contact line.
+- **Facts only:** homes, offices, cafés and outdoor spaces; some wooden pieces made in the store's own workshop; Nilkamal, Carlton and Winsome; based in Assam. No statistics, years in business, customer counts or warranties.
+
+### 38.8 404 (`NotFound`)
+
+- **The route:** `<Route path="*" element={<NotFound />} />`, the last route inside the storefront shell, so the header, footer and bottom bar stay and the URL stays as typed. This covers any URL no route matches: `/nonsense`, `/products/a/b`, `/order-confirmation` without a number, and `/admin/<unknown>` (the admin's routes are listed, so an unknown admin path falls through to the storefront; before Prompt 28 every such URL redirected to `/`).
+- **The page:** the frame on the narrow column without a trail or a contact line: the eyebrow "Page not found", the `h1` "This page has moved or never existed.", "The link may be out of date, or the address may have a typo. Start again from the home page, or browse the collection.", then a primary "Back to home" (`/`) and a ghost "Browse furniture" (`/products`), side by side with 12px between them, stacked full width up to 480px. No search field (the header's search is one tap away) and no illustration.
+- **The HTTP status** stays 200: the storefront is a single-page app served with a fallback to `index.html`.
+
+### 38.9 The crash fallback (`ErrorBoundary`)
+
+- **Where:** the boundary wraps the whole app above the providers and the router, the admin included. So the fallback imports no stylesheet and no storefront component, reads no context, and is neutral (paper and ink; navy-ink and off-white in dark mode), never storefront chrome.
+- **Styling:** inline styles from the tokens, each written `var(--sf-<token>, <fallback>)`; the fallback is the token's own value (section 12 lists them) and applies only if the token stylesheet never loaded. `isDarkTheme()` (unchanged: `localStorage.theme` `"dark"` or `"light"`, else `prefers-color-scheme`) picks `FALLBACK.light` or `FALLBACK.dark`. A style attribute cannot express `:hover` or `:focus-visible`, so one `<style>` element, scoped to `[data-error-fallback]`, adds them: a 2px `--sf-color-focus` outline (offset 2px) on the buttons and the summary, and, on hover-capable devices, the primary's `--sf-color-primary-hover` fill and the ghost's `--sf-color-primary-soft` (`!important`, against the inline styles).
+- **Layout:** the page tone at full height, a centred surface card (at most 560px, padding `clamp(24px, 6vw, 48px)`, 1px `--sf-color-border`, radius md; 16px from the edges on phones).
+- **Content:** the wrapper is `role="alert"`; the `h1` "Something went wrong." (`--sf-font-display`, display-md, ink); "This page stopped working. Reload to try again, or start again from the home page." (16px / 1.6 secondary); "Reload" (primary: ink fill, paper text) and "Go home" (ghost: a 1px ink border), each at least 44px tall, 14px 500, 12px apart; then, under a hairline, `<details>` "Error details" (14px 500) holding the error's text in a sand `<pre>` (monospace 13px, at most 240px tall, scrolling, wrapping).
+- **Actions:** "Reload" calls `window.location.reload()`; "Go home" calls `window.location.assign("/")`, a full navigation that resets the broken tree even outside the router. `componentDidCatch` logs as before.
+
+### 38.10 Focus and keyboard
+
+| Where | Behaviour |
+|---|---|
+| Help centre search | Typing filters; Enter does nothing more; the status line speaks politely |
+| `FAQ` | Tab stops on the questions; a closed answer's link is skipped (`inert`); Enter or Space toggles; an open answer's link is the next stop |
+| Support, a submit with errors | focus moves to the first failing field and scrolls it to 16px under the sticky header if the header covers it or it is below the window ("instant" under reduced motion); if it already had focus, a visually hidden status line reads its message for 5 seconds |
+| Support, sending | focus stays on the button |
+| Support, sent / Send another message | the sent panel / the form's `h2` |
+| About, the policies, the 404 | nothing moves focus; every control has its primitive's ring |
+| The crash fallback | the first Tab reaches "Reload" (its caramel outline) |
+
+Keyboard order on Support: Full name › Email address › Phone number › Order number › Topic › Subject › Message › Send message. A known edge (shared with Checkout's and Profile's identical helper): Enter pressed while the browser is still smooth-scrolling the button into view (within about half a second of tabbing to it) can leave the focused field above the window, since the field was in view when the check ran.
+
+### 38.11 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| The policies' sections, About's blocks, values and close, the Help centre's questions and contact block, the Support form card | `Reveal` (fade and 20px rise over 0.9s) | fade only |
+| The Help centre's topic cards, About's three values | `Reveal`, staggered by `staggerDelay` | fade only |
+| An answer opening or closing | `grid-template-rows` 0fr → 1fr over `--sf-duration` (`--sf-ease-out` opening, `--sf-ease-in-out` closing); `visibility` switches after the fold; the plus turns to a minus over the same time | none (the transitions are off) |
+| A topic card on hover | the border to ink, the arrow to accent and 4px right, over `--sf-duration` | the duration tokens collapse |
+| The 404, the frame's header, the crash fallback | none | — |
+
+### 38.12 Contrast
+
+No new pairs: the pages reuse pairings `scripts/check-contrast.js` already checks. Ink, secondary and muted text on the page, the surface and sand (§14); the placeholder blank, muted on sand on the page tone (5.15 / 5.81, "Confirmation: quiet badge" in §37.11); the send failure, error on the error tint over the card surface (5.50 / 5.55); the sent check, success on sand (5.35 / 6.74); the focus ring on the page, the surface and sand; the primary, ghost and link buttons. The crash fallback uses the same tokens, and its literal fallbacks equal them (tested).
+
+### 38.13 Decisions to keep
+
+- **Copy in content modules, layout in pages:** a policy, the FAQ, the topics or About change in `legalContent.js`, `constants.js` or `brandContent.js`, not in JSX.
+- **Nothing invented:** no statistics, years in business, reply times, refund timings or delivery windows; an unknown fact is a visible blank and a `// CONFIRM:` comment; every policy says "Draft for legal review" until it is approved (`draft: false`).
+- **One `h1` per page,** from the frame; sections are `h2`s; the FAQ's questions are `h3`s.
+- **The Support request is the old one** (its call and its seven fields); prefill only fills the form.
+- **An unknown URL stays put** on the 404, inside the storefront shell.
+- **The crash fallback stays neutral and self-contained** (it serves the admin too), with inline token styles and literal fallbacks equal to the tokens.
