@@ -2285,7 +2285,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 
 - **From 901px:** `grid-template-columns: minmax(0, 7fr) minmax(0, 5fr)`, column gap `clamp(32px, 4vw, 64px)`, `align-items: start`. The summary (a hairline surface card) is sticky at `top: calc(var(--sf-header-height) + 24px)` with `max-height: calc(100vh - var(--sf-header-height) - 48px)`. In a window too short for it, it scrolls on its own (`overscroll-behavior: contain`, thin stone scrollbar) and only then takes a tab stop (`tabIndex 0`, found with a `ResizeObserver`) and a focus ring, so the keyboard can scroll it.
 - **Up to 900px:** one column; the summary sits above the step as a disclosure: a 56px button "Order summary" with the amount payable in the serif and a chevron (`aria-expanded`, `aria-controls`), named "Order summary, ₹X". Closed by default, open on the Review step; a choice made on a step lasts until the step changes. The figure is a skeleton until the store's reads have settled.
-- **The body:** the `h2` "Order summary"; the first three lines (name, two-line clamp; "Walnut · Qty 2" muted; the line total), "+N more item(s)"; then a `dl`: Subtotal, "Discount (CODE)" (−, the discount voice), Shipping ("Free" in success, the amount, or "—" with "Not chosen yet" for screen readers), "Tax (18% GST)" (the store's rate), the hairline and Total (serif `--sf-text-lg`), then "Store credit" (−) and "Amount payable" when credit applies. Shipping and tax are skeletons until the methods and the settings have been read (either way).
+- **The body:** the `h2` "Order summary"; the first three lines (name, two-line clamp; "Walnut · Qty 2" muted; the line total), "+N more item(s)"; then a `dl`: Subtotal, "Discount (CODE)" (−, the discount voice), Shipping ("Free" in success, the amount, or "—" with "Not chosen yet" for screen readers), "Tax (18% GST)" (the store's rate), the hairline and Total (serif `--sf-text-lg`), then "Store credit" (−) and "Amount payable" when credit applies. Shipping and tax are skeletons until the methods and the settings have been read (either way), and the tax row reads plain "Tax" until the settings give the rate.
 - **The promises** (a hairline above, a list named "Our promises", 11px uppercase muted labels beside 16px accent outline icons, the drawer's row): "Secure payment"; "Cash on Delivery available" only while the settings say `codEnabled`; "Easy returns · N days" from `STOREFRONT_CONFIG.returnsWindowDays` (none at 0); the delivery cue of the chosen method, else Standard: "Delivery ₹499.00 · free above ₹9,999.00", or "Free delivery" for a free method. Nothing until the reads have settled, and nothing the data does not say.
 
 ### 36.4 Step 1: the cart
@@ -2296,7 +2296,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 
 ### 36.5 Step 2: shipping
 
-- **Deliver to** (a fieldset, shown when the account has addresses): hairline radio cards (`.sf-radio`), the default first, two columns from 601px, at least 44px: an eyebrow (the label, e.g. "Home", and "Default"), the name, the lines, the city line and the phone; the chosen card has an ink border. "A new address" spans the row as a slim card and clears the selection. A saved address that fails the checks says what it needs ("This address needs a phone number and a 6-digit PIN.") with a link to "My addresses".
+- **Deliver to** (a fieldset, shown when the account has addresses): hairline radio cards (`.sf-radio`), the default first, two columns from 601px, at least 44px: an eyebrow (the label, e.g. "Home", and "Default"), the name, the lines, the city line and the phone; the chosen card has an ink border. "A new address" spans the row as a slim card and clears the selection and the saved card's messages (they belong to that address). A saved address that fails the checks says what it needs ("This address needs a phone number and a 6-digit PIN.") with a link to "My addresses".
 - **The new-address form** (legend "New address", or "Delivery address" without saved ones): the fields of My addresses (§32.2): visible labels, `autocomplete` (`given-name`, `family-name`, `tel` + `inputmode="tel"`, `address-line1`, `address-line2`, `address-level2`, `address-level1`, `postal-code` + `inputmode="numeric"`, `country-name`), hints ("10-digit mobile number", "6-digit PIN", "Currently shipping within India only"), "(optional)" on line 2, the read-only sand "India"; two columns from 601px. Errors under their fields ("Phone number is required", "Enter a valid 6-digit PIN"), `aria-invalid` + `aria-describedby`; values are kept.
 - **Delivery method** (a fieldset): hairline radio rows: the name, the window ("7–10 business days", from `estimatedDays`), the cost on the right ("Free" in success when the free-above rule applies, else the amount) over the muted note "Free above ₹9,999.00"; the chosen row carries a 2px accent bar on its left (a border, so forced colours keep it). While the methods load: "Loading delivery options…" over two skeleton rows (`aria-busy`). None active: "No delivery methods are available right now. Please try again later." on sand. A Continue without one: the message in an alert, focused.
 
@@ -2319,7 +2319,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 |---|---|---|
 | Session restore | the first render, while `AuthContext` restores the session | nothing (as Profile and Wishlist), so a reload never flashes the empty state or the guest panel |
 | Empty | no lines (and no order just placed) | the header, then a sand panel: "Your cart is empty." (`h2`, `.sf-display-sm`, `tabIndex -1`), "Pieces you add to your cart will be here, ready to check out.", a primary "Browse furniture" to `/products` (full width up to 480px) |
-| Reads pending | the methods or the settings not read yet | the summary's shipping, tax, totals and the toggle's figure as skeletons; no promises; Step 2's loading rows |
+| Reads pending | the methods or the settings not read yet | the summary's shipping, tax, totals and the toggle's figure as skeletons ("Tax" without its rate); no promises; Step 2's loading rows, with Continue unavailable there |
 | Read failed | a method or settings read failed | the figures as the old page computed them (no method chosen: "—"; tax at the default 18%); no COD promise |
 | Processing | an order being placed | the primary reads "Processing…", `aria-busy`, `aria-disabled` (focus stays, a second press does nothing), full ink with a progress cursor; Back and Edit unavailable |
 | Failed | the attempt ended without an order | the alert (36.7); the step, the cart and every choice kept |
@@ -2327,6 +2327,9 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 ### 36.9 Actions
 
 A hairline above; "Back" (`.sf-btn--link`, a back glyph, secondary) on the left from step 2; the primary on the right (`.sf-btn--primary --lg`, min 12rem): "Continue", "Sign in to continue" (a guest on the cart; `aria-haspopup="dialog"`), "Place order · ₹10,527.00", "Place order" (credit covers it), "Processing…". Up to 600px they stack: Back above, the primary full width.
+
+- On Shipping the primary is unavailable (`aria-disabled`) until the delivery methods have been read, so a press never reports a missing method that is only still loading.
+- A press while the step's panel is still coming in (the old one fading out, about 160ms) is ignored: the label changes at once, so the second press of a double-click on Continue at Payment would otherwise place the order before the review shows (the old page did).
 
 ### 36.10 Focus
 
@@ -2338,7 +2341,7 @@ A hairline above; "Back" (`.sf-btn--link`, a back glyph, secondary) on the left 
 | A coupon applied / removed | the applied line / the field, only when focus had dropped to the page |
 | Signing in from the guest panel | the primary, once the dialog has gone (only for a guest seen after the session restore) |
 | A failed order | stays on Place order (SweetAlert2 returns it there) |
-| Arriving | nowhere |
+| Arriving | nowhere (under React's StrictMode too: the step last seen tells a change from a mount's repeated effects) |
 
 A panel fading out is `inert`. Every control shows its primitive's ring; the headings are reading positions with no ring.
 
@@ -2375,4 +2378,5 @@ Everything else (ink, secondary and muted text on the page, surface and sand; th
 - **Promises come only from data:** settings (COD), shipping methods (delivery), config (returns). No gateway claim in mock mode, no badges, no timers.
 - **The failure alert waits for OrderContext's dialog** (it sets `aria-hidden` on the page), so the message is announced, not lost behind it.
 - **Busy, not disabled:** the primary stays focusable while an order is placed.
+- **A press counts only once its step is on screen**, so a double-click can never skip the review.
 - **The summary opens itself on the Review step on phones**, where its figures are what the shopper is confirming.

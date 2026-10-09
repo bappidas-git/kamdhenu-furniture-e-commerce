@@ -389,6 +389,7 @@ const Checkout = () => {
   const lineFocusRef = useRef(null);
   const stepFocusRef = useRef(null);
   const stepHeadingNodeRef = useRef(null);
+  const shownStepRef = useRef(step); // the step whose panel is on screen
 
   useEffect(() => {
     const loadShipping = async () => {
@@ -630,13 +631,13 @@ const Checkout = () => {
 
   // A step change moves focus to the new step's heading once its panel is in
   // (the old one fades out first); not on arrival. focus() skips its own
-  // scroll: the scroll to the top above already brings the page up.
-  const isFirstStepRef = useRef(true);
+  // scroll: the scroll to the top above already brings the page up. The step
+  // last seen tells a change from arrival (StrictMode runs a mount's effects
+  // twice in development, so a first-run flag would not).
+  const seenStepRef = useRef(step);
   useLayoutEffect(() => {
-    if (isFirstStepRef.current) {
-      isFirstStepRef.current = false;
-      return;
-    }
+    if (seenStepRef.current === step) return;
+    seenStepRef.current = step;
     stepFocusRef.current = step;
     const node = stepHeadingNodeRef.current;
     if (node && node.isConnected && Number(node.dataset.step) === step) {
@@ -647,6 +648,7 @@ const Checkout = () => {
 
   const stepHeadingRef = useCallback((node) => {
     stepHeadingNodeRef.current = node;
+    if (node) shownStepRef.current = Number(node.dataset.step);
     if (node && stepFocusRef.current === Number(node.dataset.step)) {
       stepFocusRef.current = null;
       node.focus({ preventScroll: true });
@@ -801,8 +803,14 @@ const Checkout = () => {
     setStep(target);
   };
 
+  // A press is ignored while the order is placed, while the step's panel is
+  // still coming in (a double-click on Continue at Payment would otherwise
+  // place the order before the review shows; it did before), and on Shipping
+  // until the delivery methods have been read.
   const onPrimaryClick = () => {
     if (isProcessing || cartItems.length === 0) return;
+    if (shownStepRef.current !== step) return;
+    if (step === 1 && shippingPending) return;
     if (step === 1) setContinueAttempt((count) => count + 1);
     if (isReview) setOrderError(false);
     handleNext();
@@ -1127,7 +1135,7 @@ const Checkout = () => {
               type="radio"
               name="savedAddress"
               checked={!useExistingAddress}
-              onChange={() => setUseExistingAddress(null)}
+              onChange={() => { setUseExistingAddress(null); setAddressErrors({}); }}
             />
             <span className={styles.addressName}>A new address</span>
           </label>
@@ -1684,7 +1692,7 @@ const Checkout = () => {
   // ── The actions under every step ─────────────────────────────────────────
   const renderActions = () => {
     const signInFirst = step === 0 && !isAuthenticated;
-    const primaryUnavailable = isProcessing || cartItems.length === 0;
+    const primaryUnavailable = isProcessing || cartItems.length === 0 || (step === 1 && shippingPending);
     return (
       <div className={styles.actions}>
         {step > 0 && (
@@ -1820,7 +1828,7 @@ const Checkout = () => {
               </dd>
             </div>
             <div className={styles.totalsRow}>
-              <dt>Tax ({taxRatePct}% GST)</dt>
+              <dt>Tax{settingsLoaded ? ` (${taxRatePct}% GST)` : ""}</dt>
               <dd>{settingsLoaded ? formatCurrency(taxAmount) : <Pending />}</dd>
             </div>
             <div className={cx(styles.totalsRow, styles.totalRow)}>

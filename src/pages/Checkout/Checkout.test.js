@@ -136,29 +136,34 @@ const FirstPaint = () => {
   return null;
 };
 
-const renderCheckout = async ({ cart = [BEDSIDE()], user = SEEDED_USER, settle = true } = {}) => {
+const renderCheckout = async ({ cart = [BEDSIDE()], user = SEEDED_USER, settle = true, strict = false } = {}) => {
   localStorage.setItem("cart", JSON.stringify(cart));
   if (user) {
     sessionStorage.setItem("user", JSON.stringify(user));
     sessionStorage.setItem("token", `mock-token-${user.id}`);
   }
+  // `strict` renders under React.StrictMode, as src/index.js does: in
+  // development it runs a mount's effects twice.
+  const Wrapper = strict ? React.StrictMode : React.Fragment;
   const view = render(
-    <MemoryRouter initialEntries={["/checkout"]}>
-      <AuthProvider>
-        <CartProvider>
-          <OrderProvider>
-            <Routes>
-              <Route path="/checkout" element={<Checkout />} />
-              <Route path="/order-confirmation/:orderNumber" element={<Confirmation />} />
-              <Route path="/products" element={<p>Products page</p>} />
-              <Route path="/profile" element={<p>Profile page</p>} />
-            </Routes>
-            <AuthProbe />
-            <FirstPaint />
-          </OrderProvider>
-        </CartProvider>
-      </AuthProvider>
-    </MemoryRouter>
+    <Wrapper>
+      <MemoryRouter initialEntries={["/checkout"]}>
+        <AuthProvider>
+          <CartProvider>
+            <OrderProvider>
+              <Routes>
+                <Route path="/checkout" element={<Checkout />} />
+                <Route path="/order-confirmation/:orderNumber" element={<Confirmation />} />
+                <Route path="/products" element={<p>Products page</p>} />
+                <Route path="/profile" element={<p>Profile page</p>} />
+              </Routes>
+              <AuthProbe />
+              <FirstPaint />
+            </OrderProvider>
+          </CartProvider>
+        </AuthProvider>
+      </MemoryRouter>
+    </Wrapper>
   );
   // Let the reads the test did not hold settle inside act() (the session
   // restore, the cart, the wallet, the store reads), then, when asked, wait
@@ -269,6 +274,13 @@ describe("the page frame", () => {
     await goToShipping();
     expect(window.scrollTo.mock.calls.length).toBeGreaterThan(calls);
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "smooth" });
+  });
+
+  test("under StrictMode (development) arriving still moves nothing, and a step change still focuses its heading", async () => {
+    await renderCheckout({ strict: true });
+    expect(document.body).toHaveFocus();
+    const heading = await goToShipping();
+    await waitFor(() => expect(heading).toHaveFocus());
   });
 
   test("a reload never flashes the empty state: nothing is drawn while the session is restored", async () => {
@@ -606,6 +618,20 @@ describe("step 2: shipping", () => {
     expect(screen.getByRole("heading", { level: 2, name: /^Step 2 of 4/ })).toBeInTheDocument();
   });
 
+  test("choosing “A new address” after a refused saved one starts the form clean", async () => {
+    const user = clone(SEEDED_USER);
+    user.addresses[0].phone = "";
+    user.addresses[0].postalCode = "78131";
+    await renderCheckout({ user });
+    await goToShipping();
+    fireEvent.click(primary());
+    await screen.findByText(/This address needs a phone number and a 6-digit PIN\./);
+    fireEvent.click(screen.getByRole("radio", { name: "A new address" }));
+    const form = screen.getByRole("group", { name: "New address" });
+    expect(within(form).queryByText(/is required|Enter a valid/)).not.toBeInTheDocument();
+    within(form).getAllByRole("textbox").forEach((field) => expect(field).not.toHaveAttribute("aria-invalid"));
+  });
+
   test("delivery methods: the active ones only, the first chosen, windows, costs and the free-above note", async () => {
     await renderCheckout({ cart: [BEDSIDE(1)] });
     await goToShipping();
@@ -643,6 +669,23 @@ describe("step 2: shipping", () => {
     expect(screen.queryByText("Loading delivery options…")).not.toBeInTheDocument();
     expect(screen.getByRole("radio", { name: /^Standard Delivery/ })).toBeChecked();
     expect(await screen.findByRole("list", { name: "Our promises" })).toBeInTheDocument();
+  });
+
+  test("Continue waits while the delivery methods are read (no “select a method” before they arrive)", async () => {
+    const held = deferred();
+    apiService.shipping.getMethods.mockReturnValue(held.promise);
+    await renderCheckout({ settle: false });
+    await screen.findByRole("heading", { level: 2, name: /Your cart$/ });
+    await goToShipping();
+    expect(primary()).toHaveAttribute("aria-disabled", "true");
+    fireEvent.click(primary());
+    expect(screen.queryByText("Please select a shipping method.")).not.toBeInTheDocument();
+    const steps = within(screen.getByRole("list", { name: "Checkout progress" })).getAllByRole("listitem");
+    expect(steps[1]).toHaveAttribute("aria-current", "step");
+    await act(async () => held.resolve(clone(METHODS)));
+    expect(primary()).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(primary());
+    expect(await stepHeading(3)).toBeInTheDocument();
   });
 
   test("no delivery method: an honest line, and Continue says what is missing and takes focus there", async () => {
@@ -1032,6 +1075,22 @@ describe("placing the order", () => {
     expect(order).toMatchObject({ total: 1324, storeCreditUsed: 1324, amountPayable: 0, paymentMethod: "store_credit", paymentStatus: "paid" });
   });
 
+  test("a double-click on Continue at Payment does not place the order before the review shows", async () => {
+    await renderCheckout();
+    await goToPayment();
+    fireEvent.click(primary());
+    // The second press of a double-click lands while the payment panel fades
+    // out, on a button that already reads "Place order".
+    expect(primary()).toHaveTextContent("Place order · ₹5,808.00");
+    expect(screen.getByRole("heading", { level: 2, name: /^Step 3 of 4/ })).toBeInTheDocument();
+    fireEvent.click(primary());
+    await stepHeading(4);
+    expect(apiService.orders.create).not.toHaveBeenCalled();
+    fireEvent.click(primary());
+    expect(await screen.findByText(/^Confirmation for/)).toBeInTheDocument();
+    expect(apiService.orders.create).toHaveBeenCalledTimes(1);
+  });
+
   test("while it is placed: “Processing…”, busy and unavailable, Back and Edit too; a second press sends nothing", async () => {
     const held = deferred();
     apiService.orders.create.mockReturnValue(held.promise);
@@ -1208,6 +1267,17 @@ describe("the order summary", () => {
     expect(totalsText("Shipping")).toBe("₹499.00");
     expect(totalsText("Tax (18% GST)")).toBe("₹810.00");
     expect(totalsText("Total")).toBe("₹5,808.00");
+  });
+
+  test("the tax rate waits for the settings, like the figures", async () => {
+    const held = deferred();
+    apiService.settings.get.mockReturnValue(held.promise);
+    await renderCheckout({ cart: [BEDSIDE(1)], settle: false });
+    await screen.findByRole("heading", { level: 2, name: /Your cart$/ });
+    expect(within(summary()).getByText("Tax", { selector: "dt" })).toBeInTheDocument();
+    expect(within(summary()).queryByText(/% GST/)).not.toBeInTheDocument();
+    await act(async () => held.resolve({ ...clone(db.settings), store: { ...db.settings.store, taxRate: 12 } }));
+    expect(totalsText("Tax (12% GST)")).toBe(formatCurrency(expected({ lines: [BEDSIDE(1)], taxRate: 12 }).tax));
   });
 
   test("the tax label and amount follow the store's rate", async () => {

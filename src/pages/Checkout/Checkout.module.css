@@ -533,7 +533,7 @@
   margin: 0;
   overflow-wrap: anywhere;
   font-family: var(--sf-font-display);
-  font-size: 1.0625rem;
+  font-size: var(--sf-text-md);
   font-weight: var(--sf-font-normal);
   line-height: var(--sf-leading-tight);
   color: var(--sf-color-text);
