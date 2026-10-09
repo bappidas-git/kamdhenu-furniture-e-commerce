@@ -1,10 +1,10 @@
-import React from "react";
+import React, { useLayoutEffect, useRef } from "react";
 import { MemoryRouter, useLocation, useNavigate } from "react-router-dom";
 import { act, fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import { useReducedMotion } from "framer-motion";
 import apiService from "../../services/api";
-import { AuthProvider } from "../../context/AuthContext";
+import { AuthProvider, useAuth } from "../../context/AuthContext";
 import db from "../../../db.json";
 import Profile from "./Profile";
 
@@ -105,6 +105,26 @@ const Probe = () => {
   );
 };
 
+// What the Store credit region holds in the commit it appears in, before any
+// effect has run: a layout effect sees the DOM before React's passive effects
+// (the wallet's read among them), so this is each visit's first paint. It
+// re-renders with the session and the route, as the page does.
+let firstPaints = [];
+const FirstPaint = () => {
+  useLocation();
+  useAuth();
+  const shown = useRef(false);
+  useLayoutEffect(() => {
+    // The raw DOM at commit time (role queries would rebuild the accessibility
+    // tree of a 120-row ledger on every route change).
+    // eslint-disable-next-line testing-library/no-node-access
+    const region = document.querySelector('section[aria-label="Store credit"]');
+    if (region && !shown.current) firstPaints.push(region.textContent);
+    shown.current = Boolean(region);
+  });
+  return null;
+};
+
 const renderWallet = (at = "/profile?tab=wallet") => {
   sessionStorage.setItem("user", JSON.stringify(USER));
   sessionStorage.setItem("token", "mock-token-3");
@@ -115,6 +135,7 @@ const renderWallet = (at = "/profile?tab=wallet") => {
           <Profile />
         </main>
         <Probe />
+        <FirstPaint />
       </AuthProvider>
     </MemoryRouter>
   );
@@ -162,6 +183,7 @@ const expectWalletErrors = () => {
 beforeEach(() => {
   sessionStorage.clear();
   localStorage.clear();
+  firstPaints = [];
   useReducedMotion.mockReturnValue(false);
   apiService.wallet.getBalance.mockResolvedValue(SEEDED_BALANCE);
   apiService.wallet.getTransactions.mockResolvedValue(seededLedger());
@@ -252,6 +274,43 @@ test("a read from an earlier visit that settles during the next visit's read cha
   expect(within(region()).getByText("Loading your store credit")).toBeInTheDocument();
   await next.settle();
   expect(within(card()).getByText("₹2,302.00")).toBeInTheDocument();
+});
+
+test("…and one that fails then shows no error: the next visit's read decides", async () => {
+  expectWalletErrors();
+  const earlier = holdReads();
+  renderWallet();
+  fireEvent.click(navLink("Profile"));
+  const next = holdReads();
+  fireEvent.click(navLink("Store credit"));
+  await earlier.fail();
+  expect(within(region()).queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+  expect(within(region()).getByText("Loading your store credit")).toBeInTheDocument();
+  await next.settle();
+  expect(within(card()).getByText("₹2,302.00")).toBeInTheDocument();
+});
+
+test("the first paint of a visit is the skeletons, never an empty wallet", async () => {
+  const reads = holdReads();
+  renderWallet();
+  expect(firstPaints).toHaveLength(1);
+  expect(firstPaints[0]).toContain("Loading your store credit");
+  expect(firstPaints[0]).not.toContain("₹");
+  expect(firstPaints[0]).not.toContain("No transactions yet.");
+  await reads.settle();
+});
+
+test("…and a return visit's first paint is the skeletons, never the last visit's figures", async () => {
+  const first = holdReads();
+  renderWallet();
+  await first.settle();
+  fireEvent.click(navLink("Profile"));
+  const second = holdReads();
+  fireEvent.click(navLink("Store credit"));
+  expect(firstPaints).toHaveLength(2);
+  expect(firstPaints[1]).toContain("Loading your store credit");
+  expect(firstPaints[1]).not.toContain("₹2,302.00");
+  await second.settle();
 });
 
 // ── Loading ────────────────────────────────────────────────────────────────────
