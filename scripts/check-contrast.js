@@ -287,6 +287,22 @@ const PAIRS = [
   ["Password: meter segment, warning tone, on the card surface (graphic)", "--sf-color-warning", "--sf-color-surface", LARGE],
   ["Password: meter segment, info tone, on the card surface (graphic)", "--sf-color-info", "--sf-color-surface", LARGE],
   ["Password: meter segment and checklist check, success tone, on the card surface", "--sf-color-success", "--sf-color-surface", LARGE],
+  // Order history (Prompt 24): the status badges and review chips sit on the
+  // order card (the surface) and on the sand Track panel; a cancelled or
+  // returned order's badge is muted text on sand on the card, and a hairline
+  // outline on the panel (a second sand layer measured 4.41 in dark mode,
+  // the info row below); "Cancel order" is the error tone on a surface card,
+  // its hover the error tint; a progress step not yet reached is a
+  // border-strong ring on the sand (its label and hidden text carry the
+  // state too).
+  ["Orders: shipped badge, review pending (info on info-bg) on the card surface", "--sf-color-info", ["--sf-color-info-bg", "--sf-color-surface"], AA],
+  ["Orders: delivered badge, review published (success on success-bg) on the card surface", "--sf-color-success", ["--sf-color-success-bg", "--sf-color-surface"], AA],
+  ["Orders: cancelled / returned badge (muted on sand) on the card surface", "--sf-color-text-muted", ["--sf-color-sand", "--sf-color-surface"], AA],
+  ["Orders: shipped badge (info on info-bg) on the sand Track panel", "--sf-color-info", ["--sf-color-info-bg", ...SAND], AA],
+  ["Orders: delivered badge (success on success-bg) on the sand Track panel", "--sf-color-success", ["--sf-color-success-bg", ...SAND], AA],
+  ["Orders: cancelled / returned badge on the sand Track panel (outlined: muted on the panel's sand)", "--sf-color-text-muted", SAND, AA],
+  ["Orders: Cancel order hover (error on error-bg over the card surface)", "--sf-color-error", ["--sf-color-error-bg", "--sf-color-surface"], AA],
+  ["Orders: progress, a step not yet reached (border-strong ring) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -365,6 +381,9 @@ const INFO = [
   ["Store credit card: navy vs the page", "--sf-color-surface-dark", "--sf-color-bg"],
   ["Store credit card: edge ring (on-dark border over the page) vs the page", ["--sf-color-on-dark-border", "--sf-color-bg"], "--sf-color-bg"],
   ["Store credit card: balance skeleton (on-dark soft) vs the navy", ["--sf-color-on-dark-soft", "--sf-color-surface-dark"], "--sf-color-surface-dark"],
+  // Prompt 24: why the quiet badge is outlined on the sand Track panel
+  // rather than filled with a second sand layer.
+  ["Orders: quiet badge filled with sand on the sand panel (not used)", "--sf-color-text-muted", ["--sf-color-sand", ...SAND]],
 ];
 
 // ---------------------------------------------------------------------------

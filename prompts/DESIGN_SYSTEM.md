@@ -666,7 +666,7 @@ Appended after the shared SweetAlert block and scoped `body.light:not(.admin-are
 
 - **Popup:** `--swal2-background` surface, `--swal2-color` ink, `--swal2-border` hairline, `--swal2-border-radius` radius md, `--sf-shadow-lg`; title in Playfair 22px 500; body sans 15px secondary; icons at 75% (`--swal2-icon-zoom`); backdrop `--sf-color-overlay`.
 - **Buttons:** 44px, sans 14px 500. Confirm = ink with paper text, navy on hover (white in dark mode). Cancel = ghost (1px ink inset border, `--sf-color-primary-soft` hover). Focus = `--sf-shadow-focus`. Press 0.99.
-- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out" and, since Prompt 22, the address delete in `Profile.js` (§32.4) use it; the order cancel in `OrderHistory.js` (Prompt 24) and "Clear all" in `WishlistContext.js` still pass a hex.
+- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` were left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out", since Prompt 22 the address delete in `Profile.js` (§32.4) and since Prompt 24 the order cancel in `OrderHistory.js` (§34.5) use it; "Clear all" in `WishlistContext.js` still passes a hex.
 - **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
 - **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
 - **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation).
@@ -1813,7 +1813,7 @@ Every other pairing is already in §14 and §16.8: ink, secondary and muted text
 
 ## 31. Account shell and Profile
 
-Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses and Change password sections are §32, since Prompt 22; the Store credit section is §33, since Prompt 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
+Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses and Change password sections are §32, since Prompt 22; the Store credit section is §33, since Prompt 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24, §34) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
 
 ### 31.1 Using the shell
 
@@ -1903,7 +1903,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 ### 31.8 `.sf-btn--danger`
 
 - In `storefront-base.css`: `--sf-btn-bg` and `--sf-btn-border` are `--sf-color-error`, `--sf-btn-fg` is `--sf-color-primary-contrast` (paper on brick, 6.26 : 1; navy-ink on the dark-mode salmon, 8.00 : 1). Hover: `color-mix(in srgb, var(--sf-color-error) 85%, var(--sf-color-text))` (7.38 / 8.90 : 1), declared inside `@supports`, so a browser without `color-mix()` keeps the resting fill. A press keeps the hover fill, by touch and keyboard too (where no hover applies): otherwise SweetAlert's own `:active` rule, which outweighs the primitive's resting fill, would flash its confirm colour (navy) through.
-- **On a SweetAlert confirm:** `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`. SweetAlert 11 writes its button rules inside `:where()`, so the primitive's colours, hover, press and focus ring win, while the storefront theme still sets the 44px height and the type (§16.6). The address delete uses it since Prompt 22 (§32.4); Prompt 24 (the order cancel) can use it as it is.
+- **On a SweetAlert confirm:** `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`. SweetAlert 11 writes its button rules inside `:where()`, so the primitive's colours, hover, press and focus ring win, while the storefront theme still sets the 44px height and the type (§16.6). The address delete uses it since Prompt 22 (§32.4), the order cancel since Prompt 24 (§34.5).
 
 ### 31.9 Keyboard and focus
 
@@ -2076,4 +2076,107 @@ No new minimum pairs: every text and control pairing on the section is already i
 
 - **Hidden words, not `aria-label`, on the amounts.** ARIA 1.2 prohibits naming a generic `span`, and screen readers do not announce such a name reliably; the visible "+₹4,302.00" is `aria-hidden` and the hidden "Credit of ₹4,302.00" is what assistive technology reads, in the table and in the list alike.
 - **Two views, one set of cells.** The table and the list render the same cell components (`LedgerDate`, `LedgerDescription`, `LedgerAmount`, `LedgerBalance`), so the two can never drift.
-- **The order link stays `/orders`.** A deep link (`/orders?order=<number>`) waits for Prompt 24 to support it.
+- **The order link stays `/orders`.** Prompt 24 added no `?order=` deep link to `/orders` (its search field is the way to one order); if one is added later, change the one `to` in `LedgerDescription`.
+
+---
+
+## 34. Order history
+
+Written by Prompt 24. Files: `src/pages/OrderHistory/OrderHistory.js` + `.module.css` (`/orders`, inside the account shell of §31) and `src/components/ReviewModal/ReviewModal.js` + `.module.css` (the review dialog, 34.8). No new tokens and no new primitives: the badges, chips, buttons, fields, panels and skeletons are §16's; the cancel confirm is §31.8's `.sf-btn--danger`; the dialog follows the auth modal's surface (§30.1) and the overlay contract (§19.1); the pagination is the listing's (§24.7).
+
+The rules are the old page's, verbatim (a script compared them with the previous `HEAD`): `deriveOrderStatus`, `STATUS_CONFIG`, `getStatusInfo`, `isReturnEligible` (`RETURN_WINDOW_DAYS` 7 from `deliveredAt || updatedAt`), `isCancellable` (derived "processing"), `isReviewable` (derived "delivered"), `reviewFor`, the filter on the derived label, the search on the order number, `ORDERS_PER_PAGE` 5 with its reset and clamp, and the reads, requests and payloads (`orders.getByUserId` + `reviews.getMine` in one `Promise.all`, newest first; `orders.cancel(order.id)` merged into the list; `reviews.submit({ productId, userId, userName, rating, title, body, orderId, orderNumber, isVerifiedPurchase: true })`, then `reviews.getMine` again). The pure ones are exported for the tests.
+
+### 34.1 Structure
+
+- `<AccountLayout active="orders" titleRef>`: the shell's greeting is the page's `h1`. The content is a `<section>` region named by its `h2`, the eyebrow "Orders" (`tabIndex -1`: a reading position, no ring). Under the `h2` a polite count line ("7 orders"; "2 of 7 orders" while a chip or the search narrows the list); a ghost icon button "Refresh orders" (`.sf-btn--ghost --icon`) on the right, `aria-disabled` while a read runs.
+- **Toolbar** (while loading, and once there are orders): the search `.sf-field` (visible label "Search by order number", `type="search"`, a muted search glyph inside the field, a 44px "Clear search" while there is text, which puts focus back in the field; at most 400px wide), then the status chips: a `role="group"` "Filter by status" of `.sf-chip`s with `aria-pressed`: All · Processing · Shipped · Delivered · Cancelled · Returned. Pressing the chip in force again returns to All. Each 32px pill has a 44px hit area (`::after`, `inset: -7px 0`: the inset is measured inside the 1px border); rows are 12px apart.
+- **Results:** the cards (a `<ul>`, 20px apart), or a state (34.6); then the pagination (34.7). A visually hidden `role="status"` line carries the copy and cancel announcements (a new key re-announces a repeat).
+- **Headings:** `h1` (the shell) › `h2` "Orders" › an `h3` per order (its number) › `h4`s inside the panels (Tracking, Items, Delivery address, Payment, Summary). State titles are `h3`s.
+
+### 34.2 The order card
+
+- `<li>` › `<article>` named by its `h3`, "Order ORD-…" ("Order" visually hidden). A `.sf-card--hairline` with no padding of its own: hairline-separated blocks 24px in from the edges (the actions row 16px top and bottom), `overflow: hidden`.
+- **Head:** the order number (sans 14px, 500, 0.06em tracking) and a borderless 44px copy button ("Copy order number ORD-…"; muted glyph, ink on hover; a check in the success tone for 2 seconds after a copy), pulled into the number's line box so the row keeps its height; under them "Placed on June 14, 2026" (14px muted, a `<time>`); the status badge on the right (under the date when the row runs out of room).
+- **Status badges** (`.sf-badge`, the eyebrow type), keyed by `STATUS_CONFIG`'s `className`: Processing `--ink`; Shipped `--info`; Delivered `--success`; Cancelled and Returned `--sand` with muted text (never red: cancelling is a normal outcome). On the sand Track panel the quiet badge is a hairline outline instead of a second sand layer (34.10).
+- **Body:** up to three thumbnails (56px wide at 4:5, sand while loading, a hairline frame, `alt` = the item's name, `loading="lazy"`, `onImageError`), a "+2 more" tile beyond three; the total on the right: the eyebrow "Total" over the figure in Playfair 20px with lining tabular figures (under the thumbnails on narrow cards).
+- **Actions:** ghost "Track" and "Details" (`aria-expanded`, `aria-controls`; a chevron that turns over `--sf-duration`); a ghost link "Return or exchange" (only while `isReturnEligible`); "Cancel order" (only while `isCancellable`), a text button in `--sf-color-error` with the error tint on hover, `aria-haspopup="dialog"`, "Cancelling…" and `aria-disabled` (with `data-busy`, full strength) while it runs, when every other "Cancel order" is unavailable too. Each name carries its order after the visible words, from a hidden suffix ("Track order ORD-…", "Details of order ORD-…", "Return or exchange order ORD-…", "Cancel order ORD-…"). Up to 600px the actions stack full width.
+- **Panels:** below the actions, Track then Details. One Track panel and one Details panel are open at a time across the list (the old state, kept). Each panel sits in a slot that stays in the page, so `aria-controls` always resolves.
+
+### 34.3 Track (the sand panel)
+
+- A `.sf-panel` across the card (square corners, a hairline above, 24px padding): the eyebrow `h4` "Tracking", the progress line or the closed note, then the facts under a hairline.
+- **Progress line:** `<ol aria-label="Delivery progress">` Placed · Processing · Shipped · Delivered. The stage comes from the derived label (Processing 1, Shipped 2, Delivered 3); only what the status fields imply is marked reached. Steps before the stage are done (a filled ink dot, an ink segment to the next, a hidden ", done"); the stage is current (`aria-current="step"`, the filled dot with a 1px ring 2px out, the label ink 500); later steps are not yet (a `--sf-color-border-strong` ring, a muted label, a hidden ", not yet", a border-strong segment). Dates only from the order: Placed = `createdAt`, Delivered = `deliveredAt` (`formatDate` short). Four in a row from 601px; a column up to 600px (dots on a vertical line).
+- **Cancelled or returned:** no line; one sentence from the status fields, in `deriveOrderStatus`'s order: "This order was returned."; "This order was cancelled on June 12, 2026." (`cancelledAt`; without it, "This order was cancelled."); "The payment for this order didn't go through." (payment failed); "The payment for this order was refunded." (payment refunded).
+- **Facts** (`<dl>`; the label column 7.5–9rem, stacked up to 480px): Tracking number (tabular; "Copy tracking number"; else "Not yet available" while processing or shipped, "Not available" otherwise) · Carrier: "Open carrier page" (`.sf-btn--link` with an external glyph, `target="_blank"`, `rel="noopener noreferrer"`, a hidden "(opens in a new tab)"; only for an `http(s)` address) · Status (the badge) · Refund (the old lines: "Refunded ₹4,302.00 to your store credit", "Refund in progress — typically 5–7 business days", "Refund delayed — our team is on it").
+
+### 34.4 Details
+
+- On the card surface under a hairline, 24px in, 32px between parts.
+- **Items:** hairline rows (grid areas): a 56px 4:5 thumbnail (decorative: the name is beside it), the name (15px 500), the variant when there is one, "Qty: 1", the line total on the right ("Line total" hidden), and under the text the review control (delivered orders, items with a `productId`): the chip (`REVIEW_STATUS`'s sentence in sentence case on `.sf-badge`: pending `--info`, approved `--success`, rejected quiet sand) and a `.sf-btn--link` "Rate & review" / "Edit review" (the item's name as a hidden suffix, `aria-haspopup="dialog"`). Up to 480px the line total moves under the quantity.
+- **Delivery address** (`normalizeOrderAddress`: the name in ink 500, the lines, "Phone: …") and **Payment** (the method by checkout's names: Credit or debit card, UPI, Net banking, Wallet, Cash on delivery, Store credit; any other value as before; then "Status: Paid") on the left from 601px, the **Summary** on the right; one column below.
+- **Summary** (`<dl>`, 14px, tabular figures): Subtotal; Discount (CODE) as "−₹…" when there is one; Shipping (or "Free"); Tax; Total (500, a hairline above). With store credit (`storeCreditUsed > 0`, the confirmation page's rows): "Store credit −₹1,000.00", then "Amount paid" (`amountPayable`, else total less the credit; 500, a hairline above), named "Amount due" while the payment is pending (cash on delivery to collect) and left out once the payment was voided or failed.
+
+### 34.5 Cancel, and return or exchange
+
+- **The confirm** (SweetAlert, the storefront theme of §16.6): "Cancel this order?" (warning icon); "Order **ORD-…** will be cancelled." (the number HTML-escaped) and the refund sentence; confirm "Cancel order" with `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`; cancel "Keep order"; `focusCancel: true` (Enter on arrival keeps the order); `returnFocus: false`.
+- **The refund sentence** follows what `orders.cancel` does (`performCancel`): paid outside store credit and collected → "A full refund of ₹X will be initiated to your original payment method." (X = `amountPayable`, else the total; "bank / UPI" for cash collected on delivery; "A refund" without "full" when part was refunded already); with store credit, then "The ₹1,000.00 of store credit you used will be returned to your account."; store credit and nothing else collected → the credit sentence (and "No other payment has been collected." when part was to be paid otherwise); nothing collected → "No payment has been collected, so there's nothing to refund."
+- **Focus:** back to the button at once (busy while the request runs); on success to the order's `h3` (or the section when a chip now hides the order), and the status line says "Order ORD-… has been cancelled."; a failure shows the old alert ("Couldn't cancel order" / "Something went wrong while cancelling. Please try again."), which returns focus to the button.
+- **Return or exchange:** a router link to `/support?order=<orderNumber>&category=returns` (the Support form's category value; Prompt 28 prefills from both). There is no return form on the storefront and no returns request here: returns are handled through Support, as before.
+
+### 34.6 States
+
+| State | When | What shows |
+|---|---|---|
+| Loading | the session restore, every read, Refresh, Try again | three skeleton cards in the card's own line boxes (number, date, badge, two thumbnails, the total's two lines, two actions), `aria-hidden`, in an `aria-busy` region with a hidden "Loading your orders"; the toolbar stays |
+| Error | the orders read rejects | a sand `.sf-panel`: "We couldn't load your orders." (`.sf-display-sm`), "Please check your connection and try again.", a primary "Try again"; no toolbar, no count. Never "No orders yet." While the retry runs focus waits on the section; a second failure puts it on the new "Try again" |
+| Empty | no orders | a sand panel: "No orders yet.", "When you place an order, it appears here, ready to track.", a primary link "Browse furniture" (`/products`); no toolbar |
+| No match | a chip or the search leaves nothing | on the page: "No orders match.", "Try another order number or status.", a ghost "Show all orders" that clears both and moves focus to the first order |
+| Guest | no session once the restore has settled | the shell without the nav ("My account"), a sand panel: "Sign in to see your orders." (`.sf-display-sm`), "Your orders are linked to your account, where you can track, cancel, return or review them.", a primary "Sign in" and a ghost "Create account" (`openAuthModal`, `aria-haspopup="dialog"`; stacked full width up to 480px). No read and no redirect. After signing in the orders load in place and, once the dialog has gone, focus moves to the `h1` (§31.5) |
+
+Up to 480px the states' buttons run full width.
+
+### 34.7 Pagination
+
+The listing's (§24.7) without the per-page select: `nav "Pagination"` under a hairline; ghost "Previous page" / "Next page" (chevrons, disabled at the ends) around the numbers ("Page N", 44px, hairlines between; the current one ink 500, underlined, `aria-current="page"`) and "Page 1 of 2" from 768px; on phones the numbers on one line with Previous and Next under them (arrows only below 360px). A page change moves focus to its first order's `h3`, brought to 16px under the sticky header when it starts outside the window.
+
+### 34.8 `ReviewModal`
+
+- **Props** (unchanged): `open`, `onClose`, `product` (`{ productId, name, image }`), `existing` (the customer's review or `null`), `onSubmit` (async; receives `{ rating, title, body }`, trimmed), `isDarkMode` (accepted; the tokens flip by themselves).
+- **Surface:** a portal on `<body>` at `--sf-z-modal`; the overlay `--sf-color-overlay` (a click closes); a `role="dialog"` `aria-modal` dialog named by its `h2` ("Write a review" / "Edit your review", `.sf-display-sm`) and described by the piece's name; the page tone, a hairline, radius md, `--sf-shadow-lg`, `min(520px, 100vw − 32px)`, 40px padding; a 44px "Close" at the top right. Up to 640px a bottom sheet (8px top corners, a hairline on the top edge, safe-area padding), the buttons sharing the row.
+- **Content:** the piece between hairlines (a 44px-wide 4:5 thumbnail, decorative, `PLACEHOLDER_IMG` fallback; the name 15px 500); for an edit, the note in a sand `.sf-panel` ("Editing resubmits your review for approval before it shows on the product page."); "Your rating"; Title (optional, ≤ 80) and Review (optional, ≤ 1000) as `.sf-field`s with hints taken from the old placeholders ("Sum it up in a line.", "What did you like or dislike? How is the quality?") and counts on the right ("0/80"; read as "0 of 80 characters" through the field's description); a `role="alert"` slot for the request's failure ("Something went wrong. Please try again."); ghost "Cancel" and primary "Submit review" / "Update review" ("Submitting…", busy and `aria-disabled` while it runs).
+- **Stars:** an ARIA radio group named "Your rating", `aria-required`; five `role="radio"` buttons "1 star" … "5 stars", 44px targets around 32px glyphs (gold `--sf-color-star` when filled, the control boundary's tone when empty, filled up to the hover as before); one tab stop (the chosen star, else the first); ArrowRight / ArrowUp and ArrowLeft / ArrowDown move and choose, wrapping; Home and End jump. "4 out of 5" beside them for sighted users (`aria-hidden`). Submitting without a rating shows "Please select a star rating." under them (`.sf-field__error`), turns the empty stars to the error tone, sets `aria-invalid` and the description on the group, and puts focus on the tab stop; choosing a star clears it.
+- **Focus and keys:** `useFocusTrap` with the tab-stop star as `initialFocusRef` (the first star for a new review, the chosen one for an edit), Tab cycles, Escape closes, focus returns to the opener ("Rate & review", which then reads "Edit review"); `useBodyScrollLock`. While the request runs nothing dismisses the dialog (Escape, the overlay, Close and Cancel wait). A `<form noValidate>`: Enter in the title submits. Each opening starts from the review being edited, or clean.
+
+### 34.9 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| Track and Details panels | unfold from no height with a fade over `--sf-duration` (`--sf-ease-in-out`); fold the same way | opacity only (framer's `reducedMotion` leaves height alone, so the page spells it out) |
+| Chevrons | turn 180° over `--sf-duration` | instant (the tokens collapse) |
+| Review dialog and overlay | the auth modal's: fade and an 8px rise over `--sf-duration` (`--sf-ease-out`), out with `--sf-ease-in-out` | opacity only |
+| Cards, chips, buttons | no entrance; colour changes only (the primitives') | — |
+
+Focus scrolls (pagination) are instant under reduced motion.
+
+### 34.10 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Orders: shipped badge, review pending (info on info-bg) on the card surface | 5.95 ✓ | 5.81 ✓ | 4.5:1 |
+| Orders: delivered badge, review published (success on success-bg) on the card surface | 5.40 ✓ | 5.77 ✓ | 4.5:1 |
+| Orders: cancelled / returned badge (muted on sand) on the card surface | 5.15 ✓ | 5.21 ✓ | 4.5:1 |
+| Orders: shipped badge (info on info-bg) on the sand Track panel | 5.95 ✓ | 4.96 ✓ | 4.5:1 |
+| Orders: delivered badge (success on success-bg) on the sand Track panel | 5.40 ✓ | 4.92 ✓ | 4.5:1 |
+| Orders: cancelled / returned badge on the sand Track panel (outlined: muted on the panel's sand) | 5.15 ✓ | 5.21 ✓ | 4.5:1 |
+| Orders: Cancel order hover (error on error-bg over the card surface) | 5.50 ✓ | 5.55 ✓ | 4.5:1 |
+| Orders: progress, a step not yet reached (border-strong ring) on the sand panel | 3.19 ✓ | 3.27 ✓ | 3:1 |
+| Orders: quiet badge filled with sand on the sand panel (not used) | 5.15 | 4.41 | info |
+
+The info row is why the quiet badge is outlined on the panel. Every other pairing is already in §14, §16.8, §30.8 and §31.11: ink, secondary and muted text on the page, the surface and the sand; the ink badge (primary-contrast on primary); the error tone on the surface; the success check on the surface; the focus ring on the page, the surface and the sand; the danger confirm and its hover; gold and border-strong stars on the page tone; the dialog's alert (error on error-bg over the page tone). In forced-colours mode the progress dots and segments are `CanvasText` / `GrayText`, the stars `CanvasText` / `GrayText`, and the dialog's alert gets a `CanvasText` frame.
+
+### 34.11 Decisions to keep
+
+- **The rules stay verbatim and exported;** `RETURN_WINDOW_DAYS` must equal `STOREFRONT_CONFIG.returnsWindowDays` (a test pins the two, so the trust badges and the return button cannot disagree).
+- **Badges and chips keyed by the configs' `className`s,** so a status's tone follows `STATUS_CONFIG` / `REVIEW_STATUS` without a second mapping of the statuses.
+- **The progress line never runs ahead of the data:** no estimated dates, no step beyond the derived status, one sentence for a closed order.
+- **The confirm states what the cascade does** (the external refund, the store credit back), and focus starts on "Keep order".
