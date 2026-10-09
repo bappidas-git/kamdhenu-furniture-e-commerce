@@ -2262,3 +2262,121 @@ No new pairs: ink, secondary and muted text on the page and on sand (the count, 
 - **No heart on the wishlist's cards**; removing is the page's own "Remove", named after its piece.
 - **The merge uploads only what the device saved itself** (`WishlistContext`, an approved exception to the fixed context logic). On a sign-in or a reload with a session, a row with a local id (saved as a guest, or an upload that failed) is uploaded. A row the API had confirmed that the account no longer has was removed elsewhere (on another device or tab, one by one or with Clear all), or belongs to another account, and it is dropped, never uploaded again. A row confirmed while the merge's read is in flight stays.
 - **Snapshots:** in JSON Server mode a row is the snapshot taken when the piece was saved (price, stock, variants), and the page shows it as stored; the Laravel API nests the live product under each row and `WishlistContext` flattens it. Setting a product's stock to 0 in `products` does not reach a saved row in JSON Server mode (`scripts/validate-db.js` checks the seeded snapshots against the catalogue).
+
+## 36. Checkout
+
+Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`/checkout`). No new tokens and no new primitives: the breadcrumb is §24's, the promises' outline icons are `trustIcons.js` (§20), the line rows and the quantity stepper are the cart drawer's (§28.2), and the forms, radios, switch, panels, buttons and skeletons are §16's. Every figure, rule, read and write is the old page's, copied verbatim (the order math, store credit, the COD rules, the coupon, the effects, `validateAddress`, `handleNext`, `placeOrder` and its payload); BUILD_LOG Prompt 26 lists the three additions.
+
+### 36.1 Structure
+
+- A page frame on `--sf-container` with the gutter: the header, then the layout.
+- **Header:** `Breadcrumb` (Home › Checkout), the serif `h1` "Checkout" (`.sf-display-md`), the stepper (36.2).
+- **Layout:** the order summary first in the DOM (it opens the page on phones), then the step: one `motion.section` per step named by its `h2`, then the actions (36.9).
+- **Landmarks and headings:** the `h1`; the summary is a region named "Order summary" (its `h2`, visually hidden up to 900px, where the toggle names it); each step's `h2` (`.sf-display-sm`, `tabIndex -1`) reads "Step 2 of 4: Shipping details" (the position is visually hidden); fieldsets with legends for every radio group and the new-address form; the review's three blocks are regions named by their `h3` eyebrows.
+
+### 36.2 The stepper
+
+- `<ol aria-label="Checkout progress">` of four hairline segments in a grid (8px gaps; 4px up to 600px). Each: the serif numeral (`--sf-text-lg`, lining, `aria-hidden`) and the eyebrow label over a 1px line.
+- **States** (`data-state`): done = ink line and ink text, with ", done" for screen readers; current = a 2px `--sf-color-accent` underline (1px less padding, so the text stays level), ink text, `aria-current="step"`; upcoming = stone line, muted text. Colours move over `--sf-duration`.
+- **Up to 600px** the labels are visually hidden (still read) and one line under the segments shows "Step 2 of 4 · Shipping" (eyebrow, secondary, `aria-hidden`: the list says the same).
+- Forced colours: upcoming `GrayText`, current `Highlight`.
+
+### 36.3 Layout and the summary
+
+- **From 901px:** `grid-template-columns: minmax(0, 7fr) minmax(0, 5fr)`, column gap `clamp(32px, 4vw, 64px)`, `align-items: start`. The summary (a hairline surface card) is sticky at `top: calc(var(--sf-header-height) + 24px)` with `max-height: calc(100vh - var(--sf-header-height) - 48px)`. In a window too short for it, it scrolls on its own (`overscroll-behavior: contain`, thin stone scrollbar) and only then takes a tab stop (`tabIndex 0`, found with a `ResizeObserver`) and a focus ring, so the keyboard can scroll it.
+- **Up to 900px:** one column; the summary sits above the step as a disclosure: a 56px button "Order summary" with the amount payable in the serif and a chevron (`aria-expanded`, `aria-controls`), named "Order summary, ₹X". Closed by default, open on the Review step; a choice made on a step lasts until the step changes. The figure is a skeleton until the store's reads have settled.
+- **The body:** the `h2` "Order summary"; the first three lines (name, two-line clamp; "Walnut · Qty 2" muted; the line total), "+N more item(s)"; then a `dl`: Subtotal, "Discount (CODE)" (−, the discount voice), Shipping ("Free" in success, the amount, or "—" with "Not chosen yet" for screen readers), "Tax (18% GST)" (the store's rate), the hairline and Total (serif `--sf-text-lg`), then "Store credit" (−) and "Amount payable" when credit applies. Shipping and tax are skeletons until the methods and the settings have been read (either way), and the tax row reads plain "Tax" until the settings give the rate.
+- **The promises** (a hairline above, a list named "Our promises", 11px uppercase muted labels beside 16px accent outline icons, the drawer's row): "Secure payment"; "Cash on Delivery available" only while the settings say `codEnabled`; "Easy returns · N days" from `STOREFRONT_CONFIG.returnsWindowDays` (none at 0); the delivery cue of the chosen method, else Standard: "Delivery ₹499.00 · free above ₹9,999.00", or "Free delivery" for a free method. Nothing until the reads have settled, and nothing the data does not say.
+
+### 36.4 Step 1: the cart
+
+- **Lines:** the drawer's row (§28.2) without links: a 72 × 90 sand thumbnail with a hairline frame (`PLACEHOLDER_IMG` + `onImageError`, lazy, `alt=""`), the name in the serif (17px), "Remove" (13px secondary `.sf-btn--link`, named "Remove <name>, <option>"), the option, "₹X each", then the 36px hairline quantity pill ("Decrease quantity" / "Increase quantity" in a group named "Quantity, <name>, <option>"; − unavailable at 1, + unavailable at the line's stock with "No more stock available"; `aria-disabled`, so focus stays) and the line total.
+- **Coupon** (max 28rem): a `<form noValidate>` with the label "Coupon code", the field (typed in capitals, `aria-invalid` and `aria-describedby` once a press was refused) and a ghost "Apply"; Enter applies. The message slot `#checkout-coupon-message` is a polite live region; errors use `.sf-field__error` and carry the API's own words: the mock's text in JSON Server mode ("Minimum order amount is ₹5000"), the server's reason from the response with the Laravel API (never axios' status line). Applied: a hairline surface row "✓ WELCOME500 applied −₹500.00" (", capped at ₹2,000.00" when the cap bit) and "Remove" (named "Remove coupon WELCOME500"). The auto-removal note does not mark the field.
+- **Guests:** a hairline sand panel, "Sign in to check out." (`.sf-display-sm`) / "Your orders, their tracking and your saved addresses stay with your account.", a ghost "Sign in" and a link button "Create an account" (both `aria-haspopup="dialog"`, opening the auth dialog's tabs); the primary reads "Sign in to continue" and opens the dialog too.
+
+### 36.5 Step 2: shipping
+
+- **Deliver to** (a fieldset, shown when the account has addresses): hairline radio cards (`.sf-radio`), the default first, two columns from 601px, at least 44px: an eyebrow (the label, e.g. "Home", and "Default"), the name, the lines, the city line and the phone; the chosen card has an ink border. "A new address" spans the row as a slim card and clears the selection and the saved card's messages (they belong to that address). A saved address that fails the checks says what it needs ("This address needs a phone number and a 6-digit PIN.") with a link to "My addresses".
+- **The new-address form** (legend "New address", or "Delivery address" without saved ones): the fields of My addresses (§32.2): visible labels, `autocomplete` (`given-name`, `family-name`, `tel` + `inputmode="tel"`, `address-line1`, `address-line2`, `address-level2`, `address-level1`, `postal-code` + `inputmode="numeric"`, `country-name`), hints ("10-digit mobile number", "6-digit PIN", "Currently shipping within India only"), "(optional)" on line 2, the read-only sand "India"; two columns from 601px. Errors under their fields ("Phone number is required", "Enter a valid 6-digit PIN"), `aria-invalid` + `aria-describedby`; values are kept.
+- **Delivery method** (a fieldset): hairline radio rows: the name, the window ("7–10 business days", from `estimatedDays`), the cost on the right ("Free" in success when the free-above rule applies, else the amount) over the muted note "Free above ₹9,999.00"; the chosen row carries a 2px accent bar on its left (a border, so forced colours keep it). While the methods load: "Loading delivery options…" over two skeleton rows (`aria-busy`). None active: "No delivery methods are available right now. Please try again later." on sand. A Continue without one: the message in an alert, focused.
+
+### 36.6 Step 3: payment
+
+- **Store credit** (when the balance is above 0): the one sand panel. The eyebrow "Store credit", the balance in the serif (`--sf-text-display-sm`, "Available balance" for screen readers), "Available to use on this order.", and an `.sf-switch` "Apply to this order". On: the amount field (`#checkout-credit-amount`, `type="number"`, `inputmode="decimal"`, a ₹ prefix, no spin buttons), "Use max" (a link button, ", ₹X" for screen readers), the hint "Up to ₹X on this order.", then "Store credit applied −₹X" and "Remaining to pay".
+- **Covered:** "Your store credit covers this order in full — no further payment needed." (success on its tint, a check glyph, in a status region) replaces the payment options.
+- **Payment method** (a fieldset): the method rows with a one-line description: "Credit or debit card" (Visa, Mastercard, RuPay), "UPI" (Google Pay, PhonePe, Paytm), "Net banking" (Pay from your bank account), "Wallet" (Paytm, PhonePe, Amazon Pay), "Cash on delivery". COD's line is its real condition: "Available for orders up to ₹50,000.00" ("from ₹X" when there is a minimum; no cap printed when there is none, where the old hint said "up to ₹0.00"; "Pay when your order arrives" when there are no limits); unavailable for this amount, the row is disabled and reads "Not available for this amount · Available for orders up to ₹X"; switched off in the settings, "Currently unavailable".
+- **Details:** card (a surface sub-form "Card details": number `cc-number`, expiry `cc-exp` "MM/YY", security code `cc-csc` (masked, "3 or 4 digits"), name `cc-name`; numeric keypads; still a visual placeholder, never validated or sent), UPI ID ("For example, name@upi"), a bank `.sf-select` (the six banks), or the COD note (info on its tint): "Pay with cash when your order is delivered. Available for orders up to ₹X." The muted note "Payment details are collected securely at the gateway." appears only outside mock mode with Razorpay or Stripe enabled in the settings, and never for COD.
+
+### 36.7 Step 4: review
+
+- "Review your order": the lines ("Qty 2 × ₹4,499.00" and the line total), then three hairline blocks, each with an eyebrow `h3` and an "Edit" link button (named "Edit delivery address" / "Edit delivery method" / "Edit payment"): Deliver to (name, lines, phone), Delivery method (name, window, cost), Payment (the method, the credit applied, then "You will be charged ₹X." or "Pay ₹X in cash on delivery.", or "Paid in full with store credit (₹X).").
+- **The facts** beside Place order: "Amount payable" with the figure in the serif (20px), then a list named "About this order": "Delivery in 7–10 business days" (the chosen method), "Easy returns within 7 days of delivery" (none at 0), and "Secure payment", "Pay in cash on delivery" or "Paid in full with store credit".
+- **The failure alert:** an always-present `role="alert"` slot under the facts. When an attempt ends without an order: "We couldn't place your order. Nothing has been charged. Please try again." (error on its tint, an alert glyph). OrderContext's own "Order Failed" dialog opens first and hides the page from assistive tech, so the message comes in once that dialog has closed and handed focus back to Place order (at most 500ms later), and is announced. It goes when a new attempt starts and when the step changes.
+
+### 36.8 States
+
+| State | When | What shows |
+|---|---|---|
+| Session restore | the first render, while `AuthContext` restores the session | nothing (as Profile and Wishlist), so a reload never flashes the empty state or the guest panel |
+| Empty | no lines (and no order just placed) | the header, then a sand panel: "Your cart is empty." (`h2`, `.sf-display-sm`, `tabIndex -1`), "Pieces you add to your cart will be here, ready to check out.", a primary "Browse furniture" to `/products` (full width up to 480px) |
+| Reads pending | the methods or the settings not read yet | the summary's shipping, tax, totals and the toggle's figure as skeletons ("Tax" without its rate); no promises; Step 2's loading rows, with Continue unavailable there |
+| Read failed | a method or settings read failed | the figures as the old page computed them (no method chosen: "—"; tax at the default 18%); no COD promise |
+| Processing | an order being placed | the primary reads "Processing…", `aria-busy`, `aria-disabled` (focus stays, a second press does nothing), full ink with a progress cursor; Back and Edit unavailable |
+| Failed | the attempt ended without an order | the alert (36.7); the step, the cart and every choice kept |
+
+### 36.9 Actions
+
+A hairline above; "Back" (`.sf-btn--link`, a back glyph, secondary) on the left from step 2; the primary on the right (`.sf-btn--primary --lg`, min 12rem): "Continue", "Sign in to continue" (a guest on the cart; `aria-haspopup="dialog"`), "Place order · ₹10,527.00", "Place order" (credit covers it), "Processing…". Up to 600px they stack: Back above, the primary full width.
+
+- On Shipping the primary is unavailable (`aria-disabled`) until the delivery methods have been read, so a press never reports a missing method that is only still loading.
+- A press while the step's panel is still coming in (the old one fading out, about 160ms) is ignored: the label changes at once, so the second press of a double-click on Continue at Payment would otherwise place the order before the review shows (the old page did).
+
+### 36.10 Focus
+
+| After | Focus moves to |
+|---|---|
+| A step change (Continue, Back, Edit) | the new step's `h2`, once its panel is in (`preventScroll`; the preserved smooth scroll to the top brings the page up) |
+| Continue with gaps on Shipping | the first invalid field (or the chosen saved card when the saved address fails), scrolled clear of the sticky header; the delivery-method message when none is chosen |
+| Remove | the next line's Remove (else the previous one's); the empty state's `h2` when none is left |
+| A coupon applied / removed | the applied line / the field, only when focus had dropped to the page |
+| Signing in from the guest panel | the primary, once the dialog has gone (only for a guest seen after the session restore) |
+| A failed order | stays on Place order (SweetAlert2 returns it there) |
+| Arriving | nowhere (under React's StrictMode too: the step last seen tells a change from a mount's repeated effects) |
+
+A panel fading out is `inert`. Every control shows its primitive's ring; the headings are reading positions with no ring.
+
+### 36.11 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| A step change | the outgoing panel fades out over `--sf-duration-fast` (`--sf-ease-in-out`), then the incoming one fades in over `--sf-duration` (`--sf-ease-out`), rising 8px (`AnimatePresence mode="wait"`, none on arrival) | opacity only |
+| Stepper segments, method bars, address borders | colour over `--sf-duration` / `--sf-duration-fast` | collapse (token durations) |
+| Summary chevron | rotates 180° over `--sf-duration` (`--sf-ease-in-out`) | collapse |
+| Skeletons | the primitive's shimmer | static |
+
+### 36.12 Contrast
+
+New pairs (`node scripts/check-contrast.js`):
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Checkout: order alert (error on error-bg) on the page tone | 5.50 ✓ | 6.18 ✓ | 4.5:1 |
+| Checkout: covered note (success on success-bg) on the page tone | 5.40 ✓ | 6.44 ✓ | 4.5:1 |
+| Checkout: COD note (info on info-bg) on the page tone | 5.95 ✓ | 6.49 ✓ | 4.5:1 |
+| Checkout: read-only country (ink) on its sand fill over the page | 14.64 ✓ | 13.96 ✓ | 4.5:1 |
+| Checkout: stepper underline and chosen method bar (accent) on the page tone (graphic) | 3.57 ✓ | 9.38 ✓ | 3:1 |
+| Checkout: “Free” (success) on the page tone | 5.93 ✓ | 8.58 ✓ | 4.5:1 |
+| Checkout: “Free” (success) on the summary card (surface) | 6.34 ✓ | 7.84 ✓ | 4.5:1 |
+| Checkout: credit switch track and amount field boundaries (border-strong) on the sand panel | 3.19 ✓ | 3.27 ✓ | 3:1 |
+| Checkout: credit switch knob, off (muted) on its surface track (graphic) | 6.11 ✓ | 6.06 ✓ | 3:1 |
+
+Everything else (ink, secondary and muted text on the page, surface and sand; the discount voice; the focus ring; the primary, ghost and link buttons) is in §14 and §16.8. Forced colours: the chosen card and row borders are `Highlight`, and the three tinted messages gain a `CanvasText` border.
+
+### 36.13 Decisions to keep
+
+- **The logic is frozen.** The order math, the rules, the effects and the payload are the old page's, verbatim (a script compares 24 blocks with `main`). Only three additions: the settled flags for the loading states, the tightened phone and PIN checks, and the failure alert; and one change the owner approved, the coupon's refusal message in Laravel mode (BUILD_LOG Prompt 26).
+- **Promises come only from data:** settings (COD), shipping methods (delivery), config (returns). No gateway claim in mock mode, no badges, no timers.
+- **The failure alert waits for OrderContext's dialog** (it sets `aria-hidden` on the page), so the message is announced, not lost behind it.
+- **Busy, not disabled:** the primary stays focusable while an order is placed.
+- **A press counts only once its step is on screen**, so a double-click can never skip the review.
+- **The summary opens itself on the Review step on phones**, where its figures are what the shopper is confirming.

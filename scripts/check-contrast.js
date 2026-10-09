@@ -303,6 +303,22 @@ const PAIRS = [
   ["Orders: cancelled / returned badge on the sand Track panel (outlined: muted on the panel's sand)", "--sf-color-text-muted", SAND, AA],
   ["Orders: Cancel order hover (error on error-bg over the card surface)", "--sf-color-error", ["--sf-color-error-bg", "--sf-color-surface"], AA],
   ["Orders: progress, a step not yet reached (border-strong ring) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
+  // Checkout (Prompt 26): the steps sit on the page tone (the failure alert,
+  // the covered note and the COD note on their tints there; the read-only
+  // country is a sand field there); the stepper's current underline and the
+  // chosen delivery method's bar are the accent (aria-current and the radio
+  // carry the state too); "Free" is success text on the page and in the
+  // summary card; the store-credit panel is sand, with a switch and an amount
+  // field whose boundaries sit on it.
+  ["Checkout: order alert (error on error-bg) on the page tone", "--sf-color-error", ["--sf-color-error-bg", "--sf-color-bg"], AA],
+  ["Checkout: covered note (success on success-bg) on the page tone", "--sf-color-success", ["--sf-color-success-bg", "--sf-color-bg"], AA],
+  ["Checkout: COD note (info on info-bg) on the page tone", "--sf-color-info", ["--sf-color-info-bg", "--sf-color-bg"], AA],
+  ["Checkout: read-only country (ink) on its sand fill over the page", "--sf-color-text", ["--sf-color-sand", "--sf-color-bg"], AA],
+  ["Checkout: stepper underline and chosen method bar (accent) on the page tone (graphic)", "--sf-color-accent", "--sf-color-bg", LARGE],
+  ["Checkout: “Free” (success) on the page tone", "--sf-color-success", "--sf-color-bg", AA],
+  ["Checkout: “Free” (success) on the summary card (surface)", "--sf-color-success", "--sf-color-surface", AA],
+  ["Checkout: credit switch track and amount field boundaries (border-strong) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
+  ["Checkout: credit switch knob, off (muted) on its surface track (graphic)", "--sf-color-text-muted", "--sf-color-surface", LARGE],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
