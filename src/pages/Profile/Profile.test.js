@@ -109,9 +109,9 @@ const save = async () => {
   fireEvent.click(saveButton());
   await waitFor(() => expect(saveButton()).not.toHaveAttribute("data-busy"));
 };
-// Presentational wrappers, which have no role to query: the frame around a
-// legacy section, the toast around its status line, the .sf-field around an
-// input (what the page measures against the sticky header).
+// Presentational wrappers, which have no role to query: a section's first
+// element (its card or wrapper), the toast around its status line, the
+// .sf-field around an input (what the page measures against the sticky header).
 // eslint-disable-next-line testing-library/no-node-access
 const frameOf = (region) => region.firstElementChild;
 // eslint-disable-next-line testing-library/no-node-access
@@ -175,11 +175,13 @@ test("?tab=wallet opens Store credit and reads the balance and the ledger, as th
   apiService.wallet.getBalance.mockResolvedValue(2302);
   renderProfile("/profile?tab=wallet");
   const content = section("Store credit");
-  expect(within(content).getByRole("heading", { level: 2, name: "Store Credit" })).toBeInTheDocument();
+  expect(within(content).getByRole("heading", { level: 2, name: "Store credit" })).toBeInTheDocument();
+  expect(within(content).getByRole("heading", { level: 2, name: "Transactions" })).toBeInTheDocument();
   expect(navLink("Store credit")).toHaveAttribute("aria-current", "page");
   expect(await within(content).findByText("₹2,302.00")).toBeInTheDocument();
   expect(apiService.wallet.getBalance).toHaveBeenCalledWith(USER.id);
   expect(apiService.wallet.getTransactions).toHaveBeenCalledWith(USER.id);
+  expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
 });
 
 test.each(["orders", "wishlist", "logout", "profile", "PASSWORD", ""])(
@@ -194,20 +196,7 @@ test.each(["orders", "wishlist", "logout", "profile", "PASSWORD", ""])(
   }
 );
 
-test("the legacy wallet section keeps its dark styles in dark mode, inside a neutral frame", async () => {
-  useTheme.mockReturnValue({ isDarkMode: true });
-  renderProfile("/profile?tab=wallet");
-  expect(frameOf(section("Store credit"))).toHaveClass("legacy", "dark");
-  await within(section("Store credit")).findByText("No store-credit transactions yet");
-});
-
-test("in light mode the frame has no dark class, and the Profile section has no frame", async () => {
-  const { unmount } = renderProfile("/profile?tab=wallet");
-  expect(frameOf(section("Store credit"))).toHaveClass("legacy");
-  expect(frameOf(section("Store credit"))).not.toHaveClass("dark");
-  await within(section("Store credit")).findByText("No store-credit transactions yet");
-  unmount();
-  sessionStorage.clear();
+test("the Profile section is its hairline card (no legacy frame)", () => {
   renderProfile("/profile");
   expect(frameOf(section("Personal information"))).not.toHaveClass("legacy");
   expect(frameOf(section("Personal information"))).toHaveClass("sf-card", "sf-card--hairline");
@@ -229,17 +218,20 @@ test("a tab switch mounts the new section afresh, so it reveals (not the last se
 test.each([
   ["addresses", "Addresses"],
   ["password", "Change password"],
-])("?tab=%s is restyled: no legacy frame, no dark class, in either mode", (tab, region) => {
+  ["wallet", "Store credit"],
+])("?tab=%s is restyled: no legacy frame, no dark class, in either mode", async (tab, region) => {
   useTheme.mockReturnValue({ isDarkMode: true });
   renderProfile(`/profile?tab=${tab}`);
   expect(frameOf(section(region))).not.toHaveClass("legacy");
   expect(frameOf(section(region))).not.toHaveClass("dark");
+  // The wallet's read settles before the test ends.
+  if (tab === "wallet") await within(section(region)).findByText("No transactions yet.");
 });
 
 test("arriving on a tab leaves focus where the page load put it", async () => {
   renderProfile("/profile?tab=wallet");
   expect(document.body).toHaveFocus();
-  await within(section("Store credit")).findByText("No store-credit transactions yet");
+  await within(section("Store credit")).findByText("No transactions yet.");
 });
 
 test("arriving from another page of the app (the session already restored) leaves focus alone too", () => {
@@ -280,7 +272,7 @@ test("a tab from the nav: replace, the new section, focus on it, the last messag
 
 test("Profile in the nav goes back to /profile", async () => {
   renderProfile("/profile?tab=wallet");
-  await within(section("Store credit")).findByText("No store-credit transactions yet");
+  await within(section("Store credit")).findByText("No transactions yet.");
   fireEvent.click(navLink("Profile"));
   expect(location()).toBe("/profile");
   expect(section("Personal information")).toHaveFocus();
@@ -368,8 +360,8 @@ test("Sign in opens the dialog on Sign in; Create account on its own tab", () =>
 test("signing in renders the account in place, on the tab asked for; focus waits for the dialog", async () => {
   renderProfile("/profile?tab=wallet", { user: null });
   fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
-  // The sign-in, and the wallet read it starts, settle inside act(): the
-  // wallet shows the same empty state before its read as after it.
+  // The sign-in, and the wallet read it starts, settle inside act(), so the
+  // wallet has left its skeletons for the empty state by the checks below.
   // eslint-disable-next-line testing-library/no-unnecessary-act
   await act(async () => {
     fireEvent.click(screen.getByRole("button", { name: "Dialog sign-in" }));
@@ -381,7 +373,7 @@ test("signing in renders the account in place, on the tab asked for; focus waits
   expect(location()).toBe("/profile?tab=wallet");
   expect(h1()).toHaveAccessibleName(greeting("John"));
   expect(apiService.wallet.getBalance).toHaveBeenCalledWith(USER.id);
-  expect(within(section("Store credit")).getByText("No store-credit transactions yet")).toBeInTheDocument();
+  expect(within(section("Store credit")).getByText("No transactions yet.")).toBeInTheDocument();
   expect(h1()).not.toHaveFocus();
 
   fireEvent.click(screen.getByRole("button", { name: "Dialog close" }));

@@ -358,6 +358,13 @@ const INFO = [
   // Prompt 19: a ticket's notches are page-tone half-discs cut into the
   // surface (decorative; the hairline arc draws their edge).
   ["Ticket: notch (page tone) vs the ticket surface", "--sf-color-bg", "--sf-color-surface"],
+  // Prompt 23: the store-credit card is navy in both modes. On the dark page
+  // the two navies are close, so a 1px on-dark ring just outside the fill
+  // draws its edge (paper over paper in light mode: unseen). While the
+  // balance loads, its bar is the on-dark tint on the navy.
+  ["Store credit card: navy vs the page", "--sf-color-surface-dark", "--sf-color-bg"],
+  ["Store credit card: edge ring (on-dark border over the page) vs the page", ["--sf-color-on-dark-border", "--sf-color-bg"], "--sf-color-bg"],
+  ["Store credit card: balance skeleton (on-dark soft) vs the navy", ["--sf-color-on-dark-soft", "--sf-color-surface-dark"], "--sf-color-surface-dark"],
 ];
 
 // ---------------------------------------------------------------------------

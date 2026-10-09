@@ -1813,7 +1813,7 @@ Every other pairing is already in §14 and §16.8: ink, secondary and muted text
 
 ## 31. Account shell and Profile
 
-Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Store credit section stays the boilerplate's until Prompt 23; the Addresses and Change password sections are §32, since Prompt 22), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
+Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses and Change password sections are §32, since Prompt 22; the Store credit section is §33, since Prompt 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
 
 ### 31.1 Using the shell
 
@@ -1914,7 +1914,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 
 ### 31.10 Motion
 
-`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (the legacy wallet section keeps its own slide until Prompt 23; Addresses and Change password reveal like the Profile card, §32.6). Under reduced motion: opacity only, instant scrolling.
+`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (Addresses and Change password reveal like the Profile card, §32.6; Store credit reveals its balance card, §33.6). Under reduced motion: opacity only, instant scrolling.
 
 ### 31.11 New contrast pairs
 
@@ -2003,3 +2003,77 @@ SweetAlert, unchanged words: "Delete this address?" / "This address will be remo
 | Password: meter segment and checklist check, success tone, on the card surface | 6.34 ✓ | 7.84 ✓ | 3:1 |
 
 Every other pairing is already in §14, §16.8 and §31.11: ink, secondary and muted text on the page, the surface and the sand; the field boundary on the surface and on the sand ("Set: checkbox boundary on the sand panel"); the focus ring on the sand and the surface; the error tone on the surface (Delete, the meter's weak segment: "Field error text on surface"); the caramel bar on the surface ("Accent on surface"); the ink badge, the chosen chip and the primary button (primary-contrast on primary); the danger confirm and its hover (§31.11). In forced-colours mode the meter's segments are `GrayText` / `CanvasText`, the chosen chip is `Highlight`, and the default card's bar is a border.
+
+---
+
+## 33. Store credit
+
+Written by Prompt 23. Files: `src/pages/Profile/Profile.js` + `.module.css` (the `wallet` section of `/profile`, `?tab=wallet`, inside the account shell of §31). No new tokens and no new primitives. The reads are the tab's own two, unchanged: `apiService.wallet.getBalance(user.id)` and `apiService.wallet.getTransactions(user.id)` in one `Promise.all`, started when the tab opens and again after "Try again". The balance shown is the API's: the page never adds up the ledger.
+
+### 33.1 Structure
+
+- The balance card, the "How it works" line, then the ledger under the `h2` "Transactions". Two `h2`s: "Store credit" (the card's eyebrow) and "Transactions"; the section region "Store credit" takes focus after a tab switch (§31.4), so the card can come first.
+- While the reads run the wrapper is `aria-busy` and carries a visually hidden "Loading your store credit".
+
+### 33.2 The balance card
+
+- **Always navy**, identical in both modes: `--sf-color-surface-dark` with `--sf-color-on-dark*` (the CTA panel's tokens, §22.7), radius sm, padding `clamp(24px, 4vw, 40px)`. A grid: the text on the left, "Shop now" bottom-right; up to 600px stacked, the button full width.
+- The eyebrow `h2` "Store credit" (`.sf-eyebrow` in `--sf-color-on-dark-muted`); the balance, `formatCurrency(balance)` in `.sf-display-md` (Playfair, lining tabular figures), after a visually hidden "Available balance"; the hint "Apply your store credit at checkout toward any order." (14px, on-dark muted, 46ch); "Shop now", `.sf-btn--paper-ghost` to `/products` (its on-dark caramel focus ring).
+- **Edge:** `box-shadow: 0 0 0 1px var(--sf-color-on-dark-border)`, just outside the fill. On paper it is paper over paper (unseen); on the dark page it is a soft line, where the two navies meet at 1.12 : 1. A ring rather than a border, so the fill lines up with the hairlines below it. Forced colours: a 1px `CanvasText` border.
+- **The figure:** `Number(balance) || 0`, as before (a bare number or `{ balance }` from Laravel, §G of the API doc, both work).
+- **Loading:** the figure's line box is held (`min-height` = display-md × 1.1) by a bar in `--sf-color-on-dark-soft` (its shimmer is the same tint, not the sand block's surface sweep), so the card keeps its height: 182.59px at 1440 and 230.80px at 360, loading and loaded (measured).
+
+### 33.3 How it works
+
+- One line between hairlines (top and bottom `--sf-hairline`, 16px of padding): the eyebrow "How it works" names a list (`aria-labelledby`) of facts in 14px secondary text, each after a 5px caramel dot (`--sf-color-accent`; `CanvasText` in forced colours). It wraps where it must: the label above the facts in the 1024px account column, one fact per line on phones.
+- The facts, static and true of the storefront today (`WALLET_FACTS`): "Credit is added when a refund is issued to store credit" and "Apply it at checkout on any order". **"It never expires" is left out** until the business confirms an expiry policy.
+
+### 33.4 The ledger
+
+| Width | Markup |
+|---|---|
+| From 601px | A hairline `<table>` named by the `h2` (`aria-labelledby`): `<th scope="col">` Date, Description, Amount, Balance in eyebrow type over a hairline (Amount and Balance right-aligned); 16px of cell padding (the first and last columns flush with the content); a hairline under each entry; cells aligned on their first baseline; tabular figures |
+| Up to 600px | A `<ul>` named by the same `h2`: one item per entry between hairlines, holding a `<dl>` of four label / value rows (6.5rem eyebrow labels) |
+
+The stylesheet shows one view and sets the other to `display: none`, which also takes it out of the accessibility tree.
+
+- **Date:** `formatDate(createdAt, "short")` ("Jun 14, 2026", en-US like every storefront date until Prompt 29) in a `<time dateTime>`, secondary. A missing date is a dash with "Date not recorded" for screen readers.
+- **Description:** the reason (15px ink; "Store credit added" / "Store credit used" when there is none). When the reason contains the order number (the API writes "Applied to order ORD-…", "Refund for order ORD-…", "Store credit returned — ORD-… cancelled"), that number is the link to `/orders` (`.sf-btn--link`, in the text's own size and weight, with the primitive's 44px hit area), so it never shows twice. A reason that does not name its order ("Refund for return RET-…") is followed by "Order <link>". "Refund REF-…" follows when the entry has a refund number (13px muted).
+- **Amount:** "+₹4,302.00" in `--sf-color-success` or "−₹1,000.00" in ink (500). The visible text is `aria-hidden`; a visually hidden "Credit of ₹4,302.00" / "Debit of ₹1,000.00" carries it (§33.8). The sign comes from `type` (anything but `"credit"` is a debit, as before), the figure from `Math.abs(amount)`.
+- **Balance:** the entry's own `balanceAfter` (secondary), or a dash with "Not recorded".
+- **Order:** the API's (newest first). The page sorts nothing and adds nothing up.
+- **50 at a time:** above 50 entries, "Showing 50 of 120 transactions" (muted, a polite live region) and a ghost "Show more" that adds 50. Focus moves to the first new row in the view on screen (rows 51, 101… carry `tabIndex -1`, no ring), brought under the header when needed; the last press reads "Showing all 120 transactions" and the button goes. A new visit starts from 50.
+- **Focus scrolling:** the section's links and buttons carry `scroll-margin-top: calc(var(--sf-header-height) + 16px)` and `scroll-margin-bottom: 16px`, so Tab and Shift+Tab bring an off-screen one in with its ring clear of the sticky header and the window's edge. (Chrome applies it only when it scrolls: a control already inside the window but under the header stays there; that is the site-wide `scroll-padding-top` question, Prompt 31.)
+
+### 33.5 States
+
+| State | When | What shows |
+|---|---|---|
+| Loading | every opening of the tab, and after "Try again" | the card with its bar, the facts, the `h2`, then placeholders: the table's head over three rows of bars from 601px, three stacked entries up to 600px (`aria-hidden`) |
+| Ready | both reads resolved | the card, the facts, the ledger (or the empty panel) |
+| Empty | the ledger is empty (or not a list) | a sand `.sf-panel`: "No transactions yet." (`.sf-display-sm`) and "Refunds issued to store credit, and credit you spend at checkout, will appear here." (16px secondary); the card still shows the API's balance |
+| Error | either read rejects | a sand `.sf-panel` in place of the whole section: the `h2` "We couldn’t load your store credit." (`.sf-display-sm`), "Please check your connection and try again.", a primary "Try again" (full width up to 480px) that runs the same two reads |
+
+- A visit never shows an earlier visit's figures (the state resets when the tab closes), and a read that settles after the tab has closed, or after a newer read started, changes nothing.
+- **Try again:** focus waits on the section region while the reads run (the panel makes way for the skeletons), stays there when they succeed, and moves to the new "Try again" if they fail again, unless it has gone somewhere else meanwhile.
+- **Today the error panel cannot appear:** `wallet.getBalance` and `wallet.getTransactions` in `api.js` catch every failure and resolve `0` / `[]`, so a failed read looks like an empty wallet (the coupon read behaves the same, §29.6). The panel follows the moment those reads reject (Prompt 23's build log has the two-line change; `api.js` is not this prompt's to edit).
+
+### 33.6 Motion
+
+`Reveal` on the card (keyed), on every visit; nothing else moves: no reveal on the facts, the rows or the panels, and the old sideways slide is gone. Under reduced motion the card only fades (no transform on any sampled frame). Colour changes on the links and buttons are the primitives' own.
+
+### 33.7 Contrast
+
+No new minimum pairs: every text and control pairing on the section is already in §14 and §16.8 (on-dark and on-dark muted on navy, the paper-ghost button's text, border, hover and focus ring on navy; ink, secondary and muted text on the page and on sand; the success tone on the page; the link's focus outline; the primary button). Three informational rows record the card's edge:
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Store credit card: navy vs the page | 15.33 | 1.12 | info |
+| Store credit card: edge ring (on-dark border over the page) vs the page | 1.00 | 1.57 | info |
+| Store credit card: balance skeleton (on-dark soft) vs the navy | 1.24 | 1.24 | info |
+
+### 33.8 Decisions to keep
+
+- **Hidden words, not `aria-label`, on the amounts.** ARIA 1.2 prohibits naming a generic `span`, and screen readers do not announce such a name reliably; the visible "+₹4,302.00" is `aria-hidden` and the hidden "Credit of ₹4,302.00" is what assistive technology reads, in the table and in the list alike.
+- **Two views, one set of cells.** The table and the list render the same cell components (`LedgerDate`, `LedgerDescription`, `LedgerAmount`, `LedgerBalance`), so the two can never drift.
+- **The order link stays `/orders`.** A deep link (`/orders?order=<number>`) waits for Prompt 24 to support it.
