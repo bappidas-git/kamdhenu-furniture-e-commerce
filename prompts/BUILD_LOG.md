@@ -2691,7 +2691,7 @@ Nothing else changed: `AuthContext.js` (login, register, the toasts and the stor
 - **The toasts repeat the dialog's error, and cover the sheet's button on phones.** AuthContext fires "Login Failed" / "Registration Failed" toasts (bottom-end, 3s) with the same text as the dialog's alert line; now that the dialog sits below SweetAlert they are visible, and at 360px the toast covers the sheet's submit button until it fades. AuthContext is out of scope here; Prompts 29/30 could drop the failure toasts while the dialog shows the message, or move toasts to the top on phones (Prompt 18 noted the same over the cart drawer).
 - **Openers that vanish when you sign in.** The wishlist page's guest banner, checkout step 0's "Log In / Sign Up" prompt and the orders page's "Log In" disappear once you are signed in, so when the dialog closes there is nothing to give focus back to and it lands on `<body>`. The page owners (Prompts 24–26) or Prompt 31 could move focus to the page's next step.
 - **Their labels** still say "Log In" / "Log In / Sign Up" (and AuthContext's toast titles "Login Failed", "Login Error"; `api.js`'s "Please log in instead."), against "Sign in" everywhere else (Prompt 29).
-- **A load-sensitive test elsewhere:** `SpecialOffers.test.js` › "a second failure keeps focus on Try again" (Prompt 19) waits the default 1s for focus to land on the new "Try again" after a second failed read; with two full test runs at once it timed out (focus still on `<body>`). Sequential runs pass. Not changed here; its owner (or Prompt 34) should make the wait deterministic.
+- **A load-sensitive test elsewhere:** `SpecialOffers.test.js` › "a second failure keeps focus on Try again" (Prompt 19) timed out with two full test runs at once (focus still on `<body>`); sequential runs passed. Fixed afterwards on this branch, and the cause was not the 1s wait: see "Follow-up: the Special Offers retry tests" below.
 - **Phone formats differ in the data:** seeded users read `+91 9876543210`; accounts created through the dialog store `+919876543210` (the boilerplate's prefix, unchanged).
 
 ### Notes for later prompts
@@ -2710,3 +2710,21 @@ Nothing else changed: `AuthContext.js` (login, register, the toasts and the stor
 - **Password reset:** still none; "Forgot password?" says so and links to `/support`. Confirm that support can reset a password by hand, and whether a self-service reset is planned for the Laravel API.
 - **"Remember me"** keeps the session after the browser closes (`localStorage`); without it the session ends with the tab. A hint such as "Stay signed in on this device" could make that explicit.
 - **The phone hint** "10 digits, without +91 or 0." The number is stored on the account; nothing here claims what it is used for.
+
+### Follow-up: the Special Offers retry tests
+
+**Date:** 2026-10-09. The load-sensitive test above, fixed on this branch. Only `src/pages/SpecialOffers/SpecialOffers.test.js` changed; the page is untouched.
+
+- **Reproduced:** with six CPU-bound processes and four runs of `SpecialOffers.test.js` at a time, 5 of 12 runs failed. Both retry tests fail this way, not only the one noted above: "a failed read: the panel, then Try again reads again and moves focus to the codes" as well. Every failure was the 1s timeout with focus on `<body>`: focus never landed, it was not late (unloaded, the success test takes about 100 ms and the second-failure test about 30 ms).
+- **Cause:** an instrumented copy of the tests logged `focus()` on the old "Try again" during the click itself. `findBy*` (Testing Library 13.4) resolves as soon as the error panel is in the DOM, and the test then clicks without yielding, possibly before React has run that render's effects. Jest's jsdom has no `setImmediate` or `MessageChannel`, so React's scheduler falls back to `setTimeout(0)`; when the render outlasts its 5ms slice (under load, or on a cold first run), the effects wait for the next task. React runs the queued effects before the click's update. The page's focus effect saw the panel's own change, found the flag the click had just set, and spent it on the old button, which the loading state then removed. When the read settled, the flag was gone, so nothing moved focus. A person cannot click in that gap (the effects run in the same task or the next one), so `SpecialOffers.js` is unchanged.
+- **Change:** both retry tests now settle each read inside `act()`, with the file's `deferred()` helper as its loading tests do. `act()` returns only once React has rendered and run the effects. The tests then check focus directly instead of polling with `waitFor`. The assertions are the same: after a successful retry the codes section has focus, after a second failure the new "Try again" button does, and the read ran twice. A comment above the tests says why.
+- **Verification:**
+  - Under the same load: 20 of 20 runs pass (before: 5 of 12 failed).
+  - A temporary file ran each fixed test 25 times, keeping `console.error` so any act warning would fail it: 50 of 50 pass unloaded, 400 of 400 under load (8 runs), and there are no warnings.
+  - Two full suites at once, twice: 647 of 647 each, exit 0.
+  - `CI=true npm test -- --passWithNoTests`: 647 tests, exit 0, no warnings.
+  - `npm run build`: compiled successfully.
+  - Mutation check: 8 faults in the page's focus logic, run against the new and the old tests. Both catch the same 7. Both miss "the flag is never cleared", which matters only when the page reads again later; nothing in these tests does.
+  - ESLint (the project's config) reports the same 6 findings in the file as at `HEAD`, none from this change.
+  - The temporary files were removed.
+- **Note for later prompts:** with Testing Library 13, `findBy*` and `waitFor` can return before React has run the effects of the render they saw. When a test's next step depends on an effect (focus management, a flag set in a handler), settle the promise inside `act()` instead.
