@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useRef } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
-import { motion, useReducedMotion } from "framer-motion";
+import { Link, useSearchParams } from "react-router-dom";
+import { useReducedMotion } from "framer-motion";
 import Swal from "sweetalert2";
-import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
 import apiService from "../../services/api";
 import AccountLayout from "../../components/account/AccountLayout";
@@ -43,8 +42,14 @@ import styles from "./Profile.module.css";
 //   before. Focus moves with the work: into an opened form, back to what
 //   opened it, and to the nearest card when a card's own button goes away.
 //
-// The wallet section is still the boilerplate's (Prompt 23 restyles it); it
-// keeps its own styles, .dark variants included, inside a neutral frame.
+// STORE CREDIT (§33)
+//   A navy balance card (the balance in the display serif, "Shop now"), a
+//   hairline "How it works" line and the ledger: a hairline table from 601px,
+//   a list of label / value rows up to 600px, 50 entries at a time. The two
+//   reads are the ones the tab always made, getBalance and getTransactions,
+//   started when the tab opens; the balance shown is the API's (the page
+//   never adds up the ledger). Skeletons while they run, an empty state, and
+//   a "Try again" panel when they fail.
 // =============================================================================
 
 const PROFILE_TABS = ["profile", "addresses", "wallet", "password"];
@@ -143,19 +148,235 @@ const CheckGlyph = ({ met }) => (
   </svg>
 );
 
-// Icons for the legacy empty state (the wallet).
-const TabIcon = ({ icon }) => {
-  const icons = {
-    wallet: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
-        <path d="M3 5v14a2 2 0 0 0 2 2h16v-5" />
-        <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
-      </svg>
-    ),
-  };
-  return icons[icon] || null;
+// ---- Store credit (§33) ----------------------------------------------------------
+
+// The ledger lists 50 entries at first; "Show more" adds 50 at a time.
+const WALLET_PAGE_SIZE = 50;
+
+// "How it works": static, and true of the storefront today. A third fact, "It
+// never expires", waits until the business confirms an expiry policy.
+const WALLET_FACTS = [
+  "Credit is added when a refund is issued to store credit",
+  "Apply it at checkout on any order",
+];
+
+// The tab's state before each read: the skeletons, never a figure from an
+// earlier visit. `shown` caps the ledger's rows.
+const WALLET_LOADING = { status: "loading", balance: 0, transactions: [], shown: WALLET_PAGE_SIZE };
+
+// Any entry that is not a credit is a debit, as the ledger was always read.
+const isCreditEntry = (entry) => entry.type === "credit";
+
+// The rows "Show more" can move focus to: the first of each further 50.
+const isPageStart = (index) => index > 0 && index % WALLET_PAGE_SIZE === 0;
+
+// A value the entry does not carry: a dash, with words for screen readers.
+const Missing = ({ label }) => (
+  <>
+    <span aria-hidden="true">—</span>
+    <span className="sf-visually-hidden">{label}</span>
+  </>
+);
+
+const LedgerDate = ({ entry }) => {
+  const time = entry.createdAt ? new Date(entry.createdAt).getTime() : NaN;
+  if (Number.isNaN(time)) return <Missing label="Date not recorded" />;
+  return <time dateTime={new Date(time).toISOString()}>{formatDate(entry.createdAt, "short")}</time>;
 };
+
+// The reason, with the order number in it as the link to Orders ("Applied to
+// order ORD-…"); a reason that does not name the order is followed by
+// "Order ORD-…". The refund number, when the entry has one, goes under it.
+const LedgerDescription = ({ entry }) => {
+  const reason =
+    (typeof entry.reason === "string" && entry.reason.trim()) ||
+    (isCreditEntry(entry) ? "Store credit added" : "Store credit used");
+  const orderNumber = entry.orderNumber ? String(entry.orderNumber) : "";
+  const refundNumber = entry.refundNumber ? String(entry.refundNumber) : "";
+  const at = orderNumber ? reason.indexOf(orderNumber) : -1;
+  const orderLink = orderNumber && (
+    <Link to="/orders" className={cx("sf-btn sf-btn--link", styles.orderLink)}>
+      {orderNumber}
+    </Link>
+  );
+  const orderOnItsOwn = Boolean(orderNumber) && at < 0;
+  return (
+    <>
+      <span className={styles.txReason}>
+        {at < 0 ? (
+          reason
+        ) : (
+          <>
+            {reason.slice(0, at)}
+            {orderLink}
+            {reason.slice(at + orderNumber.length)}
+          </>
+        )}
+      </span>
+      {(orderOnItsOwn || refundNumber) && (
+        <span className={styles.txMeta}>
+          {orderOnItsOwn && <span>Order {orderLink}</span>}
+          {refundNumber && <span>Refund {refundNumber}</span>}
+        </span>
+      )}
+    </>
+  );
+};
+
+// "+₹4,302.00" in the success tone or "−₹1,000.00" in ink, read as "Credit of
+// ₹4,302.00" / "Debit of ₹1,000.00" (the sign and the colour stay visual).
+const LedgerAmount = ({ entry }) => {
+  const credit = isCreditEntry(entry);
+  const amount = formatCurrency(Math.abs(Number(entry.amount) || 0));
+  return (
+    <span className={styles.txAmount} data-type={credit ? "credit" : "debit"}>
+      <span aria-hidden="true">
+        {credit ? "+" : "−"}
+        {amount}
+      </span>
+      <span className="sf-visually-hidden">
+        {credit ? "Credit" : "Debit"} of {amount}
+      </span>
+    </span>
+  );
+};
+
+// The running balance the API recorded with the entry (never worked out here).
+const LedgerBalance = ({ entry }) => {
+  const value = entry.balanceAfter == null || entry.balanceAfter === "" ? NaN : Number(entry.balanceAfter);
+  return Number.isFinite(value) ? formatCurrency(value) : <Missing label="Not recorded" />;
+};
+
+const entryKey = (entry, index) => entry.id ?? `entry-${index}`;
+
+// The ledger twice over: a hairline table (from 601px) and a list of label /
+// value rows (up to 600px). The stylesheet shows one; the other is display:
+// none, which takes it out of the accessibility tree too. `rowRef(view, i)`
+// keeps the rows "Show more" moves focus to.
+const LedgerTable = ({ entries, labelledBy, rowRef }) => (
+  <table className={styles.ledgerTable} aria-labelledby={labelledBy}>
+    <thead>
+      <tr>
+        <th scope="col">Date</th>
+        <th scope="col">Description</th>
+        <th scope="col" className={styles.num}>
+          Amount
+        </th>
+        <th scope="col" className={styles.num}>
+          Balance
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+      {entries.map((entry, index) => (
+        <tr
+          key={entryKey(entry, index)}
+          ref={rowRef("table", index)}
+          tabIndex={isPageStart(index) ? -1 : undefined}
+        >
+          <td className={styles.txDate}>
+            <LedgerDate entry={entry} />
+          </td>
+          <td className={styles.txDescription}>
+            <LedgerDescription entry={entry} />
+          </td>
+          <td className={styles.num}>
+            <LedgerAmount entry={entry} />
+          </td>
+          <td className={cx(styles.num, styles.txBalance)}>
+            <LedgerBalance entry={entry} />
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+);
+
+const LedgerList = ({ entries, labelledBy, rowRef }) => (
+  <ul className={styles.ledgerList} aria-labelledby={labelledBy}>
+    {entries.map((entry, index) => (
+      <li
+        key={entryKey(entry, index)}
+        ref={rowRef("list", index)}
+        tabIndex={isPageStart(index) ? -1 : undefined}
+        className={styles.ledgerItem}
+      >
+        <dl className={styles.txFacts}>
+          <div>
+            <dt>Date</dt>
+            <dd className={styles.txDate}>
+              <LedgerDate entry={entry} />
+            </dd>
+          </div>
+          <div>
+            <dt>Description</dt>
+            <dd>
+              <LedgerDescription entry={entry} />
+            </dd>
+          </div>
+          <div>
+            <dt>Amount</dt>
+            <dd>
+              <LedgerAmount entry={entry} />
+            </dd>
+          </div>
+          <div>
+            <dt>Balance</dt>
+            <dd className={styles.txBalance}>
+              <LedgerBalance entry={entry} />
+            </dd>
+          </div>
+        </dl>
+      </li>
+    ))}
+  </ul>
+);
+
+// Loading: the table's head over three placeholder rows (from 601px), three
+// placeholder entries (up to 600px). Hidden from assistive technology; the
+// section says "Loading your store credit" instead.
+const SKELETON_ROWS = [0, 1, 2];
+const LedgerSkeleton = () => (
+  <div aria-hidden="true">
+    <table className={cx(styles.ledgerTable, styles.ledgerSkeleton)}>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Description</th>
+          <th className={styles.num}>Amount</th>
+          <th className={styles.num}>Balance</th>
+        </tr>
+      </thead>
+      <tbody>
+        {SKELETON_ROWS.map((row) => (
+          <tr key={row}>
+            <td className={styles.txDate}>
+              <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonDate)} />
+            </td>
+            <td className={styles.txDescription}>
+              <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonReason)} />
+            </td>
+            <td className={styles.num}>
+              <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonFigure)} />
+            </td>
+            <td className={styles.num}>
+              <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonFigure)} />
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+    <ul className={cx(styles.ledgerList, styles.ledgerSkeleton)}>
+      {SKELETON_ROWS.map((row) => (
+        <li key={row} className={styles.ledgerItem}>
+          <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonDate)} />
+          <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonReason)} />
+          <span className={cx("sf-skeleton sf-skeleton--text", styles.skeletonFigure)} />
+        </li>
+      ))}
+    </ul>
+  </div>
+);
 
 // The toast's tone glyph, drawn in currentColor (the success or error token).
 const FeedbackGlyph = ({ tone }) =>
@@ -172,10 +393,6 @@ const FeedbackGlyph = ({ tone }) =>
   );
 
 const Profile = () => {
-  const navigate = useNavigate();
-  // isDarkMode now only feeds the legacy wallet section (its .dark styles);
-  // everything new follows the tokens.
-  const { isDarkMode } = useTheme();
   const reduceMotion = useReducedMotion();
   const {
     user,
@@ -194,10 +411,16 @@ const Profile = () => {
   const [loading, setLoading] = useState(false);
   const [feedback, setFeedback] = useState(EMPTY_FEEDBACK);
 
-  // Store-credit wallet
-  const [walletBalance, setWalletBalance] = useState(0);
-  const [walletTx, setWalletTx] = useState([]);
-  const [walletLoading, setWalletLoading] = useState(false);
+  // Store credit: the balance and the ledger, read when the tab opens (status
+  // "loading" | "ready" | "error"; `shown` caps the ledger's rows).
+  const [wallet, setWallet] = useState(WALLET_LOADING);
+  // "Try again" bumps this to run the same two reads again; after a retry
+  // that fails, focus goes to the new "Try again".
+  const [walletAttempt, setWalletAttempt] = useState(0);
+  const walletRetried = useRef(false);
+  const walletRetryRef = useRef(null);
+  // The ledger's rows in each view, for "Show more"'s focus move.
+  const walletRows = useRef({ table: [], list: [] });
 
   // Profile form state
   const [profileForm, setProfileForm] = useState({
@@ -361,29 +584,50 @@ const Profile = () => {
   }, [feedback]);
 
   // Load wallet balance + ledger when the Store Credit tab is opened (fresh
-  // from the API, so a refund issued by the admin in another session shows up).
+  // from the API, so a refund issued by the admin in another session shows up),
+  // and again after "Try again". The balance is the API's, as it comes: the
+  // page never adds up the ledger.
   useEffect(() => {
     if (activeTab !== "wallet" || !user?.id) return;
     let active = true;
     (async () => {
-      setWalletLoading(true);
+      setWallet(WALLET_LOADING);
       try {
         const [bal, tx] = await Promise.all([
           apiService.wallet.getBalance(user.id),
           apiService.wallet.getTransactions(user.id),
         ]);
         if (active) {
-          setWalletBalance(Number(bal) || 0);
-          setWalletTx(Array.isArray(tx) ? tx : []);
+          setWallet({
+            status: "ready",
+            balance: Number(bal) || 0,
+            transactions: Array.isArray(tx) ? tx : [],
+            shown: WALLET_PAGE_SIZE,
+          });
         }
       } catch (e) {
         console.error("Load wallet error:", e);
-      } finally {
-        if (active) setWalletLoading(false);
+        if (active) setWallet((current) => ({ ...current, status: "error" }));
       }
     })();
-    return () => { active = false; };
-  }, [activeTab, user]);
+    // Leaving the tab (or reading again) starts the next visit from the
+    // skeletons, never from the last visit's figures.
+    return () => {
+      active = false;
+      setWallet(WALLET_LOADING);
+    };
+  }, [activeTab, user, walletAttempt]);
+
+  // After "Try again", focus waited on the section region while the reads ran
+  // (the panel had made way for the skeletons). If they fail again, it moves
+  // to the new "Try again", unless it has gone somewhere else meanwhile.
+  useEffect(() => {
+    if (!walletRetried.current || wallet.status === "loading") return;
+    walletRetried.current = false;
+    const focused = document.activeElement;
+    const waiting = !focused || focused === document.body || focused === sectionRef.current;
+    if (wallet.status === "error" && waiting && walletRetryRef.current) walletRetryRef.current.focus();
+  }, [wallet.status]);
 
   // The session restore settles on the first render: nothing to show before.
   if (authLoading) return null;
@@ -1395,111 +1639,127 @@ const Profile = () => {
     );
   };
 
-  const renderWalletSection = () => (
-    <motion.div
-      key="wallet"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Store Credit</h2>
-        <p className={styles.sectionSubtitle}>
-          Your wallet balance and transaction history
-        </p>
-      </div>
+  // ---- Store credit handlers ----
 
-      <div className={styles.walletBalanceCard}>
-        <div className={styles.walletBalanceIcon}>
-          <TabIcon icon="wallet" />
-        </div>
-        <div>
-          <span className={styles.walletBalanceLabel}>Available Balance</span>
-          <span className={styles.walletBalanceValue}>{formatCurrency(walletBalance)}</span>
-        </div>
-        <p className={styles.walletBalanceHint}>
-          Apply your store credit at checkout toward any order.
-        </p>
-      </div>
+  // "Try again" runs the same two reads. The panel (and this button) makes way
+  // for the skeletons, so focus waits on the section region meanwhile.
+  const retryWallet = () => {
+    walletRetried.current = true;
+    if (sectionRef.current) sectionRef.current.focus({ preventScroll: true });
+    setWalletAttempt((count) => count + 1);
+  };
 
-      <h3 className={styles.walletHistoryTitle}>Transaction History</h3>
+  // 50 more rows; focus moves to the first of them, in the view on screen.
+  const showMoreWallet = () => {
+    const first = wallet.shown;
+    setWallet((current) => ({ ...current, shown: current.shown + WALLET_PAGE_SIZE }));
+    requestFocus(() => {
+      const rows = [walletRows.current.table[first], walletRows.current.list[first]].filter(Boolean);
+      return rows.find((row) => row.getClientRects().length > 0) || rows[0] || null;
+    });
+  };
 
-      {walletLoading ? (
-        <div className={styles.walletLoading}>
-          <div className={styles.spinner} />
-          <p>Loading your transactions…</p>
+  const walletRowRef = (view, index) => (element) => {
+    walletRows.current[view][index] = element;
+  };
+
+  const renderWalletSection = () => {
+    if (wallet.status === "error") {
+      return (
+        <div className={cx("sf-panel", styles.walletError)}>
+          <h2 className={cx("sf-display-sm", styles.walletErrorTitle)}>We couldn’t load your store credit.</h2>
+          <p className={styles.walletErrorText}>Please check your connection and try again.</p>
+          <button
+            ref={walletRetryRef}
+            type="button"
+            className={cx("sf-btn sf-btn--primary", styles.walletRetry)}
+            onClick={retryWallet}
+          >
+            Try again
+          </button>
         </div>
-      ) : walletTx.length === 0 ? (
-        <div className={styles.emptyState}>
-          <div className={styles.emptyIcon}>
-            <TabIcon icon="wallet" />
+      );
+    }
+
+    const ready = wallet.status === "ready";
+    const total = wallet.transactions.length;
+    const shown = Math.min(wallet.shown, total);
+    const entries = wallet.transactions.slice(0, shown);
+
+    return (
+      <div className={styles.wallet} aria-busy={!ready || undefined}>
+        {!ready && <p className="sf-visually-hidden">Loading your store credit</p>}
+
+        {/* The balance: always navy, in both modes. */}
+        <Reveal key="wallet-card" className={styles.walletCard}>
+          <div>
+            <h2 className={cx("sf-eyebrow", styles.walletEyebrow)}>Store credit</h2>
+            <div className={styles.balanceLine}>
+              {ready ? (
+                <p className={cx("sf-display-md", styles.balance)}>
+                  <span className="sf-visually-hidden">Available balance </span>
+                  {formatCurrency(wallet.balance)}
+                </p>
+              ) : (
+                <span className={cx("sf-skeleton", styles.balanceSkeleton)} aria-hidden="true" />
+              )}
+            </div>
+            <p className={styles.walletHint}>Apply your store credit at checkout toward any order.</p>
           </div>
-          <p className={styles.emptyText}>No store-credit transactions yet</p>
-          <p className={styles.emptySubtext}>
-            Refunds issued to store credit, and credit you spend at checkout, will appear here.
+          <Link to="/products" className={cx("sf-btn sf-btn--paper-ghost", styles.shopNow)}>
+            Shop now
+          </Link>
+        </Reveal>
+
+        <div className={styles.facts}>
+          <p id="wallet-facts-title" className={cx("sf-eyebrow", styles.factsTitle)}>
+            How it works
           </p>
+          <ul className={styles.factList} aria-labelledby="wallet-facts-title">
+            {WALLET_FACTS.map((fact) => (
+              <li key={fact} className={styles.fact}>
+                {fact}
+              </li>
+            ))}
+          </ul>
         </div>
-      ) : (
-        <div className={styles.walletTxList}>
-          {walletTx.map((t) => {
-            const isCredit = t.type === "credit";
-            return (
-              <div key={t.id} className={styles.walletTxRow}>
-                <div
-                  className={`${styles.walletTxBadge} ${
-                    isCredit ? styles.walletTxBadgeCredit : styles.walletTxBadgeDebit
-                  }`}
-                  aria-hidden
-                >
-                  {isCredit ? "+" : "−"}
-                </div>
-                <div className={styles.walletTxBody}>
-                  <span className={styles.walletTxReason}>
-                    {t.reason || (isCredit ? "Store credit added" : "Store credit used")}
-                  </span>
-                  <span className={styles.walletTxMeta}>
-                    {formatDate(t.createdAt, "medium")}
-                    {t.orderNumber && (
-                      <>
-                        {" · "}
-                        <button
-                          type="button"
-                          className={styles.walletTxLink}
-                          onClick={() => navigate("/orders")}
-                        >
-                          {t.orderNumber}
-                        </button>
-                      </>
-                    )}
-                  </span>
-                </div>
-                <div className={styles.walletTxAmountWrap}>
-                  <span
-                    className={isCredit ? styles.walletTxAmountCredit : styles.walletTxAmountDebit}
-                  >
-                    {isCredit ? "+" : "−"}
-                    {formatCurrency(t.amount)}
-                  </span>
-                  {t.balanceAfter != null && (
-                    <span className={styles.walletTxBalance}>
-                      Bal: {formatCurrency(t.balanceAfter)}
-                    </span>
+
+        <div className={styles.ledger}>
+          <h2 id="wallet-ledger-title" className={cx("sf-display-sm", styles.ledgerTitle)}>
+            Transactions
+          </h2>
+
+          {!ready ? (
+            <LedgerSkeleton />
+          ) : total === 0 ? (
+            <div className={cx("sf-panel", styles.ledgerEmpty)}>
+              <p className={cx("sf-display-sm", styles.ledgerEmptyTitle)}>No transactions yet.</p>
+              <p className={styles.ledgerEmptyText}>
+                Refunds issued to store credit, and credit you spend at checkout, will appear here.
+              </p>
+            </div>
+          ) : (
+            <>
+              <LedgerTable entries={entries} labelledBy="wallet-ledger-title" rowRef={walletRowRef} />
+              <LedgerList entries={entries} labelledBy="wallet-ledger-title" rowRef={walletRowRef} />
+              {total > WALLET_PAGE_SIZE && (
+                <div className={styles.ledgerMore}>
+                  <p className={styles.ledgerCount} aria-live="polite">
+                    {shown < total ? `Showing ${shown} of ${total} transactions` : `Showing all ${total} transactions`}
+                  </p>
+                  {shown < total && (
+                    <button type="button" className="sf-btn sf-btn--ghost" onClick={showMoreWallet}>
+                      Show more
+                    </button>
                   )}
                 </div>
-              </div>
-            );
-          })}
+              )}
+            </>
+          )}
         </div>
-      )}
-    </motion.div>
-  );
-
-  // The boilerplate's wallet section, until Prompt 23 restyles it: a neutral
-  // token frame, plus the .dark class its own dark rules key off.
-  const renderLegacySection = (section) => (
-    <div className={cx(styles.legacy, isDarkMode && styles.dark)}>{section}</div>
-  );
+      </div>
+    );
+  };
 
   const renderActiveSection = () => {
     switch (activeTab) {
@@ -1508,7 +1768,7 @@ const Profile = () => {
       case "addresses":
         return renderAddressesSection();
       case "wallet":
-        return renderLegacySection(renderWalletSection());
+        return renderWalletSection();
       case "password":
         return renderPasswordSection();
       default:
