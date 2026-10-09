@@ -1,5 +1,5 @@
 /* =============================================================================
- * Profile — /profile (prompts/DESIGN_SYSTEM.md §31)
+ * Profile — /profile (prompts/DESIGN_SYSTEM.md §31, §32)
  * =============================================================================
  * The page shell (header, rail, chip row) is AccountLayout / AccountNav in
  * src/components/account. This file styles, tokens only:
@@ -11,11 +11,17 @@
  *   • the feedback toast: surface, hairline, a 2px caramel bar on its left
  *     edge and the tone's glyph; bottom-right, above the bottom nav up to
  *     768px;
- *   • the neutral frame around the legacy sections.
+ *   • the neutral frame around the legacy wallet section;
+ *   • the Addresses section (§32): the heading row, the sand form (the
+ *     "Address type" chips, the field grid, the default box), the hairline
+ *     cards (two columns; one up to 600px; a caramel bar on the default) and
+ *     the empty state;
+ *   • the Change password section (§32): the 440px form, Show / Hide inside
+ *     each field, the strength meter on the semantic tones and the checklist.
  *
- * Below the LEGACY banner: the boilerplate's rules for the addresses,
- * password and wallet sections, unchanged (hex colours and their .dark
- * variants included) until Prompts 22 and 23 replace them.
+ * Below the LEGACY banner: the boilerplate's rules the wallet section still
+ * uses, unchanged (hex colours and their .dark variants included) until
+ * Prompt 23 replaces them.
  * ========================================================================== */
 
 /* ---- Section region --------------------------------------------------------- */
@@ -213,10 +219,420 @@
   background-color: var(--sf-color-surface);
 }
 
+/* ---- Addresses section (§32) -------------------------------------------------- */
+
+/* The heading row: the serif h2 and a muted line; "Add address" on the right
+   (under them when the row runs out of room). */
+.addressesHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sf-space-4) var(--sf-space-6);
+  margin-bottom: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+.addressesIntro {
+  margin-top: var(--sf-space-2);
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+/* The form: a sand panel above the cards. */
+.addressForm {
+  --sf-card-padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+  display: grid;
+  gap: var(--sf-space-6);
+  margin-bottom: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+/* A UI heading (§5.4): sans 600. */
+.addressFormTitle {
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-md);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-tight);
+}
+
+/* Reading positions, not controls: focus lands on them (the form's heading
+   when it opens, a card's heading when one of its buttons goes away, the
+   empty state after the last delete) with no ring; the next Tab goes on from
+   there. */
+.addressFormTitle:focus,
+.addressCardHead:focus,
+.addressesEmptyTitle:focus {
+  outline: none;
+}
+
+/* "Address type": the chips of a radio group. Unchosen chips take the
+   surface tone, so they read as controls on the sand; each keeps a 44px hit
+   area around its 32px pill. The chosen one is the primitive's ink chip. */
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-2);
+}
+
+.chip {
+  position: relative;
+  background-color: var(--sf-color-surface);
+}
+
+.chip::after {
+  content: "";
+  position: absolute;
+  inset: -6px 0;
+}
+
+.addressFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-6) var(--sf-space-5);
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+/* "Set as default address", and the hint when the box is locked, indented
+   under the label's text (the 20px box and the row's 12px gap). */
+.defaultChoice {
+  display: grid;
+  justify-items: start;
+}
+
+.defaultHint {
+  padding-left: calc(20px + var(--sf-space-3));
+}
+
+.addressFormActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-3);
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
+}
+
+/* Busy while saving: the label says so, and the button keeps its full ink
+   (the auth modal's busy state) rather than the disabled 50%. */
+.busy[data-busy="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+/* The cards: two columns (one up to 600px), hairline cards with 20px of
+   padding. The default one carries a 2px caramel bar on its left edge (a
+   border, so forced colours keep it). */
+.addressGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-5);
+  list-style: none;
+}
+
+.addressCard {
+  --sf-card-padding: var(--sf-space-5);
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.addressCardDefault {
+  border-left: 2px solid var(--sf-color-accent);
+  /* The bar is 1px wider than the hairline: the text stays in line. */
+  padding-left: calc(var(--sf-space-5) - 1px);
+}
+
+/* The label as an eyebrow, and the ink "Default" badge. */
+.addressCardHead {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-2);
+  min-height: 22px;
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+}
+
+/* Grows, so the action rows of two cards side by side line up. */
+.addressBody {
+  flex: 1 0 auto;
+  padding-bottom: var(--sf-space-4);
+}
+
+.addressName {
+  margin-top: var(--sf-space-3);
+  color: var(--sf-color-text);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  overflow-wrap: anywhere;
+}
+
+.addressLines {
+  margin-top: var(--sf-space-1);
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  overflow-wrap: anywhere;
+}
+
+.addressLines > span {
+  display: block;
+}
+
+.addressPhone {
+  margin-top: var(--sf-space-1);
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Text buttons under a hairline. Each keeps the primitive's 44px hit area
+   (14px above and below the text): the row's padding and the card's own
+   padding hold it, and the column gap keeps neighbours' areas apart. */
+.addressCardActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-6) var(--sf-space-5);
+  padding-top: var(--sf-space-4);
+  border-top: var(--sf-hairline);
+}
+
+/* Delete in the error tone, its underline too on hover. */
+.deleteAddress {
+  --sf-btn-fg: var(--sf-color-error);
+  --sf-btn-underline: var(--sf-color-error);
+}
+
+/* No address yet: a sand panel with a serif line and the primary action. */
+.addressesEmpty {
+  --sf-card-padding: clamp(var(--sf-space-6), 5vw, var(--sf-space-12));
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-4);
+}
+
+.addressesEmptyTitle {
+  color: var(--sf-color-text);
+}
+
+.addressesEmptyText {
+  max-width: 52ch;
+  margin-bottom: var(--sf-space-2);
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+}
+
+@media (max-width: 600px) {
+  .addressFields,
+  .addressGrid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .addressFormActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .emptyAction {
+    justify-self: stretch;
+  }
+}
+
+/* ---- Change password section (§32) ---------------------------------------------- */
+
+.passwordForm {
+  display: grid;
+  gap: var(--sf-space-6);
+  max-width: 440px;
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+/* "Show" / "Hide" sits inside the field's right edge (the auth modal's
+   control, §30.4): the full 44px height of the field, which keeps 72px of
+   room for it. */
+.passwordControl {
+  position: relative;
+}
+
+.passwordInput {
+  padding-right: calc(var(--sf-space-16) + var(--sf-space-2));
+}
+
+.reveal {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: var(--sf-tap-target);
+  padding: 0 var(--sf-space-3);
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background: none;
+  color: var(--sf-color-text-secondary);
+  font-family: var(--sf-font-sans);
+  font-size: 0.8125rem;
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-button);
+  text-decoration-line: underline;
+  text-decoration-color: var(--sf-color-border);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.3em;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  transition: color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@media (hover: hover) {
+  .reveal:hover {
+    color: var(--sf-color-text);
+    text-decoration-color: var(--sf-color-accent);
+  }
+}
+
+.reveal:focus-visible {
+  outline: 2px solid var(--sf-color-focus);
+  outline-offset: -4px;
+}
+
+/* The strength meter: four 2px segments (stone when empty), filled up to the
+   score in the semantic tones; the word beside them. The row keeps its height
+   while the field is empty, so nothing moves when typing starts. */
+.strengthRow {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  min-height: calc(var(--sf-text-xs) * var(--sf-leading-normal));
+}
+
+.meter {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--sf-space-1);
+}
+
+.segment {
+  height: 0;
+  border-top: 2px solid var(--sf-color-border);
+  transition: border-color var(--sf-duration) var(--sf-ease-out);
+}
+
+.meter[data-level="1"] .segment:nth-child(-n + 1) {
+  border-top-color: var(--sf-color-error);
+}
+
+.meter[data-level="2"] .segment:nth-child(-n + 2) {
+  border-top-color: var(--sf-color-warning);
+}
+
+.meter[data-level="3"] .segment:nth-child(-n + 3) {
+  border-top-color: var(--sf-color-info);
+}
+
+.meter[data-level="4"] .segment {
+  border-top-color: var(--sf-color-success);
+}
+
+.strength {
+  flex: none;
+  min-width: 3.5rem;
+  margin-left: auto;
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  text-align: right;
+}
+
+/* The checklist: a check in the success tone as each rule passes, a small
+   ring until then (shape, not colour alone; the state is in the text too). */
+.checklist {
+  display: grid;
+  gap: var(--sf-space-2);
+}
+
+.checklistTitle {
+  color: var(--sf-color-text);
+  font-size: 0.8125rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+}
+
+.checks {
+  display: grid;
+  gap: var(--sf-space-1);
+  list-style: none;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: var(--sf-space-2);
+  color: var(--sf-color-text-muted);
+  font-size: 0.8125rem;
+  line-height: var(--sf-leading-normal);
+}
+
+.check[data-met="true"] {
+  color: var(--sf-color-text);
+}
+
+.checkGlyph {
+  flex: none;
+  width: 16px;
+  height: 16px;
+}
+
+.check[data-met="true"] .checkGlyph {
+  color: var(--sf-color-success);
+}
+
+.passwordActions {
+  margin-top: var(--sf-space-2);
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
+}
+
+/* Forced colours: the meter in system colours, and the chosen chip keeps a
+   visible state (the card's caramel bar is a border, drawn on its own). */
+@media (forced-colors: active) {
+  .segment {
+    border-top-color: GrayText;
+  }
+
+  .meter[data-level="1"] .segment:nth-child(-n + 1),
+  .meter[data-level="2"] .segment:nth-child(-n + 2),
+  .meter[data-level="3"] .segment:nth-child(-n + 3),
+  .meter[data-level="4"] .segment {
+    border-top-color: CanvasText;
+  }
+
+  .chip[aria-checked="true"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+  }
+}
+
 /* =============================================================================
- * LEGACY — the boilerplate's addresses, password and wallet styles, kept as
- * they were (Prompts 22 and 23 replace them). Their dark variants key off the
- * .dark class Profile.js puts on the legacy frame in dark mode.
+ * LEGACY — the boilerplate's wallet styles (and the section header and empty
+ * state it shares), kept as they were (Prompt 23 replaces them). Their dark
+ * variants key off the .dark class Profile.js puts on the legacy frame in dark
+ * mode.
  * ========================================================================== */
 
 /* ---- Section header ---- */
@@ -248,620 +664,6 @@
 
 .dark .sectionSubtitle {
   color: rgba(255, 255, 255, 0.5);
-}
-
-/* ---- Form grid ---- */
-.formGrid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1.25rem;
-}
-
-.fullWidth {
-  grid-column: 1 / -1;
-}
-
-/* ---- Form group ---- */
-.formGroup {
-  display: flex;
-  flex-direction: column;
-}
-
-.formGroupStacked {
-  display: flex;
-  flex-direction: column;
-  margin-bottom: 1.25rem;
-}
-
-.formLabel {
-  font-size: 0.825rem;
-  font-weight: 600;
-  color: #475569;
-  margin-bottom: 0.4rem;
-}
-
-.dark .formLabel {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.formInput {
-  width: 100%;
-  padding: 0.7rem 0.875rem;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  color: #1e293b;
-  background: #fff;
-  transition: border-color 0.2s ease, box-shadow 0.2s ease;
-  outline: none;
-  font-family: inherit;
-  box-sizing: border-box;
-}
-
-.dark .formInput {
-  background: rgba(15, 20, 45, 0.6);
-  border-color: rgba(255, 255, 255, 0.1);
-  color: #f1f5f9;
-}
-
-.formInput:focus {
-  border-color: #667eea;
-  box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.12);
-}
-
-.dark .formInput:focus {
-  border-color: #a855f7;
-  box-shadow: 0 0 0 3px rgba(168, 85, 247, 0.15);
-}
-
-.formInput.readOnly {
-  background: #f1f5f9;
-  color: #94a3b8;
-  cursor: not-allowed;
-}
-
-.dark .formInput.readOnly {
-  background: rgba(15, 20, 45, 0.4);
-  color: rgba(255, 255, 255, 0.35);
-}
-
-.fieldHint {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  margin-top: 0.3rem;
-}
-
-.dark .fieldHint {
-  color: rgba(255, 255, 255, 0.3);
-}
-
-.fieldError {
-  font-size: 0.8rem;
-  color: #ef4444;
-  margin-top: 0.3rem;
-}
-
-/* ---- Form actions ---- */
-.formActions {
-  display: flex;
-  gap: 0.75rem;
-  justify-content: flex-end;
-  margin-top: 1.75rem;
-  padding-top: 1.25rem;
-  border-top: 1px solid #f1f5f9;
-}
-
-.dark .formActions {
-  border-top-color: rgba(255, 255, 255, 0.06);
-}
-
-/* ---- Buttons ---- */
-.btnPrimary {
-  padding: 0.65rem 1.75rem;
-  border: none;
-  border-radius: 10px;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.25s ease;
-  font-family: inherit;
-}
-
-.dark .btnPrimary {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-}
-
-.btnPrimary:hover:not(:disabled) {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.35);
-}
-
-.dark .btnPrimary:hover:not(:disabled) {
-  box-shadow: 0 6px 20px rgba(168, 85, 247, 0.35);
-}
-
-.btnPrimary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btnSecondary {
-  padding: 0.65rem 1.75rem;
-  border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  background: #fff;
-  color: #475569;
-  font-size: 0.9rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.dark .btnSecondary {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.15);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.btnSecondary:hover:not(:disabled) {
-  border-color: #94a3b8;
-  background: #f8fafc;
-}
-
-.dark .btnSecondary:hover:not(:disabled) {
-  border-color: rgba(255, 255, 255, 0.25);
-  background: rgba(255, 255, 255, 0.05);
-}
-
-.btnSecondary:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.btnOutline {
-  padding: 0.55rem 1.25rem;
-  border: 1.5px solid #667eea;
-  border-radius: 10px;
-  background: transparent;
-  color: #667eea;
-  font-size: 0.85rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-  white-space: nowrap;
-}
-
-.dark .btnOutline {
-  border-color: #a855f7;
-  color: #a855f7;
-}
-
-.btnOutline:hover {
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.dark .btnOutline:hover {
-  background: rgba(168, 85, 247, 0.1);
-}
-
-/* ---- Password section ---- */
-.passwordFormWrapper {
-  max-width: 480px;
-}
-
-.passwordInputWrapper {
-  position: relative;
-}
-
-.passwordInputWrapper .formInput {
-  padding-right: 4rem;
-}
-
-.passwordToggle {
-  position: absolute;
-  right: 0.75rem;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #667eea;
-  padding: 0.25rem;
-  font-family: inherit;
-}
-
-.dark .passwordToggle {
-  color: #a855f7;
-}
-
-/* Strength meter */
-.strengthMeter {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  margin-top: 0.5rem;
-}
-
-.strengthBar {
-  display: flex;
-  gap: 4px;
-  flex: 1;
-  max-width: 160px;
-}
-
-.strengthSegment {
-  height: 4px;
-  flex: 1;
-  border-radius: 2px;
-  background: #e5e7eb;
-  transition: background-color 0.3s ease;
-}
-
-.dark .strengthSegment {
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.strengthLabel {
-  font-size: 0.75rem;
-  font-weight: 600;
-}
-
-/* Password requirements */
-.passwordRequirements {
-  margin-top: 1.25rem;
-  padding: 1rem;
-  border-radius: 10px;
-  background: #f8fafc;
-}
-
-.dark .passwordRequirements {
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.requirementsTitle {
-  margin: 0 0 0.5rem;
-  font-size: 0.825rem;
-  font-weight: 600;
-  color: #475569;
-}
-
-.dark .requirementsTitle {
-  color: rgba(255, 255, 255, 0.65);
-}
-
-.requirementsList {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.requirementsList li {
-  position: relative;
-  padding-left: 1.4rem;
-  font-size: 0.8rem;
-  color: #94a3b8;
-  line-height: 1.8;
-}
-
-.dark .requirementsList li {
-  color: rgba(255, 255, 255, 0.4);
-}
-
-.requirementsList li::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 0.5em;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  border: 1.5px solid #cbd5e1;
-  background: transparent;
-}
-
-.dark .requirementsList li::before {
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.requirementsList li.requirementMet {
-  color: #22c55e;
-}
-
-.dark .requirementsList li.requirementMet {
-  color: #4ade80;
-}
-
-.requirementsList li.requirementMet::before {
-  border-color: #22c55e;
-  background: #22c55e;
-}
-
-.dark .requirementsList li.requirementMet::before {
-  border-color: #4ade80;
-  background: #4ade80;
-}
-
-/* ---- Address section ---- */
-.addressFormCard {
-  padding: 1.5rem;
-  border-radius: 12px;
-  background: #f8fafc;
-  margin-bottom: 1.5rem;
-  border: 1px solid #e2e8f0;
-}
-
-.dark .addressFormCard {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.addressFormTitle {
-  margin: 0 0 1rem;
-  font-size: 1rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.dark .addressFormTitle {
-  color: #f1f5f9;
-}
-
-.labelSelector {
-  display: flex;
-  gap: 0.5rem;
-  margin-bottom: 1.25rem;
-}
-
-.labelChip {
-  padding: 0.4rem 1rem;
-  border-radius: 999px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  color: #475569;
-  font-size: 0.825rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s ease;
-  font-family: inherit;
-}
-
-.dark .labelChip {
-  background: transparent;
-  border-color: rgba(255, 255, 255, 0.12);
-  color: rgba(255, 255, 255, 0.6);
-}
-
-.labelChip:hover {
-  border-color: #667eea;
-  color: #667eea;
-}
-
-.dark .labelChip:hover {
-  border-color: #a855f7;
-  color: #a855f7;
-}
-
-.labelChipActive {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-color: transparent;
-}
-
-.dark .labelChipActive {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  color: #fff;
-  border-color: transparent;
-}
-
-.labelChipActive:hover {
-  color: #fff;
-}
-
-.dark .labelChipActive:hover {
-  color: #fff;
-}
-
-.checkboxGroup {
-  margin-top: 1rem;
-}
-
-.checkboxLabel {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.875rem;
-  color: #475569;
-  cursor: pointer;
-}
-
-.dark .checkboxLabel {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.checkbox {
-  width: 16px;
-  height: 16px;
-  accent-color: #667eea;
-  cursor: pointer;
-}
-
-.dark .checkbox {
-  accent-color: #a855f7;
-}
-
-/* Address cards list */
-.addressList {
-  display: flex;
-  flex-direction: column;
-  gap: 1rem;
-}
-
-.addressCard {
-  padding: 1.25rem;
-  border-radius: 12px;
-  border: 1.5px solid #e2e8f0;
-  background: #fff;
-  transition: border-color 0.2s ease;
-}
-
-.dark .addressCard {
-  background: rgba(255, 255, 255, 0.03);
-  border-color: rgba(255, 255, 255, 0.08);
-}
-
-.addressCard:hover {
-  border-color: #cbd5e1;
-}
-
-.dark .addressCard:hover {
-  border-color: rgba(255, 255, 255, 0.15);
-}
-
-.addressCardDefault {
-  border-color: #667eea;
-  background: rgba(102, 126, 234, 0.03);
-}
-
-.dark .addressCardDefault {
-  border-color: rgba(168, 85, 247, 0.4);
-  background: rgba(168, 85, 247, 0.05);
-}
-
-.addressCardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 0.75rem;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-.addressLabelRow {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-}
-
-.addressLabel {
-  font-size: 0.8rem;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: #667eea;
-  padding: 0.2rem 0.6rem;
-  border-radius: 6px;
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.dark .addressLabel {
-  color: #a855f7;
-  background: rgba(168, 85, 247, 0.12);
-}
-
-.defaultBadge {
-  font-size: 0.7rem;
-  font-weight: 600;
-  color: #fff;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  padding: 0.15rem 0.5rem;
-  border-radius: 999px;
-}
-
-.dark .defaultBadge {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-}
-
-.addressActions {
-  display: flex;
-  gap: 0.75rem;
-}
-
-.actionLink {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 600;
-  color: #667eea;
-  padding: 0;
-  font-family: inherit;
-  transition: color 0.2s ease;
-}
-
-.dark .actionLink {
-  color: #a855f7;
-}
-
-.actionLink:hover {
-  color: #4f5fd5;
-  text-decoration: underline;
-}
-
-.dark .actionLink:hover {
-  color: #c084fc;
-}
-
-.actionLink:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.actionLinkDanger {
-  color: #ef4444;
-}
-
-.dark .actionLinkDanger {
-  color: #f87171;
-}
-
-.actionLinkDanger:hover {
-  color: #dc2626;
-}
-
-.dark .actionLinkDanger:hover {
-  color: #fca5a5;
-}
-
-.addressCardBody {
-  line-height: 1.6;
-}
-
-.addressName {
-  margin: 0;
-  font-size: 0.925rem;
-  font-weight: 600;
-  color: #1e293b;
-}
-
-.dark .addressName {
-  color: #f1f5f9;
-}
-
-.addressText {
-  margin: 0;
-  font-size: 0.85rem;
-  color: #64748b;
-}
-
-.dark .addressText {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.addressPhone {
-  margin: 0.4rem 0 0;
-  font-size: 0.85rem;
-  color: #475569;
-  font-weight: 500;
-}
-
-.dark .addressPhone {
-  color: rgba(255, 255, 255, 0.6);
 }
 
 /* Empty state */
@@ -916,31 +718,6 @@
   .sectionHeader {
     flex-direction: column;
     gap: 0.75rem;
-  }
-
-  .formGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .formActions {
-    flex-direction: column-reverse;
-  }
-
-  .btnPrimary,
-  .btnSecondary {
-    width: 100%;
-    text-align: center;
-  }
-
-  .addressCardHeader {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-}
-
-@media (max-width: 480px) {
-  .labelSelector {
-    flex-wrap: wrap;
   }
 }
 

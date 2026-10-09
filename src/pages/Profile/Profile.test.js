@@ -160,8 +160,8 @@ test("/profile: the greeting, the nav marking Profile, the Personal information 
 });
 
 test.each([
-  ["addresses", "Addresses", "My Addresses", "Addresses", "123 Main Street, Apt 4B"],
-  ["password", "Change password", "Change Password", "Change password", "Password Requirements:"],
+  ["addresses", "Addresses", "Addresses", "Addresses", "123 Main Street, Apt 4B"],
+  ["password", "Change password", "Change password", "Change password", "A strong password has"],
 ])("?tab=%s opens that section inside the shell, the nav marking it", (tab, region, heading, linkName, sample) => {
   renderProfile(`/profile?tab=${tab}`);
   const content = section(region);
@@ -194,21 +194,46 @@ test.each(["orders", "wishlist", "logout", "profile", "PASSWORD", ""])(
   }
 );
 
-test("the legacy sections keep their dark styles in dark mode, inside a neutral frame", () => {
+test("the legacy wallet section keeps its dark styles in dark mode, inside a neutral frame", async () => {
   useTheme.mockReturnValue({ isDarkMode: true });
-  renderProfile("/profile?tab=addresses");
-  expect(frameOf(section("Addresses"))).toHaveClass("legacy", "dark");
+  renderProfile("/profile?tab=wallet");
+  expect(frameOf(section("Store credit"))).toHaveClass("legacy", "dark");
+  await within(section("Store credit")).findByText("No store-credit transactions yet");
 });
 
-test("in light mode the frame has no dark class, and the Profile section has no frame", () => {
-  const { unmount } = renderProfile("/profile?tab=password");
-  expect(frameOf(section("Change password"))).toHaveClass("legacy");
-  expect(frameOf(section("Change password"))).not.toHaveClass("dark");
+test("in light mode the frame has no dark class, and the Profile section has no frame", async () => {
+  const { unmount } = renderProfile("/profile?tab=wallet");
+  expect(frameOf(section("Store credit"))).toHaveClass("legacy");
+  expect(frameOf(section("Store credit"))).not.toHaveClass("dark");
+  await within(section("Store credit")).findByText("No store-credit transactions yet");
   unmount();
   sessionStorage.clear();
   renderProfile("/profile");
   expect(frameOf(section("Personal information"))).not.toHaveClass("legacy");
   expect(frameOf(section("Personal information"))).toHaveClass("sf-card", "sf-card--hairline");
+});
+
+test("a tab switch mounts the new section afresh, so it reveals (not the last section's element)", () => {
+  renderProfile();
+  const profile = frameOf(section("Personal information"));
+  fireEvent.click(navLink("Addresses"));
+  const addresses = frameOf(section("Addresses"));
+  expect(addresses).not.toBe(profile);
+  fireEvent.click(navLink("Change password"));
+  const password = frameOf(section("Change password"));
+  expect(password).not.toBe(addresses);
+  fireEvent.click(navLink("Profile"));
+  expect(frameOf(section("Personal information"))).not.toBe(password);
+});
+
+test.each([
+  ["addresses", "Addresses"],
+  ["password", "Change password"],
+])("?tab=%s is restyled: no legacy frame, no dark class, in either mode", (tab, region) => {
+  useTheme.mockReturnValue({ isDarkMode: true });
+  renderProfile(`/profile?tab=${tab}`);
+  expect(frameOf(section(region))).not.toHaveClass("legacy");
+  expect(frameOf(section(region))).not.toHaveClass("dark");
 });
 
 test("arriving on a tab leaves focus where the page load put it", async () => {

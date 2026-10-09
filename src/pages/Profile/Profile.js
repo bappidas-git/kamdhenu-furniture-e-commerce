@@ -32,9 +32,19 @@ import styles from "./Profile.module.css";
 //   renders the account in place, on the tab the URL asked for, and moves
 //   focus to the greeting once the dialog has gone.
 //
-// The addresses, password and wallet sections are still the boilerplate's
-// (Prompts 22 and 23 restyle them); they keep their own styles, .dark
-// variants included, inside a neutral frame.
+// ADDRESSES AND CHANGE PASSWORD (§32)
+//   Addresses: hairline cards (the default one carries a caramel bar), and a
+//   sand form with an "Address type" radio group, labelled fields with
+//   autocomplete, inline errors and focus on the first one that needs
+//   attention. Every address is saved as the whole array through
+//   updateUser({ addresses }), as before. Change password: a hairline card, a
+//   440px form with Show / Hide on each field, the strength meter on the
+//   semantic tokens and a checklist; the request is changePassword(), as
+//   before. Focus moves with the work: into an opened form, back to what
+//   opened it, and to the nearest card when a card's own button goes away.
+//
+// The wallet section is still the boilerplate's (Prompt 23 restyles it); it
+// keeps its own styles, .dark variants included, inside a neutral frame.
 // =============================================================================
 
 const PROFILE_TABS = ["profile", "addresses", "wallet", "password"];
@@ -63,15 +73,79 @@ const scrollUnderHeader = (element, reduceMotion) =>
     behavior: reduceMotion ? "instant" : "smooth",
   });
 
-// Icons for the legacy empty states (addresses, wallet).
+// Focus an element without the browser's own scroll, then bring it (or `box`,
+// the field around it) to 16px under the sticky header when the header covers
+// it or it is outside the window: focus() alone leaves an element the header
+// hides where it is, since it counts as in view.
+const focusAndReveal = (element, reduceMotion, box = element) => {
+  element.focus({ preventScroll: true });
+  const rect = box.getBoundingClientRect();
+  if (rect.top < headerHeight() || rect.bottom > window.innerHeight) scrollUnderHeader(box, reduceMotion);
+};
+
+// ---- Addresses (§32) ----------------------------------------------------------
+
+// The "Address type" radio group (the card's eyebrow).
+const ADDRESS_LABELS = ["Home", "Work", "Other"];
+
+// The address form's fields, in form order: a visible label, the autocomplete
+// token for each part of the address, and a hint where the old placeholder
+// carried one.
+const ADDRESS_FIELDS = [
+  { name: "firstName", id: "address-first-name", label: "First name", autoComplete: "given-name", autoCapitalize: "words", required: true },
+  { name: "lastName", id: "address-last-name", label: "Last name", autoComplete: "family-name", autoCapitalize: "words", required: true },
+  { name: "phone", id: "address-phone", label: "Phone number", type: "tel", inputMode: "tel", autoComplete: "tel", hint: "10-digit mobile number", required: true, wide: true },
+  { name: "addressLine1", id: "address-line-1", label: "Address line 1", autoComplete: "address-line1", hint: "House or flat number, building and street", required: true, wide: true },
+  { name: "addressLine2", id: "address-line-2", label: "Address line 2", optional: true, autoComplete: "address-line2", hint: "Landmark or area", wide: true },
+  { name: "city", id: "address-city", label: "City", autoComplete: "address-level2", autoCapitalize: "words", required: true },
+  { name: "state", id: "address-state", label: "State", autoComplete: "address-level1", autoCapitalize: "words", required: true },
+  { name: "postalCode", id: "address-postal-code", label: "Postal code", inputMode: "numeric", autoComplete: "postal-code", hint: "6-digit PIN", required: true },
+  { name: "country", id: "address-country", label: "Country", autoComplete: "country-name", hint: "Currently shipping within India only", readOnly: true },
+];
+
+// A card's buttons carry its name ("Edit Home address at 123 Main Street"),
+// so a list of cards never reads as a row of bare "Edit"s.
+const addressContext = (address) => {
+  const name = address.label ? `${address.label} address` : "Address";
+  return address.addressLine1 ? `${name} at ${address.addressLine1}` : name;
+};
+
+// "Mumbai, Maharashtra 400001" (legacy rows may carry zipCode).
+const cityLine = (address) =>
+  [[address.city, address.state].filter(Boolean).join(", "), address.postalCode || address.zipCode]
+    .filter(Boolean)
+    .join(" ");
+
+// ---- Change password (§32) ----------------------------------------------------
+
+// The three fields, keyed like showPasswords. `noun` completes the Show / Hide
+// button's name ("Show current password") and its announcement.
+const PASSWORD_FIELDS = {
+  current: { name: "currentPassword", id: "password-current", label: "Current password", autoComplete: "current-password", noun: "current password" },
+  new: { name: "newPassword", id: "password-new", label: "New password", autoComplete: "new-password", noun: "new password" },
+  confirm: { name: "confirmPassword", id: "password-confirm", label: "Confirm new password", autoComplete: "new-password", noun: "password confirmation" },
+};
+
+// The checklist under the new password: display only, as before (the one
+// rule the form enforces is the 8-character minimum).
+const PASSWORD_CHECKS = [
+  { label: "At least 8 characters", test: (password) => password.length >= 8 },
+  { label: "One uppercase letter", test: (password) => /[A-Z]/.test(password) },
+  { label: "One lowercase letter", test: (password) => /[a-z]/.test(password) },
+  { label: "One number", test: (password) => /[0-9]/.test(password) },
+  { label: "One special character", test: (password) => /[^A-Za-z0-9]/.test(password) },
+];
+
+// A check (the rule passes) or a small ring (not yet), in currentColor.
+const CheckGlyph = ({ met }) => (
+  <svg className={styles.checkGlyph} viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+    {met ? <polyline points="3.5 8.5 6.5 11.5 12.5 4.5" /> : <circle cx="8" cy="8" r="2.5" />}
+  </svg>
+);
+
+// Icons for the legacy empty state (the wallet).
 const TabIcon = ({ icon }) => {
   const icons = {
-    location: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
-        <circle cx="12" cy="10" r="3" />
-      </svg>
-    ),
     wallet: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 12V7H5a2 2 0 0 1 0-4h14v4" />
@@ -99,8 +173,8 @@ const FeedbackGlyph = ({ tone }) =>
 
 const Profile = () => {
   const navigate = useNavigate();
-  // isDarkMode now only feeds the legacy sections (their .dark styles and the
-  // password meter); everything new follows the tokens.
+  // isDarkMode now only feeds the legacy wallet section (its .dark styles);
+  // everything new follows the tokens.
   const { isDarkMode } = useTheme();
   const reduceMotion = useReducedMotion();
   const {
@@ -154,6 +228,15 @@ const Profile = () => {
     new: false,
     confirm: false,
   });
+  // Inline messages under the password fields, from the last submit. The
+  // confirmation also says "Passwords do not match" on its own as soon as it
+  // cannot match (the old form said it from the first keystroke; see
+  // renderPasswordSection), until the two match.
+  const [passwordErrors, setPasswordErrors] = useState({});
+  const passwordFieldRefs = useRef({});
+  // The visually hidden line that says "Current password shown." (a new key
+  // re-announces a repeated message).
+  const [passwordAnnouncement, setPasswordAnnouncement] = useState({ key: 0, text: "" });
 
   // Address state
   const [addresses, setAddresses] = useState([]);
@@ -173,6 +256,38 @@ const Profile = () => {
     country: "India",
     isDefault: false,
   });
+  // Inline messages under the address fields ("" or absent = none).
+  const [addressErrors, setAddressErrors] = useState({});
+  const addressFieldRefs = useRef({});
+  const labelChipRefs = useRef([]);
+  // Focus targets as the addresses change: the form's heading, "Add address"
+  // and the empty state's button, each card's heading, Edit and Delete.
+  const addressFormTitleRef = useRef(null);
+  const addAddressRef = useRef(null);
+  const emptyAddressRef = useRef(null);
+  const emptyTitleRef = useRef(null);
+  const cardHeadingRefs = useRef([]);
+  const editButtonRefs = useRef([]);
+  const deleteButtonRefs = useRef([]);
+
+  // Focus to move once the change that asks for it is on screen (a form
+  // opened or closed, a card's own button gone): requestFocus(resolve) keeps
+  // a function that returns the element and bumps focusRequest in the same
+  // batch as that change, so the effect runs after the commit that shows it
+  // (not after an earlier commit whose effects flush first).
+  const pendingFocus = useRef(null);
+  const [focusRequest, setFocusRequest] = useState(0);
+  const requestFocus = (resolve) => {
+    pendingFocus.current = resolve;
+    setFocusRequest((count) => count + 1);
+  };
+  useEffect(() => {
+    const resolve = pendingFocus.current;
+    if (!resolve) return;
+    pendingFocus.current = null;
+    const target = resolve();
+    if (target && target.isConnected) focusAndReveal(target, reduceMotion);
+  }, [focusRequest, reduceMotion]);
 
   // Populate form data from user
   useEffect(() => {
@@ -373,10 +488,14 @@ const Profile = () => {
   const handlePasswordChange = (e) => {
     const { name, value } = e.target;
     setPasswordForm((prev) => ({ ...prev, [name]: value }));
+    // Editing a field clears its message.
+    setPasswordErrors((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
+  // The score and thresholds are the same as ever; the tones moved to the
+  // stylesheet (the meter reads data-level, 1 weak … 4 strong).
   const getPasswordStrength = (password) => {
-    if (!password) return { level: 0, label: "", color: "" };
+    if (!password) return { level: 0, label: "" };
     let score = 0;
     if (password.length >= 8) score++;
     if (password.length >= 12) score++;
@@ -385,13 +504,45 @@ const Profile = () => {
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
 
-    if (score <= 2) return { level: 1, label: "Weak", color: "#ef4444" };
-    if (score <= 4) return { level: 2, label: "Fair", color: "#f59e0b" };
-    if (score <= 5) return { level: 3, label: "Good", color: "#3b82f6" };
-    return { level: 4, label: "Strong", color: "#22c55e" };
+    if (score <= 2) return { level: 1, label: "Weak" };
+    if (score <= 4) return { level: 2, label: "Fair" };
+    if (score <= 5) return { level: 3, label: "Good" };
+    return { level: 4, label: "Strong" };
   };
 
-  const handlePasswordSubmit = async () => {
+  // Show / Hide. The button's name follows its text ("Show current password",
+  // "Hide current password"), so it carries no aria-pressed (§30.4), and the
+  // hidden status line says what changed.
+  const togglePasswordVisibility = (key) => {
+    const { noun } = PASSWORD_FIELDS[key];
+    const text = `${noun.charAt(0).toUpperCase()}${noun.slice(1)} ${showPasswords[key] ? "hidden" : "shown"}.`;
+    setPasswordAnnouncement((previous) => ({ key: previous.key + 1, text }));
+    setShowPasswords((p) => ({ ...p, [key]: !p[key] }));
+  };
+
+  const handlePasswordSubmit = async (event) => {
+    if (event) event.preventDefault();
+    if (loading) return;
+
+    // The rules, their order and their toasts are the same as ever. Each field
+    // now also says what is wrong with it, and focus moves to the first one
+    // that needs attention; the toast still carries the first rule's message.
+    const { currentPassword, newPassword, confirmPassword } = passwordForm;
+    const errors = {};
+    if (!currentPassword) errors.currentPassword = "Enter your current password";
+    if (newPassword.length < 8) {
+      errors.newPassword = newPassword ? "New password must be at least 8 characters" : "Enter a new password";
+    }
+    if (newPassword !== confirmPassword) {
+      errors.confirmPassword = confirmPassword ? "Passwords do not match" : "Confirm your new password";
+    }
+    setPasswordErrors(errors);
+    const firstInvalid = ["current", "new", "confirm"].find((key) => errors[PASSWORD_FIELDS[key].name]);
+    if (firstInvalid) {
+      const input = passwordFieldRefs.current[PASSWORD_FIELDS[firstInvalid].name];
+      if (input) focusAndReveal(input, reduceMotion, input.closest(".sf-field") || input);
+    }
+
     if (!passwordForm.currentPassword) {
       showFeedback("error", "Please enter your current password.");
       return;
@@ -440,6 +591,7 @@ const Profile = () => {
     });
     setShowAddressForm(false);
     setEditingAddressIndex(null);
+    setAddressErrors({});
   };
 
   const handleAddressChange = (e) => {
@@ -448,9 +600,76 @@ const Profile = () => {
       ...prev,
       [name]: type === "checkbox" ? checked : value,
     }));
+    // Editing a field clears its message.
+    setAddressErrors((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
-  const handleAddressSave = async () => {
+  // Opening the form moves focus to its heading. Closing it (Cancel, or a
+  // save) gives focus back to what opened it: the card's Edit button, else
+  // "Add address", or the empty state's button when there is no address.
+  const focusAddressFormTitle = () => {
+    requestFocus(() => addressFormTitleRef.current);
+  };
+  const focusAddressOpener = (editedIndex) => {
+    requestFocus(() =>
+      editedIndex !== null ? editButtonRefs.current[editedIndex] : addAddressRef.current || emptyAddressRef.current
+    );
+  };
+
+  const openNewAddressForm = () => {
+    resetAddressForm();
+    setShowAddressForm(true);
+    focusAddressFormTitle();
+  };
+
+  const cancelAddressForm = () => {
+    if (loading) return;
+    const editedIndex = editingAddressIndex;
+    resetAddressForm();
+    focusAddressOpener(editedIndex);
+  };
+
+  // "Address type": arrow keys move along the chips and select (a radio
+  // group); Home and End jump to either end.
+  const handleLabelKeyDown = (event, index) => {
+    const count = ADDRESS_LABELS.length;
+    let next;
+    if (event.key === "ArrowRight" || event.key === "ArrowDown") next = (index + 1) % count;
+    else if (event.key === "ArrowLeft" || event.key === "ArrowUp") next = (index - 1 + count) % count;
+    else if (event.key === "Home") next = 0;
+    else if (event.key === "End") next = count - 1;
+    else return;
+    event.preventDefault();
+    const label = ADDRESS_LABELS[next];
+    setAddressForm((prev) => ({ ...prev, label }));
+    if (labelChipRefs.current[next]) labelChipRefs.current[next].focus();
+  };
+
+  const handleAddressSave = async (event) => {
+    if (event) event.preventDefault();
+    if (loading) return;
+
+    // The rules are the same as ever: the required fields, then the phone.
+    // Each field now also says what is wrong with it, and focus moves to the
+    // first one that needs attention (form order); the toast still carries
+    // the first rule's message.
+    const errors = {};
+    if (!addressForm.firstName.trim()) errors.firstName = "First name is required";
+    if (!addressForm.lastName.trim()) errors.lastName = "Last name is required";
+    if (!isValidPhone(addressForm.phone)) {
+      errors.phone = addressForm.phone.trim() ? "Enter a valid 10-digit mobile number" : "Phone number is required";
+    }
+    if (!addressForm.addressLine1.trim()) errors.addressLine1 = "Address line 1 is required";
+    if (!addressForm.city.trim()) errors.city = "City is required";
+    if (!addressForm.state.trim()) errors.state = "State is required";
+    if (!addressForm.postalCode.trim()) errors.postalCode = "Postal code is required";
+    setAddressErrors(errors);
+    const firstInvalid = ADDRESS_FIELDS.find(({ name }) => errors[name]);
+    if (firstInvalid) {
+      const input = addressFieldRefs.current[firstInvalid.name];
+      if (input) focusAndReveal(input, reduceMotion, input.closest(".sf-field") || input);
+    }
+
     if (
       !addressForm.firstName.trim() ||
       !addressForm.lastName.trim() ||
@@ -503,6 +722,7 @@ const Profile = () => {
       await updateUser({ addresses: updatedAddresses });
       setAddresses(updatedAddresses);
       resetAddressForm();
+      focusAddressOpener(editingAddressIndex);
       showFeedback(
         "success",
         editingAddressIndex !== null ? "Address updated successfully." : "Address added successfully."
@@ -515,6 +735,7 @@ const Profile = () => {
   };
 
   const handleAddressEdit = (index) => {
+    if (loading) return;
     const a = addresses[index] || {};
     // Normalise any legacy row (single fullName / zipCode) into the canonical
     // form shape so an edit always writes firstName/lastName/postalCode back.
@@ -535,19 +756,33 @@ const Profile = () => {
     });
     setEditingAddressIndex(index);
     setShowAddressForm(true);
+    setAddressErrors({});
+    focusAddressFormTitle();
   };
 
   const handleAddressDelete = async (index) => {
+    if (loading) return;
+    // The confirm button is the danger primitive (the error token with
+    // primary-contrast text in both modes, §31.8), not a hex colour. The page
+    // moves focus itself once the dialog has gone (returnFocus: false):
+    // SweetAlert's own return comes after its closing animation, by when
+    // React has reused this Delete button for the card that took this one's
+    // place, so focus would land on that card's Delete.
     const result = await Swal.fire({
       title: "Delete this address?",
       text: "This address will be removed from your account.",
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#ef4444",
       confirmButtonText: "Delete",
       cancelButtonText: "Keep",
+      customClass: { confirmButton: "sf-btn sf-btn--danger" },
+      returnFocus: false,
     });
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+      // Nothing deleted ("Keep", Escape): back to this card's Delete.
+      requestFocus(() => deleteButtonRefs.current[index]);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -562,8 +797,23 @@ const Profile = () => {
       setAddresses(updatedAddresses);
       // If we were editing the row we just deleted, drop the open form.
       if (editingAddressIndex === index) resetAddressForm();
+      // A form open on a later row follows that row up the list, so saving it
+      // still replaces the row it was opened for.
+      else if (editingAddressIndex !== null && editingAddressIndex > index) {
+        setEditingAddressIndex(editingAddressIndex - 1);
+      }
+      // The deleted card's buttons are gone: focus moves to the card that took
+      // its place (else the one before it), or the empty state.
+      requestFocus(
+        () =>
+          cardHeadingRefs.current[Math.min(index, updatedAddresses.length - 1)] ||
+          emptyTitleRef.current ||
+          addressFormTitleRef.current
+      );
       showFeedback("success", "Address deleted successfully.");
     } catch (err) {
+      // Nothing deleted: back to this card's Delete.
+      requestFocus(() => deleteButtonRefs.current[index]);
       showFeedback("error", "Failed to delete address. Please try again.");
     } finally {
       setLoading(false);
@@ -571,6 +821,7 @@ const Profile = () => {
   };
 
   const handleSetDefaultAddress = async (index) => {
+    if (loading) return;
     setLoading(true);
     try {
       const updatedAddresses = addresses.map((a, i) => ({
@@ -579,6 +830,9 @@ const Profile = () => {
       }));
       await updateUser({ addresses: updatedAddresses });
       setAddresses(updatedAddresses);
+      // "Set as default" has gone from this card: focus moves to its heading,
+      // which now reads "Default".
+      requestFocus(() => cardHeadingRefs.current[index]);
       showFeedback("success", "Default address updated.");
     } catch (err) {
       showFeedback("error", "Failed to update default address.");
@@ -721,445 +975,425 @@ const Profile = () => {
     </Reveal>
   );
 
-  const renderAddressesSection = () => (
-    <motion.div
-      key="addresses"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className={styles.sectionHeader}>
-        <div>
-          <h2 className={styles.sectionTitle}>My Addresses</h2>
-          <p className={styles.sectionSubtitle}>Manage your delivery addresses</p>
-        </div>
-        {!showAddressForm && (
-          <button
-            className={styles.btnOutline}
-            onClick={() => {
-              resetAddressForm();
-              setShowAddressForm(true);
-            }}
-          >
-            + Add New Address
-          </button>
+  // ---- Addresses section (§32) ----
+  // While there is at most one address (the first one being added, or the
+  // only one being edited), the save makes it the default whatever the box
+  // says, so the box shows that: checked and locked, with a hint.
+  const defaultIsFixed = addresses.length === 0 || (addresses.length === 1 && editingAddressIndex === 0);
+
+  const renderAddressField = ({ name, id, label, optional, hint, wide, readOnly, ...inputProps }) => {
+    const error = addressErrors[name];
+    return (
+      <div key={name} className={cx("sf-field", wide && styles.wide)}>
+        <label className="sf-field__label" htmlFor={id}>
+          {label}
+          {optional && (
+            <>
+              {" "}
+              <span className={styles.optional}>(optional)</span>
+            </>
+          )}
+        </label>
+        <input
+          ref={(node) => {
+            addressFieldRefs.current[name] = node;
+          }}
+          id={id}
+          className="sf-input"
+          type="text"
+          name={name}
+          value={addressForm[name]}
+          onChange={readOnly ? undefined : handleAddressChange}
+          readOnly={readOnly}
+          {...inputProps}
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={describedBy(hint && `${id}-hint`, error && `${id}-error`)}
+        />
+        {hint && (
+          <p className="sf-field__hint" id={`${id}-hint`}>
+            {hint}
+          </p>
+        )}
+        {error && (
+          <p className="sf-field__error" id={`${id}-error`}>
+            {error}
+          </p>
         )}
       </div>
+    );
+  };
 
-      {showAddressForm && (
-        <div className={styles.addressFormCard}>
-          <h3 className={styles.addressFormTitle}>
-            {editingAddressIndex !== null ? "Edit Address" : "Add New Address"}
-          </h3>
+  const renderAddressForm = () => {
+    // A saved label that is none of the three keeps the first chip in the tab
+    // order, so the group can still be reached.
+    const labelIsChip = ADDRESS_LABELS.includes(addressForm.label);
+    return (
+      <form
+        className={cx("sf-panel", styles.addressForm)}
+        onSubmit={handleAddressSave}
+        noValidate
+        aria-labelledby="address-form-title"
+      >
+        {/* Takes focus when the form opens: a reading position, no ring. */}
+        <h3 ref={addressFormTitleRef} id="address-form-title" className={styles.addressFormTitle} tabIndex={-1}>
+          {editingAddressIndex !== null ? "Edit address" : "Add an address"}
+        </h3>
 
-          <div className={styles.labelSelector}>
-            {["Home", "Work", "Other"].map((label) => (
-              <button
-                key={label}
-                className={`${styles.labelChip} ${
-                  addressForm.label === label ? styles.labelChipActive : ""
-                }`}
-                onClick={() =>
-                  setAddressForm((prev) => ({ ...prev, label }))
-                }
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-
-          <div className={styles.formGrid}>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>First Name *</label>
-              <input
-                type="text"
-                name="firstName"
-                value={addressForm.firstName}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Enter first name"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Last Name *</label>
-              <input
-                type="text"
-                name="lastName"
-                value={addressForm.lastName}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Enter last name"
-              />
-            </div>
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.formLabel}>Phone Number *</label>
-              <input
-                type="tel"
-                name="phone"
-                value={addressForm.phone}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="10-digit mobile number"
-              />
-            </div>
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.formLabel}>Address Line 1 *</label>
-              <input
-                type="text"
-                name="addressLine1"
-                value={addressForm.addressLine1}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="House/Flat No., Building, Street"
-              />
-            </div>
-            <div className={`${styles.formGroup} ${styles.fullWidth}`}>
-              <label className={styles.formLabel}>Address Line 2</label>
-              <input
-                type="text"
-                name="addressLine2"
-                value={addressForm.addressLine2}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Landmark, Area (optional)"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>City *</label>
-              <input
-                type="text"
-                name="city"
-                value={addressForm.city}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Enter city"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>State *</label>
-              <input
-                type="text"
-                name="state"
-                value={addressForm.state}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Enter state"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Postal Code *</label>
-              <input
-                type="text"
-                name="postalCode"
-                value={addressForm.postalCode}
-                onChange={handleAddressChange}
-                className={styles.formInput}
-                placeholder="Enter postal code"
-              />
-            </div>
-            <div className={styles.formGroup}>
-              <label className={styles.formLabel}>Country</label>
-              <input
-                type="text"
-                name="country"
-                value={addressForm.country}
-                className={`${styles.formInput} ${styles.readOnly}`}
-                readOnly
-              />
-              <span className={styles.fieldHint}>Currently shipping within India only</span>
-            </div>
-          </div>
-
-          <div className={styles.checkboxGroup}>
-            <label className={styles.checkboxLabel}>
-              <input
-                type="checkbox"
-                name="isDefault"
-                checked={addressForm.isDefault}
-                onChange={handleAddressChange}
-                className={styles.checkbox}
-              />
-              <span>Set as default address</span>
-            </label>
-          </div>
-
-          <div className={styles.formActions}>
-            <button
-              className={styles.btnSecondary}
-              onClick={resetAddressForm}
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              className={styles.btnPrimary}
-              onClick={handleAddressSave}
-              disabled={loading}
-            >
-              {loading
-                ? "Saving..."
-                : editingAddressIndex !== null
-                ? "Update Address"
-                : "Save Address"}
-            </button>
+        <div className="sf-field">
+          <span className="sf-field__label" id="address-type-label">
+            Address type
+          </span>
+          <div className={styles.chips} role="radiogroup" aria-labelledby="address-type-label">
+            {ADDRESS_LABELS.map((label, index) => {
+              const checked = addressForm.label === label;
+              return (
+                <button
+                  key={label}
+                  ref={(node) => {
+                    labelChipRefs.current[index] = node;
+                  }}
+                  type="button"
+                  role="radio"
+                  aria-checked={checked}
+                  tabIndex={checked || (!labelIsChip && index === 0) ? 0 : -1}
+                  className={cx("sf-chip", styles.chip)}
+                  onClick={() => setAddressForm((prev) => ({ ...prev, label }))}
+                  onKeyDown={(event) => handleLabelKeyDown(event, index)}
+                >
+                  {label}
+                </button>
+              );
+            })}
           </div>
         </div>
-      )}
 
-      <div className={styles.addressList}>
-        {addresses.length === 0 && !showAddressForm ? (
-          <div className={styles.emptyState}>
-            <div className={styles.emptyIcon}>
-              <TabIcon icon="location" />
-            </div>
-            <p className={styles.emptyText}>No addresses saved yet</p>
-            <p className={styles.emptySubtext}>
-              Add an address to make checkout faster
+        <div className={styles.addressFields}>{ADDRESS_FIELDS.map(renderAddressField)}</div>
+
+        <div className={styles.defaultChoice}>
+          <label className="sf-check">
+            <input
+              type="checkbox"
+              name="isDefault"
+              checked={defaultIsFixed || addressForm.isDefault}
+              disabled={defaultIsFixed}
+              onChange={handleAddressChange}
+              aria-describedby={defaultIsFixed ? "address-default-hint" : undefined}
+            />
+            Set as default address
+          </label>
+          {defaultIsFixed && (
+            <p className={cx("sf-field__hint", styles.defaultHint)} id="address-default-hint">
+              Your only address is always the default.
             </p>
-          </div>
-        ) : (
-          addresses.map((addr, index) => (
-            <div
-              key={index}
-              className={`${styles.addressCard} ${
-                addr.isDefault ? styles.addressCardDefault : ""
-              }`}
-            >
-              <div className={styles.addressCardHeader}>
-                <div className={styles.addressLabelRow}>
-                  <span className={styles.addressLabel}>{addr.label}</span>
-                  {addr.isDefault && (
-                    <span className={styles.defaultBadge}>Default</span>
-                  )}
-                </div>
-                <div className={styles.addressActions}>
-                  {!addr.isDefault && (
-                    <button
-                      className={styles.actionLink}
-                      onClick={() => handleSetDefaultAddress(index)}
-                      disabled={loading}
-                    >
-                      Set Default
-                    </button>
-                  )}
-                  <button
-                    className={styles.actionLink}
-                    onClick={() => handleAddressEdit(index)}
-                    disabled={loading}
-                  >
-                    Edit
-                  </button>
-                  <button
-                    className={`${styles.actionLink} ${styles.actionLinkDanger}`}
-                    onClick={() => handleAddressDelete(index)}
-                    disabled={loading}
-                  >
-                    Delete
-                  </button>
-                </div>
-              </div>
-              <div className={styles.addressCardBody}>
-                <p className={styles.addressName}>
-                  {[addr.firstName, addr.lastName].filter(Boolean).join(" ") ||
-                    addr.fullName ||
-                    ""}
-                </p>
-                <p className={styles.addressText}>
-                  {addr.addressLine1}
-                  {addr.addressLine2 ? `, ${addr.addressLine2}` : ""}
-                </p>
-                <p className={styles.addressText}>
-                  {addr.city}, {addr.state} {addr.postalCode || addr.zipCode || ""}
-                </p>
-                <p className={styles.addressText}>{addr.country}</p>
-                <p className={styles.addressPhone}>Phone: {addr.phone}</p>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    </motion.div>
-  );
-
-  const renderPasswordSection = () => (
-    <motion.div
-      key="password"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Change Password</h2>
-        <p className={styles.sectionSubtitle}>
-          Update your password to keep your account secure
-        </p>
-      </div>
-
-      <div className={styles.passwordFormWrapper}>
-        <div className={styles.formGroupStacked}>
-          <label className={styles.formLabel}>Current Password *</label>
-          <div className={styles.passwordInputWrapper}>
-            <input
-              type={showPasswords.current ? "text" : "password"}
-              name="currentPassword"
-              value={passwordForm.currentPassword}
-              onChange={handlePasswordChange}
-              className={styles.formInput}
-              placeholder="Enter current password"
-            />
-            <button
-              type="button"
-              className={styles.passwordToggle}
-              onClick={() =>
-                setShowPasswords((p) => ({ ...p, current: !p.current }))
-              }
-            >
-              {showPasswords.current ? "Hide" : "Show"}
-            </button>
-          </div>
-        </div>
-
-        <div className={styles.formGroupStacked}>
-          <label className={styles.formLabel}>New Password *</label>
-          <div className={styles.passwordInputWrapper}>
-            <input
-              type={showPasswords.new ? "text" : "password"}
-              name="newPassword"
-              value={passwordForm.newPassword}
-              onChange={handlePasswordChange}
-              className={styles.formInput}
-              placeholder="Enter new password"
-            />
-            <button
-              type="button"
-              className={styles.passwordToggle}
-              onClick={() =>
-                setShowPasswords((p) => ({ ...p, new: !p.new }))
-              }
-            >
-              {showPasswords.new ? "Hide" : "Show"}
-            </button>
-          </div>
-          {passwordForm.newPassword && (
-            <div className={styles.strengthMeter}>
-              <div className={styles.strengthBar}>
-                {[1, 2, 3, 4].map((seg) => (
-                  <div
-                    key={seg}
-                    className={styles.strengthSegment}
-                    style={{
-                      backgroundColor:
-                        seg <= passwordStrength.level
-                          ? passwordStrength.color
-                          : isDarkMode
-                          ? "rgba(255,255,255,0.1)"
-                          : "#e5e7eb",
-                    }}
-                  />
-                ))}
-              </div>
-              <span
-                className={styles.strengthLabel}
-                style={{ color: passwordStrength.color }}
-              >
-                {passwordStrength.label}
-              </span>
-            </div>
           )}
         </div>
 
-        <div className={styles.formGroupStacked}>
-          <label className={styles.formLabel}>Confirm New Password *</label>
-          <div className={styles.passwordInputWrapper}>
-            <input
-              type={showPasswords.confirm ? "text" : "password"}
-              name="confirmPassword"
-              value={passwordForm.confirmPassword}
-              onChange={handlePasswordChange}
-              className={styles.formInput}
-              placeholder="Confirm new password"
-            />
-            <button
-              type="button"
-              className={styles.passwordToggle}
-              onClick={() =>
-                setShowPasswords((p) => ({ ...p, confirm: !p.confirm }))
-              }
-            >
-              {showPasswords.confirm ? "Hide" : "Show"}
-            </button>
-          </div>
-          {passwordForm.confirmPassword &&
-            passwordForm.newPassword !== passwordForm.confirmPassword && (
-              <span className={styles.fieldError}>Passwords do not match</span>
-            )}
-        </div>
-
-        <div className={styles.passwordRequirements}>
-          <p className={styles.requirementsTitle}>Password Requirements:</p>
-          <ul className={styles.requirementsList}>
-            <li
-              className={
-                passwordForm.newPassword.length >= 8
-                  ? styles.requirementMet
-                  : ""
-              }
-            >
-              At least 8 characters
-            </li>
-            <li
-              className={
-                /[A-Z]/.test(passwordForm.newPassword)
-                  ? styles.requirementMet
-                  : ""
-              }
-            >
-              One uppercase letter
-            </li>
-            <li
-              className={
-                /[a-z]/.test(passwordForm.newPassword)
-                  ? styles.requirementMet
-                  : ""
-              }
-            >
-              One lowercase letter
-            </li>
-            <li
-              className={
-                /[0-9]/.test(passwordForm.newPassword)
-                  ? styles.requirementMet
-                  : ""
-              }
-            >
-              One number
-            </li>
-            <li
-              className={
-                /[^A-Za-z0-9]/.test(passwordForm.newPassword)
-                  ? styles.requirementMet
-                  : ""
-              }
-            >
-              One special character
-            </li>
-          </ul>
-        </div>
-
-        <div className={styles.formActions}>
+        <div className={styles.addressFormActions}>
+          {/* Busy, not disabled, while saving (the Profile form's pattern):
+              focus stays on the button and further presses are ignored. */}
           <button
-            className={styles.btnPrimary}
-            onClick={handlePasswordSubmit}
-            disabled={loading}
+            type="submit"
+            className={cx("sf-btn sf-btn--primary", styles.busy)}
+            aria-disabled={loading || undefined}
+            data-busy={loading || undefined}
           >
-            {loading ? "Updating..." : "Update Password"}
+            {loading ? "Saving…" : "Save address"}
+          </button>
+          <button
+            type="button"
+            className="sf-btn sf-btn--ghost"
+            onClick={cancelAddressForm}
+            aria-disabled={loading || undefined}
+          >
+            Cancel
           </button>
         </div>
+      </form>
+    );
+  };
+
+  const renderAddressCard = (addr, index) => {
+    const name = [addr.firstName, addr.lastName].filter(Boolean).join(" ") || addr.fullName || "";
+    const street = [addr.addressLine1, addr.addressLine2].filter(Boolean).join(", ");
+    const place = cityLine(addr);
+    const context = addressContext(addr);
+    return (
+      <li
+        key={index}
+        className={cx("sf-card sf-card--hairline", styles.addressCard, addr.isDefault && styles.addressCardDefault)}
+      >
+        {/* Takes focus when one of this card's buttons goes away (a reading
+            position, no ring); "Default" is part of its name. */}
+        <h3
+          ref={(node) => {
+            cardHeadingRefs.current[index] = node;
+          }}
+          className={styles.addressCardHead}
+          tabIndex={-1}
+        >
+          <span className="sf-eyebrow">{addr.label || "Address"}</span>
+          {addr.isDefault && (
+            <>
+              {" "}
+              <span className="sf-badge sf-badge--ink">Default</span>
+            </>
+          )}
+        </h3>
+        <div className={styles.addressBody}>
+          {name && <p className={styles.addressName}>{name}</p>}
+          {(street || place || addr.country) && (
+            <p className={styles.addressLines}>
+              {street && <span>{street}</span>}
+              {place && <span>{place}</span>}
+              {addr.country && <span>{addr.country}</span>}
+            </p>
+          )}
+          {addr.phone && (
+            <p className={styles.addressPhone}>
+              <span className="sf-visually-hidden">Phone: </span>
+              {addr.phone}
+            </p>
+          )}
+        </div>
+        <div className={styles.addressCardActions}>
+          {!addr.isDefault && (
+            <button
+              type="button"
+              className="sf-btn sf-btn--link"
+              onClick={() => handleSetDefaultAddress(index)}
+              aria-disabled={loading || undefined}
+            >
+              Set as default<span className="sf-visually-hidden"> {context}</span>
+            </button>
+          )}
+          <button
+            ref={(node) => {
+              editButtonRefs.current[index] = node;
+            }}
+            type="button"
+            className="sf-btn sf-btn--link"
+            onClick={() => handleAddressEdit(index)}
+            aria-disabled={loading || undefined}
+          >
+            Edit<span className="sf-visually-hidden"> {context}</span>
+          </button>
+          <button
+            ref={(node) => {
+              deleteButtonRefs.current[index] = node;
+            }}
+            type="button"
+            className={cx("sf-btn sf-btn--link", styles.deleteAddress)}
+            onClick={() => handleAddressDelete(index)}
+            aria-disabled={loading || undefined}
+            aria-haspopup="dialog"
+          >
+            Delete<span className="sf-visually-hidden"> {context}</span>
+          </button>
+        </div>
+      </li>
+    );
+  };
+
+  // Keyed, like the password card: the sections share their place in the
+  // tree, so without a key React would reuse the previous section's
+  // already-revealed element and a tab switch would show no reveal.
+  const renderAddressesSection = () => (
+    <Reveal key="addresses">
+      <div className={styles.addressesHead}>
+        <div>
+          <h2 className={cx("sf-display-sm", styles.panelTitle)}>Addresses</h2>
+          <p className={styles.addressesIntro}>Your default address is selected for you at checkout.</p>
+        </div>
+        {!showAddressForm && addresses.length > 0 && (
+          <button ref={addAddressRef} type="button" className="sf-btn sf-btn--ghost" onClick={openNewAddressForm}>
+            Add address
+          </button>
+        )}
       </div>
-    </motion.div>
+
+      {showAddressForm && renderAddressForm()}
+
+      {addresses.length > 0 ? (
+        <ul className={styles.addressGrid}>{addresses.map(renderAddressCard)}</ul>
+      ) : (
+        !showAddressForm && (
+          <div className={cx("sf-panel", styles.addressesEmpty)}>
+            {/* Takes focus when the last address is deleted (no ring). */}
+            <p ref={emptyTitleRef} className={cx("sf-display-sm", styles.addressesEmptyTitle)} tabIndex={-1}>
+              No addresses yet.
+            </p>
+            <p className={styles.addressesEmptyText}>Add an address to make checkout faster.</p>
+            <button
+              ref={emptyAddressRef}
+              type="button"
+              className={cx("sf-btn sf-btn--primary", styles.emptyAction)}
+              onClick={openNewAddressForm}
+            >
+              Add your first address
+            </button>
+          </div>
+        )
+      )}
+    </Reveal>
   );
+
+  // ---- Change password section (§32) ----
+  // A password field with its "Show" / "Hide" text button inside the right
+  // edge (the auth modal's control, §30.4).
+  const renderPasswordControl = (key, { error, description }) => {
+    const { name, id, autoComplete, noun } = PASSWORD_FIELDS[key];
+    const visible = showPasswords[key];
+    return (
+      <div className={styles.passwordControl}>
+        <input
+          ref={(node) => {
+            passwordFieldRefs.current[name] = node;
+          }}
+          id={id}
+          className={cx("sf-input", styles.passwordInput)}
+          type={visible ? "text" : "password"}
+          name={name}
+          value={passwordForm[name]}
+          onChange={handlePasswordChange}
+          autoComplete={autoComplete}
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          required
+          aria-invalid={error ? "true" : undefined}
+          aria-describedby={description}
+        />
+        <button type="button" className={styles.reveal} onClick={() => togglePasswordVisibility(key)} aria-controls={id}>
+          {visible ? "Hide" : "Show"}
+          <span className="sf-visually-hidden"> {noun}</span>
+        </button>
+      </div>
+    );
+  };
+
+  const renderPasswordSection = () => {
+    const { current, new: next, confirm } = PASSWORD_FIELDS;
+    // The confirmation's message: the last submit's, or "Passwords do not
+    // match" as soon as typing on cannot make the two match (the confirmation
+    // is not the start of the new password; an empty one always is). A correct
+    // entry never shows it, a slip shows it at once, and nothing changes on
+    // leaving the field, so the button never moves under a pointer on its way
+    // to it. Either message goes as soon as the two match.
+    const { newPassword, confirmPassword } = passwordForm;
+    const confirmError =
+      newPassword !== confirmPassword
+        ? passwordErrors.confirmPassword || (newPassword.startsWith(confirmPassword) ? "" : "Passwords do not match")
+        : "";
+    const errorLine = (message, id) =>
+      message && (
+        <p className="sf-field__error" id={id}>
+          {message}
+        </p>
+      );
+
+    return (
+      <Reveal key="password" className={cx("sf-card sf-card--hairline", styles.panel)}>
+        <h2 className={cx("sf-display-sm", styles.panelTitle)}>Change password</h2>
+
+        <form className={styles.passwordForm} onSubmit={handlePasswordSubmit} noValidate>
+          {/* For password managers: the account the new password belongs to. */}
+          <input type="text" name="username" autoComplete="username" value={user.email || ""} readOnly hidden />
+
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor={current.id}>
+              {current.label}
+            </label>
+            {renderPasswordControl("current", {
+              error: passwordErrors.currentPassword,
+              description: describedBy(passwordErrors.currentPassword && `${current.id}-error`),
+            })}
+            {errorLine(passwordErrors.currentPassword, `${current.id}-error`)}
+          </div>
+
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor={next.id}>
+              {next.label}
+            </label>
+            {renderPasswordControl("new", {
+              error: passwordErrors.newPassword,
+              description: describedBy(
+                passwordStrength.label && `${next.id}-strength`,
+                passwordErrors.newPassword && `${next.id}-error`
+              ),
+            })}
+            {/* The meter, while there is a password, and its word: a polite
+                live region that stays in the page. */}
+            <div className={styles.strengthRow}>
+              {passwordForm.newPassword && (
+                <div className={styles.meter} data-level={passwordStrength.level} aria-hidden="true">
+                  <span className={styles.segment} />
+                  <span className={styles.segment} />
+                  <span className={styles.segment} />
+                  <span className={styles.segment} />
+                </div>
+              )}
+              <p id={`${next.id}-strength`} className={styles.strength} aria-live="polite">
+                {passwordStrength.label && (
+                  <>
+                    <span className="sf-visually-hidden">Password strength: </span>
+                    {passwordStrength.label}
+                  </>
+                )}
+              </p>
+            </div>
+            {errorLine(passwordErrors.newPassword, `${next.id}-error`)}
+          </div>
+
+          {/* Display only, as before; not a live region (it would speak on
+              every keystroke). Each rule's state is in its text too. */}
+          <div className={styles.checklist}>
+            <p className={styles.checklistTitle} id="password-checklist-title">
+              A strong password has
+            </p>
+            <ul className={styles.checks} aria-labelledby="password-checklist-title">
+              {PASSWORD_CHECKS.map(({ label, test }) => {
+                const met = test(passwordForm.newPassword);
+                return (
+                  <li key={label} className={styles.check} data-met={met || undefined}>
+                    <CheckGlyph met={met} />
+                    {label}
+                    <span className="sf-visually-hidden">{met ? ", done" : ", not yet"}</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor={confirm.id}>
+              {confirm.label}
+            </label>
+            {renderPasswordControl("confirm", {
+              error: confirmError,
+              description: describedBy(confirmError && `${confirm.id}-error`),
+            })}
+            {errorLine(confirmError, `${confirm.id}-error`)}
+          </div>
+
+          <div className={styles.passwordActions}>
+            {/* Busy, not disabled, while the request runs. */}
+            <button
+              type="submit"
+              className={cx("sf-btn sf-btn--primary", styles.save)}
+              aria-disabled={loading || undefined}
+              data-busy={loading || undefined}
+            >
+              {loading ? "Updating…" : "Update password"}
+            </button>
+          </div>
+
+          <p className="sf-visually-hidden" aria-live="polite" aria-atomic="true">
+            {passwordAnnouncement.text && <span key={passwordAnnouncement.key}>{passwordAnnouncement.text}</span>}
+          </p>
+        </form>
+      </Reveal>
+    );
+  };
 
   const renderWalletSection = () => (
     <motion.div
@@ -1261,8 +1495,8 @@ const Profile = () => {
     </motion.div>
   );
 
-  // The boilerplate's sections, until Prompts 22 and 23 restyle them: a
-  // neutral token frame, plus the .dark class their own dark rules key off.
+  // The boilerplate's wallet section, until Prompt 23 restyles it: a neutral
+  // token frame, plus the .dark class its own dark rules key off.
   const renderLegacySection = (section) => (
     <div className={cx(styles.legacy, isDarkMode && styles.dark)}>{section}</div>
   );
@@ -1272,11 +1506,11 @@ const Profile = () => {
       case "profile":
         return renderProfileSection();
       case "addresses":
-        return renderLegacySection(renderAddressesSection());
+        return renderAddressesSection();
       case "wallet":
         return renderLegacySection(renderWalletSection());
       case "password":
-        return renderLegacySection(renderPasswordSection());
+        return renderPasswordSection();
       default:
         return renderProfileSection();
     }
