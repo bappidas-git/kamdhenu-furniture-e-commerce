@@ -332,7 +332,7 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-bottomnav` | 58 | mobile bottom nav (≤ 768px; Prompt 09): above content and the header, below the sticky bar, every drawer and every modal |
 | `--sf-z-stickybar` | 60 | mobile sticky Add-to-Cart bar (`AddToCartBar`, up to 768px; Prompt 16): above the bottom nav, which it covers while shown, below every drawer and modal (section 26.6) |
 | `--sf-z-overlay` | 1000 | drawer and sheet backdrops, the drawers themselves (the sidebar, the bottom sheet and, since Prompt 18, the cart drawer, which was 1200/1300) |
-| `--sf-z-modal` | 1100 | modals (auth) |
+| `--sf-z-modal` | 1100 | modals: the auth dialog (Prompt 20, section 30; it was 9999) |
 | `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal (section 25.1). It was set above the cart drawer's legacy 1200/1300; Prompt 18 moved the drawer to `--sf-z-overlay`, so nothing needs more than `--sf-z-modal` now, and 1400 is kept (lowering it is optional) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
@@ -808,14 +808,14 @@ Written by Prompt 09. Files: `src/components/SidebarMenu/*`, `src/components/Bot
 
 ### 19.1 The overlay contract
 
-Every drawer, sheet and modal on the storefront should behave the same way. The sidebar, the bottom sheet, the search overlay (Prompt 15) and the cart drawer (Prompt 18, section 28) follow this contract; the auth modal (Prompt 20) can adopt it with the same helper.
+Every drawer, sheet and modal on the storefront should behave the same way. The sidebar, the bottom sheet, the search overlay (Prompt 15), the cart drawer (Prompt 18, section 28) and the auth modal (Prompt 20, section 30) follow this contract.
 
 | Concern | Rule |
 |---|---|
 | Semantics | `role="dialog"`, `aria-modal="true"` and a name (`aria-label`, or `aria-labelledby` pointing at a visible title) |
 | Focus | `useFocusTrap(ref, { active, onEscape, initialFocusRef, returnFocusRef, returnFocus })`: on open, focus moves to `initialFocusRef`, else the first focusable element, else the container (give it `tabIndex={-1}`). Tab and Shift+Tab cycle inside. On close, focus returns to the element that opened the layer, unless another layer has taken focus in the meantime. Only the most recently opened trap handles keys, so nested layers work. Focus is not forcibly pulled back into the layer: `aria-modal` hides the page from assistive technology, and portalled popovers and SweetAlert dialogs opened from inside the layer keep their own focus. |
 | Escape | `onEscape` (usually `onClose`), handled by the topmost trap only |
-| Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. This is the same signal the auth modal sets (the cart drawer and search use this hook since Prompts 18 and 15), and the one BottomNav listens to through `useBodyScrollLocked()`. |
+| Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. Every overlay sets it through this hook (search since Prompt 15, the cart drawer since Prompt 18, the auth modal since Prompt 20), and BottomNav listens to it through `useBodyScrollLocked()`. |
 | Stacking | Backdrops and panels at `--sf-z-overlay` (1000); modals at `--sf-z-modal` (1100); the full-screen search at `--sf-z-search` (1400, section 25.1); BottomNav (58) is always beneath them |
 | Backdrop | `--sf-color-overlay`, no blur; a click closes the layer |
 | Motion | Enter with `--sf-ease-out`; exit in `--sf-duration` with `--sf-ease-in-out`; under reduced motion, opacity only (an explicit `useReducedMotion()` variant, on top of `MotionConfig`) |
@@ -893,7 +893,7 @@ import { BottomDrawer } from "../../components/ui";
 - **14 (listing):** `BottomDrawer` covers the filter sheet's semantics: dialog, Escape, focus on the close button, focus back to the trigger, scroll lock. Its `footer` slot holds "Clear all" and "Show N results". The sheet's old `z-index: 1300` was there to beat a bottom nav at 1200 and is no longer needed.
 - **15 (search):** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's own restore becomes a no-op.
 - **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58). Done in Prompt 16 (section 26.6).
-- **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`. Done for the cart drawer in Prompt 18 (section 28).
+- **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`. Done for the cart drawer in Prompt 18 (section 28) and the auth modal in Prompt 20 (section 30).
 - **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
 
 ---
@@ -1729,3 +1729,81 @@ Ticket and deal-card reveals (`Reveal`, 90ms apart), the grid's reveal and its p
 | Ticket: notch (page tone) vs the ticket surface | 1.07 | 1.09 | info |
 
 Every other pairing is already in §14 and §23.5: ink, secondary and muted text on the page and the surface, the accent italic, the selected chip and the code pill (primary-contrast on primary), the ghost and primary buttons, the focus ring, sand panels and skeletons, the discount tone on the page, and the card's own pairs. In forced-colours mode the pressed chip keeps a `Highlight` fill.
+
+---
+
+## 30. Auth modal
+
+Written by Prompt 20. Files: `src/components/AuthModal/AuthModal.js` + `.module.css`. Props `open`, `onClose`, `defaultTab` (`"login"` | `"signup"`). There is no `/login` route: `Header` mounts the dialog once, and anything opens it with `useAuth().openAuthModal("login" | "signup")` (the header's account button, the sidebar, the bottom bar's Account, the wishlist banner, the orders page, checkout step 0). Login, registration, the toasts and the storage policy stay in `AuthContext` / `authStorage`.
+
+### 30.1 Surface and stacking
+
+- A portal on `<body>`. The layer is fixed at `--sf-z-modal` (1100): above the header (50), the bottom bar (58), the sticky bar (60) and every drawer (1000); below the search overlay (1400) and SweetAlert (2000), so AuthContext's toasts show above it (the old overlay sat at 9999, over them).
+- Overlay `--sf-color-overlay`, no blur; a click on it closes the dialog.
+- **Dialog (from 641px):** `width: min(480px, calc(100vw - 32px))`, `max-height: calc(100dvh - 32px)` (a `100vh` fallback first), centred; `--sf-color-bg` (paper; navy-ink in dark mode), `--sf-hairline`, `--sf-radius-md`, `--sf-shadow-lg`. The body scrolls (`overscroll-behavior: contain`) inside 40px of padding; the 44px close button (`.sf-btn--icon` on a paper ground, sand on hover, "Close") stays at the top right above it, 12px from the edges (8px on the sheet).
+- **Bottom sheet (up to 640px):** full width, flush with the bottom, `max-height: calc(100dvh - 40px)` (a strip of overlay stays visible above it, and a tap there closes it), `--sf-radius-lg` top corners and square bottom ones, a hairline on the top edge only; 32px / 20px padding plus the safe-area insets. No drag handle: nothing can be dragged.
+
+### 30.2 Head
+
+- `<BrandLogo height={56} />`, the auto variant (the light artwork on paper, the white one in dark mode), `aria-hidden` here (the heading names the dialog); 20px of clear space below it. 56px is §10's minimum for this surface: the wordmark and the tagline in the artwork stay legible (at 36px the tagline is a smudge).
+- The heading, an `h2.sf-display-sm` that names the dialog: "Welcome back" / "Create your account".
+- One line under it (15px secondary, 36ch, balanced) that describes the dialog: "Sign in to track orders and save your wishlist across devices." / "Create an account to track orders and save your wishlist across devices." `brandContent.js` has no line for this; only real benefits are named (order history and the wishlist are kept on the account).
+
+### 30.3 Tabs
+
+- `.sf-tabs` as a `tablist` named "Sign in or create an account", 32px under the head: two equal halves, `.sf-tab`s "Sign in" and "Create account" with `aria-selected`, `aria-controls` and a roving `tabindex`. ArrowLeft / ArrowRight (wrapping), Home and End move focus and select (automatic activation: the panels are cheap to show).
+- The primitive's own underline is switched off; one 1px `--sf-color-primary` line (a `border-top`, so forced colours keep it, as `Highlight`) sits under the selected half and slides there with `translateX` over `--sf-duration` (`--sf-ease-in-out`).
+- The panel is a `.sf-tabpanel` (24px above) labelled by its tab. Panels cross-fade (`AnimatePresence mode="wait"`: out over `--sf-duration-fast` with `--sf-ease-in-out`, in over `--sf-duration` with `--sf-ease-out`, opacity only); the one fading out is `inert`.
+
+### 30.4 Fields
+
+`.sf-field` with a visible `.sf-field__label` above the control; `.sf-input` raised to 48px (`--sf-space-12`); 20px between fields; first and last name side by side at every width.
+
+| Field | `type` | `autocomplete` | `inputmode` | Notes |
+|---|---|---|---|---|
+| Email address (both forms) | `email` | `email` | `email` | `autocapitalize="none"`, `autocorrect="off"`, no spellcheck; placeholder `name@example.com` |
+| Password (sign in) | `password` / `text` | `current-password` | — | Show / Hide |
+| First name, Last name | `text` | `given-name`, `family-name` | — | `autocapitalize="words"` |
+| Mobile number (optional) | `tel` | `tel-national` | `tel` | "+91" inside the field behind a hairline (`aria-hidden`); hint "10 digits, without +91 or 0."; "(optional)" in muted text |
+| Password, Confirm password (sign up) | `password` / `text` | `new-password` | — | Show / Hide; hint "At least 6 characters." and the strength meter |
+
+No field needed `inputmode="numeric"` (there is no code or PIN field). Required fields carry `required` (the forms are `noValidate`, so it only reaches assistive technology).
+
+- **Errors:** `.sf-field__error` under the field (the circled "!" and the error tone), the control `aria-invalid="true"` and `aria-describedby` = hint, then error. Typing in a field clears its message. The messages are the boilerplate's, word for word.
+- **Show / Hide:** a text button inside the field's right edge (13px 500 secondary, a stone underline that turns accent on hover, 44 × 44px, an inset focus outline; the field keeps 72px of right padding for it). Its name follows its text, "Show password" / "Hide password" ("Show password confirmation" on the second field), with `aria-controls` on the field; the dialog's status line says "Password shown." / "Password hidden.". It is in the tab order. Every password is hidden again when the dialog opens.
+- **Strength meter** (the sign-up password, while it has text): four 2px segments with 4px gaps, stone when empty and filled up to the score in `--sf-color-error` / `-warning` / `-info` / `-success` (Weak / Fair / Good / Strong: the boilerplate's score and thresholds). The word (12px 500 secondary, "Password strength:" visually hidden before it) shares a line with the hint, is a polite live region and is part of the field's description.
+- **Check rows:** "Remember me" and the terms are `.sf-check` rows. The terms box lines up with the first line of its text and takes the error border when invalid; its message is indented under the text. "Terms & Conditions" and "Privacy Policy" are ink links with a 1px accent underline (2px on hover) that open in a new tab, described by a hidden "Opens in a new tab" (so the checkbox's own name stays the sentence).
+
+### 30.5 Messages and the button
+
+- Above the submit button, where the eye already is, two slots that are always in the DOM: `role="alert"` (the request's own error: wrong password, the email already in use) and `role="status"` (the "Forgot password?" note with its "Contact support" link to `/support`, or the success line). Empty, they take no room.
+- A message: 14px on its semantic tint (`--sf-color-error-bg` / `-success-bg` / `-info-bg`) in the matching tone, an 18px glyph in `currentColor` (circled "!", check, circled "i"), radius sm, 12px / 16px padding, 16px above the button. Links inside inherit the tone and its focus outline is `currentColor` (≥ 5.4 : 1 on every tint).
+- Submit: `.sf-btn--primary --lg --block` (52px), "Sign in" / "Create account"; "Signing in…" / "Creating account…" while the request runs. While it runs, and while the success line waits for its timer, the button is `aria-disabled` with `data-busy` (it keeps its full ink and a `progress` cursor rather than the disabled 50%, and keeps focus) and further submits are ignored.
+- Under it: "New here? Create an account" / "Already have an account? Sign in" (`.sf-btn--link`), which switch tabs and take focus to the other form's first field.
+- Timers (unchanged): the dialog closes 1.5s after "Welcome back. Signing you in…"; 1.8s after "Account created. Taking you to sign in…" it turns to Sign in with the email filled in and focus on the password.
+
+### 30.6 Focus and keyboard
+
+- `useFocusTrap` (§19.1): focus starts in the active form's first field (Email address, or First name), Tab and Shift+Tab stay inside (close → selected tab → fields → … → the switch link), Escape closes, and focus goes back to the opener. When the opener is still `inert` at that moment (the bottom bar's Account button, inert under every overlay), the dialog tries again over the next frames until it can take focus, unless focus has gone somewhere on purpose meanwhile. `useBodyScrollLock` locks the page.
+- A submit that fails validation moves focus to the first field with a message (in form order); if that field already has focus, the visually hidden status line says the message instead (it clears after 5s).
+- Opening always shows the tab asked for (`defaultTab`); a new `defaultTab` while open switches the form. A route change underneath (back, forward) closes the dialog.
+
+### 30.7 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| Dialog | opacity 0 → 1 and an 8px rise over `--sf-duration` (`--sf-ease-out`); out the same way with `--sf-ease-in-out` | opacity only |
+| Overlay | fades over `--sf-duration` | same |
+| Panels | cross-fade: out `--sf-duration-fast`, in `--sf-duration` | same (opacity) |
+| Tab underline | `translateX` over `--sf-duration` (`--sf-ease-in-out`) | instant (the tokens collapse) |
+| Meter segments, Show / Hide | colour over `--sf-duration` / `--sf-duration-fast` | instant |
+
+### 30.8 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Auth: error line (error on error-bg over the page tone) | 5.50 ✓ | 6.18 ✓ | 4.5:1 |
+| Auth: success line (success on success-bg over the page tone) | 5.40 ✓ | 6.44 ✓ | 4.5:1 |
+| Auth: info line and its link (info on info-bg over the page tone) | 5.95 ✓ | 6.49 ✓ | 4.5:1 |
+
+Every other pairing is already in §14 and §16.8: ink, secondary and muted text on the page and on the field surface, the field boundary and its error border, the focus ring on page and surface, the primary button and its hover, the checked box (accent-contrast on accent), ink on sand (the close button's hover), and the error, warning, info and success tones on the page for the meter's segments (graphics, 3 : 1; the word beside them carries the meaning). In forced-colours mode the segments are `GrayText` / `CanvasText`, the underline `Highlight`, and each message gets a `CanvasText` frame.

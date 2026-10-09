@@ -471,28 +471,39 @@ test("while the data loads, skeletons hold the admin's counts under the real her
   expect(screen.queryByText("Loading offers")).not.toBeInTheDocument();
 });
 
+// The retry tests settle each read inside act(), which returns only once React
+// has rendered and run its effects. Awaiting findBy* instead let the click land
+// while the error panel's effects were still queued: under load the queued
+// focus effect then spent the retry's focus flag on the old button.
 test("a failed read: the panel, then Try again reads again and moves focus to the codes", async () => {
   const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-  apiService.products.getAll.mockRejectedValueOnce(new Error("offline"));
+  const failed = deferred();
+  const retried = deferred();
+  apiService.products.getAll.mockReturnValueOnce(failed.promise).mockReturnValueOnce(retried.promise);
   renderPage();
-  expect(await screen.findByRole("heading", { name: "We couldn’t load the offers." })).toBeInTheDocument();
+  await act(async () => failed.reject(new Error("offline")));
+  expect(screen.getByRole("heading", { name: "We couldn’t load the offers." })).toBeInTheDocument();
   expect(screen.queryByRole("region", { name: titled("Codes to use at checkout.") })).not.toBeInTheDocument();
   expect(screen.queryByText("Nothing on offer right now.")).not.toBeInTheDocument();
 
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-  const codes = await findRegion("Codes to use at checkout.");
-  await waitFor(() => expect(codes).toHaveFocus());
+  await act(async () => retried.resolve(PRODUCTS));
+  expect(region("Codes to use at checkout.")).toHaveFocus();
   expect(apiService.products.getAll).toHaveBeenCalledTimes(2);
-  expect(await findRegion("8 pieces on offer.")).toBeInTheDocument();
+  expect(region("8 pieces on offer.")).toBeInTheDocument();
   consoleError.mockRestore();
 });
 
 test("a second failure keeps focus on Try again", async () => {
   const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
-  apiService.categories.getAll.mockRejectedValue(new Error("offline"));
+  const failed = deferred();
+  const failedAgain = deferred();
+  apiService.categories.getAll.mockReturnValueOnce(failed.promise).mockReturnValueOnce(failedAgain.promise);
   renderPage();
-  fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
-  await waitFor(() => expect(screen.getByRole("button", { name: "Try again" })).toHaveFocus());
+  await act(async () => failed.reject(new Error("offline")));
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await act(async () => failedAgain.reject(new Error("offline")));
+  expect(screen.getByRole("button", { name: "Try again" })).toHaveFocus();
   expect(apiService.categories.getAll).toHaveBeenCalledTimes(2);
   consoleError.mockRestore();
 });

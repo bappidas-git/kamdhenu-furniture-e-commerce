@@ -1,98 +1,111 @@
-import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import { motion, AnimatePresence } from "framer-motion";
+import React, { useCallback, useEffect, useId, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { Link, useLocation } from "react-router-dom";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
+import { CloseOutlined } from "@mui/icons-material";
 import { useAuth } from "../../hooks/useAuth";
-import { useTheme } from "../../context/ThemeContext";
 import { isEmailValid } from "../../utils/helpers";
+import { TOKENS } from "../../theme/tokens";
+import BrandLogo from "../ui/BrandLogo";
+import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
 import styles from "./AuthModal.module.css";
 
-/* ------------------------------------------------------------------ */
-/*  SVG Icons                                                          */
-/* ------------------------------------------------------------------ */
+// =============================================================================
+// AuthModal — the sign-in / create-account dialog
+// =============================================================================
+//
+// There is no /login route: Header renders this dialog once, and any page
+// opens it with useAuth().openAuthModal("login" | "signup"). Props: `open`,
+// `onClose`, `defaultTab` ("login" | "signup").
+//
+// Layout: a paper dialog (480px wide, hairline, soft shadow) centred over the
+// navy overlay; up to 640px a bottom sheet with 8px top corners and safe-area
+// padding. The logo heads it (BrandLogo's auto variant: the light artwork on
+// paper, the white one in dark mode), then the serif heading and one line on
+// what an account is for. Two tabs, "Sign in" and "Create account", switch
+// the forms.
+//
+// Kept from the boilerplate: the validation rules and messages
+// (validateLogin / validateSignup, unchanged); login({ email, password,
+// remember }), so "Remember me" keeps the session in localStorage instead of
+// sessionStorage (authStorage, through AuthContext); register() with the
+// phone prefixed "+91"; the dialog closes 1.5s after signing in, and turns to
+// "Sign in" with the email filled in 1.8s after an account is created; a
+// failed request shows its message and keeps what was typed; "Forgot
+// password?" says reset isn't available yet and links to /support (no reset
+// flow exists); the tab follows `defaultTab`; messages reset on opening; the
+// page behind is locked; Escape and the overlay close it. The toasts stay in
+// AuthContext. The disabled "Soon" Google and Facebook buttons are gone: no
+// flow existed behind them.
+//
+// Accessibility (DESIGN_SYSTEM §19.1 and §30): role="dialog" aria-modal,
+// named by its heading and described by its subtitle. useFocusTrap moves focus
+// to the active form's first field, keeps Tab inside and gives focus back to
+// whatever opened the dialog. The tabs are a tablist (arrow keys, Home, End).
+// Every field has a visible label, autocomplete and, where it helps, an
+// inputmode. A submit that fails validation marks the fields (aria-invalid,
+// with the message in aria-describedby) and moves focus to the first one; the
+// request's own error is role="alert"; the info and success lines are
+// role="status". Rendered in a portal on <body> at --sf-z-modal.
+//
+// Motion: fades in with an 8px rise over --sf-duration (opacity only under
+// reduced motion); the forms cross-fade when the tab changes.
+// =============================================================================
 
-const EmailIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="2" y="4" width="20" height="16" rx="2" />
-    <path d="M22 4l-10 8L2 4" />
-  </svg>
-);
+const { duration, easeOut, easeInOut } = TOKENS.motion;
 
-const LockIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <rect x="3" y="11" width="18" height="11" rx="2" />
-    <path d="M7 11V7a5 5 0 0110 0v4" />
-  </svg>
-);
+// Rendered height of the logo in the dialog's head (BrandLogo derives the
+// width, 169px): DESIGN_SYSTEM §10's minimum for the auth modal, the size at
+// which the wordmark and the tagline in the artwork stay legible.
+const LOGO_HEIGHT = 56;
 
-const UserIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" />
-    <circle cx="12" cy="7" r="4" />
-  </svg>
-);
+// The two delays the flows have always used.
+const CLOSE_AFTER_SIGN_IN_MS = 1500;
+const SWITCH_AFTER_SIGN_UP_MS = 1800;
+// How long the visually hidden status line keeps what it said.
+const ANNOUNCEMENT_MS = 5000;
 
-const PhoneIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M22 16.92v3a2 2 0 01-2.18 2 19.86 19.86 0 01-8.63-3.07 19.5 19.5 0 01-6-6A19.86 19.86 0 012.12 4.18 2 2 0 014.11 2h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.09 9.91a16 16 0 006 6l1.27-1.27a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z" />
-  </svg>
-);
+const TABS = [
+  { id: "login", label: "Sign in" },
+  { id: "signup", label: "Create account" },
+];
 
-const EyeIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-    <circle cx="12" cy="12" r="3" />
-  </svg>
-);
+const COPY = {
+  login: {
+    title: "Welcome back",
+    subtitle: "Sign in to track orders and save your wishlist across devices.",
+    submit: "Sign in",
+    submitting: "Signing in…",
+  },
+  signup: {
+    title: "Create your account",
+    subtitle: "Create an account to track orders and save your wishlist across devices.",
+    submit: "Create account",
+    submitting: "Creating account…",
+  },
+};
 
-const EyeOffIcon = () => (
-  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M17.94 17.94A10.07 10.07 0 0112 20c-7 0-11-8-11-8a18.45 18.45 0 015.06-5.94" />
-    <path d="M9.9 4.24A9.12 9.12 0 0112 4c7 0 11 8 11 8a18.5 18.5 0 01-2.16 3.19" />
-    <path d="M14.12 14.12a3 3 0 11-4.24-4.24" />
-    <line x1="1" y1="1" x2="23" y2="23" />
-  </svg>
-);
+// Top to bottom: a submit that fails validation moves focus to the first of
+// these that has a message.
+const FIELD_ORDER = {
+  login: ["email", "password"],
+  signup: ["firstName", "lastName", "email", "phone", "password", "confirmPassword", "terms"],
+};
 
-const CloseIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="18" y1="6" x2="6" y2="18" />
-    <line x1="6" y1="6" x2="18" y2="18" />
-  </svg>
-);
+const cx = (...names) => names.filter(Boolean).join(" ");
 
-const GoogleIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24">
-    <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4" />
-    <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
-    <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
-    <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
-  </svg>
-);
-
-const FacebookIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="#1877F2">
-    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z" />
-  </svg>
-);
-
-const CheckIcon = () => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-    <polyline points="20 6 9 17 4 12" />
-  </svg>
-);
-
-const SpinnerIcon = () => (
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" className={styles.spinner}>
-    <path d="M12 2a10 10 0 010 20" />
-  </svg>
-);
+// The control's description: its hint, then anything extra, then its error.
+const describedBy = (id, { hint, extra, error } = {}) =>
+  [hint && `${id}-hint`, extra, error && `${id}-error`].filter(Boolean).join(" ") || undefined;
 
 /* ------------------------------------------------------------------ */
 /*  Password strength helper                                           */
 /* ------------------------------------------------------------------ */
 
+// The boilerplate's score and thresholds, unchanged. The tones moved to CSS:
+// the meter reads `data-score` (1 weak … 4 strong).
 function getPasswordStrength(password) {
-  if (!password) return { score: 0, label: "", color: "" };
+  if (!password) return { score: 0, label: "" };
 
   let score = 0;
   if (password.length >= 6) score++;
@@ -101,38 +114,127 @@ function getPasswordStrength(password) {
   if (/[0-9]/.test(password)) score++;
   if (/[^A-Za-z0-9]/.test(password)) score++;
 
-  if (score <= 1) return { score: 1, label: "Weak", color: "var(--auth-strength-weak)" };
-  if (score <= 2) return { score: 2, label: "Fair", color: "var(--auth-strength-fair)" };
-  if (score <= 3) return { score: 3, label: "Good", color: "var(--auth-strength-good)" };
-  return { score: 4, label: "Strong", color: "var(--auth-strength-strong)" };
+  if (score <= 1) return { score: 1, label: "Weak" };
+  if (score <= 2) return { score: 2, label: "Fair" };
+  if (score <= 3) return { score: 3, label: "Good" };
+  return { score: 4, label: "Strong" };
 }
 
 /* ------------------------------------------------------------------ */
-/*  Overlay animation variants                                         */
+/*  Small parts                                                        */
 /* ------------------------------------------------------------------ */
 
-const overlayVariants = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1 },
-  exit: { opacity: 0 },
+// Status glyphs, drawn in currentColor so each follows its message's tone.
+const GLYPHS = {
+  error: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 7.5v5.5" />
+      <path d="M12 16.5h.01" />
+    </>
+  ),
+  info: (
+    <>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M12 11v5.5" />
+      <path d="M12 7.5h.01" />
+    </>
+  ),
+  success: <path d="M5 12.5l4.5 4.5L19 7.5" />,
 };
 
-const desktopDialogVariants = {
-  hidden: { opacity: 0, scale: 0.92, y: 20 },
-  visible: { opacity: 1, scale: 1, y: 0, transition: { type: "spring", damping: 25, stiffness: 350 } },
-  exit: { opacity: 0, scale: 0.92, y: 20, transition: { duration: 0.2 } },
-};
+// A message line on its semantic tint. The live region is the slot around it
+// (always in the DOM), so the message is announced as it arrives.
+const Message = ({ tone, children }) => (
+  <div className={cx(styles.message, styles[tone])}>
+    <svg
+      className={styles.glyph}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.75"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+      focusable="false"
+    >
+      {GLYPHS[tone]}
+    </svg>
+    <p>{children}</p>
+  </div>
+);
 
-const mobileDialogVariants = {
-  hidden: { y: "100%" },
-  visible: { y: 0, transition: { type: "spring", damping: 30, stiffness: 350 } },
-  exit: { y: "100%", transition: { duration: 0.25 } },
-};
+// A labelled field: the label above the control, the hint and the error below
+// it (both referenced from the control through describedBy).
+const Field = ({ id, label, hint, error, className, children }) => (
+  <div className={cx("sf-field", className)}>
+    <label className="sf-field__label" htmlFor={id}>
+      {label}
+    </label>
+    {children}
+    {hint && (
+      <p id={`${id}-hint`} className="sf-field__hint">
+        {hint}
+      </p>
+    )}
+    {error && (
+      <p id={`${id}-error`} className="sf-field__error">
+        {error}
+      </p>
+    )}
+  </div>
+);
 
-const tabContentVariants = {
-  enter: (direction) => ({ x: direction > 0 ? 60 : -60, opacity: 0 }),
-  center: { x: 0, opacity: 1, transition: { duration: 0.3, ease: "easeOut" } },
-  exit: (direction) => ({ x: direction > 0 ? -60 : 60, opacity: 0, transition: { duration: 0.2 } }),
+// A password field with a "Show" / "Hide" text button. The button's name
+// follows its text ("Show password" / "Hide password"), so it carries no
+// aria-pressed: a control whose label changes with its state is not a toggle
+// button (WAI-ARIA APG), and a fixed name would not contain the visible
+// "Hide" (WCAG 2.5.3). The dialog's status line also says what changed.
+const PasswordInput = React.forwardRef(function PasswordInput(
+  { id, visible, onToggle, toggleNoun, ...inputProps },
+  ref
+) {
+  return (
+    <div className={styles.passwordControl}>
+      <input
+        ref={ref}
+        id={id}
+        type={visible ? "text" : "password"}
+        autoCapitalize="none"
+        autoCorrect="off"
+        spellCheck={false}
+        className={cx("sf-input", styles.input, styles.passwordInput)}
+        {...inputProps}
+      />
+      <button type="button" className={styles.reveal} onClick={onToggle} aria-controls={id}>
+        {visible ? "Hide" : "Show"}
+        <span className="sf-visually-hidden"> {toggleNoun}</span>
+      </button>
+    </div>
+  );
+});
+
+// One tab panel. While it fades out it is inert; once a new one is in the DOM
+// it calls onEntered, so focus can follow a switch made from inside a form.
+const TabPanel = ({ id, tabId, onEntered, children }) => {
+  const isPresent = useIsPresent();
+  useEffect(() => {
+    onEntered();
+  }, [onEntered]);
+  return (
+    <motion.div
+      role="tabpanel"
+      id={id}
+      aria-labelledby={tabId}
+      className={cx("sf-tabpanel", styles.panel)}
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1, transition: { duration: duration.base, ease: easeOut } }}
+      exit={{ opacity: 0, transition: { duration: duration.fast, ease: easeInOut } }}
+    >
+      {/* React 18 does not know `inert`; the empty string sets the attribute. */}
+      <div inert={isPresent ? undefined : ""}>{children}</div>
+    </motion.div>
+  );
 };
 
 /* ------------------------------------------------------------------ */
@@ -141,10 +243,11 @@ const tabContentVariants = {
 
 const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
   const { login, register, isLoading: authLoading } = useAuth();
-  const { isDarkMode } = useTheme();
+  const location = useLocation();
+  const reduceMotion = useReducedMotion();
+  const uid = useId();
 
   const [activeTab, setActiveTab] = useState(defaultTab);
-  const [direction, setDirection] = useState(0);
 
   // Login state
   const [loginData, setLoginData] = useState({ email: "", password: "" });
@@ -169,61 +272,219 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [infoMessage, setInfoMessage] = useState("");
+  // Counts submits that failed validation; each one sends focus to the first
+  // field with a message.
+  const [failedSubmits, setFailedSubmits] = useState(0);
+  // The dialog's visually hidden status line (a new key re-announces a
+  // repeated message; the text clears after ANNOUNCEMENT_MS, so a fixed error
+  // is not left behind in it).
+  const [announcement, setAnnouncement] = useState({ key: 0, text: "" });
 
-  // Detect mobile
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth <= 640);
-    checkMobile();
-    window.addEventListener("resize", checkMobile);
-    return () => window.removeEventListener("resize", checkMobile);
-  }, []);
+  // Reset on open: the messages start clean, the tab follows defaultTab and
+  // passwords are hidden again. Done while rendering, so the dialog's first
+  // frame already shows the right form and focus can go straight to its first
+  // field.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setActiveTab(defaultTab);
+      setErrors({});
+      setSuccessMessage("");
+      setInfoMessage("");
+      setShowLoginPassword(false);
+      setShowSignupPassword(false);
+      setShowConfirmPassword(false);
+      setAnnouncement((previous) => ({ key: previous.key, text: "" }));
+    }
+  }
 
   // Sync defaultTab prop
   useEffect(() => {
     setActiveTab(defaultTab);
   }, [defaultTab]);
 
-  // Reset on open
-  useEffect(() => {
-    if (open) {
-      setErrors({});
-      setSuccessMessage("");
-      setInfoMessage("");
-    }
-  }, [open]);
+  const dialogRef = useRef(null);
+  const loginEmailRef = useRef(null);
+  const loginPasswordRef = useRef(null);
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const signupEmailRef = useRef(null);
+  const phoneRef = useRef(null);
+  const signupPasswordRef = useRef(null);
+  const confirmPasswordRef = useRef(null);
+  const termsRef = useRef(null);
+  const tabRefs = useRef({});
+  // A field to focus once the next panel is in the DOM (set by a switch made
+  // from inside a form, and after an account is created).
+  const pendingFocus = useRef(null);
+  const openerRef = useRef(null);
+  const timers = useRef([]);
+  const openRef = useRef(open);
+  openRef.current = open;
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
-  // Lock body scroll when open
+  // ---- Focus in, focus back -------------------------------------------------
+  // useFocusTrap gives focus back to the opener when the dialog closes. An
+  // opener that is still inert at that moment cannot take it (BottomNav's
+  // Account button is inert while any overlay locks the page), so this tries
+  // again over the next frames, until the opener is reachable, unless focus
+  // has gone somewhere else on purpose. Declared before useFocusTrap, so it
+  // sees the opener before focus moves in.
   useEffect(() => {
     if (open) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "";
+      openerRef.current = document.activeElement;
+      return undefined;
     }
+    pendingFocus.current = null;
+    const opener = openerRef.current;
+    openerRef.current = null;
+    if (!opener || opener === document.body) return undefined;
+    const dialog = dialogRef.current;
+    let frame = 0;
+    let attempts = 0;
+    const retry = () => {
+      frame = 0;
+      const active = document.activeElement;
+      const leftBehind = !active || active === document.body || (dialog && dialog.contains(active));
+      if (!leftBehind || !opener.isConnected) return;
+      if (!opener.closest("[inert]")) {
+        opener.focus({ preventScroll: true });
+        return;
+      }
+      attempts += 1;
+      if (attempts < 30) frame = window.requestAnimationFrame(retry);
+    };
+    frame = window.requestAnimationFrame(retry);
     return () => {
-      document.body.style.overflow = "";
+      if (frame) window.cancelAnimationFrame(frame);
     };
   }, [open]);
 
-  // Close on Escape
+  useFocusTrap(dialogRef, {
+    active: open,
+    onEscape: onClose,
+    initialFocusRef: activeTab === "login" ? loginEmailRef : firstNameRef,
+  });
+  useBodyScrollLock(open);
+
+  // ---- Close when the route changes underneath (back, forward) -------------
+  const routeKey = location.pathname + location.search;
+  const lastRouteKey = useRef(routeKey);
   useEffect(() => {
-    const handleKeyDown = (e) => {
-      if (e.key === "Escape" && open) onClose();
-    };
-    document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
-  }, [open, onClose]);
+    if (lastRouteKey.current === routeKey) return;
+    lastRouteKey.current = routeKey;
+    if (open) onCloseRef.current();
+  }, [routeKey, open]);
+
+  // ---- Timers ----------------------------------------------------------------
+  // The success delays and the status line's clearing, all cancelled if the
+  // dialog ever unmounts.
+  useEffect(() => {
+    const scheduled = timers.current;
+    return () => scheduled.forEach((id) => clearTimeout(id));
+  }, []);
+
+  const later = useCallback((callback, ms) => {
+    const timer = setTimeout(() => {
+      const scheduled = timers.current;
+      const index = scheduled.indexOf(timer);
+      if (index !== -1) scheduled.splice(index, 1);
+      callback();
+    }, ms);
+    timers.current.push(timer);
+  }, []);
+
+  const announcements = useRef(0);
+  const announce = useCallback(
+    (text) => {
+      announcements.current += 1;
+      const key = announcements.current;
+      setAnnouncement({ key, text });
+      later(
+        () => setAnnouncement((current) => (current.key === key ? { key, text: "" } : current)),
+        ANNOUNCEMENT_MS
+      );
+    },
+    [later]
+  );
+
+  // ---- After a submit fails validation ---------------------------------------
+  // Focus moves to the first field with a message, which then reads its
+  // message (aria-describedby). When that field already has focus, nothing
+  // would be read, so the status line says it instead.
+  const handledFailures = useRef(0);
+  useEffect(() => {
+    if (failedSubmits === handledFailures.current) return;
+    handledFailures.current = failedSubmits;
+    const refs =
+      activeTab === "login"
+        ? { email: loginEmailRef, password: loginPasswordRef }
+        : {
+            firstName: firstNameRef,
+            lastName: lastNameRef,
+            email: signupEmailRef,
+            phone: phoneRef,
+            password: signupPasswordRef,
+            confirmPassword: confirmPasswordRef,
+            terms: termsRef,
+          };
+    const first = FIELD_ORDER[activeTab].find((name) => errors[name]);
+    const field = first && refs[first].current;
+    if (!field) return;
+    if (document.activeElement === field) announce(errors[first]);
+    else field.focus();
+  }, [failedSubmits, activeTab, errors, announce]);
+
+  /* ---- Derived ---- */
+
+  const loading = isSubmitting || authLoading;
+  // While the success line shows, the form waits for its timer.
+  const busy = loading || Boolean(successMessage);
+  const copy = COPY[activeTab];
+  const passwordStrength = getPasswordStrength(signupData.password);
+
+  // A panel has just entered: give focus to the field a switch asked for, when
+  // focus was left behind in the panel that went away.
+  const onPanelEntered = useCallback(() => {
+    const target = pendingFocus.current && pendingFocus.current.current;
+    pendingFocus.current = null;
+    const active = document.activeElement;
+    if (target && target.isConnected && (!active || active === document.body)) target.focus();
+  }, []);
 
   /* ---- Tab switching ---- */
 
   const switchTab = (tab) => {
     if (tab === activeTab) return;
-    setDirection(tab === "signup" ? 1 : -1);
     setActiveTab(tab);
     setErrors({});
     setSuccessMessage("");
     setInfoMessage("");
+  };
+
+  // "Create an account" / "Sign in" at the foot of a form: focus follows to
+  // the first field of the other form.
+  const switchFromForm = (tab) => {
+    pendingFocus.current = tab === "login" ? loginEmailRef : firstNameRef;
+    switchTab(tab);
+  };
+
+  // Arrow keys move along the tabs (and select, as the panels are cheap to
+  // show); Home and End jump to either end.
+  const handleTabKeyDown = (event) => {
+    const index = TABS.findIndex((tab) => tab.id === activeTab);
+    let next;
+    if (event.key === "ArrowRight") next = TABS[(index + 1) % TABS.length];
+    else if (event.key === "ArrowLeft") next = TABS[(index - 1 + TABS.length) % TABS.length];
+    else if (event.key === "Home") next = TABS[0];
+    else if (event.key === "End") next = TABS[TABS.length - 1];
+    else return;
+    event.preventDefault();
+    switchTab(next.id);
+    const button = tabRefs.current[next.id];
+    if (button) button.focus();
   };
 
   // Self-service password reset isn't built yet — say so instead of doing
@@ -257,7 +518,12 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
 
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
-    if (!validateLogin()) return;
+    // One request at a time; nothing more while the success line waits to close.
+    if (busy) return;
+    if (!validateLogin()) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({});
@@ -274,12 +540,12 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         setErrors({ general: result.error || "Login failed. Please try again." });
         return;
       }
-      setSuccessMessage("Welcome back! Signing you in...");
-      setTimeout(() => {
-        onClose();
+      setSuccessMessage("Welcome back. Signing you in…");
+      later(() => {
+        onCloseRef.current();
         setSuccessMessage("");
         setLoginData({ email: "", password: "" });
-      }, 1500);
+      }, CLOSE_AFTER_SIGN_IN_MS);
     } catch (err) {
       setErrors({ general: err.message || "Login failed. Please try again." });
     } finally {
@@ -326,7 +592,11 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
 
   const handleSignupSubmit = async (e) => {
     e.preventDefault();
-    if (!validateSignup()) return;
+    if (busy) return;
+    if (!validateSignup()) {
+      setFailedSubmits((count) => count + 1);
+      return;
+    }
 
     setIsSubmitting(true);
     setErrors({});
@@ -345,15 +615,17 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         setErrors({ general: result.error || "Registration failed. Please try again." });
         return;
       }
-      setSuccessMessage("Account created! Redirecting to login...");
+      setSuccessMessage("Account created. Taking you to sign in…");
       const registeredEmail = signupData.email;
-      setTimeout(() => {
+      later(() => {
+        // Focus follows to the password, the one field left to fill in.
+        if (openRef.current) pendingFocus.current = loginPasswordRef;
         switchTab("login");
         setSuccessMessage("");
         setLoginData({ email: registeredEmail, password: "" });
         setSignupData({ firstName: "", lastName: "", email: "", phone: "", password: "", confirmPassword: "" });
         setAgreeTerms(false);
-      }, 1800);
+      }, SWITCH_AFTER_SIGN_UP_MS);
     } catch (err) {
       setErrors({ general: err.message || "Registration failed. Please try again." });
     } finally {
@@ -361,497 +633,483 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
     }
   };
 
-  /* ---- Overlay click ---- */
+  /* ---- Show / hide passwords ---- */
 
-  const handleOverlayClick = (e) => {
-    if (e.target === e.currentTarget) onClose();
+  const toggleLoginPassword = () => {
+    announce(showLoginPassword ? "Password hidden." : "Password shown.");
+    setShowLoginPassword((v) => !v);
+  };
+  const toggleSignupPassword = () => {
+    announce(showSignupPassword ? "Password hidden." : "Password shown.");
+    setShowSignupPassword((v) => !v);
+  };
+  const toggleConfirmPassword = () => {
+    announce(showConfirmPassword ? "Password confirmation hidden." : "Password confirmation shown.");
+    setShowConfirmPassword((v) => !v);
   };
 
-  /* ---- Password strength (signup only) ---- */
+  /* ---- Ids ---- */
 
-  const passwordStrength = getPasswordStrength(signupData.password);
+  const id = (name) => `${uid}-${name}`;
+  const titleId = id("title");
+  const subtitleId = id("subtitle");
+  const tabId = (tab) => id(`tab-${tab}`);
+  const panelId = (tab) => id(`panel-${tab}`);
 
-  /* ---- Derived ---- */
+  if (typeof document === "undefined") return null;
 
-  const loading = isSubmitting || authLoading;
-  const darkMode = isDarkMode;
+  const submitButton = (tab) => (
+    <button
+      type="submit"
+      className={cx("sf-btn sf-btn--primary sf-btn--lg sf-btn--block", styles.submit)}
+      aria-disabled={busy || undefined}
+      data-busy={busy || undefined}
+    >
+      {loading ? COPY[tab].submitting : COPY[tab].submit}
+    </button>
+  );
+
+  // The request's own error (role="alert") and the info / success line
+  // (role="status"): both slots stay in the DOM, so a message is announced as
+  // it arrives. They sit just above the button, where the eye already is.
+  const messageSlots = (statusContent) => (
+    <>
+      <div role="alert" className={styles.slot}>
+        {errors.general && <Message tone="error">{errors.general}</Message>}
+      </div>
+      <div role="status" className={styles.slot}>
+        {statusContent}
+      </div>
+    </>
+  );
+
+  /* ---- Sign in ---- */
+
+  const loginEmailId = id("login-email");
+  const loginPasswordId = id("login-password");
+
+  const loginForm = (
+    <form className={styles.form} onSubmit={handleLoginSubmit} noValidate>
+      <Field id={loginEmailId} label="Email address" error={errors.email}>
+        <input
+          ref={loginEmailRef}
+          id={loginEmailId}
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="name@example.com"
+          required
+          value={loginData.email}
+          onChange={handleLoginChange}
+          aria-invalid={errors.email ? true : undefined}
+          aria-describedby={describedBy(loginEmailId, { error: errors.email })}
+          className={cx("sf-input", styles.input)}
+        />
+      </Field>
+
+      <Field id={loginPasswordId} label="Password" error={errors.password}>
+        <PasswordInput
+          ref={loginPasswordRef}
+          id={loginPasswordId}
+          name="password"
+          autoComplete="current-password"
+          required
+          value={loginData.password}
+          onChange={handleLoginChange}
+          aria-invalid={errors.password ? true : undefined}
+          aria-describedby={describedBy(loginPasswordId, { error: errors.password })}
+          visible={showLoginPassword}
+          onToggle={toggleLoginPassword}
+          toggleNoun="password"
+        />
+      </Field>
+
+      <div className={styles.options}>
+        <label className="sf-check">
+          <input
+            type="checkbox"
+            name="remember"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+          />
+          Remember me
+        </label>
+        <button type="button" className="sf-btn sf-btn--link" onClick={handleForgotPassword}>
+          Forgot password?
+        </button>
+      </div>
+
+      <div className={styles.actions}>
+        {messageSlots(
+          successMessage ? (
+            <Message tone="success">{successMessage}</Message>
+          ) : infoMessage ? (
+            <Message tone="info">
+              {infoMessage}{" "}
+              <Link to="/support" className={styles.messageLink} onClick={onClose}>
+                Contact support
+              </Link>
+            </Message>
+          ) : null
+        )}
+        {submitButton("login")}
+      </div>
+
+      <p className={styles.switch}>
+        New here?{" "}
+        <button type="button" className="sf-btn sf-btn--link" onClick={() => switchFromForm("signup")}>
+          Create an account
+        </button>
+      </p>
+    </form>
+  );
+
+  /* ---- Create account ---- */
+
+  const firstNameId = id("first-name");
+  const lastNameId = id("last-name");
+  const signupEmailId = id("signup-email");
+  const phoneId = id("phone");
+  const signupPasswordId = id("signup-password");
+  const strengthId = id("signup-password-strength");
+  const confirmId = id("confirm-password");
+  const termsId = id("terms");
+  const newTabNoteId = id("new-tab");
+
+  const signupForm = (
+    <form className={styles.form} onSubmit={handleSignupSubmit} noValidate>
+      <div className={styles.nameRow}>
+        <Field id={firstNameId} label="First name" error={errors.firstName}>
+          <input
+            ref={firstNameRef}
+            id={firstNameId}
+            name="firstName"
+            type="text"
+            autoComplete="given-name"
+            autoCapitalize="words"
+            required
+            value={signupData.firstName}
+            onChange={handleSignupChange}
+            aria-invalid={errors.firstName ? true : undefined}
+            aria-describedby={describedBy(firstNameId, { error: errors.firstName })}
+            className={cx("sf-input", styles.input)}
+          />
+        </Field>
+        <Field id={lastNameId} label="Last name" error={errors.lastName}>
+          <input
+            ref={lastNameRef}
+            id={lastNameId}
+            name="lastName"
+            type="text"
+            autoComplete="family-name"
+            autoCapitalize="words"
+            required
+            value={signupData.lastName}
+            onChange={handleSignupChange}
+            aria-invalid={errors.lastName ? true : undefined}
+            aria-describedby={describedBy(lastNameId, { error: errors.lastName })}
+            className={cx("sf-input", styles.input)}
+          />
+        </Field>
+      </div>
+
+      <Field id={signupEmailId} label="Email address" error={errors.email}>
+        <input
+          ref={signupEmailRef}
+          id={signupEmailId}
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          autoCapitalize="none"
+          autoCorrect="off"
+          spellCheck={false}
+          placeholder="name@example.com"
+          required
+          value={signupData.email}
+          onChange={handleSignupChange}
+          aria-invalid={errors.email ? true : undefined}
+          aria-describedby={describedBy(signupEmailId, { error: errors.email })}
+          className={cx("sf-input", styles.input)}
+        />
+      </Field>
+
+      <Field
+        id={phoneId}
+        label={
+          <>
+            Mobile number <span className={styles.optional}>(optional)</span>
+          </>
+        }
+        hint="10 digits, without +91 or 0."
+        error={errors.phone}
+      >
+        <div className={styles.phoneControl}>
+          <span className={styles.prefix} aria-hidden="true">
+            +91
+          </span>
+          <input
+            ref={phoneRef}
+            id={phoneId}
+            name="phone"
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel-national"
+            value={signupData.phone}
+            onChange={handleSignupChange}
+            aria-invalid={errors.phone ? true : undefined}
+            aria-describedby={describedBy(phoneId, { hint: true, error: errors.phone })}
+            className={cx("sf-input", styles.input, styles.phoneInput)}
+          />
+        </div>
+      </Field>
+
+      {/* The password's hint and strength share one line under a quiet meter. */}
+      <div className="sf-field">
+        <label className="sf-field__label" htmlFor={signupPasswordId}>
+          Password
+        </label>
+        <PasswordInput
+          ref={signupPasswordRef}
+          id={signupPasswordId}
+          name="password"
+          autoComplete="new-password"
+          required
+          value={signupData.password}
+          onChange={handleSignupChange}
+          aria-invalid={errors.password ? true : undefined}
+          aria-describedby={describedBy(signupPasswordId, {
+            hint: true,
+            extra: passwordStrength.label ? strengthId : null,
+            error: errors.password,
+          })}
+          visible={showSignupPassword}
+          onToggle={toggleSignupPassword}
+          toggleNoun="password"
+        />
+        {signupData.password && (
+          <div className={styles.meter} data-score={passwordStrength.score} aria-hidden="true">
+            <span className={styles.segment} />
+            <span className={styles.segment} />
+            <span className={styles.segment} />
+            <span className={styles.segment} />
+          </div>
+        )}
+        <div className={styles.passwordMeta}>
+          <p id={`${signupPasswordId}-hint`} className="sf-field__hint">
+            At least 6 characters.
+          </p>
+          <p id={strengthId} className={styles.strength} aria-live="polite">
+            {passwordStrength.label && (
+              <>
+                <span className="sf-visually-hidden">Password strength: </span>
+                {passwordStrength.label}
+              </>
+            )}
+          </p>
+        </div>
+        {errors.password && (
+          <p id={`${signupPasswordId}-error`} className="sf-field__error">
+            {errors.password}
+          </p>
+        )}
+      </div>
+
+      <Field id={confirmId} label="Confirm password" error={errors.confirmPassword}>
+        <PasswordInput
+          ref={confirmPasswordRef}
+          id={confirmId}
+          name="confirmPassword"
+          autoComplete="new-password"
+          required
+          value={signupData.confirmPassword}
+          onChange={handleSignupChange}
+          aria-invalid={errors.confirmPassword ? true : undefined}
+          aria-describedby={describedBy(confirmId, { error: errors.confirmPassword })}
+          visible={showConfirmPassword}
+          onToggle={toggleConfirmPassword}
+          toggleNoun="password confirmation"
+        />
+      </Field>
+
+      <div className={styles.terms}>
+        <label className={cx("sf-check", styles.termsCheck)}>
+          <input
+            ref={termsRef}
+            id={termsId}
+            type="checkbox"
+            name="terms"
+            required
+            checked={agreeTerms}
+            onChange={(e) => {
+              setAgreeTerms(e.target.checked);
+              if (errors.terms) setErrors((prev) => ({ ...prev, terms: "" }));
+            }}
+            aria-invalid={errors.terms ? true : undefined}
+            aria-describedby={describedBy(termsId, { error: errors.terms })}
+          />
+          <span>
+            I agree to the{" "}
+            <Link
+              to="/terms"
+              target="_blank"
+              rel="noopener"
+              className={styles.inlineLink}
+              onClick={(e) => e.stopPropagation()}
+              aria-describedby={newTabNoteId}
+            >
+              Terms &amp; Conditions
+            </Link>{" "}
+            and{" "}
+            <Link
+              to="/privacy"
+              target="_blank"
+              rel="noopener"
+              className={styles.inlineLink}
+              onClick={(e) => e.stopPropagation()}
+              aria-describedby={newTabNoteId}
+            >
+              Privacy Policy
+            </Link>
+          </span>
+        </label>
+        {errors.terms && (
+          <p id={`${termsId}-error`} className={cx("sf-field__error", styles.termsError)}>
+            {errors.terms}
+          </p>
+        )}
+        <span id={newTabNoteId} hidden>
+          Opens in a new tab
+        </span>
+      </div>
+
+      <div className={styles.actions}>
+        {messageSlots(successMessage ? <Message tone="success">{successMessage}</Message> : null)}
+        {submitButton("signup")}
+      </div>
+
+      <p className={styles.switch}>
+        Already have an account?{" "}
+        <button type="button" className="sf-btn sf-btn--link" onClick={() => switchFromForm("login")}>
+          Sign in
+        </button>
+      </p>
+    </form>
+  );
 
   /* ---- Render ---- */
 
-  return (
+  const dialogMotion = reduceMotion
+    ? {
+        initial: { opacity: 0 },
+        animate: { opacity: 1 },
+        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
+      }
+    : {
+        initial: { opacity: 0, y: 8 },
+        animate: { opacity: 1, y: 0 },
+        exit: { opacity: 0, y: 8, transition: { duration: duration.base, ease: easeInOut } },
+      };
+
+  return createPortal(
     <AnimatePresence>
       {open && (
-        <motion.div
-          className={`${styles.overlay} ${darkMode ? styles.dark : styles.light}`}
-          variants={overlayVariants}
-          initial="hidden"
-          animate="visible"
-          exit="exit"
-          transition={{ duration: 0.25 }}
-          onClick={handleOverlayClick}
-          role="dialog"
-          aria-modal="true"
-          aria-label="Authentication"
-        >
+        <div key="auth-modal" className={styles.root}>
           <motion.div
-            className={`${styles.dialog} ${isMobile ? styles.dialogMobile : ""}`}
-            variants={isMobile ? mobileDialogVariants : desktopDialogVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
+            className={styles.backdrop}
+            aria-hidden="true"
+            onClick={onClose}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
+            transition={{ duration: duration.base, ease: easeOut }}
+          />
+          <motion.div
+            ref={dialogRef}
+            className={styles.dialog}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby={titleId}
+            aria-describedby={subtitleId}
+            tabIndex={-1}
+            transition={{ duration: duration.base, ease: easeOut }}
+            {...dialogMotion}
           >
-            {/* ---- Success toast ---- */}
-            <AnimatePresence>
-              {successMessage && (
-                <motion.div
-                  className={styles.successToast}
-                  initial={{ opacity: 0, y: -20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -20 }}
-                >
-                  <span className={styles.successIcon}><CheckIcon /></span>
-                  {successMessage}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ---- Close button ---- */}
             <button
-              className={styles.closeBtn}
+              type="button"
+              className={cx("sf-btn sf-btn--icon", styles.close)}
               onClick={onClose}
               aria-label="Close"
-              type="button"
             >
-              <CloseIcon />
+              <CloseOutlined />
             </button>
 
-            {/* ---- Header ---- */}
-            <div className={styles.header}>
-              <h2 className={styles.title}>
-                {activeTab === "login" ? "Welcome back" : "Create account"}
-              </h2>
-              <p className={styles.subtitle}>
-                {activeTab === "login"
-                  ? "Sign in to access your account"
-                  : "Join us and start shopping today"}
+            <div className={styles.body}>
+              <div className={styles.head}>
+                <BrandLogo height={LOGO_HEIGHT} className={styles.logo} aria-hidden="true" />
+                <h2 id={titleId} className={cx("sf-display-sm", styles.title)}>
+                  {copy.title}
+                </h2>
+                <p id={subtitleId} className={styles.subtitle}>
+                  {copy.subtitle}
+                </p>
+              </div>
+
+              <div
+                className={cx("sf-tabs", styles.tabs)}
+                role="tablist"
+                aria-label="Sign in or create an account"
+              >
+                {TABS.map((tab) => {
+                  const selected = tab.id === activeTab;
+                  return (
+                    <button
+                      key={tab.id}
+                      ref={(node) => {
+                        tabRefs.current[tab.id] = node;
+                      }}
+                      type="button"
+                      role="tab"
+                      id={tabId(tab.id)}
+                      aria-selected={selected}
+                      aria-controls={panelId(tab.id)}
+                      tabIndex={selected ? 0 : -1}
+                      className={cx("sf-tab", styles.tab)}
+                      onClick={() => switchTab(tab.id)}
+                      onKeyDown={handleTabKeyDown}
+                    >
+                      {tab.label}
+                    </button>
+                  );
+                })}
+                {/* The 1px ink underline, sliding to the selected tab. */}
+                <span className={styles.indicator} data-tab={activeTab} aria-hidden="true" />
+              </div>
+
+              <AnimatePresence mode="wait" initial={false}>
+                <TabPanel
+                  key={activeTab}
+                  id={panelId(activeTab)}
+                  tabId={tabId(activeTab)}
+                  onEntered={onPanelEntered}
+                >
+                  {activeTab === "login" ? loginForm : signupForm}
+                </TabPanel>
+              </AnimatePresence>
+
+              <p className="sf-visually-hidden" role="status">
+                {announcement.text && <span key={announcement.key}>{announcement.text}</span>}
               </p>
             </div>
-
-            {/* ---- Tabs ---- */}
-            <div className={styles.tabs}>
-              <button
-                type="button"
-                className={`${styles.tab} ${activeTab === "login" ? styles.tabActive : ""}`}
-                onClick={() => switchTab("login")}
-              >
-                Login
-              </button>
-              <button
-                type="button"
-                className={`${styles.tab} ${activeTab === "signup" ? styles.tabActive : ""}`}
-                onClick={() => switchTab("signup")}
-              >
-                Sign Up
-              </button>
-              <motion.div
-                className={styles.tabIndicator}
-                animate={{ x: activeTab === "login" ? "0%" : "100%" }}
-                transition={{ type: "spring", stiffness: 400, damping: 30 }}
-              />
-            </div>
-
-            {/* ---- General error ---- */}
-            <AnimatePresence>
-              {errors.general && (
-                <motion.div
-                  className={styles.errorBanner}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  {errors.general}
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ---- Info banner ---- */}
-            <AnimatePresence>
-              {infoMessage && (
-                <motion.div
-                  className={styles.infoBanner}
-                  initial={{ opacity: 0, height: 0 }}
-                  animate={{ opacity: 1, height: "auto" }}
-                  exit={{ opacity: 0, height: 0 }}
-                >
-                  {infoMessage}{" "}
-                  <Link to="/support" className={styles.infoBannerLink} onClick={onClose}>
-                    Contact support
-                  </Link>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            {/* ---- Form content ---- */}
-            <div className={styles.formWrapper}>
-              <AnimatePresence custom={direction} mode="wait">
-                {activeTab === "login" ? (
-                  <motion.form
-                    key="login"
-                    custom={direction}
-                    variants={tabContentVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    onSubmit={handleLoginSubmit}
-                    noValidate
-                    className={styles.form}
-                  >
-                    {/* Email */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="login-email">Email</label>
-                      <div className={`${styles.inputWrap} ${errors.email ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><EmailIcon /></span>
-                        <input
-                          id="login-email"
-                          name="email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                          value={loginData.email}
-                          onChange={handleLoginChange}
-                          className={styles.input}
-                        />
-                      </div>
-                      {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
-                    </div>
-
-                    {/* Password */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="login-password">Password</label>
-                      <div className={`${styles.inputWrap} ${errors.password ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><LockIcon /></span>
-                        <input
-                          id="login-password"
-                          name="password"
-                          type={showLoginPassword ? "text" : "password"}
-                          autoComplete="current-password"
-                          placeholder="Enter your password"
-                          value={loginData.password}
-                          onChange={handleLoginChange}
-                          className={styles.input}
-                        />
-                        <button
-                          type="button"
-                          className={styles.eyeBtn}
-                          onClick={() => setShowLoginPassword((v) => !v)}
-                          aria-label={showLoginPassword ? "Hide password" : "Show password"}
-                          tabIndex={-1}
-                        >
-                          {showLoginPassword ? <EyeOffIcon /> : <EyeIcon />}
-                        </button>
-                      </div>
-                      {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
-                    </div>
-
-                    {/* Remember me + Forgot */}
-                    <div className={styles.optionsRow}>
-                      <label className={styles.checkLabel}>
-                        <input
-                          type="checkbox"
-                          checked={rememberMe}
-                          onChange={(e) => setRememberMe(e.target.checked)}
-                          className={styles.checkbox}
-                        />
-                        <span className={styles.checkMark} />
-                        Remember me
-                      </label>
-                      <button type="button" className={styles.linkBtn} onClick={handleForgotPassword}>
-                        Forgot password?
-                      </button>
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                      type="submit"
-                      className={styles.submitBtn}
-                      disabled={loading}
-                    >
-                      {loading ? <SpinnerIcon /> : "Login"}
-                    </button>
-
-                    {/* Divider */}
-                    <div className={styles.divider}>
-                      <span className={styles.dividerLine} />
-                      <span className={styles.dividerText}>or continue with</span>
-                      <span className={styles.dividerLine} />
-                    </div>
-
-                    {/* Social buttons — providers not configured yet, so they
-                        are disabled and badged instead of silently dead */}
-                    <div className={styles.socialRow}>
-                      <button
-                        type="button"
-                        className={`${styles.socialBtn} ${styles.socialBtnDisabled}`}
-                        disabled
-                        title="Google sign-in is coming soon"
-                      >
-                        <GoogleIcon />
-                        <span>Google</span>
-                        <span className={styles.soonBadge}>Soon</span>
-                      </button>
-                      <button
-                        type="button"
-                        className={`${styles.socialBtn} ${styles.socialBtnDisabled}`}
-                        disabled
-                        title="Facebook sign-in is coming soon"
-                      >
-                        <FacebookIcon />
-                        <span>Facebook</span>
-                        <span className={styles.soonBadge}>Soon</span>
-                      </button>
-                    </div>
-
-                    {/* Switch link */}
-                    <p className={styles.switchText}>
-                      New user?{" "}
-                      <button type="button" className={styles.switchBtn} onClick={() => switchTab("signup")}>
-                        Sign up
-                      </button>
-                    </p>
-                  </motion.form>
-                ) : (
-                  <motion.form
-                    key="signup"
-                    custom={direction}
-                    variants={tabContentVariants}
-                    initial="enter"
-                    animate="center"
-                    exit="exit"
-                    onSubmit={handleSignupSubmit}
-                    noValidate
-                    className={styles.form}
-                  >
-                    {/* Name row */}
-                    <div className={styles.nameRow}>
-                      <div className={styles.fieldGroup}>
-                        <label className={styles.label} htmlFor="signup-first">First Name</label>
-                        <div className={`${styles.inputWrap} ${errors.firstName ? styles.inputError : ""}`}>
-                          <span className={styles.inputIcon}><UserIcon /></span>
-                          <input
-                            id="signup-first"
-                            name="firstName"
-                            type="text"
-                            autoComplete="given-name"
-                            placeholder="John"
-                            value={signupData.firstName}
-                            onChange={handleSignupChange}
-                            className={styles.input}
-                          />
-                        </div>
-                        {errors.firstName && <span className={styles.fieldError}>{errors.firstName}</span>}
-                      </div>
-
-                      <div className={styles.fieldGroup}>
-                        <label className={styles.label} htmlFor="signup-last">Last Name</label>
-                        <div className={`${styles.inputWrap} ${errors.lastName ? styles.inputError : ""}`}>
-                          <span className={styles.inputIcon}><UserIcon /></span>
-                          <input
-                            id="signup-last"
-                            name="lastName"
-                            type="text"
-                            autoComplete="family-name"
-                            placeholder="Doe"
-                            value={signupData.lastName}
-                            onChange={handleSignupChange}
-                            className={styles.input}
-                          />
-                        </div>
-                        {errors.lastName && <span className={styles.fieldError}>{errors.lastName}</span>}
-                      </div>
-                    </div>
-
-                    {/* Email */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="signup-email">Email</label>
-                      <div className={`${styles.inputWrap} ${errors.email ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><EmailIcon /></span>
-                        <input
-                          id="signup-email"
-                          name="email"
-                          type="email"
-                          autoComplete="email"
-                          placeholder="you@example.com"
-                          value={signupData.email}
-                          onChange={handleSignupChange}
-                          className={styles.input}
-                        />
-                      </div>
-                      {errors.email && <span className={styles.fieldError}>{errors.email}</span>}
-                    </div>
-
-                    {/* Phone */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="signup-phone">Phone</label>
-                      <div className={`${styles.inputWrap} ${errors.phone ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><PhoneIcon /></span>
-                        <span className={styles.phonePrefix}>+91</span>
-                        <input
-                          id="signup-phone"
-                          name="phone"
-                          type="tel"
-                          autoComplete="tel-national"
-                          placeholder="9876543210"
-                          value={signupData.phone}
-                          onChange={handleSignupChange}
-                          className={`${styles.input} ${styles.phoneInput}`}
-                        />
-                      </div>
-                      {errors.phone && <span className={styles.fieldError}>{errors.phone}</span>}
-                    </div>
-
-                    {/* Password */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="signup-password">Password</label>
-                      <div className={`${styles.inputWrap} ${errors.password ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><LockIcon /></span>
-                        <input
-                          id="signup-password"
-                          name="password"
-                          type={showSignupPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          placeholder="Min. 6 characters"
-                          value={signupData.password}
-                          onChange={handleSignupChange}
-                          className={styles.input}
-                        />
-                        <button
-                          type="button"
-                          className={styles.eyeBtn}
-                          onClick={() => setShowSignupPassword((v) => !v)}
-                          aria-label={showSignupPassword ? "Hide password" : "Show password"}
-                          tabIndex={-1}
-                        >
-                          {showSignupPassword ? <EyeOffIcon /> : <EyeIcon />}
-                        </button>
-                      </div>
-                      {errors.password && <span className={styles.fieldError}>{errors.password}</span>}
-
-                      {/* Password strength indicator */}
-                      {signupData.password && (
-                        <div className={styles.strengthWrap}>
-                          <div className={styles.strengthBar}>
-                            {[1, 2, 3, 4].map((segment) => (
-                              <div
-                                key={segment}
-                                className={styles.strengthSegment}
-                                style={{
-                                  backgroundColor:
-                                    segment <= passwordStrength.score
-                                      ? passwordStrength.color
-                                      : "var(--auth-strength-empty)",
-                                }}
-                              />
-                            ))}
-                          </div>
-                          <span
-                            className={styles.strengthLabel}
-                            style={{ color: passwordStrength.color }}
-                          >
-                            {passwordStrength.label}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Confirm Password */}
-                    <div className={styles.fieldGroup}>
-                      <label className={styles.label} htmlFor="signup-confirm">Confirm Password</label>
-                      <div className={`${styles.inputWrap} ${errors.confirmPassword ? styles.inputError : ""}`}>
-                        <span className={styles.inputIcon}><LockIcon /></span>
-                        <input
-                          id="signup-confirm"
-                          name="confirmPassword"
-                          type={showConfirmPassword ? "text" : "password"}
-                          autoComplete="new-password"
-                          placeholder="Re-enter password"
-                          value={signupData.confirmPassword}
-                          onChange={handleSignupChange}
-                          className={styles.input}
-                        />
-                        <button
-                          type="button"
-                          className={styles.eyeBtn}
-                          onClick={() => setShowConfirmPassword((v) => !v)}
-                          aria-label={showConfirmPassword ? "Hide password" : "Show password"}
-                          tabIndex={-1}
-                        >
-                          {showConfirmPassword ? <EyeOffIcon /> : <EyeIcon />}
-                        </button>
-                      </div>
-                      {errors.confirmPassword && <span className={styles.fieldError}>{errors.confirmPassword}</span>}
-                    </div>
-
-                    {/* Terms */}
-                    <div className={styles.fieldGroup}>
-                      <label className={`${styles.checkLabel} ${styles.termsLabel}`}>
-                        <input
-                          type="checkbox"
-                          checked={agreeTerms}
-                          onChange={(e) => {
-                            setAgreeTerms(e.target.checked);
-                            if (errors.terms) setErrors((prev) => ({ ...prev, terms: "" }));
-                          }}
-                          className={styles.checkbox}
-                        />
-                        <span className={styles.checkMark} />
-                        <span>
-                          I agree to the{" "}
-                          <Link
-                            to="/terms"
-                            target="_blank"
-                            className={styles.linkBtn}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Terms &amp; Conditions
-                          </Link>{" "}
-                          and{" "}
-                          <Link
-                            to="/privacy"
-                            target="_blank"
-                            className={styles.linkBtn}
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            Privacy Policy
-                          </Link>
-                        </span>
-                      </label>
-                      {errors.terms && <span className={styles.fieldError}>{errors.terms}</span>}
-                    </div>
-
-                    {/* Submit */}
-                    <button
-                      type="submit"
-                      className={styles.submitBtn}
-                      disabled={loading}
-                    >
-                      {loading ? <SpinnerIcon /> : "Sign Up"}
-                    </button>
-
-                    {/* Switch link */}
-                    <p className={styles.switchText}>
-                      Already have an account?{" "}
-                      <button type="button" className={styles.switchBtn} onClick={() => switchTab("login")}>
-                        Login
-                      </button>
-                    </p>
-                  </motion.form>
-                )}
-              </AnimatePresence>
-            </div>
           </motion.div>
-        </motion.div>
+        </div>
       )}
-    </AnimatePresence>
+    </AnimatePresence>,
+    document.body
   );
 };
 
