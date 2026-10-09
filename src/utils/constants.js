@@ -1,3 +1,5 @@
+import { STOREFRONT_CONFIG } from "../theme/tokens";
+
 // App Info (override via .env)
 export const APP_NAME = process.env.REACT_APP_NAME || "A & S Urbanseat";
 // The tagline is printed inside the logo artwork: never render it as text
@@ -141,66 +143,146 @@ export const SUPPORT_HOURS = "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sund
 // Terms, Cookie and Refund pages never show contradictory "last updated" dates.
 export const POLICY_LAST_UPDATED = "October 7, 2026";
 
-// FAQs
+// FAQs: the Help centre's questions (src/components/FAQ). Answers state only
+// what the store does today. Delivery times, charges and payment limits come
+// from live data, so the answers point to where the store shows them (the
+// product page's Delivery & returns facts, the cart, checkout) instead of
+// repeating numbers here. The one number, the returns window, is
+// STOREFRONT_CONFIG.returnsWindowDays (a placeholder), which the trust badges
+// and the Returns & refunds policy also read. `link` is optional: { label, to }.
+const RETURN_DAYS = Number(STOREFRONT_CONFIG.returnsWindowDays) || 0;
+const RETURN_WINDOW = RETURN_DAYS > 0 ? `${RETURN_DAYS} day${RETURN_DAYS === 1 ? "" : "s"}` : null;
+
 export const FAQ_ITEMS = [
   {
     id: 1,
     question: "How long does delivery take?",
     answer:
-      "Standard delivery takes 5-7 business days. Express delivery is available in 2-3 business days. Same-day delivery is available in select cities.",
+      "It depends on the delivery method you choose. Every product page lists the methods and their estimated times under Delivery & returns, and checkout shows them again before you pay.",
   },
   {
     id: 2,
-    question: "What is your return policy?",
+    question: "Is delivery free?",
     answer:
-      "We offer a 7-day hassle-free return policy. If you're not satisfied with your purchase, you can request a return within 7 days of delivery. Refunds are processed within 5-7 business days.",
+      "Some delivery methods are free above an order value. Your cart shows how far you are from free delivery, and checkout shows the delivery charge before you pay.",
   },
   {
     id: 3,
-    question: "Is payment secure?",
+    question: "Where do you deliver?",
     answer:
-      "Yes, all payments are processed through industry-standard SSL encryption. We support UPI, credit/debit cards, net banking, and Cash on Delivery.",
+      "We deliver within India. To check delivery to your town before you order, send us a message with your PIN code.",
+    link: { label: "Send us a message", to: "/support?category=shipping" },
   },
   {
     id: 4,
-    question: "Do you offer Cash on Delivery?",
+    question: "How do I track my order?",
     answer:
-      "Yes, Cash on Delivery is available on orders up to ₹50,000 in most pin codes across India.",
+      "Open My orders and choose Track on the order. You will see its progress and, once it ships, its tracking number.",
+    link: { label: "Go to My orders", to: "/orders" },
   },
   {
     id: 5,
-    question: "How do I track my order?",
+    question: "Can I cancel an order?",
     answer:
-      "Once your order is shipped, you'll receive an email with a tracking number. You can track your order from the 'My Orders' section in your account.",
+      "Yes, until it ships: open My orders and choose Cancel order. What you paid is refunded, and any store credit you used goes back to your account.",
+  },
+  {
+    id: 6,
+    question: "Do I need an account to order?",
+    answer:
+      "Yes. You can sign in or create an account at checkout. It keeps your orders, saved addresses, wishlist and store credit in one place.",
+  },
+  {
+    id: 7,
+    question: "How can I pay?",
+    answer:
+      "Checkout offers cards, UPI, net banking and wallets and, where available, cash on delivery up to the limit shown at checkout. You can also use store credit.",
+  },
+  {
+    id: 8,
+    question: "Do prices include GST?",
+    answer:
+      "No. Prices on the website don't include GST. The tax for your order is added at checkout and shown before you pay.",
+  },
+  {
+    id: 9,
+    question: "How does store credit work?",
+    answer:
+      "Refunds can be issued as store credit, which stays on your account. You can apply it at checkout to any order, and see your balance under Store credit in your account.",
+    link: { label: "View your store credit", to: "/profile?tab=wallet" },
+  },
+  {
+    id: 10,
+    question: "Can I return a piece?",
+    answer: RETURN_WINDOW
+      ? `Yes. Eligible pieces can be returned within ${RETURN_WINDOW} of delivery. Choose Return or exchange on the order in My orders, or send us a message with your order number.`
+      : "We accept returns only for pieces that arrive damaged, faulty or different from what you ordered. Send us a message with your order number.",
+    link: { label: "Read our returns policy", to: "/refund" },
+  },
+  {
+    id: 11,
+    question: "What if a piece arrives damaged?",
+    answer: `Tell us ${RETURN_WINDOW ? `within ${RETURN_WINDOW} of delivery` : "as soon as you can"}, with your order number and photos, and we will arrange a repair, a replacement or a refund.`,
+    link: { label: "Report a problem", to: "/support?category=returns" },
   },
 ];
 
-// Why choose us
-export const WHY_CHOOSE_US = [
+// Help centre topics (/help): one hairline card each. The targets are the old
+// tiles'; Payments now preselects the support form's "payment" category.
+// `requiresDeals` hides a topic while the Special Offers page is switched off
+// in the admin (the header's and footer's rule).
+export const HELP_TOPICS = [
   {
-    id: 1,
-    title: "Fast Delivery",
-    description: "Same-day and express delivery options available across India",
-    icon: "mdi:truck-fast",
+    id: "orders",
+    title: "Orders & delivery",
+    description: "Track an order, and see what happens after you buy.",
+    to: "/orders",
   },
   {
-    id: 2,
-    title: "Secure Payments",
-    description: "256-bit SSL encryption protects every transaction",
-    icon: "mdi:shield-check",
+    id: "returns",
+    title: "Returns & refunds",
+    description: "How to return a piece, and how refunds are paid.",
+    to: "/refund",
   },
   {
-    id: 3,
-    title: "Easy Returns",
-    description: "7-day hassle-free returns with full refund guarantee",
-    icon: "mdi:backup-restore",
+    id: "payments",
+    title: "Payments",
+    description: "A question about a payment, a charge or an invoice.",
+    to: "/support?category=payment",
   },
   {
-    id: 4,
-    title: "24/7 Support",
-    description: "Our support team is always here to help you",
-    icon: "mdi:headset",
+    id: "account",
+    title: "Your account",
+    description: "Your details, saved addresses, password and store credit.",
+    to: "/profile",
   },
+  {
+    id: "privacy",
+    title: "Privacy & security",
+    description: "How we collect, use and protect your information.",
+    to: "/privacy",
+  },
+  {
+    id: "offers",
+    title: "Offers",
+    description: "Pieces on offer now, and codes to use at checkout.",
+    to: "/special-offers",
+    requiresDeals: true,
+  },
+];
+
+// The support form's topics (/support). The values are what the form sends
+// and what Admin → Leads shows; `?category=<value>` preselects one (Order
+// History's "Return or exchange" sends `returns`).
+export const SUPPORT_CATEGORIES = [
+  { value: "general", label: "General question" },
+  { value: "order", label: "An order" },
+  { value: "shipping", label: "Delivery" },
+  { value: "returns", label: "Returns & refunds" },
+  { value: "product", label: "A product" },
+  { value: "payment", label: "Payments" },
+  { value: "account", label: "Your account" },
+  { value: "other", label: "Something else" },
 ];
 
 // Framer Motion animation variants

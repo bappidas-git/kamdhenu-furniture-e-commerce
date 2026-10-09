@@ -1,31 +1,166 @@
-.faq { padding: 48px 16px; }
-.dark { color: #e2e8f0; }
-.container { max-width: 800px; margin: 0 auto; }
-.container h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 24px; text-align: center; }
-.list { display: flex; flex-direction: column; gap: 8px; }
-.item { border-radius: 10px; border: 1px solid #e2e8f0; overflow: hidden; transition: border-color 0.2s; }
-.dark .item { border-color: #334155; }
-.item.open { border-color: #667eea; }
-.dark .item.open { border-color: #a855f7; }
-.question { width: 100%; padding: 16px 20px; background: #fff; border: none; cursor: pointer; display: flex; justify-content: space-between; align-items: center; gap: 16px; font-size: 1rem; font-weight: 500; text-align: left; font-family: inherit; color: inherit; }
-.dark .question { background: #1e293b; color: #e2e8f0; }
-.question:hover { background: #f8fafc; }
-.dark .question:hover { background: #273349; }
+/* =============================================================================
+ * FAQ — the question-and-answer accordion (prompts/DESIGN_SYSTEM.md §38.4)
+ * =============================================================================
+ * Hairline rows. The question in the display serif (20px) with a plus that
+ * turns into a minus; the answer in 16px secondary text. The answer's height
+ * unfolds with grid-template-rows 0fr → 1fr over --sf-duration, and a closed
+ * answer is visibility: hidden once folded (it is also `inert`). Under reduced
+ * motion nothing animates. Tokens only.
+ * ========================================================================== */
 
-/* Plus icon drawn with pseudo-elements so it can rotate into a cross. */
-.toggle { position: relative; flex: 0 0 auto; width: 18px; height: 18px; }
-.toggle::before, .toggle::after { content: ""; position: absolute; top: 50%; left: 50%; width: 14px; height: 2px; border-radius: 2px; background: #667eea; transform: translate(-50%, -50%); transition: transform 0.28s ease; }
-.dark .toggle::before, .dark .toggle::after { background: #a855f7; }
-.toggle::after { transform: translate(-50%, -50%) rotate(90deg); }
-.item.open .toggle::after { transform: translate(-50%, -50%) rotate(180deg); }
+.faq {
+  border-top: var(--sf-hairline);
+}
 
-/* Smooth height animation via animatable grid-template-rows (0fr -> 1fr). */
-.answer { display: grid; grid-template-rows: 0fr; transition: grid-template-rows 0.28s ease; }
-.item.open .answer { grid-template-rows: 1fr; }
-.answerInner { overflow: hidden; min-height: 0; }
-.answerInner p { padding: 0 20px 16px; margin: 0; color: #475569; line-height: 1.6; }
-.dark .answerInner p { color: #94a3b8; }
+.item {
+  border-bottom: var(--sf-hairline);
+}
+
+.heading {
+  margin: 0;
+  font: inherit;
+}
+
+.question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-6);
+  width: 100%;
+  min-height: var(--sf-tap-target);
+  padding: var(--sf-space-5) 0;
+  border: 0;
+  border-radius: var(--sf-radius-sm);
+  background: none;
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  text-align: left;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.questionText {
+  min-width: 0;
+  overflow-wrap: break-word;
+}
+
+.question:focus-visible {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  box-shadow: var(--sf-shadow-focus);
+}
+
+/* Plus when closed; the upright bar turns flat when open, giving a minus. */
+.toggle {
+  position: relative;
+  flex: none;
+  width: var(--sf-space-3);
+  height: var(--sf-space-3);
+  color: var(--sf-color-text);
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.toggle::before,
+.toggle::after {
+  content: "";
+  position: absolute;
+  inset: calc(50% - 0.5px) 0 auto;
+  height: 1px;
+  background-color: currentColor;
+}
+
+.toggle::after {
+  transform: rotate(90deg);
+  transition: transform var(--sf-duration) var(--sf-ease-in-out);
+}
+
+.open .toggle::after {
+  transform: rotate(180deg);
+}
+
+@media (hover: hover) {
+  .question:hover .toggle {
+    color: var(--sf-color-accent);
+  }
+}
+
+/* The answer unfolds from 0 to its own height. Closing keeps it visible until
+   the fold has finished, then hides it. */
+.panel {
+  display: grid;
+  grid-template-rows: 0fr;
+  visibility: hidden;
+  transition: grid-template-rows var(--sf-duration) var(--sf-ease-in-out),
+    visibility 0s linear var(--sf-duration);
+}
+
+.open .panel {
+  grid-template-rows: 1fr;
+  visibility: visible;
+  transition: grid-template-rows var(--sf-duration) var(--sf-ease-out), visibility 0s linear 0s;
+}
+
+/* 8px of room on each side, so the answer link's focus outline is not clipped
+   by the overflow the fold needs. */
+.panelInner {
+  min-height: 0;
+  margin-inline: calc(-1 * var(--sf-space-2));
+  padding-inline: var(--sf-space-2);
+  overflow: hidden;
+}
+
+.answer,
+.more {
+  max-width: 62ch;
+  margin: 0;
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-relaxed);
+  color: var(--sf-color-text-secondary);
+}
+
+.answer {
+  padding-bottom: var(--sf-space-5);
+}
+
+/* The link's 44px hit area reaches 14px above and below it, so it keeps that
+   much room inside the clipped panel. */
+.more {
+  margin-top: calc(-1 * var(--sf-space-1));
+  padding: var(--sf-space-4) 0 var(--sf-space-6);
+}
+
+.empty {
+  padding: var(--sf-space-6) 0;
+  border-top: var(--sf-hairline);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
+.empty p {
+  margin: 0;
+}
+
+.empty p + p {
+  margin-top: var(--sf-space-2);
+}
 
 @media (prefers-reduced-motion: reduce) {
-  .answer, .toggle::before, .toggle::after { transition: none; }
+  .panel,
+  .open .panel,
+  .toggle,
+  .toggle::after {
+    transition: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .toggle::before,
+  .toggle::after {
+    background-color: CanvasText;
+  }
 }

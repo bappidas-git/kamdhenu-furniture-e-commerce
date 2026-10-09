@@ -1,103 +1,142 @@
-import React, { useState } from "react";
+import React, { useId, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
-import { FAQ_ITEMS, SUPPORT_EMAIL, SUPPORT_PHONE } from "../../utils/constants";
+import ContentPage from "../../components/ContentPage/ContentPage";
+import ContactFacts from "../../components/ContentPage/ContactFacts";
+import FAQ, { filterFaqs } from "../../components/FAQ/FAQ";
+import { Reveal, staggerDelay } from "../../components/ui";
+import { useDealsConfig } from "../../context/DealsConfigContext";
+import { FAQ_ITEMS, HELP_TOPICS } from "../../utils/constants";
 import styles from "./HelpCenter.module.css";
 
+// =============================================================================
+// /help — the Help centre (prompts/DESIGN_SYSTEM.md §38.5)
+// =============================================================================
+// The ContentPage header ("How can we help?") with a labelled search field,
+// then the common questions (the FAQ accordion, filtered by the search) beside
+// six hairline topic cards (below it up to 1023px), and a contact block with
+// the store's hours, email, phone and WhatsApp. The search rule is the old
+// page's: the query found in a question or its answer, case-insensitive.
+// The Offers topic shows only while the Special Offers page is switched on
+// (the header's and footer's rule), once the deals config has loaded.
+// =============================================================================
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+// The polite line under the search field: what the list now shows.
+export const searchStatus = (query, count) => {
+  const needle = String(query ?? "").trim();
+  if (!needle) return "";
+  if (count === 0) return `No questions match “${needle}”.`;
+  return `${count} ${count === 1 ? "question matches" : "questions match"} “${needle}”.`;
+};
+
+const Arrow = () => (
+  <svg className={styles.arrow} viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" focusable="false">
+    <path d="M2 8h11M9 4l4 4-4 4" fill="none" stroke="currentColor" strokeWidth="1.25" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
+);
+
 const HelpCenter = () => {
-  const { isDarkMode } = useTheme();
-  const [openFaq, setOpenFaq] = useState(null);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [query, setQuery] = useState("");
+  const { enabled: dealsEnabled, loading: dealsLoading } = useDealsConfig();
+  const searchId = useId();
+  const statusId = `${searchId}-status`;
 
-  const helpTopics = [
-    { icon: "&#128230;", title: "Orders & Shipping", desc: "Track orders, delivery times, shipping info", link: "/orders" },
-    { icon: "&#128257;", title: "Returns & Refunds", desc: "Return policy, refund process, exchanges", link: "/refund" },
-    { icon: "&#128179;", title: "Payments", desc: "Payment methods, billing, invoices", link: "/support" },
-    { icon: "&#128100;", title: "Account & Settings", desc: "Profile, password, login issues", link: "/profile" },
-    { icon: "&#127873;", title: "Deals & Offers", desc: "Coupons, special offers, rewards", link: "/special-offers" },
-    { icon: "&#128274;", title: "Privacy & Security", desc: "Data protection, account security", link: "/privacy" },
-  ];
+  const matches = useMemo(() => filterFaqs(FAQ_ITEMS, query).length, [query]);
+  const topics = HELP_TOPICS.filter((topic) => !topic.requiresDeals || (dealsEnabled && !dealsLoading));
 
-  const filteredFaqs = searchQuery
-    ? FAQ_ITEMS.filter((f) => f.question.toLowerCase().includes(searchQuery.toLowerCase()) || f.answer.toLowerCase().includes(searchQuery.toLowerCase()))
-    : FAQ_ITEMS;
+  const search = (
+    <form
+      role="search"
+      aria-label="Help centre"
+      className={styles.search}
+      onSubmit={(event) => event.preventDefault()}
+    >
+      <div className="sf-field">
+        <label className="sf-field__label" htmlFor={searchId}>
+          Search the questions
+        </label>
+        <input
+          id={searchId}
+          className="sf-input"
+          type="search"
+          value={query}
+          onChange={(event) => setQuery(event.target.value)}
+          placeholder="Delivery, returns, GST…"
+          autoComplete="off"
+          enterKeyHint="search"
+          aria-describedby={statusId}
+        />
+        <p id={statusId} className={cx("sf-field__hint", styles.status)} role="status">
+          {searchStatus(query, matches)}
+        </p>
+      </div>
+    </form>
+  );
 
   return (
-    <div className={`${styles.container} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.breadcrumb}><Link to="/">Home</Link> <span>/</span> <span>Help Center</span></div>
+    <ContentPage
+      width="default"
+      crumb="Help centre"
+      eyebrow="Help centre"
+      title="How can we help?"
+      intro="Answers about orders, delivery, payments and returns. If you can’t find what you need, we’re a message away."
+      extra={search}
+      contact={false}
+    >
+      <div className={styles.layout}>
+        <Reveal as="section" className={styles.questions} aria-labelledby="help-questions-title">
+          <h2 id="help-questions-title" className={cx("sf-display-sm", styles.sectionTitle)}>
+            Common questions
+          </h2>
+          <FAQ
+            items={FAQ_ITEMS}
+            query={query}
+            idPrefix="help-faq"
+            emptyMessage={
+              <>
+                <p>Try another word, or ask us directly.</p>
+                <p>
+                  <Link to="/support" className="sf-btn sf-btn--link">
+                    Send us your question
+                  </Link>
+                </p>
+              </>
+            }
+          />
+        </Reveal>
 
-      <motion.div className={styles.header} initial={{ y: -20, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
-        <h1>Help Center</h1>
-        <p>Find answers to common questions or reach out to our support team.</p>
-        <div className={styles.searchBox}>
-          <input type="text" placeholder="Search for help..." value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} />
-        </div>
-      </motion.div>
-
-      <motion.section className={styles.topics} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
-        <h2>Browse Help Topics</h2>
-        <div className={styles.topicGrid}>
-          {helpTopics.map((topic, i) => (
-            <Link to={topic.link} key={i} className={styles.topicCard}>
-              <span className={styles.topicIcon} dangerouslySetInnerHTML={{ __html: topic.icon }} />
-              <h3>{topic.title}</h3>
-              <p>{topic.desc}</p>
-            </Link>
-          ))}
-        </div>
-      </motion.section>
-
-      <motion.section className={styles.faqSection} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }}>
-        <h2>Frequently Asked Questions</h2>
-        <div className={styles.faqList}>
-          {filteredFaqs.length === 0 ? (
-            <p className={styles.noResults}>No FAQs match your search. <Link to="/support">Contact us</Link> for help.</p>
-          ) : (
-            filteredFaqs.map((faq) => {
-              const isOpen = openFaq === faq.id;
-              return (
-                <div key={faq.id} className={`${styles.faqItem} ${isOpen ? styles.open : ""}`}>
-                  <button
-                    className={styles.faqQuestion}
-                    onClick={() => setOpenFaq(isOpen ? null : faq.id)}
-                    aria-expanded={isOpen}
-                    aria-controls={`help-faq-answer-${faq.id}`}
-                    id={`help-faq-question-${faq.id}`}
-                  >
-                    <span>{faq.question}</span>
-                    <span className={styles.faqToggle} aria-hidden="true" />
-                  </button>
-                  <div
-                    className={styles.faqAnswer}
-                    id={`help-faq-answer-${faq.id}`}
-                    role="region"
-                    aria-labelledby={`help-faq-question-${faq.id}`}
-                    aria-hidden={!isOpen}
-                  >
-                    <div className={styles.faqAnswerInner}><p>{faq.answer}</p></div>
-                  </div>
-                </div>
-              );
-            })
-          )}
-        </div>
-      </motion.section>
-
-      <div className={styles.contactBanner}>
-        <h3>Still need help?</h3>
-        <p>Our support team is available Mon-Sat, 9am-8pm IST</p>
-        <div className={styles.contactMeta}>
-          <a href={`mailto:${SUPPORT_EMAIL}`}>{SUPPORT_EMAIL}</a>
-          <span aria-hidden="true">•</span>
-          <a href={`tel:${SUPPORT_PHONE.replace(/\s/g, "")}`}>{SUPPORT_PHONE}</a>
-        </div>
-        <div className={styles.contactActions}>
-          <Link to="/support" className={styles.primaryBtn}>Contact Support</Link>
-          <a href={`mailto:${SUPPORT_EMAIL}`} className={styles.secondaryBtn}>Email Us</a>
-        </div>
+        <section className={styles.topics} aria-labelledby="help-topics-title">
+          <h2 id="help-topics-title" className={cx("sf-display-sm", styles.sectionTitle)}>
+            Browse by topic
+          </h2>
+          <ul className={styles.topicList}>
+            {topics.map((topic, index) => (
+              <Reveal as="li" key={topic.id} delay={staggerDelay(index)} className={styles.topicItem}>
+                <Link to={topic.to} className={styles.topic}>
+                  <span className={styles.topicTitle}>{topic.title}</span>
+                  <span className={styles.topicLine}>{topic.description}</span>
+                  <Arrow />
+                </Link>
+              </Reveal>
+            ))}
+          </ul>
+        </section>
       </div>
-    </div>
+
+      <Reveal as="section" className={styles.contactBlock} aria-labelledby="help-contact-title">
+        <div className={styles.contactHead}>
+          <h2 id="help-contact-title" className={cx("sf-display-sm", styles.sectionTitle)}>
+            Still need help?
+          </h2>
+          <p className={styles.contactLine}>Send us a message, call, or write to us on WhatsApp.</p>
+          <Link to="/support" className={cx("sf-btn sf-btn--primary", styles.contactCta)}>
+            Send us a message
+          </Link>
+        </div>
+        <ContactFacts layout="row" className={styles.contactFacts} />
+      </Reveal>
+    </ContentPage>
   );
 };
 

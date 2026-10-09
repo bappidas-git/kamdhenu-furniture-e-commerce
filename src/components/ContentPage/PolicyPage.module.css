@@ -1,0 +1,94 @@
+/* =============================================================================
+ * PolicyPage — a policy from legalContent.js (prompts/DESIGN_SYSTEM.md §38.3)
+ * =============================================================================
+ * The sections are .sf-prose (17px / 1.7, 66ch, serif h2s with a hairline
+ * above, accent-underlined links); this module adds the meta line, the anchor
+ * offset, the tables and the placeholder blanks. Tokens only.
+ * ========================================================================== */
+
+.meta {
+  margin: var(--sf-space-4) 0 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-text-muted);
+}
+
+.draft {
+  font-weight: var(--sf-font-medium);
+}
+
+/* A deep link (/terms#governing-law) lands 16px under the sticky header. */
+.heading {
+  scroll-margin-top: calc(var(--sf-header-height) + var(--sf-space-4));
+}
+
+/* Tables: column heads as eyebrows over an ink rule, hairlines between rows,
+   the row head in ink. The wrapper only scrolls if a cell ever cannot wrap. */
+.tableWrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-normal);
+}
+
+.table :is(th, td) {
+  padding: var(--sf-space-3) var(--sf-space-4) var(--sf-space-3) 0;
+  border-bottom: var(--sf-hairline);
+  text-align: left;
+  vertical-align: top;
+  overflow-wrap: break-word;
+}
+
+.table :is(th, td):last-child {
+  padding-right: 0;
+}
+
+.table thead th {
+  padding-top: 0;
+  border-bottom: 1px solid var(--sf-color-text);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+  color: var(--sf-color-text-muted);
+}
+
+.table tbody th {
+  font-weight: var(--sf-font-medium);
+  color: var(--sf-color-text);
+}
+
+.table td {
+  color: var(--sf-color-text-secondary);
+}
+
+/* A fact nobody has supplied yet: a sand blank with muted words, so it reads
+   as "fill this in", never as a promise. */
+.placeholder {
+  padding: 0 0.4em;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  color: var(--sf-color-text-muted);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@media (forced-colors: active) {
+  .placeholder {
+    border: 1px dashed CanvasText;
+  }
+}
+
+/* Printing a policy before scrolling through it: the sections not yet
+   revealed still carry Reveal's inline opacity 0, so print overrides it. */
+@media print {
+  .section {
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
