@@ -228,6 +228,30 @@
   --sf-btn-border: var(--sf-color-primary);
   --sf-btn-bg-hover: var(--sf-color-primary-soft);
 }
+/* Destructive actions: the error token with primary-contrast text (paper on
+   brick, navy-ink on the dark-mode salmon), never plain white. Also the
+   confirm of a SweetAlert dialog, through customClass: { confirmButton:
+   "sf-btn sf-btn--danger" } (no confirmButtonColor); the class outweighs
+   SweetAlert's :where() rules. */
+:where(body:not(.admin-area)) .sf-btn--danger {
+  --sf-btn-bg: var(--sf-color-error);
+  --sf-btn-fg: var(--sf-color-primary-contrast);
+  --sf-btn-border: var(--sf-color-error);
+}
+/* Hover: 15% toward the text tone, which raises the contrast in both modes.
+   Browsers without color-mix() keep the resting colour. */
+@supports (color: color-mix(in srgb, currentColor, transparent)) {
+  :where(body:not(.admin-area)) .sf-btn--danger {
+    --sf-btn-bg-hover: color-mix(in srgb, var(--sf-color-error) 85%, var(--sf-color-text));
+    --sf-btn-border-hover: var(--sf-btn-bg-hover);
+  }
+}
+/* A press keeps the hover fill (also by touch or keyboard, where no hover
+   applies), so SweetAlert's own :active colour never flashes through. */
+:where(body:not(.admin-area)) .sf-btn--danger:active:where(:not(:disabled, [aria-disabled="true"])) {
+  border-color: var(--sf-btn-border-hover);
+  background-color: var(--sf-btn-bg-hover);
+}
 /* --paper / --paper-ghost sit on always-dark surfaces (navy bands, footer,
    photo scrims), so they use the fixed brand and on-dark tokens. */
 :where(body:not(.admin-area)) .sf-btn--paper {

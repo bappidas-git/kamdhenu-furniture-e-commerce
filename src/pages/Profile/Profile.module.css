@@ -1,379 +1,223 @@
-/* ==========================================================================
-   Profile Page - Professional Layout (Amazon/Flipkart style)
-   ========================================================================== */
+/* =============================================================================
+ * Profile — /profile (prompts/DESIGN_SYSTEM.md §31)
+ * =============================================================================
+ * The page shell (header, rail, chip row) is AccountLayout / AccountNav in
+ * src/components/account. This file styles, tokens only:
+ *   • the section region: a focus target after a tab switch (no ring);
+ *   • the Profile section: a hairline card with the serif title, "Member
+ *     since", the .sf-field grid (two columns; one up to 600px) and the
+ *     primary "Save changes";
+ *   • the guest panel: sand, a serif line, "Sign in" and "Create account";
+ *   • the feedback toast: surface, hairline, a 2px caramel bar on its left
+ *     edge and the tone's glyph; bottom-right, above the bottom nav up to
+ *     768px;
+ *   • the neutral frame around the legacy sections.
+ *
+ * Below the LEGACY banner: the boilerplate's rules for the addresses,
+ * password and wallet sections, unchanged (hex colours and their .dark
+ * variants included) until Prompts 22 and 23 replace them.
+ * ========================================================================== */
 
-/* ---- Page wrapper ---- */
-.profilePage {
-  min-height: 100vh;
-  padding: 2rem 0 4rem;
-  background: #f5f7fa;
-  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif;
+/* ---- Section region --------------------------------------------------------- */
+
+/* Focus lands here after a tab switch (tabIndex -1): a reading position, not
+   a control, so no ring; the next Tab reaches the section's first control. */
+.section:focus {
+  outline: none;
 }
 
-.profilePage.dark {
-  background: #0a0e27;
+/* ---- Profile section ---------------------------------------------------------- */
+
+.panel {
+  --sf-card-padding: clamp(var(--sf-space-5), 4vw, var(--sf-space-10));
 }
 
-/* ---- Container ---- */
-.container {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-/* ---- Page header ---- */
-.pageHeader {
-  margin-bottom: 1.75rem;
-}
-
-.pageTitle {
-  font-size: 1.75rem;
-  font-weight: 700;
-  margin: 0 0 0.25rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.dark .pageTitle {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.pageSubtitle {
-  font-size: 0.925rem;
-  color: #64748b;
+.panelTitle {
   margin: 0;
+  color: var(--sf-color-text);
 }
 
-.dark .pageSubtitle {
-  color: rgba(255, 255, 255, 0.55);
+.memberSince {
+  margin: var(--sf-space-2) 0 0;
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
 }
 
-/* ---- Feedback toast ----
-   Fixed so it's always visible regardless of scroll position. Sits bottom-right
-   on desktop/tablet (no bottom nav there); on phones it moves above the fixed
-   BottomNav (z-index 1200) so a "Saved" message after tapping a button at the
-   bottom of a long form is never scrolled off-screen. */
-.feedback {
+.form {
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+}
+
+.fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-6) var(--sf-space-5);
+}
+
+.optional {
+  color: var(--sf-color-text-muted);
+  font-weight: var(--sf-font-normal);
+}
+
+.actions {
+  display: flex;
+  margin-top: var(--sf-space-8);
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
+}
+
+/* Busy while saving: the label says so, and the button keeps its full ink
+   (the auth modal's busy state) rather than the disabled 50%. */
+.save[data-busy="true"] {
+  opacity: 1;
+  cursor: progress;
+}
+
+@media (max-width: 600px) {
+  .fields {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .save {
+    width: 100%;
+  }
+}
+
+/* ---- Guest panel ---------------------------------------------------------------- */
+
+.guest {
+  --sf-card-padding: clamp(var(--sf-space-6), 5vw, var(--sf-space-12));
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-4);
+  max-width: var(--sf-container-narrow);
+}
+
+.guestTitle {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.guestText {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+}
+
+.guestActions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--sf-space-3);
+  margin-top: var(--sf-space-2);
+}
+
+@media (max-width: 480px) {
+  .guestActions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-self: stretch;
+  }
+}
+
+/* ---- Feedback toast ------------------------------------------------------------ */
+
+/* Always in the page (its status line must exist before a message arrives);
+   without a message it has no frame, no size and lets clicks through. */
+.toast {
   position: fixed;
-  bottom: 1.5rem;
-  right: 1.5rem;
-  left: auto;
-  z-index: 1300;
-  width: auto;
-  max-width: 380px;
+  right: var(--sf-space-6);
+  bottom: var(--sf-space-6);
+  /* Above the page and the bottom nav; below drawers, modals and SweetAlert. */
+  z-index: calc(var(--sf-z-bottomnav) + 1);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  padding: 0.85rem 1rem;
-  border-radius: 10px;
-  font-size: 0.9rem;
-  font-weight: 500;
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.18);
+  gap: var(--sf-space-3);
+  max-width: min(380px, calc(100vw - 2 * var(--sf-space-6)));
+  font-family: var(--sf-font-sans);
+  pointer-events: none;
 }
 
-.dark .feedback {
-  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.45);
+.toastShown {
+  min-height: var(--sf-space-12);
+  padding: var(--sf-space-1) var(--sf-space-1) var(--sf-space-1) var(--sf-space-4);
+  border: var(--sf-hairline);
+  border-left: 2px solid var(--sf-color-accent);
+  border-radius: var(--sf-radius-md);
+  background-color: var(--sf-color-surface);
+  box-shadow: var(--sf-shadow-md);
+  color: var(--sf-color-text);
+  pointer-events: auto;
+  animation: toast-in var(--sf-duration) var(--sf-ease-out);
 }
 
+.toastGlyph {
+  flex: none;
+  width: 18px;
+  height: 18px;
+}
+
+.toast[data-tone="success"] .toastGlyph {
+  color: var(--sf-color-success);
+}
+
+.toast[data-tone="error"] .toastGlyph {
+  color: var(--sf-color-error);
+}
+
+.toastMessage {
+  flex: 1 1 auto;
+  min-width: 0;
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+.toastClose {
+  --sf-btn-fg: var(--sf-color-text-muted);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  flex: none;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sf-space-2));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toastShown {
+    animation: none;
+  }
+}
+
+/* Phones: full width above the bottom nav (57px plus the home-indicator
+   inset, DESIGN_SYSTEM.md §19.3). */
 @media (max-width: 768px) {
-  .feedback {
-    left: 1rem;
-    right: 1rem;
-    bottom: calc(72px + env(safe-area-inset-bottom, 0px));
+  .toast {
+    left: var(--sf-space-4);
+    right: var(--sf-space-4);
+    bottom: calc(57px + var(--sf-space-4) + env(safe-area-inset-bottom, 0px));
     max-width: none;
   }
 }
 
-.feedback_success {
-  background: #ecfdf5;
-  color: #065f46;
-  border: 1px solid #a7f3d0;
+/* ---- Legacy sections' frame ---------------------------------------------------- */
+
+.legacy {
+  padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-surface);
 }
 
-.dark .feedback_success {
-  background: rgba(16, 185, 129, 0.15);
-  color: #6ee7b7;
-  border-color: rgba(16, 185, 129, 0.3);
-}
-
-.feedback_error {
-  background: #fef2f2;
-  color: #991b1b;
-  border: 1px solid #fecaca;
-}
-
-.dark .feedback_error {
-  background: rgba(239, 68, 68, 0.15);
-  color: #fca5a5;
-  border-color: rgba(239, 68, 68, 0.3);
-}
-
-.feedbackClose {
-  background: none;
-  border: none;
-  cursor: pointer;
-  font-size: 1rem;
-  padding: 0 0.25rem;
-  color: inherit;
-  opacity: 0.7;
-  line-height: 1;
-}
-
-.feedbackClose:hover {
-  opacity: 1;
-}
-
-/* ---- Layout grid (sidebar + main) ---- */
-.layoutGrid {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-/* ---- Sidebar ---- */
-.sidebar {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-  position: sticky;
-  top: 5rem;
-}
-
-.dark .sidebar {
-  background: rgba(26, 31, 58, 0.85);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(168, 85, 247, 0.12);
-}
-
-.sidebarUserCard {
-  display: flex;
-  align-items: center;
-  gap: 0.875rem;
-  padding: 1.25rem 1.25rem 1rem;
-  border-bottom: 1px solid #f1f5f9;
-}
-
-.dark .sidebarUserCard {
-  border-bottom-color: rgba(255, 255, 255, 0.08);
-}
-
-.sidebarAvatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1rem;
-  flex-shrink: 0;
-}
-
-.dark .sidebarAvatar {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-}
-
-.sidebarUserInfo {
-  overflow: hidden;
-}
-
-.sidebarUserName {
-  margin: 0;
-  font-size: 0.925rem;
-  font-weight: 600;
-  color: #1e293b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dark .sidebarUserName {
-  color: #f1f5f9;
-}
-
-.sidebarUserEmail {
-  margin: 0.125rem 0 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.dark .sidebarUserEmail {
-  color: rgba(255, 255, 255, 0.45);
-}
-
-/* Sidebar navigation */
-.sidebarNav {
-  padding: 0.5rem 0;
-}
-
-.sidebarItem {
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  width: 100%;
-  padding: 0.75rem 1.25rem;
-  border: none;
-  background: none;
-  cursor: pointer;
-  font-size: 0.9rem;
-  color: #475569;
-  transition: all 0.2s ease;
-  text-align: left;
-  position: relative;
-}
-
-.dark .sidebarItem {
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.sidebarItem:hover {
-  background: #f8fafc;
-  color: #667eea;
-}
-
-.dark .sidebarItem:hover {
-  background: rgba(168, 85, 247, 0.08);
-  color: #a855f7;
-}
-
-.sidebarItemActive {
-  color: #667eea;
-  background: linear-gradient(90deg, rgba(102, 126, 234, 0.08), transparent);
-  font-weight: 600;
-}
-
-.sidebarItemActive::before {
-  content: "";
-  position: absolute;
-  left: 0;
-  top: 8px;
-  bottom: 8px;
-  width: 3px;
-  border-radius: 0 3px 3px 0;
-  background: linear-gradient(180deg, #667eea, #764ba2);
-}
-
-.dark .sidebarItemActive {
-  color: #a855f7;
-  background: linear-gradient(90deg, rgba(168, 85, 247, 0.12), transparent);
-}
-
-.dark .sidebarItemActive::before {
-  background: linear-gradient(180deg, #a855f7, #ec4899);
-}
-
-.sidebarItemLogout {
-  margin-top: 0.25rem;
-  border-top: 1px solid #f1f5f9;
-  color: #ef4444;
-}
-
-.dark .sidebarItemLogout {
-  border-top-color: rgba(255, 255, 255, 0.08);
-  color: #f87171;
-}
-
-.sidebarItemLogout:hover {
-  background: #fef2f2;
-  color: #dc2626;
-}
-
-.dark .sidebarItemLogout:hover {
-  background: rgba(239, 68, 68, 0.1);
-  color: #f87171;
-}
-
-.externalIcon {
-  margin-left: auto;
-  opacity: 0.4;
-}
-
-/* ---- Mobile tabs (horizontal scrollable) ---- */
-.mobileTabs {
-  display: none;
-  overflow-x: auto;
-  gap: 0.5rem;
-  padding-bottom: 1rem;
-  margin-bottom: 1rem;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-}
-
-.mobileTabs::-webkit-scrollbar {
-  display: none;
-}
-
-.mobileTab {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  white-space: nowrap;
-  padding: 0.6rem 1rem;
-  border-radius: 999px;
-  border: 1px solid #e2e8f0;
-  background: #fff;
-  cursor: pointer;
-  font-size: 0.825rem;
-  color: #475569;
-  transition: all 0.2s ease;
-  flex-shrink: 0;
-}
-
-.dark .mobileTab {
-  background: rgba(26, 31, 58, 0.8);
-  border-color: rgba(168, 85, 247, 0.15);
-  color: rgba(255, 255, 255, 0.7);
-}
-
-.mobileTab:hover {
-  border-color: #667eea;
-  color: #667eea;
-}
-
-.dark .mobileTab:hover {
-  border-color: #a855f7;
-  color: #a855f7;
-}
-
-.mobileTabActive {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #fff;
-  border-color: transparent;
-}
-
-.dark .mobileTabActive {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-  color: #fff;
-  border-color: transparent;
-}
-
-/* ---- Main content ---- */
-.mainContent {
-  background: #ffffff;
-  border-radius: 14px;
-  box-shadow: 0 1px 12px rgba(0, 0, 0, 0.06);
-  padding: 2rem;
-  min-height: 480px;
-}
-
-.dark .mainContent {
-  background: rgba(26, 31, 58, 0.85);
-  box-shadow: 0 2px 16px rgba(0, 0, 0, 0.3);
-  border: 1px solid rgba(168, 85, 247, 0.12);
-}
+/* =============================================================================
+ * LEGACY — the boilerplate's addresses, password and wallet styles, kept as
+ * they were (Prompts 22 and 23 replace them). Their dark variants key off the
+ * .dark class Profile.js puts on the legacy frame in dark mode.
+ * ========================================================================== */
 
 /* ---- Section header ---- */
 .sectionHeader {
@@ -404,75 +248,6 @@
 
 .dark .sectionSubtitle {
   color: rgba(255, 255, 255, 0.5);
-}
-
-/* ---- Avatar block (profile section) ---- */
-.avatarBlock {
-  display: flex;
-  align-items: center;
-  gap: 1.25rem;
-  padding: 1.5rem;
-  border-radius: 12px;
-  background: #f8fafc;
-  margin-bottom: 2rem;
-}
-
-.dark .avatarBlock {
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.06);
-}
-
-.avatarLarge {
-  width: 72px;
-  height: 72px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #fff;
-  font-weight: 700;
-  font-size: 1.5rem;
-  flex-shrink: 0;
-}
-
-.dark .avatarLarge {
-  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
-}
-
-.avatarInfo {
-  min-width: 0;
-}
-
-.avatarName {
-  margin: 0;
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: #1e293b;
-}
-
-.dark .avatarName {
-  color: #f1f5f9;
-}
-
-.avatarEmail {
-  margin: 0.15rem 0 0;
-  font-size: 0.875rem;
-  color: #64748b;
-}
-
-.dark .avatarEmail {
-  color: rgba(255, 255, 255, 0.55);
-}
-
-.memberSince {
-  margin: 0.35rem 0 0;
-  font-size: 0.8rem;
-  color: #94a3b8;
-}
-
-.dark .memberSince {
-  color: rgba(255, 255, 255, 0.35);
 }
 
 /* ---- Form grid ---- */
@@ -1138,40 +913,9 @@
    ========================================================================== */
 
 @media (max-width: 900px) {
-  .profilePage {
-    padding: 1rem 0 6rem;
-  }
-
-  .container {
-    padding: 0 1rem;
-  }
-
-  .layoutGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .sidebar {
-    display: none;
-  }
-
-  .mobileTabs {
-    display: flex;
-  }
-
-  .mainContent {
-    padding: 1.5rem;
-    min-height: auto;
-    border-radius: 12px;
-  }
-
   .sectionHeader {
     flex-direction: column;
     gap: 0.75rem;
-  }
-
-  .avatarBlock {
-    flex-direction: column;
-    text-align: center;
   }
 
   .formGrid {
@@ -1192,34 +936,11 @@
     flex-direction: column;
     align-items: flex-start;
   }
-
-  .pageTitle {
-    font-size: 1.4rem;
-  }
 }
 
 @media (max-width: 480px) {
-  .container {
-    padding: 0 0.75rem;
-  }
-
-  .mainContent {
-    padding: 1.25rem;
-  }
-
-  .avatarLarge {
-    width: 60px;
-    height: 60px;
-    font-size: 1.25rem;
-  }
-
   .labelSelector {
     flex-wrap: wrap;
-  }
-
-  .mobileTab {
-    padding: 0.5rem 0.8rem;
-    font-size: 0.775rem;
   }
 }
 

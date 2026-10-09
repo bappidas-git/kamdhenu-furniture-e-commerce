@@ -1,0 +1,182 @@
+/* =============================================================================
+ * AccountNav — the account rail and chip row (prompts/DESIGN_SYSTEM.md §31)
+ * =============================================================================
+ * Up to 900px: one row of .sf-chip links that scrolls sideways to the screen's
+ * edges (the gutter is its edge room); the current one is the ink chip, and
+ * "Sign out" ends the row in muted text. Each chip keeps a 44px hit area
+ * (::after), and the row's 8px of vertical padding holds the hit areas and
+ * the focus rings inside its scroll box.
+ *
+ * From 901px: a rail. The initials in a 56px hairline circle, the name (serif
+ * 18px) and the email (muted); a hairline; the links as 44px rows in sans
+ * 15px, secondary, the current one ink with a 2px caramel bar (a border, so
+ * forced colours keep it); a hairline; "Sign out" in muted text. Hovers change
+ * colour only. The links keep the .sf-chip class: the rail styles below
+ * override the primitive (same weight, later in the bundle).
+ *
+ * Tokens only: every colour, size step and duration is a --sf-* variable.
+ * ========================================================================== */
+
+.nav {
+  min-width: 0;
+  font-family: var(--sf-font-sans);
+}
+
+.identity {
+  display: none;
+}
+
+.list {
+  display: flex;
+  gap: var(--sf-space-2);
+  margin: 0 calc(-1 * var(--sf-gutter));
+  padding: var(--sf-space-2) var(--sf-gutter);
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  scroll-padding-inline: var(--sf-gutter);
+  scrollbar-width: none;
+  list-style: none;
+}
+
+.list::-webkit-scrollbar {
+  display: none;
+}
+
+.item {
+  flex: none;
+}
+
+.link {
+  position: relative;
+}
+
+/* ---- Up to 900px: the chip row --------------------------------------------- */
+@media (max-width: 900.98px) {
+  /* A 44px hit area around the 32px chip. */
+  .link::after {
+    content: "";
+    position: absolute;
+    inset: -6px 0;
+  }
+
+  .link[aria-current="page"] {
+    border-color: var(--sf-color-primary);
+    background-color: var(--sf-color-primary);
+    color: var(--sf-color-primary-contrast);
+  }
+
+  .signOut {
+    color: var(--sf-color-text-muted);
+  }
+}
+
+/* ---- From 901px: the rail ---------------------------------------------------- */
+@media (min-width: 901px) {
+  .identity {
+    display: grid;
+    justify-items: start;
+    gap: var(--sf-space-1);
+    padding-bottom: var(--sf-space-5);
+    border-bottom: var(--sf-hairline);
+  }
+
+  .avatar {
+    display: inline-grid;
+    place-items: center;
+    width: 56px;
+    height: 56px;
+    margin-bottom: var(--sf-space-3);
+    border: var(--sf-hairline);
+    border-radius: var(--sf-radius-pill);
+    color: var(--sf-color-text);
+    font-family: var(--sf-font-display);
+    font-size: var(--sf-text-lg);
+    line-height: 1;
+    letter-spacing: 0.02em;
+  }
+
+  .name,
+  .email {
+    max-width: 100%;
+    margin: 0;
+    overflow-wrap: anywhere;
+  }
+
+  .name {
+    color: var(--sf-color-text);
+    font-family: var(--sf-font-display);
+    font-size: 1.125rem;
+    font-weight: var(--sf-font-medium);
+    line-height: var(--sf-leading-tight);
+    letter-spacing: var(--sf-tracking-display);
+  }
+
+  .email {
+    color: var(--sf-color-text-muted);
+    font-size: var(--sf-text-sm);
+    line-height: var(--sf-leading-normal);
+  }
+
+  .list {
+    display: block;
+    margin: 0;
+    padding: var(--sf-space-3) 0 0;
+    overflow: visible;
+  }
+
+  .link {
+    display: flex;
+    justify-content: flex-start;
+    width: 100%;
+    min-height: var(--sf-tap-target);
+    padding: 0 0 0 var(--sf-space-4);
+    border: 0;
+    border-radius: 0;
+    background: none;
+    color: var(--sf-color-text-secondary);
+    font-size: 0.9375rem;
+    white-space: normal;
+    text-align: left;
+  }
+
+  .link[aria-current="page"] {
+    color: var(--sf-color-text);
+    font-weight: var(--sf-font-medium);
+  }
+
+  .link[aria-current="page"]::before {
+    content: "";
+    position: absolute;
+    top: 10px;
+    bottom: 10px;
+    left: 0;
+    border-left: 2px solid var(--sf-color-accent);
+  }
+
+  .signOutItem {
+    margin-top: var(--sf-space-3);
+    padding-top: var(--sf-space-3);
+    border-top: var(--sf-hairline);
+  }
+
+  .signOut {
+    color: var(--sf-color-text-muted);
+  }
+}
+
+@media (min-width: 901px) and (hover: hover) {
+  .link:hover {
+    color: var(--sf-color-text);
+  }
+}
+
+/* Forced colours: the current chip keeps a visible state (the rail's bar is a
+   border, which forced colours draw on their own). */
+@media (forced-colors: active) and (max-width: 900.98px) {
+  .link[aria-current="page"] {
+    forced-color-adjust: none;
+    border-color: Highlight;
+    background-color: Highlight;
+    color: HighlightText;
+  }
+}

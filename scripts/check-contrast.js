@@ -273,6 +273,10 @@ const PAIRS = [
   ["Auth: error line (error on error-bg over the page tone)", "--sf-color-error", ["--sf-color-error-bg", "--sf-color-bg"], AA],
   ["Auth: success line (success on success-bg over the page tone)", "--sf-color-success", ["--sf-color-success-bg", "--sf-color-bg"], AA],
   ["Auth: info line and its link (info on info-bg over the page tone)", "--sf-color-info", ["--sf-color-info-bg", "--sf-color-bg"], AA],
+  // Account shell (Prompt 21): .sf-btn--danger (the sign-out confirm) is
+  // primary-contrast on the error fill, the solid-error badge row above. Its
+  // hover is color-mix(in srgb, error 85%, text): the text tone at 15% over it.
+  ["Danger button hover (primary-contrast on error mixed 15% toward the text)", "--sf-color-primary-contrast", ["--sf-color-text@0.15", "--sf-color-error"], AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.

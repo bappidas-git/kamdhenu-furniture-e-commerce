@@ -1,31 +1,71 @@
-import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import React, { useState, useEffect, useRef } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { motion, useReducedMotion } from "framer-motion";
 import Swal from "sweetalert2";
 import { useTheme } from "../../context/ThemeContext";
 import { useAuth } from "../../hooks/useAuth";
 import apiService from "../../services/api";
-import { formatDate, formatCurrency, getInitials, generateId, isValidPhone } from "../../utils/helpers";
+import AccountLayout from "../../components/account/AccountLayout";
+import { Reveal } from "../../components/ui";
+import { TOKENS } from "../../theme/tokens";
+import { formatDate, formatCurrency, generateId, isValidPhone } from "../../utils/helpers";
 import styles from "./Profile.module.css";
 
-const TABS = [
-  { id: "profile", label: "My Profile", icon: "person" },
-  { id: "addresses", label: "My Addresses", icon: "location" },
-  { id: "orders", label: "My Orders", icon: "orders", link: "/orders" },
-  { id: "wallet", label: "Store Credit", icon: "wallet" },
-  { id: "wishlist", label: "My Wishlist", icon: "heart", link: "/wishlist" },
-  { id: "password", label: "Change Password", icon: "lock" },
-  { id: "logout", label: "Logout", icon: "logout" },
-];
+// =============================================================================
+// Profile — /profile, the account page (prompts/DESIGN_SYSTEM.md §31)
+// =============================================================================
+// AccountLayout (the header and AccountNav) around one section at a time:
+// profile (the default), addresses, wallet or password. Orders and Wishlist
+// are routes of their own.
+//
+// THE ?tab= CONTRACT
+//   The section comes from the URL: /profile?tab=addresses | wallet |
+//   password; no value (or any other value) shows the Profile section. It is
+//   read on every location change, so AccountNav's links (from any page), the
+//   header's "My profile", back and forward all land on the right section.
+//   AccountNav switches tabs here with replace, so tabs add no history. After
+//   a switch, focus moves to the new section (a region named after it).
+//
+// GUESTS
+//   Once the session restore has settled, a guest sees a sign-in panel here
+//   (no silent redirect home). "Sign in" opens the auth modal; signing in
+//   renders the account in place, on the tab the URL asked for, and moves
+//   focus to the greeting once the dialog has gone.
+//
+// The addresses, password and wallet sections are still the boilerplate's
+// (Prompts 22 and 23 restyle them); they keep their own styles, .dark
+// variants included, inside a neutral frame.
+// =============================================================================
 
+const PROFILE_TABS = ["profile", "addresses", "wallet", "password"];
+
+// The section region's name (it takes focus after a tab switch).
+const SECTION_LABELS = {
+  profile: "Personal information",
+  addresses: "Addresses",
+  wallet: "Store credit",
+  password: "Change password",
+};
+
+const EMPTY_FEEDBACK = { type: "", message: "" };
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+// The sticky header's visible height, published by the header (§17.2).
+const headerHeight = () =>
+  parseFloat(getComputedStyle(document.documentElement).getPropertyValue("--sf-header-height")) || 0;
+
+// Scroll so `element` starts 16px under the sticky header ("instant", not
+// "auto", under reduced motion: the root's scroll-behavior is smooth).
+const scrollUnderHeader = (element, reduceMotion) =>
+  window.scrollTo({
+    top: Math.max(0, window.scrollY + element.getBoundingClientRect().top - headerHeight() - TOKENS.space[4]),
+    behavior: reduceMotion ? "instant" : "smooth",
+  });
+
+// Icons for the legacy empty states (addresses, wallet).
 const TabIcon = ({ icon }) => {
   const icons = {
-    person: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
-        <circle cx="12" cy="7" r="4" />
-      </svg>
-    ),
     location: (
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
         <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z" />
@@ -39,43 +79,46 @@ const TabIcon = ({ icon }) => {
         <path d="M18 12a2 2 0 0 0 0 4h4v-4z" />
       </svg>
     ),
-    orders: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
-        <line x1="3" y1="6" x2="21" y2="6" />
-        <path d="M16 10a4 4 0 0 1-8 0" />
-      </svg>
-    ),
-    heart: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
-      </svg>
-    ),
-    lock: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
-        <path d="M7 11V7a5 5 0 0 1 10 0v4" />
-      </svg>
-    ),
-    logout: (
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-        <polyline points="16 17 21 12 16 7" />
-        <line x1="21" y1="12" x2="9" y2="12" />
-      </svg>
-    ),
   };
   return icons[icon] || null;
 };
 
+// The toast's tone glyph, drawn in currentColor (the success or error token).
+const FeedbackGlyph = ({ tone }) =>
+  tone === "success" ? (
+    <svg className={styles.toastGlyph} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  ) : (
+    <svg className={styles.toastGlyph} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+      <circle cx="12" cy="12" r="9" />
+      <line x1="12" y1="7.5" x2="12" y2="12.5" />
+      <line x1="12" y1="16" x2="12.01" y2="16" />
+    </svg>
+  );
+
 const Profile = () => {
   const navigate = useNavigate();
+  // isDarkMode now only feeds the legacy sections (their .dark styles and the
+  // password meter); everything new follows the tokens.
   const { isDarkMode } = useTheme();
-  const { user, isAuthenticated, isLoading: authLoading, logout, updateUser } = useAuth();
+  const reduceMotion = useReducedMotion();
+  const {
+    user,
+    isAuthenticated,
+    isLoading: authLoading,
+    updateUser,
+    openAuthModal,
+    authModalOpen,
+  } = useAuth();
 
-  const [activeTab, setActiveTab] = useState("profile");
+  // The section on screen comes from the URL (see "The ?tab= contract").
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const activeTab = PROFILE_TABS.includes(tabParam) ? tabParam : "profile";
+
   const [loading, setLoading] = useState(false);
-  const [feedback, setFeedback] = useState({ type: "", message: "" });
+  const [feedback, setFeedback] = useState(EMPTY_FEEDBACK);
 
   // Store-credit wallet
   const [walletBalance, setWalletBalance] = useState(0);
@@ -89,6 +132,16 @@ const Profile = () => {
     email: "",
     phone: "",
   });
+  // Inline messages under the profile fields ("" or absent = none).
+  const [profileErrors, setProfileErrors] = useState({});
+  const firstNameRef = useRef(null);
+  const lastNameRef = useRef(null);
+  const phoneRef = useRef(null);
+
+  // Focus targets: the h1 (after signing in here) and the section region
+  // (after a tab switch).
+  const titleRef = useRef(null);
+  const sectionRef = useRef(null);
 
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -130,17 +183,59 @@ const Profile = () => {
         email: user.email || "",
         phone: user.phone || "",
       });
+      setProfileErrors({});
       setAddresses(user.addresses || []);
     }
   }, [user]);
 
-  // Redirect if not authenticated — but only after the session restore has
-  // finished, or a page reload would bounce logged-in users back to home.
+  // Guests see a sign-in panel (rendered below, once the session restore has
+  // settled) instead of a silent redirect home. When someone signs in from
+  // it, the panel and its "Sign in" button (the dialog's opener) are gone, so
+  // focus moves to the greeting once the dialog has left the page.
+  const sawGuest = useRef(false);
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate("/");
+    if (authLoading) return undefined;
+    if (!isAuthenticated) {
+      sawGuest.current = true;
+      return undefined;
     }
-  }, [authLoading, isAuthenticated, navigate]);
+    if (!sawGuest.current || authModalOpen) return undefined;
+    sawGuest.current = false;
+    let frame = 0;
+    let attempts = 0;
+    const focusGreeting = () => {
+      frame = 0;
+      const active = document.activeElement;
+      // Focus has gone somewhere on purpose meanwhile: leave it there.
+      if (active && active !== document.body && !active.closest('[aria-modal="true"]')) return;
+      // The dialog is still on its way out: try again next frame.
+      if (document.querySelector('[aria-modal="true"]') && attempts < 60) {
+        attempts += 1;
+        frame = window.requestAnimationFrame(focusGreeting);
+        return;
+      }
+      if (titleRef.current) titleRef.current.focus();
+    };
+    frame = window.requestAnimationFrame(focusGreeting);
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+    };
+  }, [authLoading, isAuthenticated, authModalOpen]);
+
+  // After a tab switch (not on arrival): drop the last message, as switching
+  // always did, and move focus to the new section. A switch made from the
+  // sticky rail far down a long section would leave the new one above the
+  // window, so its top is brought back under the header.
+  const shownTab = useRef(activeTab);
+  useEffect(() => {
+    if (shownTab.current === activeTab) return;
+    shownTab.current = activeTab;
+    setFeedback(EMPTY_FEEDBACK);
+    const region = sectionRef.current;
+    if (!region) return;
+    region.focus({ preventScroll: true });
+    if (region.getBoundingClientRect().top < headerHeight()) scrollUnderHeader(region, reduceMotion);
+  }, [activeTab, reduceMotion]);
 
   // Clear feedback after 4 seconds
   useEffect(() => {
@@ -175,40 +270,86 @@ const Profile = () => {
     return () => { active = false; };
   }, [activeTab, user]);
 
+  // The session restore settles on the first render: nothing to show before.
+  if (authLoading) return null;
+
   if (!isAuthenticated || !user) {
-    return null;
+    return (
+      <AccountLayout titleRef={titleRef}>
+        <div className={cx("sf-panel", styles.guest)}>
+          <h2 className={cx("sf-display-sm", styles.guestTitle)}>Sign in to see your account.</h2>
+          <p className={styles.guestText}>
+            Your details, saved addresses and store credit are kept on your account.
+          </p>
+          <div className={styles.guestActions}>
+            <button
+              type="button"
+              className="sf-btn sf-btn--primary"
+              onClick={() => openAuthModal("login")}
+              aria-haspopup="dialog"
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              className="sf-btn sf-btn--ghost"
+              onClick={() => openAuthModal("signup")}
+              aria-haspopup="dialog"
+            >
+              Create account
+            </button>
+          </div>
+        </div>
+      </AccountLayout>
+    );
   }
 
   const showFeedback = (type, message) => {
     setFeedback({ type, message });
   };
 
-  // ---- Tab click handler ----
-  const handleTabClick = (tab) => {
-    if (tab.link) {
-      navigate(tab.link);
-      return;
-    }
-    if (tab.id === "logout") {
-      handleLogout();
-      return;
-    }
-    setActiveTab(tab.id);
-    setFeedback({ type: "", message: "" });
-  };
-
   // ---- Profile handlers ----
   const handleProfileChange = (e) => {
     const { name, value } = e.target;
     setProfileForm((prev) => ({ ...prev, [name]: value }));
+    // Editing a field clears its message.
+    setProfileErrors((prev) => (prev[name] ? { ...prev, [name]: "" } : prev));
   };
 
-  const handleProfileSave = async () => {
-    if (!profileForm.firstName.trim() || !profileForm.lastName.trim()) {
+  const handleProfileSave = async (event) => {
+    if (event) event.preventDefault();
+    if (loading) return;
+
+    // The rules are the same as ever. Each field now also says what is wrong
+    // with it, and focus moves to the first one that needs attention; the
+    // toast still carries the first rule's message.
+    const errors = {};
+    if (!profileForm.firstName.trim()) errors.firstName = "First name is required";
+    if (!profileForm.lastName.trim()) errors.lastName = "Last name is required";
+    if (profileForm.phone && !isValidPhone(profileForm.phone)) {
+      errors.phone = "Enter a valid 10-digit mobile number";
+    }
+    setProfileErrors(errors);
+    const firstInvalid = [
+      ["firstName", firstNameRef],
+      ["lastName", lastNameRef],
+      ["phone", phoneRef],
+    ].find(([name]) => errors[name]);
+    if (firstInvalid && firstInvalid[1].current) {
+      const input = firstInvalid[1].current;
+      input.focus({ preventScroll: true });
+      // focus() leaves a field the sticky header covers where it is (it is
+      // "in view"), so bring the whole field, label first, under the header.
+      const field = input.closest(".sf-field") || input;
+      const box = field.getBoundingClientRect();
+      if (box.top < headerHeight() || box.bottom > window.innerHeight) scrollUnderHeader(field, reduceMotion);
+    }
+
+    if (errors.firstName || errors.lastName) {
       showFeedback("error", "First name and last name are required.");
       return;
     }
-    if (profileForm.phone && !isValidPhone(profileForm.phone)) {
+    if (errors.phone) {
       showFeedback("error", "Please enter a valid 10-digit Indian mobile number.");
       return;
     }
@@ -446,118 +587,138 @@ const Profile = () => {
     }
   };
 
-  // ---- Logout handler ----
-  const handleLogout = async () => {
-    // Confirm first so logging out isn't a one-click accident.
-    const result = await Swal.fire({
-      title: "Log out?",
-      text: "You'll need to sign in again to access your account.",
-      icon: "question",
-      showCancelButton: true,
-      confirmButtonColor: "#ef4444",
-      confirmButtonText: "Log Out",
-      cancelButtonText: "Stay Signed In",
-    });
-    if (!result.isConfirmed) return;
-
-    try {
-      await logout();
-      navigate("/");
-    } catch (err) {
-      showFeedback("error", "Logout failed. Please try again.");
-    }
-  };
+  // Signing out (the confirm, logout(), home) lives in AccountNav, which the
+  // orders and wishlist pages share; a failure is reported in this page's toast.
 
   const passwordStrength = getPasswordStrength(passwordForm.newPassword);
 
   // ---- Render sections ----
+  // aria-describedby: the hint, then the message when there is one.
+  const describedBy = (...ids) => ids.filter(Boolean).join(" ") || undefined;
+
   const renderProfileSection = () => (
-    <motion.div
-      key="profile"
-      initial={{ opacity: 0, x: 20 }}
-      animate={{ opacity: 1, x: 0 }}
-      exit={{ opacity: 0, x: -20 }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className={styles.sectionHeader}>
-        <h2 className={styles.sectionTitle}>Personal Information</h2>
-        <p className={styles.sectionSubtitle}>Manage your personal details</p>
-      </div>
+    <Reveal className={cx("sf-card sf-card--hairline", styles.panel)}>
+      <h2 className={cx("sf-display-sm", styles.panelTitle)}>Personal information</h2>
+      {user.createdAt && (
+        <p className={styles.memberSince}>Member since {formatDate(user.createdAt, "medium")}</p>
+      )}
 
-      <div className={styles.avatarBlock}>
-        <div className={styles.avatarLarge}>
-          {getInitials(user.firstName, user.lastName)}
-        </div>
-        <div className={styles.avatarInfo}>
-          <h3 className={styles.avatarName}>
-            {user.firstName} {user.lastName}
-          </h3>
-          <p className={styles.avatarEmail}>{user.email}</p>
-          {user.createdAt && (
-            <p className={styles.memberSince}>
-              Member since {formatDate(user.createdAt, "medium")}
+      <form className={styles.form} onSubmit={handleProfileSave} noValidate>
+        <div className={styles.fields}>
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor="profile-first-name">
+              First name
+            </label>
+            <input
+              ref={firstNameRef}
+              id="profile-first-name"
+              className="sf-input"
+              type="text"
+              name="firstName"
+              value={profileForm.firstName}
+              onChange={handleProfileChange}
+              autoComplete="given-name"
+              autoCapitalize="words"
+              required
+              aria-invalid={profileErrors.firstName ? "true" : undefined}
+              aria-describedby={describedBy(profileErrors.firstName && "profile-first-name-error")}
+            />
+            {profileErrors.firstName && (
+              <p className="sf-field__error" id="profile-first-name-error">
+                {profileErrors.firstName}
+              </p>
+            )}
+          </div>
+
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor="profile-last-name">
+              Last name
+            </label>
+            <input
+              ref={lastNameRef}
+              id="profile-last-name"
+              className="sf-input"
+              type="text"
+              name="lastName"
+              value={profileForm.lastName}
+              onChange={handleProfileChange}
+              autoComplete="family-name"
+              autoCapitalize="words"
+              required
+              aria-invalid={profileErrors.lastName ? "true" : undefined}
+              aria-describedby={describedBy(profileErrors.lastName && "profile-last-name-error")}
+            />
+            {profileErrors.lastName && (
+              <p className="sf-field__error" id="profile-last-name-error">
+                {profileErrors.lastName}
+              </p>
+            )}
+          </div>
+
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor="profile-email">
+              Email address
+            </label>
+            <input
+              id="profile-email"
+              className="sf-input"
+              type="email"
+              name="email"
+              value={profileForm.email}
+              readOnly
+              autoComplete="email"
+              aria-describedby="profile-email-hint"
+            />
+            <p className="sf-field__hint" id="profile-email-hint">
+              Email cannot be changed
             </p>
-          )}
-        </div>
-      </div>
+          </div>
 
-      <div className={styles.formGrid}>
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>First Name *</label>
-          <input
-            type="text"
-            name="firstName"
-            value={profileForm.firstName}
-            onChange={handleProfileChange}
-            className={styles.formInput}
-            placeholder="Enter first name"
-          />
+          <div className="sf-field">
+            <label className="sf-field__label" htmlFor="profile-phone">
+              Phone number <span className={styles.optional}>(optional)</span>
+            </label>
+            <input
+              ref={phoneRef}
+              id="profile-phone"
+              className="sf-input"
+              type="tel"
+              name="phone"
+              value={profileForm.phone}
+              onChange={handleProfileChange}
+              inputMode="tel"
+              autoComplete="tel"
+              aria-invalid={profileErrors.phone ? "true" : undefined}
+              aria-describedby={describedBy(
+                "profile-phone-hint",
+                profileErrors.phone && "profile-phone-error"
+              )}
+            />
+            <p className="sf-field__hint" id="profile-phone-hint">
+              10-digit mobile number
+            </p>
+            {profileErrors.phone && (
+              <p className="sf-field__error" id="profile-phone-error">
+                {profileErrors.phone}
+              </p>
+            )}
+          </div>
         </div>
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Last Name *</label>
-          <input
-            type="text"
-            name="lastName"
-            value={profileForm.lastName}
-            onChange={handleProfileChange}
-            className={styles.formInput}
-            placeholder="Enter last name"
-          />
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Email Address</label>
-          <input
-            type="email"
-            name="email"
-            value={profileForm.email}
-            className={`${styles.formInput} ${styles.readOnly}`}
-            readOnly
-          />
-          <span className={styles.fieldHint}>Email cannot be changed</span>
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.formLabel}>Phone Number</label>
-          <input
-            type="tel"
-            name="phone"
-            value={profileForm.phone}
-            onChange={handleProfileChange}
-            className={styles.formInput}
-            placeholder="Enter phone number"
-          />
-        </div>
-      </div>
 
-      <div className={styles.formActions}>
-        <button
-          className={styles.btnPrimary}
-          onClick={handleProfileSave}
-          disabled={loading}
-        >
-          {loading ? "Saving..." : "Save Changes"}
-        </button>
-      </div>
-    </motion.div>
+        <div className={styles.actions}>
+          {/* Busy, not disabled, while saving: focus stays on the button
+              (the auth modal's pattern) and further presses are ignored. */}
+          <button
+            type="submit"
+            className={cx("sf-btn sf-btn--primary", styles.save)}
+            aria-disabled={loading || undefined}
+            data-busy={loading || undefined}
+          >
+            {loading ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      </form>
+    </Reveal>
   );
 
   const renderAddressesSection = () => (
@@ -1100,129 +1261,69 @@ const Profile = () => {
     </motion.div>
   );
 
+  // The boilerplate's sections, until Prompts 22 and 23 restyle them: a
+  // neutral token frame, plus the .dark class their own dark rules key off.
+  const renderLegacySection = (section) => (
+    <div className={cx(styles.legacy, isDarkMode && styles.dark)}>{section}</div>
+  );
+
   const renderActiveSection = () => {
     switch (activeTab) {
       case "profile":
         return renderProfileSection();
       case "addresses":
-        return renderAddressesSection();
+        return renderLegacySection(renderAddressesSection());
       case "wallet":
-        return renderWalletSection();
+        return renderLegacySection(renderWalletSection());
       case "password":
-        return renderPasswordSection();
+        return renderLegacySection(renderPasswordSection());
       default:
         return renderProfileSection();
     }
   };
 
   return (
-    <div className={`${styles.profilePage} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.container}>
-        {/* Page Header */}
-        <motion.div
-          className={styles.pageHeader}
-          initial={{ opacity: 0, y: -10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.3 }}
-        >
-          <h1 className={styles.pageTitle}>My Account</h1>
-          <p className={styles.pageSubtitle}>
-            Manage your account settings and preferences
-          </p>
-        </motion.div>
+    <AccountLayout
+      active={activeTab}
+      titleRef={titleRef}
+      onSignOutError={(message) => showFeedback("error", message)}
+    >
+      {/* Named after the section; takes focus after a tab switch. */}
+      <section
+        ref={sectionRef}
+        className={styles.section}
+        tabIndex={-1}
+        aria-label={SECTION_LABELS[activeTab]}
+      >
+        {renderActiveSection()}
+      </section>
 
-        {/* Feedback toast (fixed-position; see .feedback in the stylesheet) */}
+      {/* Feedback toast: fixed bottom-right, above the bottom nav on phones.
+          The status line stays in the page while empty, so each message is
+          announced as it arrives; it clears itself after 4 seconds. */}
+      <div
+        className={cx(styles.toast, feedback.message && styles.toastShown)}
+        data-tone={feedback.type || undefined}
+      >
+        {feedback.message && <FeedbackGlyph tone={feedback.type} />}
+        <p className={styles.toastMessage} role="status" aria-live="polite">
+          {feedback.message}
+        </p>
         {feedback.message && (
-          <motion.div
-            className={`${styles.feedback} ${styles[`feedback_${feedback.type}`]}`}
-            role="status"
-            aria-live="polite"
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 20 }}
+          <button
+            type="button"
+            className={cx("sf-btn sf-btn--icon sf-btn--sm", styles.toastClose)}
+            onClick={() => setFeedback(EMPTY_FEEDBACK)}
+            aria-label="Dismiss message"
           >
-            <span>{feedback.message}</span>
-            <button
-              className={styles.feedbackClose}
-              onClick={() => setFeedback({ type: "", message: "" })}
-              aria-label="Dismiss"
-            >
-              ×
-            </button>
-          </motion.div>
+            <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" aria-hidden="true" focusable="false">
+              <line x1="6" y1="6" x2="18" y2="18" />
+              <line x1="18" y1="6" x2="6" y2="18" />
+            </svg>
+          </button>
         )}
-
-        {/* Mobile tabs */}
-        <div className={styles.mobileTabs}>
-          {TABS.map((tab) => (
-            <button
-              key={tab.id}
-              className={`${styles.mobileTab} ${
-                activeTab === tab.id ? styles.mobileTabActive : ""
-              }`}
-              onClick={() => handleTabClick(tab)}
-            >
-              <TabIcon icon={tab.icon} />
-              <span>{tab.label}</span>
-            </button>
-          ))}
-        </div>
-
-        <div className={styles.layoutGrid}>
-          {/* Sidebar */}
-          <motion.aside
-            className={styles.sidebar}
-            initial={{ opacity: 0, x: -20 }}
-            animate={{ opacity: 1, x: 0 }}
-            transition={{ duration: 0.3 }}
-          >
-            {/* Sidebar user card */}
-            <div className={styles.sidebarUserCard}>
-              <div className={styles.sidebarAvatar}>
-                {getInitials(user.firstName, user.lastName)}
-              </div>
-              <div className={styles.sidebarUserInfo}>
-                <p className={styles.sidebarUserName}>
-                  {user.firstName} {user.lastName}
-                </p>
-                <p className={styles.sidebarUserEmail}>{user.email}</p>
-              </div>
-            </div>
-
-            <nav className={styles.sidebarNav}>
-              {TABS.map((tab) => (
-                <button
-                  key={tab.id}
-                  className={`${styles.sidebarItem} ${
-                    activeTab === tab.id ? styles.sidebarItemActive : ""
-                  } ${tab.id === "logout" ? styles.sidebarItemLogout : ""}`}
-                  onClick={() => handleTabClick(tab)}
-                >
-                  <TabIcon icon={tab.icon} />
-                  <span>{tab.label}</span>
-                  {tab.link && (
-                    <svg
-                      className={styles.externalIcon}
-                      width="14"
-                      height="14"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                    >
-                      <polyline points="9 18 15 12 9 6" />
-                    </svg>
-                  )}
-                </button>
-              ))}
-            </nav>
-          </motion.aside>
-
-          {/* Main content */}
-          <main className={styles.mainContent}>{renderActiveSection()}</main>
-        </div>
       </div>
-    </div>
+    </AccountLayout>
   );
 };
 
