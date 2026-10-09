@@ -36,6 +36,8 @@ const wishlistToast = (options) =>
 // still in flight). They are never sent to the API as a row id.
 const localId = () => `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 const isLocalId = (id) => String(id).startsWith("local-");
+// A row the API has confirmed carries the API's id.
+const isConfirmed = (item) => item.id != null && !isLocalId(item.id);
 
 // Flat product snapshot stored per wishlist row. The same shape is rendered by
 // the Wishlist page and POSTed to the API (minus the local row id).
@@ -148,18 +150,32 @@ export const WishlistProvider = ({ children }) => {
 
     // Login (or already-logged-in on reload): load the server wishlist, keep
     // server rows for products saved in both places, and upload guest-only
-    // items so they follow the account.
+    // items so they follow the account. Guest-only means never confirmed by
+    // the API (a local id: saved as a guest, or an upload that failed). The
+    // device also keeps its copy of the account's list, so a confirmed row
+    // the server no longer has was removed elsewhere (on another device or
+    // tab, one by one or with Clear all), or belongs to an account whose
+    // session ended without a logout: it is dropped, never uploaded again.
     let cancelled = false;
     (async () => {
       try {
         setIsLoading(true);
+        // Confirmed before the read. A row confirmed while it runs (saved
+        // meanwhile) can be newer than the server's answer, so it stays.
+        const confirmedBefore = new Set(
+          wishlistItemsRef.current.filter(isConfirmed).map((item) => String(item.id))
+        );
         const serverRows = (await apiService.wishlist.get(user.id)) || [];
         const serverItems = serverRows.map(normalizeWishlistItem);
         if (cancelled) return;
 
         const onServer = new Set(serverItems.map((item) => item.productId));
-        const guestOnly = wishlistItemsRef.current.filter(
+        const notOnServer = wishlistItemsRef.current.filter(
           (item) => !onServer.has(item.productId)
+        );
+        const guestOnly = notOnServer.filter((item) => !isConfirmed(item));
+        const savedMeanwhile = notOnServer.filter(
+          (item) => isConfirmed(item) && !confirmedBefore.has(String(item.id))
         );
         const uploaded = await Promise.all(
           guestOnly.map(async (item) => {
@@ -179,7 +195,7 @@ export const WishlistProvider = ({ children }) => {
           })
         );
         if (cancelled) return;
-        setWishlistItems([...serverItems, ...uploaded]);
+        setWishlistItems([...serverItems, ...savedMeanwhile, ...uploaded]);
       } catch (error) {
         // Leave whatever is stored locally rather than wiping the list.
         console.error("Error loading wishlist:", error);

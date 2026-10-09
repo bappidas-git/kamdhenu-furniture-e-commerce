@@ -2185,7 +2185,7 @@ The info row is why the quiet badge is outlined on the panel. Every other pairin
 
 ## 35. Wishlist
 
-Written by Prompt 25. Files: `src/pages/Wishlist/Wishlist.js` + `.module.css` (`/wishlist`, inside the account shell of §31). No new tokens and no new primitives: the pieces are §23's `ProductCard` (and `ProductCardSkeleton`), the header and the rail are §31's shell, the toolbar and the actions are §16's primitives, the grid is the listing's (§24.3). Every read and write is `WishlistContext`'s or `CartContext`'s, unchanged: the guest list in `localStorage["wishlist"]`, the merge on sign-in, `removeFromWishlist` (`{ silent: true }` for a move), `clearWishlist` and its confirm, `addToCart` with `buildCartItem`'s line. `SORT_OPTIONS` and `getSortedItems` are the old page's, verbatim.
+Written by Prompt 25. Files: `src/pages/Wishlist/Wishlist.js` + `.module.css` (`/wishlist`, inside the account shell of §31). No new tokens and no new primitives: the pieces are §23's `ProductCard` (and `ProductCardSkeleton`), the header and the rail are §31's shell, the toolbar and the actions are §16's primitives, the grid is the listing's (§24.3). Every read and write is `WishlistContext`'s or `CartContext`'s, unchanged except for the merge's upload rule (35.9): the guest list in `localStorage["wishlist"]`, the merge on sign-in, `removeFromWishlist` (`{ silent: true }` for a move), `clearWishlist` and its confirm, `addToCart` with `buildCartItem`'s line. `SORT_OPTIONS` and `getSortedItems` are the old page's, verbatim.
 
 ### 35.1 Structure
 
@@ -2260,4 +2260,5 @@ No new pairs: ink, secondary and muted text on the page and on sand (the count, 
 - **The card's `stock` is the page's stock rule**, not the snapshot's sum, so the card and the page can never disagree about whether a piece can be added.
 - **Unknown stock claims nothing** but stays addable (the old behaviour), as on the product page.
 - **No heart on the wishlist's cards**; removing is the page's own "Remove", named after its piece.
+- **The merge uploads only what the device saved itself** (`WishlistContext`, an approved exception to the fixed context logic). On a sign-in or a reload with a session, a row with a local id (saved as a guest, or an upload that failed) is uploaded. A row the API had confirmed that the account no longer has was removed elsewhere (on another device or tab, one by one or with Clear all), or belongs to another account, and it is dropped, never uploaded again. A row confirmed while the merge's read is in flight stays.
 - **Snapshots:** in JSON Server mode a row is the snapshot taken when the piece was saved (price, stock, variants), and the page shows it as stored; the Laravel API nests the live product under each row and `WishlistContext` flattens it. Setting a product's stock to 0 in `products` does not reach a saved row in JSON Server mode (`scripts/validate-db.js` checks the seeded snapshots against the catalogue).
