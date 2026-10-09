@@ -336,7 +336,7 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `--sf-z-search` | 1400 | the full-screen search overlay (Prompt 15): above every drawer and modal (section 25.1). It was set above the cart drawer's legacy 1200/1300; Prompt 18 moved the drawer to `--sf-z-overlay`, so nothing needs more than `--sf-z-modal` now, and 1400 is kept (lowering it is optional) |
 | (SweetAlert2) | 2000 | set in `index.css`; above everything, including MUI dialogs (1300) |
 
-`--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested), `--sf-z-search` by Prompt 15 (1400, section 25.1). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels.
+`--sf-z-bottomnav` was defined by Prompt 09 (58, as suggested), `--sf-z-search` by Prompt 15 (1400, section 25.1). The sidebar menu and the bottom sheet use `--sf-z-overlay` for their backdrops and panels. The account page's feedback toast (Prompt 21, §31.7) is `calc(var(--sf-z-bottomnav) + 1)` (59): over the page and the bottom nav, under every drawer, modal and SweetAlert.
 
 ---
 
@@ -544,6 +544,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | Buttons | `.sf-btn` | 44px, sans 14px 500, 0.02em, radius sm, `0 20px`; colour-only hover (`--sf-duration`, `--sf-ease-out`), press `scale(0.99)`, focus ring, `:disabled` / `[aria-disabled="true"]` 50% + `not-allowed` |
 | | `--primary` | ink, paper text; hover navy (white in dark mode) |
 | | `--ghost` | transparent, 1px ink border; hover ink 6% tint (`--sf-color-primary-soft`) |
+| | `--danger` | destructive actions: the error token with primary-contrast text; hover mixes 15% of the text tone in (`color-mix`, where supported). Also a SweetAlert confirm: `customClass: { confirmButton: "sf-btn sf-btn--danger" }` (Prompt 21, §31.8) |
 | | `--paper`, `--paper-ghost` | for navy bands, the footer and photo scrims: brand paper with ink text (hover caramel) / paper border and text (hover paper 16%); on-dark caramel focus ring |
 | | `--link` | inline text link: stone underline at rest, accent on hover; no padding; a 44px invisible hit area |
 | | `--sm` (36px; 44px on touch screens), `--lg` (52px, 16px text), `--block` (full width), `--icon` (square, needs `aria-label`), `.sf-btn__icon` (1.25em icon slot; MUI icons fit) | |
@@ -665,7 +666,7 @@ Appended after the shared SweetAlert block and scoped `body.light:not(.admin-are
 
 - **Popup:** `--swal2-background` surface, `--swal2-color` ink, `--swal2-border` hairline, `--swal2-border-radius` radius md, `--sf-shadow-lg`; title in Playfair 22px 500; body sans 15px secondary; icons at 75% (`--swal2-icon-zoom`); backdrop `--sf-color-overlay`.
 - **Buttons:** 44px, sans 14px 500. Confirm = ink with paper text, navy on hover (white in dark mode). Cancel = ghost (1px ink inset border, `--sf-color-primary-soft` hover). Focus = `--sf-shadow-focus`. Press 0.99.
-- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`).
+- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` are left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out" uses it; the address delete in `Profile.js` (Prompt 22), the order cancel in `OrderHistory.js` (Prompt 24) and "Clear all" in `WishlistContext.js` still pass a hex.
 - **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
 - **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
 - **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation).
@@ -894,7 +895,7 @@ import { BottomDrawer } from "../../components/ui";
 - **15 (search):** the bar's Search button is `aria-haspopup="dialog"`. If the overlay starts returning focus to its opener itself, the bar's own restore becomes a no-op.
 - **16 (product page):** `AddToCartBar` overrides its z-index to 1300 on mobile to beat the old 1200 bar. `--sf-z-stickybar` (60) is now enough (the bar is 58). Done in Prompt 16 (section 26.6).
 - **18, 20 (cart drawer, auth modal):** reuse `useFocusTrap` and `useBodyScrollLock` from `src/components/ui`. Done for the cart drawer in Prompt 18 (section 28) and the auth modal in Prompt 20 (section 30).
-- **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar.
+- **21 (account):** the Profile toast's `z-index: 1300` comment refers to the old 1200 bar. Done in Prompt 21: the toast is `calc(var(--sf-z-bottomnav) + 1)` and clears the 57px bar (§31.7).
 
 ---
 
@@ -1807,3 +1808,118 @@ No field needed `inputmode="numeric"` (there is no code or PIN field). Required 
 | Auth: info line and its link (info on info-bg over the page tone) | 5.95 ✓ | 6.49 ✓ | 4.5:1 |
 
 Every other pairing is already in §14 and §16.8: ink, secondary and muted text on the page and on the field surface, the field boundary and its error border, the focus ring on page and surface, the primary button and its hover, the checked box (accent-contrast on accent), ink on sand (the close button's hover), and the error, warning, info and success tones on the page for the meter's segments (graphics, 3 : 1; the word beside them carries the meaning). In forced-colours mode the segments are `GrayText` / `CanvasText`, the underline `Highlight`, and each message gets a `CanvasText` frame.
+
+---
+
+## 31. Account shell and Profile
+
+Written by Prompt 21. Files: `src/components/account/AccountLayout.js` + `.module.css` (the shell), `src/components/account/AccountNav.js` + `.module.css` (the navigation), `src/pages/Profile/Profile.js` + `.module.css` (`/profile`: the `?tab=` switch, the guest panel, the Profile section and the toast; the Addresses, Change password and Store credit sections stay the boilerplate's until Prompts 22 and 23), and `.sf-btn--danger` in `storefront-base.css` (31.8). Orders (`/orders`, Prompt 24) and Wishlist (`/wishlist`, Prompt 25) adopt the same shell.
+
+### 31.1 Using the shell
+
+```jsx
+import AccountLayout from "../../components/account/AccountLayout";
+
+<AccountLayout active="orders">…the page…</AccountLayout>                      // /orders
+<AccountLayout active="wishlist" eyebrow="Saved" title="Your wishlist"
+               description={<span>3 pieces</span>}>…</AccountLayout>            // /wishlist
+<AccountLayout nav={false} eyebrow="Saved" title="Your wishlist">…</AccountLayout> // a guest
+```
+
+| `AccountLayout` prop | Default | Notes |
+|---|---|---|
+| `active` | — | the `AccountNav` key on screen: `profile`, `addresses`, `orders`, `wallet`, `wishlist`, `password` |
+| `eyebrow` | `"Account"` | `.sf-eyebrow` above the `h1` |
+| `title` | `Hello, <em>{firstName}</em>.`, or `"My account"` | a string or a node; the default reads `user.firstName` (trimmed), so it follows `updateUser` at once |
+| `description` | — | an optional line under the `h1` (17px secondary, 60ch) |
+| `nav` | `true` | `false` leaves the nav out; it is left out anyway while nobody is signed in (it would show no identity) |
+| `titleRef` | — | a ref to the `h1` (`tabIndex -1`, no ring), for moving focus there |
+| `onSignOutError` | — | passed to `AccountNav` |
+
+`AccountNav` (`active`, `className`, `onSignOutError(message)`) can also stand alone; it renders nothing without a user. `ACCOUNT_NAV_ITEMS` (exported) is its item list.
+
+The shell sits inside the app's `<main>`: it adds no landmark besides the nav (its `<header>` is a plain group there). One `h1` per page, the shell's; a page's sections are `h2`s.
+
+### 31.2 Layout
+
+| Part | Spec |
+|---|---|
+| Page | `.sf-container` (1280px plus the gutter); `padding-top: var(--sf-section-y)` (the listing's page-header rhythm), half of it below |
+| Header | `.sf-eyebrow` "Account", then the `h1` (`.sf-display-lg`, 12px below): "Hello, *John*." with the first name as the accent italic (caramel; the scale is large enough, §5.5), or "My account". `clamp(24px, 4vw, 48px)` under it |
+| Up to 900px | One column: the nav's chip row, 24px, the content |
+| From 901px | 12 columns (`clamp(24px, 3vw, 48px)` gaps): the rail in 1–3, the content in 4–12. The rail is sticky at `top: calc(var(--sf-header-height) + 24px)` with `max-height: calc(100vh - var(--sf-header-height) - 48px)`; in a short window it scrolls on its own, keeping 8px of focus room inside its scroll box |
+
+### 31.3 AccountNav
+
+- One `<nav aria-label="Account">`; its two looks are CSS only (one DOM).
+- **Rail (from 901px):** the initials (`getInitials`, else the email's first letter) in a 56px hairline circle, serif 20px, `aria-hidden`; the name (Playfair 18px, 500; the email when the account has no name); the email (14px muted; never twice); a hairline; the links as 44px rows (sans 15px, secondary, ink on hover), the current one ink 500 with a 2px caramel bar on its left (a 24px border on `::before`, so forced colours keep it); a hairline; "Sign out" in muted text (ink on hover). Long names and emails wrap (`overflow-wrap: anywhere`).
+- **Chip row (up to 900px):** the same links as `.sf-chip`s in one row that scrolls sideways to the screen's edges (no scrollbar; `scroll-padding-inline` is the gutter); the current one is the ink chip (`Highlight` in forced colours); "Sign out" ends the row in muted text. Chips keep a 44px hit area (`::after`), and the row's 8px of vertical padding holds the hit areas and the focus rings. The identity block is not shown: the greeting names the user. On arrival, and whenever `active` changes, a current chip outside the row is scrolled to the row's middle (the row only, never the window).
+- **Items:** Profile `/profile` · Addresses `/profile?tab=addresses` · Orders `/orders` · Store credit `/profile?tab=wallet` · Wishlist `/wishlist` · Change password `/profile?tab=password` · Sign out. `aria-current="page"` on the item matching `active`.
+- **History:** a link to the page already on screen (a Profile tab on `/profile`) navigates with `replace`, so tabs never pile up history; links to other pages push as usual.
+- **Sign out:** a button (`aria-haspopup="dialog"`) that asks first: SweetAlert "Sign out?" / "You'll need to sign in again to access your account." (the question icon), confirm "Sign out" with `customClass: { confirmButton: "sf-btn sf-btn--danger" }`, cancel "Stay signed in". Confirmed: `logout()`, then `navigate("/")`. A failure calls `onSignOutError("Sign out failed. Please try again.")`, or shows an error toast without it.
+- It reads `useAuth().user` and fetches nothing.
+
+### 31.4 The `?tab=` contract (`/profile`)
+
+| URL | Section |
+|---|---|
+| `/profile` | Profile (personal information) |
+| `/profile?tab=addresses` | Addresses |
+| `/profile?tab=wallet` | Store credit (reads the balance and the ledger when it opens, as before) |
+| `/profile?tab=password` | Change password |
+| any other value (`orders`, `wishlist`, `logout`, `PASSWORD`…) | Profile. The URL is left as it is and nothing else happens: a link never signs anyone out |
+
+- Read with `useSearchParams` on every render, so `AccountNav` (from any page), the header's "My profile", the footer's "My account", and back and forward all land on the right section. Values are case-sensitive.
+- Written by `AccountNav`'s links, with `replace` on `/profile` (31.3).
+- After a switch (not on arrival): the last toast message is dropped (as before); focus moves to the section, a `<section>` region named after it ("Personal information", "Addresses", "Store credit", "Change password"; `tabIndex -1`, no ring), so the next Tab reaches its first control; and when the section's top is under the sticky header or above the window (a switch from the sticky rail far down a long section), the window brings it back to `--sf-header-height` + 16px (smooth; instant under reduced motion).
+
+### 31.5 Guests
+
+Once the session restore has settled, a guest on `/profile` (any tab) gets the shell without the nav, the `h1` "My account" and a sand `.sf-panel`: the `h2` "Sign in to see your account." (display-sm), "Your details, saved addresses and store credit are kept on your account." (16px secondary), a primary "Sign in" (`openAuthModal("login")`) and a ghost "Create account" (`openAuthModal("signup")`), both `aria-haspopup="dialog"` and stacked full width up to 480px. No redirect and no data read. Signing in renders the account in place, on the tab the URL asked for. The dialog's opener ("Sign in") leaves with the panel, so once the dialog has left the page (no `[aria-modal="true"]` in the document), focus moves to the `h1`, unless it has gone somewhere else meanwhile.
+
+### 31.6 The Profile section
+
+- A `.sf-card--hairline` inside `Reveal` (the surface; padding `clamp(20px, 4vw, 40px)`): the `h2` "Personal information" (`.sf-display-sm`), "Member since January 15, 2025" (14px muted; only with `createdAt`; `formatDate`), then the form.
+- A `<form noValidate>` (Enter submits) of `.sf-field`s in two columns (20px between them, 24px between rows), one column up to 600px:
+
+| Field | `type` | `autocomplete` | Also |
+|---|---|---|---|
+| First name | `text` | `given-name` | `required`, `autocapitalize="words"` |
+| Last name | `text` | `family-name` | `required`, `autocapitalize="words"` |
+| Email address | `email` | `email` | `readOnly` (sand); hint "Email cannot be changed" |
+| Phone number (optional) | `tel` | `tel` | `inputmode="tel"`; hint "10-digit mobile number" |
+
+- "(optional)" is muted, weight 400, inside the label. No placeholders.
+- **Validation (the rules are unchanged):** the names are required (trimmed); the phone is optional but must pass `isValidPhone`. On submit every failing field gets its message ("First name is required", "Last name is required", "Enter a valid 10-digit mobile number") as `.sf-field__error`, with `aria-invalid="true"` and `aria-describedby` = its hint, then the message; focus moves to the first failing field in form order (with `preventScroll`; if the field, label first, is under the sticky header or below the window, the page scrolls it to 16px under the header, smoothly unless reduced motion asks otherwise: Chrome's `focus()` leaves a field the header covers where it is, since it counts as in view, and `scroll-margin-top` does not change that); the toast says the first failing rule's message, as before ("First name and last name are required." / "Please enter a valid 10-digit Indian mobile number."); nothing is sent, and the values stay. Typing in a field clears its own message. **This is the inline-error pattern Prompt 22's forms follow.**
+- **Save:** `updateUser({ firstName, lastName, phone })`, each trimmed: the old payload and nothing else. The greeting, the rail and the header follow at once (AuthContext's `setUser`), and so does the stored session.
+- "Save changes" (`.sf-btn--primary`, full width up to 600px) under a hairline. While saving it reads "Saving…" and is `aria-disabled` with `data-busy` (full ink, a `progress` cursor: the auth modal's busy state), so focus stays on it and further presses are ignored.
+
+### 31.7 The feedback toast
+
+- Fixed bottom-right, 24px from the edges, `max-width: min(380px, 100vw - 48px)`; up to 768px full width 16px from the sides and 16px above the bottom nav (57px plus the home-indicator inset). `z-index: calc(var(--sf-z-bottomnav) + 1)`.
+- The surface, a hairline, a 2px caramel bar on its left edge (a border), `--sf-radius-md`, `--sf-shadow-md`; the tone's 18px glyph in `currentColor` (a check in `--sf-color-success`, a circled "!" in `--sf-color-error`), the message (sans 14px), and a 36px "Dismiss message" icon button (44px on touch screens). It enters with an 8px rise and a fade over `--sf-duration` (no animation under reduced motion).
+- The status line (`role="status"`, polite) stays in the page while empty, so each message is announced as it arrives; without a message the toast has no frame and no size and lets clicks through. It clears itself after 4 seconds, and a tab switch clears it (both unchanged). The legacy sections' messages use it as they did.
+
+### 31.8 `.sf-btn--danger`
+
+- In `storefront-base.css`: `--sf-btn-bg` and `--sf-btn-border` are `--sf-color-error`, `--sf-btn-fg` is `--sf-color-primary-contrast` (paper on brick, 6.26 : 1; navy-ink on the dark-mode salmon, 8.00 : 1). Hover: `color-mix(in srgb, var(--sf-color-error) 85%, var(--sf-color-text))` (7.38 / 8.90 : 1), declared inside `@supports`, so a browser without `color-mix()` keeps the resting fill. A press keeps the hover fill, by touch and keyboard too (where no hover applies): otherwise SweetAlert's own `:active` rule, which outweighs the primitive's resting fill, would flash its confirm colour (navy) through.
+- **On a SweetAlert confirm:** `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor`. SweetAlert 11 writes its button rules inside `:where()`, so the primitive's colours, hover, press and focus ring win, while the storefront theme still sets the 44px height and the type (§16.6). Prompts 22 (the address delete) and 24 (the order cancel) can use it as it is.
+
+### 31.9 Keyboard and focus
+
+- Tab order: the nav (the rail's links and Sign out from 901px, the chip row up to 900px), then the section.
+- Focus targets without a ring (reading positions, not controls): the section region after a tab switch, the `h1` after signing in on the page.
+- Moving focus never leaves its target under the sticky header: the section (after a tab switch from far down the page) and a failing field (after a save) are scrolled to 16px under `--sf-header-height` when they start above it; focus itself uses `preventScroll`.
+- Every link, chip and button shows the primitives' focus ring; the rail keeps 8px of room for it inside its scroll box, the chip row 8px above and below.
+
+### 31.10 Motion
+
+`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (the legacy sections keep their own slide until Prompts 22 and 23). Under reduced motion: opacity only, instant scrolling.
+
+### 31.11 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Danger button hover (primary-contrast on error mixed 15% toward the text) | 7.38 ✓ | 8.90 ✓ | 4.5:1 |
+
+Every other pairing is already in §14 and §16.8: ink, secondary and muted text on the page and the surface, the caramel bar and the focus ring on the page and the surface (graphics), the selected chip (primary-contrast on primary), the field boundary and its error border, the error and success tones on the surface (the toast's glyphs: "Field error text on surface", "Ticket: 'Copied'"), ink and secondary text on sand (the guest panel), the primary and ghost buttons, and primary-contrast on the solid error fill (the danger button at rest: "Badge text on solid error fill"). In forced-colours mode the rail's bar and the toast's frame are borders, and the current chip is `Highlight`.
