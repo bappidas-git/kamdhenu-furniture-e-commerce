@@ -228,11 +228,11 @@ const Profile = () => {
     new: false,
     confirm: false,
   });
-  // Inline messages under the password fields. The confirmation also says
-  // "Passwords do not match" on its own once it has been left with a value
-  // (as the old form did while typing), until the two match.
+  // Inline messages under the password fields, from the last submit. The
+  // confirmation also says "Passwords do not match" on its own as soon as it
+  // cannot match (the old form said it from the first keystroke; see
+  // renderPasswordSection), until the two match.
   const [passwordErrors, setPasswordErrors] = useState({});
-  const [confirmTouched, setConfirmTouched] = useState(false);
   const passwordFieldRefs = useRef({});
   // The visually hidden line that says "Current password shown." (a new key
   // re-announces a repeated message).
@@ -261,13 +261,14 @@ const Profile = () => {
   const addressFieldRefs = useRef({});
   const labelChipRefs = useRef([]);
   // Focus targets as the addresses change: the form's heading, "Add address"
-  // and the empty state's button, each card's heading and Edit button.
+  // and the empty state's button, each card's heading, Edit and Delete.
   const addressFormTitleRef = useRef(null);
   const addAddressRef = useRef(null);
   const emptyAddressRef = useRef(null);
   const emptyTitleRef = useRef(null);
   const cardHeadingRefs = useRef([]);
   const editButtonRefs = useRef([]);
+  const deleteButtonRefs = useRef([]);
 
   // Focus to move once the change that asks for it is on screen (a form
   // opened or closed, a card's own button gone): requestFocus(resolve) keeps
@@ -564,7 +565,6 @@ const Profile = () => {
       });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setShowPasswords({ current: false, new: false, confirm: false });
-      setConfirmTouched(false);
       showFeedback("success", "Password updated successfully.");
     } catch (err) {
       showFeedback("error", "Failed to change password. Please check your current password.");
@@ -763,7 +763,11 @@ const Profile = () => {
   const handleAddressDelete = async (index) => {
     if (loading) return;
     // The confirm button is the danger primitive (the error token with
-    // primary-contrast text in both modes, §31.8), not a hex colour.
+    // primary-contrast text in both modes, §31.8), not a hex colour. The page
+    // moves focus itself once the dialog has gone (returnFocus: false):
+    // SweetAlert's own return comes after its closing animation, by when
+    // React has reused this Delete button for the card that took this one's
+    // place, so focus would land on that card's Delete.
     const result = await Swal.fire({
       title: "Delete this address?",
       text: "This address will be removed from your account.",
@@ -772,8 +776,13 @@ const Profile = () => {
       confirmButtonText: "Delete",
       cancelButtonText: "Keep",
       customClass: { confirmButton: "sf-btn sf-btn--danger" },
+      returnFocus: false,
     });
-    if (!result.isConfirmed) return;
+    if (!result.isConfirmed) {
+      // Nothing deleted ("Keep", Escape): back to this card's Delete.
+      requestFocus(() => deleteButtonRefs.current[index]);
+      return;
+    }
 
     setLoading(true);
     try {
@@ -803,6 +812,8 @@ const Profile = () => {
       );
       showFeedback("success", "Address deleted successfully.");
     } catch (err) {
+      // Nothing deleted: back to this card's Delete.
+      requestFocus(() => deleteButtonRefs.current[index]);
       showFeedback("error", "Failed to delete address. Please try again.");
     } finally {
       setLoading(false);
@@ -1167,6 +1178,9 @@ const Profile = () => {
             Edit<span className="sf-visually-hidden"> {context}</span>
           </button>
           <button
+            ref={(node) => {
+              deleteButtonRefs.current[index] = node;
+            }}
             type="button"
             className={cx("sf-btn sf-btn--link", styles.deleteAddress)}
             onClick={() => handleAddressDelete(index)}
@@ -1180,8 +1194,11 @@ const Profile = () => {
     );
   };
 
+  // Keyed, like the password card: the sections share their place in the
+  // tree, so without a key React would reuse the previous section's
+  // already-revealed element and a tab switch would show no reveal.
   const renderAddressesSection = () => (
-    <Reveal>
+    <Reveal key="addresses">
       <div className={styles.addressesHead}>
         <div>
           <h2 className={cx("sf-display-sm", styles.panelTitle)}>Addresses</h2>
@@ -1223,7 +1240,7 @@ const Profile = () => {
   // ---- Change password section (§32) ----
   // A password field with its "Show" / "Hide" text button inside the right
   // edge (the auth modal's control, §30.4).
-  const renderPasswordControl = (key, { error, description, onBlur }) => {
+  const renderPasswordControl = (key, { error, description }) => {
     const { name, id, autoComplete, noun } = PASSWORD_FIELDS[key];
     const visible = showPasswords[key];
     return (
@@ -1238,7 +1255,6 @@ const Profile = () => {
           name={name}
           value={passwordForm[name]}
           onChange={handlePasswordChange}
-          onBlur={onBlur}
           autoComplete={autoComplete}
           autoCapitalize="none"
           autoCorrect="off"
@@ -1258,13 +1274,16 @@ const Profile = () => {
   const renderPasswordSection = () => {
     const { current, new: next, confirm } = PASSWORD_FIELDS;
     // The confirmation's message: the last submit's, or "Passwords do not
-    // match" once the field has been left with a value; either goes as soon
-    // as the two match.
-    const mismatch = passwordForm.newPassword !== passwordForm.confirmPassword;
-    const confirmError = mismatch
-      ? passwordErrors.confirmPassword ||
-        (confirmTouched && passwordForm.confirmPassword ? "Passwords do not match" : "")
-      : "";
+    // match" as soon as typing on cannot make the two match (the confirmation
+    // is not the start of the new password; an empty one always is). A correct
+    // entry never shows it, a slip shows it at once, and nothing changes on
+    // leaving the field, so the button never moves under a pointer on its way
+    // to it. Either message goes as soon as the two match.
+    const { newPassword, confirmPassword } = passwordForm;
+    const confirmError =
+      newPassword !== confirmPassword
+        ? passwordErrors.confirmPassword || (newPassword.startsWith(confirmPassword) ? "" : "Passwords do not match")
+        : "";
     const errorLine = (message, id) =>
       message && (
         <p className="sf-field__error" id={id}>
@@ -1273,7 +1292,7 @@ const Profile = () => {
       );
 
     return (
-      <Reveal className={cx("sf-card sf-card--hairline", styles.panel)}>
+      <Reveal key="password" className={cx("sf-card sf-card--hairline", styles.panel)}>
         <h2 className={cx("sf-display-sm", styles.panelTitle)}>Change password</h2>
 
         <form className={styles.passwordForm} onSubmit={handlePasswordSubmit} noValidate>
@@ -1352,9 +1371,6 @@ const Profile = () => {
             {renderPasswordControl("confirm", {
               error: confirmError,
               description: describedBy(confirmError && `${confirm.id}-error`),
-              onBlur: () => {
-                if (passwordForm.confirmPassword) setConfirmTouched(true);
-              },
             })}
             {errorLine(confirmError, `${confirm.id}-error`)}
           </div>

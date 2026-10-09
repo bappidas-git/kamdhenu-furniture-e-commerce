@@ -296,6 +296,23 @@ test("a mismatch: 'Passwords do not match' on the confirmation, focus there, the
   expect(confirmation()).toHaveValue("Furniture#2025");
 });
 
+test("the length rule's edge: seven characters is too short, eight is enough", async () => {
+  renderPassword();
+  type(current(), "password123");
+  type(next(), "Abcde1!");
+  type(confirmation(), "Abcde1!");
+  await press(submitButton());
+  expect(next()).toHaveAttribute("aria-invalid", "true");
+  expect(next()).toHaveAccessibleDescription(/New password must be at least 8 characters$/);
+  expect(status()).toHaveTextContent("New password must be at least 8 characters.");
+  expect(apiService.auth.changePassword).not.toHaveBeenCalled();
+  type(next(), "Abcdef1!");
+  type(confirmation(), "Abcdef1!");
+  await press(submitButton());
+  expect(apiService.auth.changePassword).toHaveBeenCalledTimes(1);
+  expect(next()).not.toHaveAttribute("aria-invalid");
+});
+
 test("an empty confirmation under a good new password asks for it", async () => {
   renderPassword();
   type(current(), "password123");
@@ -337,27 +354,41 @@ test("the mismatch message goes as soon as the two match, from either field", as
   expect(within(region()).queryByText("Passwords do not match")).not.toBeInTheDocument();
 });
 
-test("leaving the confirmation with a value that differs says so (not while typing), until they match", () => {
+test("a confirmation on its way to the new password says nothing, nor on leaving it", () => {
   renderPassword();
   type(next(), "Furniture#2026");
   type(confirmation(), "Furn");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
+  // Leaving the field changes nothing: a message that appeared on blur would
+  // move the button under a pointer that is pressing it.
   fireEvent.blur(confirmation());
-  expect(confirmation()).toHaveAttribute("aria-invalid", "true");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
-  // From then on it follows the typing.
-  type(confirmation(), "Furniture#2026");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
-  type(confirmation(), "Furniture#202");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
-  expect(apiService.auth.changePassword).not.toHaveBeenCalled();
+  expect(within(region()).queryByText("Passwords do not match")).not.toBeInTheDocument();
 });
 
-test("leaving an empty confirmation says nothing", () => {
+test("the confirmation says so as soon as typing on cannot make it match, until they match", () => {
   renderPassword();
   type(next(), "Furniture#2026");
-  fireEvent.blur(confirmation());
+  type(confirmation(), "Furx");
+  expect(confirmation()).toHaveAttribute("aria-invalid", "true");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  // The first letter missed: the rest is in the new password, but not at its start.
+  type(confirmation(), "urniture");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  type(confirmation(), "Furniture#2026");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
+  // Longer than the new password.
+  type(confirmation(), "Furniture#20266");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  // The new password's changes count too.
+  type(next(), "Furniture#20266");
+  expect(confirmation()).not.toHaveAttribute("aria-invalid");
+  type(next(), "Furniture");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  // Emptied: nothing to say until a submit.
+  type(confirmation(), "");
+  expect(confirmation()).not.toHaveAttribute("aria-invalid");
+  expect(apiService.auth.changePassword).not.toHaveBeenCalled();
 });
 
 test("a failing field the sticky header covers is brought back under it, label first", async () => {
@@ -403,8 +434,7 @@ test("a valid change: changePassword with the same object as ever, the toast, a 
   });
   expect(meter()).toBeNull();
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
-  // The next attempt starts fresh: no mismatch message until the
-  // confirmation is left again.
+  // The next attempt starts fresh: nothing left over from the last submit.
   type(next(), "Another#2026");
   type(confirmation(), "Ano");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");

@@ -213,6 +213,19 @@ test("in light mode the frame has no dark class, and the Profile section has no 
   expect(frameOf(section("Personal information"))).toHaveClass("sf-card", "sf-card--hairline");
 });
 
+test("a tab switch mounts the new section afresh, so it reveals (not the last section's element)", () => {
+  renderProfile();
+  const profile = frameOf(section("Personal information"));
+  fireEvent.click(navLink("Addresses"));
+  const addresses = frameOf(section("Addresses"));
+  expect(addresses).not.toBe(profile);
+  fireEvent.click(navLink("Change password"));
+  const password = frameOf(section("Change password"));
+  expect(password).not.toBe(addresses);
+  fireEvent.click(navLink("Profile"));
+  expect(frameOf(section("Personal information"))).not.toBe(password);
+});
+
 test.each([
   ["addresses", "Addresses"],
   ["password", "Change password"],

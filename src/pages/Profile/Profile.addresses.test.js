@@ -692,6 +692,9 @@ test("Delete asks first, with the danger primitive (no hex colour)", async () =>
     confirmButtonText: "Delete",
     cancelButtonText: "Keep",
     customClass: { confirmButton: "sf-btn sf-btn--danger" },
+    // The page returns focus itself: SweetAlert's late return would land on
+    // the Delete button React reuses for the next card.
+    returnFocus: false,
   });
   expect(options).not.toHaveProperty("confirmButtonColor");
 });
@@ -726,12 +729,13 @@ test("deleting the default promotes the next one", async () => {
   );
 });
 
-test("'Keep' leaves everything as it was", async () => {
-  Swal.fire.mockResolvedValue({ isConfirmed: false });
+test("'Keep' leaves everything as it was, with focus back on that Delete", async () => {
+  Swal.fire.mockResolvedValue({ isConfirmed: false, isDismissed: true });
   renderAddresses(withAddresses(HOME, WORK));
   await press(cardButton(cardWith("12 Park Avenue"), "Delete"));
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
   expect(cards()).toHaveLength(2);
+  await waitFor(() => expect(cardButton(cardWith("12 Park Avenue"), "Delete")).toHaveFocus());
 });
 
 test("deleting the last address: the empty state, with focus on its line", async () => {
@@ -762,12 +766,13 @@ test("deleting an earlier address while a later one is being edited: the save st
   expect(cards()).toHaveLength(2);
 });
 
-test("a failed delete says so and keeps the card", async () => {
+test("a failed delete says so, keeps the card, and gives focus back to its Delete", async () => {
   apiService.auth.updateUser.mockRejectedValue(new Error("Network Error"));
   renderAddresses(withAddresses(HOME, WORK));
   await press(cardButton(cardWith("12 Park Avenue"), "Delete"));
   expect(status()).toHaveTextContent("Failed to delete address. Please try again.");
   expect(cards()).toHaveLength(2);
+  await waitFor(() => expect(cardButton(cardWith("12 Park Avenue"), "Delete")).toHaveFocus());
 });
 
 // ── Set as default ───────────────────────────────────────────────────────────
