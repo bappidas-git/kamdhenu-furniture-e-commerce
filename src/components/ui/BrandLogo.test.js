@@ -61,6 +61,17 @@ test("priority loads eagerly with high fetch priority", () => {
   expect(logo()).toHaveAttribute("width", "121");
 });
 
+test("loading overrides the default without raising the fetch priority", () => {
+  const { unmount } = renderInTheme(<BrandLogo variant="light" height={56} loading="eager" />);
+  expect(logo()).toHaveAttribute("loading", "eager");
+  expect(logo()).not.toHaveAttribute("fetchpriority");
+  expect(logo()).toHaveAttribute("width", "169");
+  unmount();
+  renderInTheme(<BrandLogo priority loading="lazy" />);
+  expect(logo()).toHaveAttribute("loading", "lazy");
+  expect(logo()).toHaveAttribute("fetchpriority", "high");
+});
+
 test("renders outside the theme provider using the body class", () => {
   document.body.classList.add("dark");
   render(<BrandLogo />);

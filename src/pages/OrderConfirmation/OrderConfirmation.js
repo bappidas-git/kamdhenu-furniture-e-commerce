@@ -1,33 +1,222 @@
-import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useTheme } from "../../context/ThemeContext";
+import React, { useEffect, useId, useRef, useState } from "react";
+import { Link, useParams } from "react-router-dom";
 import apiService from "../../services/api";
-import { formatCurrency, formatDate, normalizeOrderAddress } from "../../utils/helpers";
+import {
+  copyToClipboard,
+  formatCurrency,
+  formatDate,
+  normalizeOrderAddress,
+  onImageError,
+  PLACEHOLDER_IMG,
+} from "../../utils/helpers";
+import { Reveal, staggerDelay } from "../../components/ui";
+import Invoice from "./Invoice";
 import styles from "./OrderConfirmation.module.css";
+
+// =============================================================================
+// Order confirmation (/order-confirmation/:orderNumber) — DESIGN_SYSTEM §37
+// =============================================================================
+// Where checkout lands once an order is placed. A calm, centred thank-you (a
+// thin ink circle whose check draws itself, "Thank you, Bappi." in the serif,
+// one line that says only what the order's status fields say, the order
+// number in a hairline chip with a copy button), a hairline row of facts
+// (delivery, payment, help), the summary card (items, delivery address, price
+// details, the actions) and, hidden until "Print invoice" is used, a
+// print-first invoice (Invoice.js), which is also what printing this page
+// prints.
+//
+// What did not change: the read (orders.getByOrderNumber with the URL's
+// number; the response normalised as data → order → the response itself),
+// the three states (loading; a failed read, which offers a retry and never
+// claims the order does not exist; no order), the derived figures and their
+// fallbacks (taxAmount ?? tax, shippingAmount ?? shipping, discountAmount ??
+// 0, amountPayable ?? the total less the store credit), the payment-status
+// switch's cases, and where the actions lead (Track order and Order history →
+// /orders, Go to home → /). "Continue shopping" opens /products (the brief's
+// design; it opened /).
+//
+// The delivery line no longer invents a date. An order does not record its
+// delivery method, so the old "placed + 5 days" estimate is gone: a delivered
+// order shows the day it arrived, a shipped one says so, and an order still
+// being prepared says what happens next.
+// =============================================================================
+
+const cx = (...names) => names.filter(Boolean).join(" ");
+
+// Payment methods by checkout's names (Order History's list); any other value
+// reads as it did before.
+const PAYMENT_METHOD_LABELS = {
+  card: "Credit or debit card",
+  upi: "UPI",
+  net_banking: "Net banking",
+  wallet: "Wallet",
+  cod: "Cash on delivery",
+  store_credit: "Store credit",
+};
+
+export const paymentMethodLabel = (method) =>
+  method ? PAYMENT_METHOD_LABELS[method] || method.replace(/_/g, " ").toUpperCase() : "Not recorded";
+
+// Where the order stands, read from its three status fields in the order
+// Order History's deriveOrderStatus reads them. The eyebrow, the mark, the
+// line under the thank-you and the delivery fact follow it, so the page never
+// says more than the fields do (a cancelled order is not "being prepared").
+export const orderStage = (order) => {
+  if (order.fulfillmentStatus === "returned") return "returned";
+  if (order.fulfillmentStatus === "cancelled") return "cancelled";
+  if (order.paymentStatus === "failed") return "failed";
+  if (order.paymentStatus === "refunded") return "refunded";
+  if (order.shippingStatus === "delivered") return "delivered";
+  if (order.shippingStatus === "shipped") return "shipped";
+  return "placed";
+};
+
+const CLOSED_STAGES = ["returned", "cancelled", "failed", "refunded"];
+
+const EYEBROW = {
+  placed: "Order confirmed",
+  shipped: "Order confirmed",
+  delivered: "Order confirmed",
+  cancelled: "Order cancelled",
+  returned: "Order returned",
+  failed: "Payment failed",
+  refunded: "Order refunded",
+};
+
+// The line under the thank-you. While the order is being prepared it follows
+// the payment (cash on delivery to collect, or received); a shipped or
+// delivered order says so; a closed order gets Order History's sentence.
+export const headlineFor = (
+  order,
+  stage = orderStage(order),
+  isPaymentPending = order.paymentStatus === "pending"
+) => {
+  const payOnDelivery = isPaymentPending && order.paymentMethod === "cod";
+  switch (stage) {
+    case "returned":
+      return "This order was returned.";
+    case "cancelled":
+      return order.cancelledAt
+        ? `This order was cancelled on ${formatDate(order.cancelledAt)}.`
+        : "This order was cancelled.";
+    case "failed":
+      return "The payment for this order didn't go through.";
+    case "refunded":
+      return "The payment for this order was refunded.";
+    case "delivered":
+      return "Your order was delivered.";
+    case "shipped":
+      return payOnDelivery ? "Your order is on its way. Pay when it arrives." : "Your order is on its way.";
+    default:
+      if (payOnDelivery) return "Your order is placed. Pay when it arrives.";
+      if (order.paymentStatus === "paid") return "Your payment was received and your order is being prepared.";
+      if (isPaymentPending) return "Your order is placed. Its payment is still pending.";
+      return "Your order is placed.";
+  }
+};
+
+// The delivery fact. There is no estimate to give (the order does not store
+// its delivery method), so: the day a delivered order arrived (deliveredAt,
+// else updatedAt, as before), "shipped" for a shipped one, a plain "not
+// shipped" for a closed one, and what happens next for the rest.
+export const deliveryFor = (
+  order,
+  stage = orderStage(order),
+  isDelivered = order.shippingStatus === "delivered"
+) => {
+  if (isDelivered) {
+    const deliveredOn = order.deliveredAt || order.updatedAt;
+    return deliveredOn ? `Delivered on ${formatDate(deliveredOn)}.` : "Delivered.";
+  }
+  if (order.shippingStatus === "shipped") return "Your order has shipped.";
+  if (CLOSED_STAGES.includes(stage)) return "This order was not shipped.";
+  return "We'll email tracking details when your order ships.";
+};
+
+// The last row of the price details when store credit was used, named for
+// what happened (Order History's rule): "Amount due" while the payment is
+// still to be collected, no row once it was voided or failed, else "Amount
+// paid".
+export const paidRowLabel = (order) => {
+  if (order.paymentStatus === "pending") return "Amount due";
+  if (["voided", "failed"].includes(order.paymentStatus)) return null;
+  return "Amount paid";
+};
+
+// Glyphs (strokes in currentColor)
+const Icon = ({ children }) => (
+  <svg
+    viewBox="0 0 24 24"
+    width="16"
+    height="16"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="1.5"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+    aria-hidden="true"
+    focusable="false"
+  >
+    {children}
+  </svg>
+);
+
+const CopyIcon = () => (
+  <Icon>
+    <rect x="9" y="9" width="11" height="11" rx="1" />
+    <path d="M15 9V5a1 1 0 00-1-1H5a1 1 0 00-1 1v9a1 1 0 001 1h4" />
+  </Icon>
+);
+
+const CheckIcon = () => (
+  <Icon>
+    <path d="M5 12.5l4.5 4.5L19 7.5" />
+  </Icon>
+);
+
+// A thin ink circle; the check draws itself in one stroke (static under
+// reduced motion). Once drawn it stays drawn: printing hides the thank-you
+// and shows it again, which would otherwise restart the animation.
+const ConfirmedMark = () => {
+  const [drawn, setDrawn] = useState(false);
+  return (
+    <svg className={styles.mark} viewBox="0 0 64 64" width="64" height="64" aria-hidden="true" focusable="false">
+      <circle className={styles.markRing} cx="32" cy="32" r="31.5" />
+      <path
+        className={cx(styles.markCheck, drawn && styles.markDrawn)}
+        d="M21 33l7.5 7.5L43.5 25"
+        pathLength="1"
+        onAnimationEnd={() => setDrawn(true)}
+      />
+    </svg>
+  );
+};
 
 const OrderConfirmation = () => {
   const { orderNumber } = useParams();
-  const navigate = useNavigate();
-  const { isDarkMode } = useTheme();
+  const uid = useId();
 
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  const [copied, setCopied] = useState(false);
-  const [showCheck, setShowCheck] = useState(false);
+  // The copy button's note ("Copied" / "Couldn't copy"), over the button for
+  // two seconds in a polite live region; a new key re-announces a repeat.
+  const [copyNote, setCopyNote] = useState({ key: 0, text: "", copied: false });
+  const [invoiceOpen, setInvoiceOpen] = useState(false);
+  const [printRequest, setPrintRequest] = useState(0);
+  const [announcement, setAnnouncement] = useState({ key: 0, text: "" });
+
+  const titleRef = useRef(null);
+  const retryRef = useRef(null);
+  const invoiceRef = useRef(null);
+  const copyTimer = useRef(null);
+  const retrying = useRef(false);
+  const revealingInvoice = useRef(false);
 
   useEffect(() => {
     fetchOrder();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [orderNumber]);
-
-  useEffect(() => {
-    if (order) {
-      const timer = setTimeout(() => setShowCheck(true), 300);
-      return () => clearTimeout(timer);
-    }
-  }, [order]);
 
   const fetchOrder = async () => {
     setLoading(true);
@@ -46,41 +235,137 @@ const OrderConfirmation = () => {
     }
   };
 
-  const handleCopyOrderNumber = () => {
+  // "Try again" runs the same read; focus follows it (below).
+  const handleRetry = () => {
+    retrying.current = true;
+    fetchOrder();
+  };
+
+  // Focus follows the read. After "Try again": the loading line while it
+  // runs, then the result (the new "Try again" if it failed again). On
+  // arrival: the page's h1 once the read has settled, so a screen reader
+  // hears the outcome of the order, but only when focus is nowhere yet (it is
+  // never taken from where the shopper has put it).
+  useEffect(() => {
+    if (loading) {
+      if (retrying.current) titleRef.current?.focus({ preventScroll: true });
+      return;
+    }
+    const afterRetry = retrying.current;
+    retrying.current = false;
+    const active = document.activeElement;
+    if (active && active !== document.body) return;
+    const target = afterRetry && fetchError ? retryRef.current : titleRef.current;
+    target?.focus({ preventScroll: true });
+  }, [loading, fetchError]);
+
+  // Copy the order number: a check on the button and "Copied" over it for two
+  // seconds, announced; a refused copy says so (the old handler always
+  // claimed success).
+  const handleCopyOrderNumber = async () => {
     const text = order?.orderNumber || orderNumber;
-    navigator.clipboard.writeText(text);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    const copied = await copyToClipboard(String(text));
+    clearTimeout(copyTimer.current);
+    setCopyNote((previous) => ({ key: previous.key + 1, text: copied ? "Copied" : "Couldn't copy", copied }));
+    copyTimer.current = setTimeout(() => setCopyNote((previous) => ({ ...previous, text: "", copied: false })), 2000);
   };
 
-  const formatDeliveryDate = (date) =>
-    date.toLocaleDateString("en-IN", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
+  useEffect(() => () => clearTimeout(copyTimer.current), []);
 
-  const getEstimatedDelivery = () => {
-    const created = new Date(order?.createdAt || Date.now());
-    const delivery = new Date(created);
-    delivery.setDate(delivery.getDate() + 5);
-    return formatDeliveryDate(delivery);
+  // "Print invoice": the invoice comes into view under the summary, then the
+  // browser's print dialog opens once its logo has loaded (at most 3 seconds:
+  // the store's name is printed beside it anyway). The print stylesheet
+  // prints the invoice alone, so the browser's own Print prints it too.
+  const handlePrintInvoice = () => {
+    revealingInvoice.current = !invoiceOpen;
+    setInvoiceOpen(true);
+    setPrintRequest((count) => count + 1);
   };
 
-  const handleDownloadInvoice = () => {
-    // No-op placeholder for invoice download
-    alert("Invoice download will be available soon.");
-  };
+  useEffect(() => {
+    if (!printRequest) return undefined;
+    let settled = false;
+    let frame = 0;
+    const logo = invoiceRef.current?.querySelector("img");
+    const print = () => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      frame = window.requestAnimationFrame(() => {
+        window.print();
+        if (revealingInvoice.current) {
+          revealingInvoice.current = false;
+          setAnnouncement((previous) => ({ key: previous.key + 1, text: "Your invoice is below the order summary." }));
+        }
+      });
+    };
+    const timer = setTimeout(print, 3000);
+    if (!logo || logo.complete) {
+      print();
+    } else {
+      logo.addEventListener("load", print, { once: true });
+      logo.addEventListener("error", print, { once: true });
+    }
+    return () => {
+      settled = true;
+      clearTimeout(timer);
+      window.cancelAnimationFrame(frame);
+      logo?.removeEventListener("load", print);
+      logo?.removeEventListener("error", print);
+    };
+  }, [printRequest]);
 
-  // Loading state
+  // Loading: the thank-you, the facts and the card as placeholders.
   if (loading) {
     return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.container}>
-          <div className={styles.loadingState}>
-            <div className={styles.spinner} />
-            <p>Loading order details...</p>
+      <div className={styles.page}>
+        <div className={cx("sf-container sf-container--narrow", styles.layout)}>
+          <h1 ref={titleRef} tabIndex={-1} className={cx("sf-visually-hidden", styles.title)}>
+            Loading your order
+          </h1>
+          <div className={styles.layout} aria-busy="true">
+            <div className={styles.skHero} aria-hidden="true">
+              <span className={cx("sf-skeleton sf-skeleton--circle", styles.skMark)} />
+              <span className={cx("sf-skeleton", styles.skEyebrow)} />
+              <span className={cx("sf-skeleton", styles.skTitle)} />
+              <span className={cx("sf-skeleton", styles.skLead)} />
+              <span className={cx("sf-skeleton", styles.skChip)} />
+            </div>
+            <div className={styles.skFacts} aria-hidden="true">
+              {[0, 1, 2].map((index) => (
+                <div key={index} className={styles.skFact}>
+                  <span className={cx("sf-skeleton", styles.skLabel)} />
+                  <span className={cx("sf-skeleton", styles.skText)} />
+                </div>
+              ))}
+            </div>
+            <div className={cx("sf-card sf-card--hairline", styles.summary)} aria-hidden="true">
+              <span className={cx("sf-skeleton", styles.skHeading)} />
+              <div className={styles.items}>
+                {[0, 1].map((index) => (
+                  <div key={index} className={styles.item}>
+                    <span className={cx("sf-skeleton sf-skeleton--image", styles.skThumb)} />
+                    <span className={styles.skItemText}>
+                      <span className={cx("sf-skeleton", styles.skText)} />
+                      <span className={cx("sf-skeleton", styles.skShort)} />
+                    </span>
+                    <span className={cx("sf-skeleton", styles.skAmount)} />
+                  </div>
+                ))}
+              </div>
+              <div className={styles.details}>
+                <span className={styles.skBlock}>
+                  <span className={cx("sf-skeleton", styles.skLabel)} />
+                  <span className={cx("sf-skeleton", styles.skText)} />
+                  <span className={cx("sf-skeleton", styles.skShort)} />
+                </span>
+                <span className={styles.skBlock}>
+                  <span className={cx("sf-skeleton", styles.skLabel)} />
+                  <span className={cx("sf-skeleton", styles.skText)} />
+                  <span className={cx("sf-skeleton", styles.skText)} />
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -91,28 +376,22 @@ const OrderConfirmation = () => {
   // the order doesn't exist.
   if (fetchError) {
     return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.container}>
-          <div className={styles.notFound}>
-            <div className={styles.notFoundIcon}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-            </div>
-            <h2>Couldn't Load Your Order</h2>
-            <p>
-              Something went wrong while fetching order {orderNumber}. Please
-              check your connection and try again.
+      <div className={styles.page}>
+        <div className="sf-container sf-container--narrow">
+          <div className={cx("sf-panel", styles.state)}>
+            <h1 ref={titleRef} tabIndex={-1} className={cx("sf-display-sm", styles.stateTitle)}>
+              We couldn&rsquo;t load your order.
+            </h1>
+            <p className={styles.stateText}>
+              Something went wrong while loading order {orderNumber}. Please check your connection and try again.
             </p>
-            <div className={styles.notFoundActions}>
-              <button className={styles.btnPrimary} onClick={fetchOrder}>
-                Try Again
+            <div className={styles.stateActions}>
+              <button ref={retryRef} type="button" className="sf-btn sf-btn--primary" onClick={handleRetry}>
+                Try again
               </button>
-              <button className={styles.btnSecondary} onClick={() => navigate("/orders")}>
-                View Order History
-              </button>
+              <Link to="/orders" className="sf-btn sf-btn--ghost">
+                Order history
+              </Link>
             </div>
           </div>
         </div>
@@ -123,27 +402,22 @@ const OrderConfirmation = () => {
   // Order not found
   if (!order) {
     return (
-      <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-        <div className={styles.container}>
-          <div className={styles.notFound}>
-            <div className={styles.notFoundIcon}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10" />
-                <line x1="12" y1="8" x2="12" y2="12" />
-                <line x1="12" y1="16" x2="12.01" y2="16" />
-              </svg>
-            </div>
-            <h2>Order Not Found</h2>
-            <p>
-              We couldn't find the order you're looking for. It may have been placed in a different session.
+      <div className={styles.page}>
+        <div className="sf-container sf-container--narrow">
+          <div className={cx("sf-panel", styles.state)}>
+            <h1 ref={titleRef} tabIndex={-1} className={cx("sf-display-sm", styles.stateTitle)}>
+              We couldn&rsquo;t find this order.
+            </h1>
+            <p className={styles.stateText}>
+              Order {orderNumber} may have been placed in a different session.
             </p>
-            <div className={styles.notFoundActions}>
-              <button className={styles.btnPrimary} onClick={() => navigate("/")}>
-                Go to Home
-              </button>
-              <button className={styles.btnSecondary} onClick={() => navigate("/orders")}>
-                View Order History
-              </button>
+            <div className={styles.stateActions}>
+              <Link to="/" className="sf-btn sf-btn--primary">
+                Go to home
+              </Link>
+              <Link to="/orders" className="sf-btn sf-btn--ghost">
+                Order history
+              </Link>
             </div>
           </div>
         </div>
@@ -161,322 +435,267 @@ const OrderConfirmation = () => {
   const shippingAddr = normalizeOrderAddress(order.shippingAddress);
   const isDelivered = order.shippingStatus === "delivered";
 
+  const stage = orderStage(order);
+  const closed = CLOSED_STAGES.includes(stage);
+  // Quiet: muted text on sand (a refund, a payment never taken).
+  const quiet = `sf-badge--sand ${styles.badgeQuiet}`;
+
   // Badge text mirrors the order's real paymentStatus — never a hardcoded
-  // "successful".
+  // "successful". Cash on delivery reads "Pay on delivery" only while the
+  // order can still arrive.
   const paymentStatusInfo = (() => {
     switch (order.paymentStatus) {
       case "paid":
-        return { label: "Payment Successful", modifier: "" };
+        return { label: "Paid", modifier: "sf-badge--success" };
       case "failed":
-        return { label: "Payment Failed", modifier: styles.paymentStatusFailed };
+        return { label: "Failed", modifier: "sf-badge--error" };
       case "refunded":
-        return { label: "Payment Refunded", modifier: styles.paymentStatusFailed };
+        return { label: "Refunded", modifier: quiet };
       case "partially_refunded":
-        return { label: "Payment Partially Refunded", modifier: styles.paymentStatusPending };
+        return { label: "Partially refunded", modifier: quiet };
+      case "voided":
+        return { label: "Not charged", modifier: quiet };
       default:
-        return {
-          label:
-            order.paymentMethod === "cod"
-              ? "Payment Pending — Pay on Delivery"
-              : "Payment Pending",
-          modifier: styles.paymentStatusPending,
-        };
+        if (closed) return { label: "Not charged", modifier: quiet };
+        return order.paymentMethod === "cod"
+          ? { label: "Pay on delivery", modifier: "sf-badge--info" }
+          : { label: "Pending", modifier: "sf-badge--warning" };
     }
   })();
 
+  const displayNumber = order.orderNumber || orderNumber;
+  const firstName =
+    typeof order.shippingAddress?.firstName === "string" ? order.shippingAddress.firstName.trim() : "";
+  const storeCreditUsed = order.storeCreditUsed ?? 0;
+  const paidLabel = paidRowLabel(order);
+  const paidAmount = order.amountPayable ?? Math.max(0, order.total - order.storeCreditUsed);
+  const showsTracking = order.shippingStatus === "shipped" && Boolean(order.trackingNumber);
+  const supportPath = `/support?${new URLSearchParams({ order: displayNumber }).toString()}`;
+  const summaryId = `${uid}summary`;
+  const invoiceId = `${uid}invoice`;
+
   return (
-    <div className={`${styles.page} ${isDarkMode ? styles.dark : ""}`}>
-      <div className={styles.container}>
-        {/* Success Animation */}
-        <motion.div
-          className={styles.successSection}
-          initial={{ opacity: 0, scale: 0.8 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ type: "spring", stiffness: 200, damping: 20, duration: 0.6 }}
-        >
-          <div className={`${styles.checkCircle} ${showCheck ? styles.checkCircleActive : ""}`}>
-            <svg
-              className={styles.checkSvg}
-              width="56"
-              height="56"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            >
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <h1 className={styles.successTitle}>Order Confirmed!</h1>
-          <p className={styles.successSubtext}>
-            {isPaymentPending
-              ? "Your order has been placed. Pay when it arrives at your door."
-              : "Your payment was successful and your order is being processed."}
-          </p>
-        </motion.div>
+    <div className={styles.page}>
+      <div className={cx("sf-container sf-container--narrow", styles.layout)}>
+        <Reveal as="header" className={styles.hero}>
+          {!closed && <ConfirmedMark />}
+          <p className={cx("sf-eyebrow", styles.eyebrow)}>{EYEBROW[stage]}</p>
+          <h1 ref={titleRef} tabIndex={-1} className={cx("sf-display-lg", styles.title)}>
+            {firstName ? (
+              <>
+                Thank you, <em>{firstName}</em>.
+              </>
+            ) : (
+              "Thank you."
+            )}
+          </h1>
+          <p className={styles.lead}>{headlineFor(order, stage, isPaymentPending)}</p>
 
-        {/* Order Number (Prominent + Copyable) */}
-        <motion.div
-          className={styles.orderNumberBanner}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
-        >
-          <span className={styles.orderNumberLabel}>Order Number</span>
-          <div className={styles.orderNumberRow}>
-            <span className={styles.orderNumberValue}>
-              {order.orderNumber || orderNumber}
-            </span>
-            <button className={styles.btnCopyBanner} onClick={handleCopyOrderNumber}>
-              {copied ? (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <polyline points="20 6 9 17 4 12" />
-                  </svg>
-                  Copied!
-                </>
-              ) : (
-                <>
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                    <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-                    <path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1" />
-                  </svg>
-                  Copy
-                </>
-              )}
-            </button>
-          </div>
-          <div className={styles.orderMeta}>
-            <span>Placed on {formatDate(order.createdAt)}</span>
-          </div>
-        </motion.div>
-
-        {/* Estimated Delivery */}
-        <motion.div
-          className={styles.deliveryBanner}
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-        >
-          <div className={styles.deliveryIcon}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
-              <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-              <circle cx="5.5" cy="18.5" r="2.5" />
-              <circle cx="18.5" cy="18.5" r="2.5" />
-            </svg>
-          </div>
-          <div className={styles.deliveryText}>
-            <span className={styles.deliveryLabel}>
-              {isDelivered ? "Delivered" : "Estimated Delivery"}
-            </span>
-            <span className={styles.deliveryDate}>
-              {isDelivered
-                ? formatDeliveryDate(new Date(order.deliveredAt || order.updatedAt))
-                : getEstimatedDelivery()}
-            </span>
-          </div>
-        </motion.div>
-
-        <div className={styles.contentGrid}>
-          {/* Left Column */}
-          <div className={styles.mainColumn}>
-            {/* Order Items */}
-            <motion.div
-              className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.35 }}
-            >
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                    <line x1="3" y1="6" x2="21" y2="6" />
-                    <path d="M16 10a4 4 0 01-8 0" />
-                  </svg>
-                  Order Summary
-                </h3>
-                <span className={styles.itemCount}>
-                  {orderItems.length} item{orderItems.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.itemsList}>
-                  {orderItems.map((item, index) => (
-                    <div key={index} className={styles.orderItem}>
-                      <div className={styles.itemImage}>
-                        <img
-                          src={item.image || "https://placehold.co/72x72?text=Item"}
-                          alt={item.name || "Product"}
-                        />
-                      </div>
-                      <div className={styles.itemInfo}>
-                        <span className={styles.itemName}>{item.name || item.productName}</span>
-                        {item.variantName && (
-                          <span className={styles.itemVariant}>{item.variantName}</span>
-                        )}
-                        <span className={styles.itemQty}>Qty: {item.quantity}</span>
-                      </div>
-                      <div className={styles.itemPrice}>
-                        {formatCurrency(item.price * item.quantity, item.currency)}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Totals */}
-                <div className={styles.totalsSection}>
-                  <div className={styles.totalsRow}>
-                    <span>Subtotal</span>
-                    <span>{formatCurrency(order.subtotal)}</span>
-                  </div>
-                  {discountAmount > 0 && (
-                    <div className={styles.totalsRow}>
-                      <span>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</span>
-                      <span>-{formatCurrency(discountAmount)}</span>
-                    </div>
-                  )}
-                  <div className={styles.totalsRow}>
-                    <span>Shipping</span>
-                    <span>{shippingAmount > 0 ? formatCurrency(shippingAmount) : "FREE"}</span>
-                  </div>
-                  <div className={styles.totalsRow}>
-                    <span>Tax</span>
-                    <span>{formatCurrency(taxAmount)}</span>
-                  </div>
-                  <div className={`${styles.totalsRow} ${styles.totalsRowFinal}`}>
-                    <span>Total</span>
-                    <span>{formatCurrency(order.total)}</span>
-                  </div>
-                  {(order.storeCreditUsed ?? 0) > 0 && (
-                    <>
-                      <div className={styles.totalsRow}>
-                        <span>Store Credit</span>
-                        <span>-{formatCurrency(order.storeCreditUsed)}</span>
-                      </div>
-                      <div className={`${styles.totalsRow} ${styles.totalsRowFinal}`}>
-                        <span>Amount Paid</span>
-                        <span>{formatCurrency(order.amountPayable ?? Math.max(0, order.total - order.storeCreditUsed))}</span>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Shipping Address */}
-            <motion.div
-              className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.4 }}
-            >
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z" />
-                    <circle cx="12" cy="10" r="3" />
-                  </svg>
-                  Shipping Address
-                </h3>
-              </div>
-              <div className={styles.cardBody}>
-                {shippingAddr ? (
-                  <div className={styles.addressBlock}>
-                    {shippingAddr.name && (
-                      <p className={styles.addressName}>{shippingAddr.name}</p>
-                    )}
-                    {shippingAddr.line1 && <p>{shippingAddr.line1}</p>}
-                    {shippingAddr.line2 && <p>{shippingAddr.line2}</p>}
-                    {shippingAddr.cityLine && <p>{shippingAddr.cityLine}</p>}
-                    {shippingAddr.country && <p>{shippingAddr.country}</p>}
-                    {shippingAddr.phone && (
-                      <p className={styles.addressPhone}>Phone: {shippingAddr.phone}</p>
-                    )}
-                  </div>
-                ) : (
-                  <p className={styles.textMuted}>Shipping address not available</p>
+          <div className={styles.chip}>
+            <p className={styles.chipText}>
+              <span className={styles.chipLabel}>Order number</span>
+              <span className={styles.chipValue}>{displayNumber}</span>
+            </p>
+            <span className={styles.copyWrap}>
+              <button
+                type="button"
+                className={cx("sf-btn sf-btn--icon", styles.copy)}
+                onClick={handleCopyOrderNumber}
+                aria-label={`Copy order number ${displayNumber}`}
+                data-copied={copyNote.copied || undefined}
+              >
+                {copyNote.copied ? <CheckIcon /> : <CopyIcon />}
+              </button>
+              <span role="status" className={styles.copyStatus}>
+                {copyNote.text && (
+                  <span key={copyNote.key} className={styles.copyBubble}>
+                    {copyNote.text}
+                  </span>
                 )}
-              </div>
-            </motion.div>
+              </span>
+            </span>
           </div>
 
-          {/* Right Column */}
-          <div className={styles.sideColumn}>
-            {/* Payment Method */}
-            <motion.div
-              className={styles.card}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.45 }}
-            >
-              <div className={styles.cardHeader}>
-                <h3 className={styles.cardTitle}>
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2" />
-                    <line x1="1" y1="10" x2="23" y2="10" />
-                  </svg>
-                  Payment Method
-                </h3>
-              </div>
-              <div className={styles.cardBody}>
-                <div className={styles.paymentBadge}>
-                  {order.paymentMethod ? order.paymentMethod.replace(/_/g, " ").toUpperCase() : "N/A"}
-                </div>
-                <div className={`${styles.paymentStatus} ${paymentStatusInfo.modifier}`}>
-                  <span className={styles.paymentStatusDot} />
-                  {paymentStatusInfo.label}
-                </div>
-              </div>
-            </motion.div>
+          {order.createdAt && (
+            <p className={styles.placed}>
+              Placed on <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+            </p>
+          )}
+        </Reveal>
 
-            {/* Action Buttons */}
-            <motion.div
-              className={styles.actionsCard}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.5 }}
-            >
-              <button
-                className={styles.btnTrack}
-                onClick={() => navigate("/orders")}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <rect x="1" y="3" width="15" height="13" rx="2" ry="2" />
-                  <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-                  <circle cx="5.5" cy="18.5" r="2.5" />
-                  <circle cx="18.5" cy="18.5" r="2.5" />
-                </svg>
-                Track Order
-              </button>
-              <button
-                className={styles.btnContinue}
-                onClick={() => navigate("/")}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M6 2L3 6v14a2 2 0 002 2h14a2 2 0 002-2V6l-3-4z" />
-                  <line x1="3" y1="6" x2="21" y2="6" />
-                  <path d="M16 10a4 4 0 01-8 0" />
-                </svg>
-                Continue Shopping
-              </button>
-              <button
-                className={styles.btnInvoice}
-                onClick={handleDownloadInvoice}
-              >
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4" />
-                  <polyline points="7 10 12 15 17 10" />
-                  <line x1="12" y1="15" x2="12" y2="3" />
-                </svg>
-                Download Invoice
-              </button>
-            </motion.div>
+        <Reveal as="dl" className={styles.facts} delay={staggerDelay(1)}>
+          <div className={styles.fact}>
+            <dt className="sf-eyebrow">Delivery</dt>
+            <dd className={styles.factValue}>
+              <p>{deliveryFor(order, stage, isDelivered)}</p>
+              {showsTracking && <p className={styles.factMeta}>Tracking number {order.trackingNumber}</p>}
+            </dd>
           </div>
-        </div>
+          <div className={styles.fact}>
+            <dt className="sf-eyebrow">Payment</dt>
+            <dd className={styles.factValue}>
+              <p>{paymentMethodLabel(order.paymentMethod)}</p>
+              <span className={cx("sf-badge", paymentStatusInfo.modifier)}>{paymentStatusInfo.label}</span>
+            </dd>
+          </div>
+          <div className={styles.fact}>
+            <dt className="sf-eyebrow">Help</dt>
+            <dd className={styles.factValue}>
+              <p>
+                Questions?{" "}
+                <Link to={supportPath} className={cx("sf-btn sf-btn--link", styles.inlineLink)}>
+                  Contact us
+                </Link>
+              </p>
+            </dd>
+          </div>
+        </Reveal>
+
+        <Reveal
+          as="section"
+          className={cx("sf-card sf-card--hairline", styles.summary)}
+          delay={staggerDelay(2)}
+          aria-labelledby={summaryId}
+        >
+          <div className={styles.summaryHead}>
+            <h2 id={summaryId} className={cx("sf-display-sm", styles.summaryTitle)}>
+              Order summary
+            </h2>
+            <p className={styles.count}>
+              {orderItems.length} item{orderItems.length !== 1 ? "s" : ""}
+            </p>
+          </div>
+
+          <ul className={styles.items}>
+            {orderItems.map((item, index) => (
+              <li key={index} className={styles.item}>
+                <span className={styles.thumb}>
+                  <img
+                    src={item.image || PLACEHOLDER_IMG}
+                    alt=""
+                    width="56"
+                    height="70"
+                    loading="lazy"
+                    decoding="async"
+                    onError={onImageError}
+                  />
+                </span>
+                <div className={styles.itemText}>
+                  <p className={styles.itemName}>{item.name || item.productName}</p>
+                  {item.variantName && <p className={styles.itemMeta}>{item.variantName}</p>}
+                  <p className={styles.itemMeta}>Qty: {item.quantity}</p>
+                </div>
+                <p className={styles.itemTotal}>
+                  <span className="sf-visually-hidden">Line total </span>
+                  {formatCurrency(item.price * item.quantity, item.currency)}
+                </p>
+              </li>
+            ))}
+          </ul>
+
+          <div className={styles.details}>
+            <div className={styles.block}>
+              <h3 className={cx("sf-eyebrow", styles.blockTitle)}>Delivery address</h3>
+              {shippingAddr ? (
+                <div className={styles.lines}>
+                  {shippingAddr.name && <p className={styles.lineStrong}>{shippingAddr.name}</p>}
+                  {shippingAddr.line1 && <p>{shippingAddr.line1}</p>}
+                  {shippingAddr.line2 && <p>{shippingAddr.line2}</p>}
+                  {shippingAddr.cityLine && <p>{shippingAddr.cityLine}</p>}
+                  {shippingAddr.country && <p>{shippingAddr.country}</p>}
+                  {shippingAddr.phone && <p className={styles.phone}>Phone: {shippingAddr.phone}</p>}
+                </div>
+              ) : (
+                <p className={styles.muted}>Shipping address not available</p>
+              )}
+            </div>
+
+            <div className={styles.block}>
+              <h3 className={cx("sf-eyebrow", styles.blockTitle)}>Price details</h3>
+              <dl className={styles.totals}>
+                <div className={styles.row}>
+                  <dt>Subtotal</dt>
+                  <dd>{formatCurrency(order.subtotal)}</dd>
+                </div>
+                {discountAmount > 0 && (
+                  <div className={styles.row}>
+                    <dt>Discount{order.couponCode ? ` (${order.couponCode})` : ""}</dt>
+                    <dd>−{formatCurrency(discountAmount)}</dd>
+                  </div>
+                )}
+                <div className={styles.row}>
+                  <dt>Shipping</dt>
+                  <dd>{shippingAmount > 0 ? formatCurrency(shippingAmount) : "Free"}</dd>
+                </div>
+                <div className={styles.row}>
+                  <dt>Tax</dt>
+                  <dd>{formatCurrency(taxAmount)}</dd>
+                </div>
+                <div className={cx(styles.row, styles.rowTotal)}>
+                  <dt>Total</dt>
+                  <dd>{formatCurrency(order.total)}</dd>
+                </div>
+                {storeCreditUsed > 0 && (
+                  <>
+                    <div className={styles.row}>
+                      <dt>Store credit</dt>
+                      <dd>−{formatCurrency(order.storeCreditUsed)}</dd>
+                    </div>
+                    {paidLabel && (
+                      <div className={cx(styles.row, styles.rowPaid)}>
+                        <dt>{paidLabel}</dt>
+                        <dd>{formatCurrency(paidAmount)}</dd>
+                      </div>
+                    )}
+                  </>
+                )}
+              </dl>
+            </div>
+          </div>
+
+          <div className={styles.actions}>
+            <Link to="/orders" className={cx("sf-btn sf-btn--primary", styles.action)}>
+              Track order
+            </Link>
+            <button
+              type="button"
+              className={cx("sf-btn sf-btn--ghost", styles.action)}
+              onClick={handlePrintInvoice}
+              aria-controls={invoiceId}
+            >
+              Print invoice
+            </button>
+            <Link to="/products" className={cx("sf-btn sf-btn--link", styles.continue)}>
+              Continue shopping
+            </Link>
+          </div>
+        </Reveal>
+
+        <Invoice
+          ref={invoiceRef}
+          id={invoiceId}
+          hidden={!invoiceOpen}
+          order={order}
+          orderNumber={displayNumber}
+          items={orderItems}
+          shippingAddress={shippingAddr}
+          totals={{
+            subtotal: order.subtotal,
+            discountAmount,
+            couponCode: order.couponCode,
+            shippingAmount,
+            taxAmount,
+            total: order.total,
+            storeCreditUsed,
+            paidLabel,
+            paidAmount,
+          }}
+          payment={{ method: paymentMethodLabel(order.paymentMethod), status: paymentStatusInfo.label }}
+        />
+
+        <p className="sf-visually-hidden" role="status">
+          {announcement.text && <span key={announcement.key}>{announcement.text}</span>}
+        </p>
       </div>
     </div>
   );
