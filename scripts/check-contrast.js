@@ -319,6 +319,10 @@ const PAIRS = [
   ["Checkout: “Free” (success) on the summary card (surface)", "--sf-color-success", "--sf-color-surface", AA],
   ["Checkout: credit switch track and amount field boundaries (border-strong) on the sand panel", "--sf-color-border-strong", SAND, LARGE],
   ["Checkout: credit switch knob, off (muted) on its surface track (graphic)", "--sf-color-text-muted", "--sf-color-surface", LARGE],
+  // Prompt 27: the confirmation's payment badges sit on the page tone (the
+  // facts row), not on a card.
+  ["Confirmation: pending badge (warning on warning-bg) on the page tone", "--sf-color-warning", ["--sf-color-warning-bg", "--sf-color-bg"], AA],
+  ["Confirmation: quiet badge (muted on sand) on the page tone", "--sf-color-text-muted", ["--sf-color-sand", "--sf-color-bg"], AA],
 ];
 
 // Always-dark surfaces (footer, hero, navy bands): identical in both modes.
@@ -344,6 +348,11 @@ const PAIRS_FIXED = [
   ["Hero: paper-ghost CTA border (on-dark) on scrim over white photo", "--sf-color-on-dark", ["--sf-color-scrim", "#ffffff"], LARGE],
   // Product card (Prompt 13): the Sale / New / Sold out chips over photography.
   ["Card chip: brand paper on brand ink", "--sf-brand-paper", "--sf-brand-ink", AA],
+  // Prompt 27: the invoice is a sheet of brand paper in both themes. Its
+  // quieter text is color-mix(in srgb, ink 72%, paper), which is the ink at
+  // 72% over the opaque paper; in print every word is the full ink.
+  ["Invoice: text (brand ink) on the paper sheet", "--sf-brand-ink", "--sf-brand-paper", AA],
+  ["Invoice: labels and store lines (ink 72% into paper) on the sheet", ["--sf-brand-ink@0.72", "--sf-brand-paper"], "--sf-brand-paper", AA],
 ];
 
 // Light mode only: the inline PLACEHOLDER_IMG SVG cannot read CSS variables.
@@ -400,6 +409,12 @@ const INFO = [
   // Prompt 24: why the quiet badge is outlined on the sand Track panel
   // rather than filled with a second sand layer.
   ["Orders: quiet badge filled with sand on the sand panel (not used)", "--sf-color-text-muted", ["--sf-color-sand", ...SAND]],
+  // Prompt 27: the invoice's hairlines (ink 20% into paper; full ink under
+  // the table head and the total), and the sheet's edge against the page:
+  // paper on paper in light mode (a stone hairline frames it), a strong edge
+  // on the dark page.
+  ["Invoice: hairline (ink 20% into paper) vs the paper sheet", ["--sf-brand-ink@0.2", "--sf-brand-paper"], "--sf-brand-paper"],
+  ["Invoice: the paper sheet vs the page", "--sf-brand-paper", "--sf-color-bg"],
 ];
 
 // ---------------------------------------------------------------------------

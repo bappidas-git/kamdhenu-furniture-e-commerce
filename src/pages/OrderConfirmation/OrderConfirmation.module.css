@@ -1,830 +1,667 @@
-/* ===== Base Page ===== */
+/* =============================================================================
+ * Order confirmation (/order-confirmation/:orderNumber) — DESIGN_SYSTEM §37
+ * =============================================================================
+ * One narrow column (--sf-container-narrow): the thank-you, the facts row, the
+ * summary card and, once revealed, the invoice (its styles and the page's
+ * print stylesheet live in Invoice.module.css). Tokens only: no hex, rgb(),
+ * gradients or font names. Primitives (.sf-btn, .sf-badge, .sf-card,
+ * .sf-panel, .sf-skeleton, .sf-eyebrow, .sf-display-*) come from
+ * storefront-base.css; these classes extend them.
+ * ========================================================================== */
+
 .page {
-  min-height: 100vh;
-  padding: 2rem 0 4rem;
-  background: #f5f7fa;
-  color: #1a202c;
+  padding-block: clamp(var(--sf-space-8), 6vw, var(--sf-space-16)) var(--sf-section-y);
 }
 
-.dark {
-  background: #0a0e27;
-  color: #e2e8f0;
+.layout {
+  display: grid;
+  gap: clamp(var(--sf-space-8), 5vw, var(--sf-space-12));
 }
 
-.container {
-  max-width: 960px;
-  margin: 0 auto;
-  padding: 0 1.5rem;
-}
-
-/* ===== Loading ===== */
-.loadingState {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 60vh;
-  gap: 1.25rem;
-  color: #718096;
-}
-
-.dark .loadingState {
-  color: #a0aec0;
-}
-
-.spinner {
-  width: 40px;
-  height: 40px;
-  border: 3px solid #e2e8f0;
-  border-top-color: #667eea;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.dark .spinner {
-  border-color: rgba(167, 139, 250, 0.2);
-  border-top-color: #a78bfa;
-}
-
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-/* ===== Not Found ===== */
-.notFound {
+/* ---- The thank-you ------------------------------------------------------ */
+.hero {
+  display: grid;
+  justify-items: center;
   text-align: center;
-  padding: 5rem 2rem;
-  max-width: 480px;
-  margin: 0 auto;
 }
 
-.notFoundIcon {
-  color: #cbd5e0;
-  margin-bottom: 1.5rem;
+/* A thin ink circle; the check draws itself in one stroke, once. */
+.mark {
+  display: block;
+  width: 64px;
+  height: 64px;
+  margin-bottom: var(--sf-space-6);
+  color: var(--sf-color-text);
+  overflow: visible;
 }
 
-.dark .notFoundIcon {
-  color: #4a5568;
+.markRing {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1;
 }
 
-.notFound h2 {
-  font-size: 1.5rem;
-  font-weight: 700;
-  margin: 0 0 0.75rem;
+.markCheck {
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 1;
+  stroke-dashoffset: 1;
+  animation: draw-check var(--sf-duration-slow) var(--sf-ease-out) var(--sf-duration-fast) forwards;
 }
 
-.notFound p {
-  color: #718096;
-  margin: 0 0 2rem;
-  line-height: 1.6;
-}
-
-.dark .notFound p {
-  color: #a0aec0;
-}
-
-.notFoundActions {
-  display: flex;
-  gap: 1rem;
-  justify-content: center;
-}
-
-/* ===== Success Section ===== */
-.successSection {
-  text-align: center;
-  padding: 2rem 0 1rem;
-}
-
-.checkCircle {
-  width: 96px;
-  height: 96px;
-  margin: 0 auto 1.5rem;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8px 32px rgba(72, 187, 120, 0.35);
-  position: relative;
-  transform: scale(0);
-  transition: transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
-}
-
-.checkCircleActive {
-  transform: scale(1);
-}
-
-.checkSvg {
-  color: #ffffff;
-  stroke-dasharray: 30;
-  stroke-dashoffset: 30;
-  animation: drawCheck 0.5s 0.5s ease-out forwards;
-}
-
-@keyframes drawCheck {
+@keyframes draw-check {
   to {
     stroke-dashoffset: 0;
   }
 }
 
-/* Pulse ring animation */
-.checkCircle::after {
-  content: "";
-  position: absolute;
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  border: 3px solid rgba(72, 187, 120, 0.4);
-  animation: pulseRing 1.5s 0.8s ease-out forwards;
-  opacity: 0;
+/* Drawn: no animation left to restart when printing hides and re-shows it. */
+.markCheck.markDrawn {
+  animation: none;
+  stroke-dashoffset: 0;
 }
 
-@keyframes pulseRing {
-  0% {
-    transform: scale(1);
-    opacity: 0.8;
-  }
-  100% {
-    transform: scale(1.5);
-    opacity: 0;
-  }
-}
-
-.successTitle {
-  font-size: 2rem;
-  font-weight: 800;
-  margin: 0 0 0.5rem;
-  background: linear-gradient(135deg, #48bb78 0%, #38a169 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.successSubtext {
-  color: #718096;
-  font-size: 1.05rem;
+.eyebrow {
   margin: 0;
 }
 
-.dark .successSubtext {
-  color: #a0aec0;
+.title {
+  max-width: 100%;
+  margin: var(--sf-space-3) 0 0;
+  color: var(--sf-color-text);
 }
 
-/* ===== Order Number Banner ===== */
-.orderNumberBanner {
-  text-align: center;
-  padding: 1.5rem;
-  margin: 1.5rem 0;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 16px;
-  color: #ffffff;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+/* A reading position (tabIndex -1) that focus moves to, not a control. */
+.title:focus {
+  outline: none;
 }
 
-.dark .orderNumberBanner {
-  background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
-  box-shadow: 0 4px 20px rgba(124, 58, 237, 0.3);
+.lead {
+  max-width: 46ch;
+  margin: var(--sf-space-4) 0 0;
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-md);
+  line-height: var(--sf-leading-body);
 }
 
-.orderNumberLabel {
-  display: block;
-  font-size: 0.825rem;
-  opacity: 0.85;
-  margin-bottom: 0.5rem;
-  letter-spacing: 0.05em;
+/* The order number: a hairline chip, the label over the number, the copy
+   button at its end. */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--sf-space-3);
+  max-width: 100%;
+  margin-top: var(--sf-space-8);
+  padding: var(--sf-space-1) var(--sf-space-1) var(--sf-space-1) var(--sf-space-5);
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  text-align: left;
+}
+
+.chipText {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  margin: 0;
+}
+
+.chipLabel {
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-eyebrow);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
   text-transform: uppercase;
 }
 
-.orderNumberRow {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 1rem;
-  margin-bottom: 0.5rem;
+.chipValue {
+  color: var(--sf-color-text);
+  font-size: var(--sf-text-md);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  letter-spacing: 0.04em;
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
 }
 
-.orderNumberValue {
-  font-size: 1.5rem;
-  font-weight: 800;
-  letter-spacing: 2px;
-  font-family: "SF Mono", "Fira Code", "Fira Mono", "Roboto Mono", monospace;
-}
-
-.btnCopyBanner {
+.copyWrap {
+  position: relative;
   display: inline-flex;
-  align-items: center;
-  gap: 0.4rem;
-  padding: 0.4rem 0.85rem;
-  background: rgba(255, 255, 255, 0.2);
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  border-radius: 8px;
-  color: #ffffff;
-  font-size: 0.825rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.2s;
-  backdrop-filter: blur(4px);
+  flex: none;
 }
 
-.btnCopyBanner:hover {
-  background: rgba(255, 255, 255, 0.3);
-  border-color: rgba(255, 255, 255, 0.5);
+/* A borderless 44px icon button (Order History's): muted glyph, ink on
+   hover, the success tone while "Copied" shows. */
+.copy {
+  --sf-btn-fg: var(--sf-color-text-muted);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  --sf-btn-bg-hover: var(--sf-color-primary-soft);
 }
 
-.orderMeta {
-  font-size: 0.85rem;
-  opacity: 0.85;
+.copy[data-copied="true"] {
+  --sf-btn-fg: var(--sf-color-success);
 }
 
-/* ===== Delivery Banner ===== */
-.deliveryBanner {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 1.15rem 1.5rem;
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  margin-bottom: 1.5rem;
-  border-left: 4px solid #48bb78;
+/* The live region stays in the page; the note inside it is a small ink
+   tooltip over the button (the storefront tooltip's look), so nothing moves. */
+.copyStatus {
+  position: absolute;
+  bottom: calc(100% + var(--sf-space-1));
+  left: 50%;
+  transform: translateX(-50%);
+  pointer-events: none;
 }
 
-.dark .deliveryBanner {
-  background: rgba(26, 31, 58, 0.8);
-  border-color: rgba(167, 139, 250, 0.12);
-  border-left-color: #48bb78;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
+.copyBubble {
+  display: block;
+  padding: var(--sf-space-1) var(--sf-space-2);
+  border-radius: var(--sf-radius-md);
+  background-color: var(--sf-color-primary);
+  color: var(--sf-color-primary-contrast);
+  font-size: var(--sf-text-xs);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  white-space: nowrap;
+  box-shadow: var(--sf-shadow-sm);
 }
 
-.deliveryIcon {
-  color: #48bb78;
-  flex-shrink: 0;
+.placed {
+  margin: var(--sf-space-3) 0 0;
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
 }
 
-.deliveryText {
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
-}
-
-.deliveryLabel {
-  font-size: 0.8rem;
-  color: #718096;
-  font-weight: 500;
-}
-
-.dark .deliveryLabel {
-  color: #a0aec0;
-}
-
-.deliveryDate {
-  font-size: 1.05rem;
-  font-weight: 700;
-  color: #1a202c;
-}
-
-.dark .deliveryDate {
-  color: #f7fafc;
-}
-
-/* ===== Content Grid ===== */
-.contentGrid {
+/* ---- Facts: delivery, payment, help ------------------------------------ */
+.facts {
   display: grid;
-  grid-template-columns: 1fr 340px;
-  gap: 1.5rem;
-  align-items: start;
-}
-
-.mainColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-.sideColumn {
-  display: flex;
-  flex-direction: column;
-  gap: 1.5rem;
-}
-
-/* ===== Cards ===== */
-.card {
-  background: #ffffff;
-  border-radius: 14px;
-  border: 1px solid #e2e8f0;
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
-  overflow: hidden;
-}
-
-.dark .card {
-  background: rgba(26, 31, 58, 0.8);
-  border-color: rgba(167, 139, 250, 0.12);
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.3);
-}
-
-.cardHeader {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 1.15rem 1.25rem;
-  border-bottom: 1px solid #edf2f7;
-}
-
-.dark .cardHeader {
-  border-bottom-color: rgba(167, 139, 250, 0.08);
-}
-
-.cardTitle {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 1rem;
-  font-weight: 700;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   margin: 0;
-  color: #1a202c;
+  border-block: var(--sf-hairline);
 }
 
-.dark .cardTitle {
-  color: #f7fafc;
+.fact {
+  display: grid;
+  align-content: start;
+  gap: var(--sf-space-2);
+  min-width: 0;
+  padding: var(--sf-space-6) var(--sf-space-5);
 }
 
-.cardTitle svg {
-  color: #667eea;
+.fact:first-child {
+  padding-inline-start: 0;
 }
 
-.dark .cardTitle svg {
-  color: #a78bfa;
+.fact:last-child {
+  padding-inline-end: 0;
 }
 
-.itemCount {
-  font-size: 0.8rem;
-  color: #718096;
-  background: #edf2f7;
-  padding: 0.2rem 0.6rem;
-  border-radius: 12px;
+.fact + .fact {
+  border-inline-start: var(--sf-hairline);
 }
 
-.dark .itemCount {
-  color: #a78bfa;
-  background: rgba(167, 139, 250, 0.12);
+.fact dt {
+  margin: 0;
 }
 
-.cardBody {
-  padding: 1.25rem;
+.factValue {
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-2);
+  margin: 0;
+  color: var(--sf-color-text);
+  font-size: 0.9375rem;
+  line-height: var(--sf-leading-normal);
 }
 
-/* ===== Items List ===== */
-.itemsList {
+.factValue p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.factValue .factMeta {
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+.inlineLink {
+  font-size: inherit;
+}
+
+/* A refund, a payment never taken: muted text on sand. */
+.badgeQuiet {
+  --sf-badge-fg: var(--sf-color-text-muted);
+}
+
+/* ---- The summary card --------------------------------------------------- */
+.summary {
+  --sf-card-padding: clamp(var(--sf-space-5), 4vw, var(--sf-space-8));
+  display: grid;
+  gap: var(--sf-space-6);
+}
+
+.summaryHead {
   display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
-  margin-bottom: 1.25rem;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-2) var(--sf-space-4);
 }
 
-.orderItem {
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  padding: 0.85rem;
-  background: #f7fafc;
-  border-radius: 10px;
-  border: 1px solid #edf2f7;
+.summaryTitle {
+  margin: 0;
+  color: var(--sf-color-text);
 }
 
-.dark .orderItem {
-  background: rgba(10, 14, 39, 0.4);
-  border-color: rgba(167, 139, 250, 0.08);
+.count {
+  margin: 0;
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  font-variant-numeric: tabular-nums;
 }
 
-.itemImage {
-  width: 64px;
-  height: 64px;
-  border-radius: 10px;
+.items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  border-top: var(--sf-hairline);
+}
+
+/* The thumbnail, the name, variant and quantity, the line total on the
+   right (under the quantity up to 480px, as on Order History). */
+.item {
+  display: grid;
+  grid-template-columns: 56px minmax(0, 1fr) auto;
+  align-items: start;
+  column-gap: var(--sf-space-4);
+  padding-block: var(--sf-space-4);
+  border-bottom: var(--sf-hairline);
+}
+
+/* 56px at the catalogue's 4:5, sand while loading, a hairline frame so a
+   sand photograph keeps its edge. */
+.thumb {
+  position: relative;
+  display: block;
+  width: 56px;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  flex-shrink: 0;
-  border: 1px solid #e2e8f0;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
 }
 
-.dark .itemImage {
-  border-color: rgba(167, 139, 250, 0.12);
+.thumb::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border: var(--sf-hairline);
+  border-radius: inherit;
+  pointer-events: none;
 }
 
-.itemImage img {
+.thumb img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
-.itemInfo {
-  flex: 1;
+.itemText {
+  display: grid;
+  align-content: start;
+  gap: var(--sf-space-1);
   min-width: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 0.15rem;
 }
 
 .itemName {
-  font-weight: 600;
-  font-size: 0.925rem;
-  color: #1a202c;
+  margin: 0;
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-display);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-tight);
+  overflow-wrap: anywhere;
 }
 
-.dark .itemName {
-  color: #e2e8f0;
+.itemMeta {
+  margin: 0;
+  color: var(--sf-color-text-muted);
+  font-size: 0.8125rem;
+  line-height: var(--sf-leading-normal);
 }
 
-.itemVariant {
-  font-size: 0.8rem;
-  color: #718096;
+.itemTotal {
+  margin: 0;
+  color: var(--sf-color-text);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-tight);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  white-space: nowrap;
 }
 
-.dark .itemVariant {
-  color: #a0aec0;
+/* Delivery address and price details: side by side from 601px. */
+.details {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: var(--sf-space-6);
 }
 
-.itemQty {
-  font-size: 0.775rem;
-  color: #a0aec0;
+.block {
+  display: grid;
+  align-content: start;
+  gap: var(--sf-space-3);
+  min-width: 0;
 }
 
-.dark .itemQty {
-  color: #718096;
+.blockTitle {
+  margin: 0;
 }
 
-.itemPrice {
-  font-weight: 700;
-  font-size: 1rem;
-  color: #667eea;
-  flex-shrink: 0;
+.lines {
+  display: grid;
+  gap: 2px;
 }
 
-.dark .itemPrice {
-  color: #a78bfa;
+.lines p {
+  margin: 0;
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+  overflow-wrap: anywhere;
 }
 
-/* ===== Totals ===== */
-.totalsSection {
-  border-top: 1px solid #edf2f7;
-  padding-top: 1rem;
+.lines .lineStrong {
+  color: var(--sf-color-text);
+  font-weight: var(--sf-font-medium);
+}
+
+.phone {
+  font-variant-numeric: tabular-nums;
+}
+
+.muted {
+  margin: 0;
+  color: var(--sf-color-text-muted);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+.totals {
+  display: grid;
+  gap: var(--sf-space-2);
+  margin: 0;
+}
+
+.row {
   display: flex;
-  flex-direction: column;
-  gap: 0.4rem;
-}
-
-.dark .totalsSection {
-  border-top-color: rgba(167, 139, 250, 0.1);
-}
-
-.totalsRow {
-  display: flex;
+  align-items: baseline;
   justify-content: space-between;
-  font-size: 0.9rem;
-  color: #4a5568;
-  padding: 0.2rem 0;
+  gap: var(--sf-space-4);
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
 }
 
-.dark .totalsRow {
-  color: #cbd5e0;
+.row dt {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
-.totalsRowFinal {
-  border-top: 1px solid #e2e8f0;
-  margin-top: 0.5rem;
-  padding-top: 0.75rem;
-  font-weight: 800;
-  font-size: 1.1rem;
-  color: #1a202c;
-}
-
-.dark .totalsRowFinal {
-  border-top-color: rgba(167, 139, 250, 0.15);
-  color: #f7fafc;
-}
-
-/* ===== Address Block ===== */
-.addressBlock {
-  line-height: 1.7;
-}
-
-.addressBlock p {
+.row dd {
   margin: 0;
-  font-size: 0.925rem;
-  color: #4a5568;
+  color: var(--sf-color-text);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.dark .addressBlock p {
-  color: #cbd5e0;
+/* The total in the serif (lining figures), under a hairline. */
+.rowTotal {
+  margin-top: var(--sf-space-1);
+  padding-top: var(--sf-space-3);
+  border-top: var(--sf-hairline);
+  color: var(--sf-color-text);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
 }
 
-.addressName {
-  font-weight: 700;
-  color: #1a202c !important;
-  font-size: 1rem !important;
+.rowTotal dd {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-weight: var(--sf-font-normal);
+  font-variant-numeric: lining-nums tabular-nums;
 }
 
-.dark .addressName {
-  color: #f7fafc !important;
+.rowPaid {
+  padding-top: var(--sf-space-2);
+  border-top: var(--sf-hairline);
+  color: var(--sf-color-text);
+  font-size: 0.9375rem;
+  font-weight: var(--sf-font-medium);
 }
 
-.addressPhone {
-  margin-top: 0.5rem !important;
-  color: #718096 !important;
-  font-size: 0.85rem !important;
+/* Track order, Print invoice, then Continue shopping at the end. */
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--sf-space-3);
+  padding-top: var(--sf-space-6);
+  border-top: var(--sf-hairline);
 }
 
-.dark .addressPhone {
-  color: #a0aec0 !important;
+.continue {
+  margin-inline-start: auto;
 }
 
-.textMuted {
-  color: #a0aec0;
-  font-size: 0.9rem;
+/* ---- States: error and not found ---------------------------------------- */
+.state {
+  --sf-card-padding: clamp(var(--sf-space-6), 5vw, var(--sf-space-12));
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-4);
+}
+
+.stateTitle {
   margin: 0;
+  color: var(--sf-color-text);
 }
 
-.dark .textMuted {
-  color: #718096;
+.stateTitle:focus {
+  outline: none;
 }
 
-/* ===== Payment ===== */
-.paymentBadge {
-  display: inline-block;
-  padding: 0.45rem 1rem;
-  background: #edf2f7;
-  border-radius: 8px;
-  font-weight: 700;
-  font-size: 0.9rem;
-  color: #2d3748;
-  letter-spacing: 0.03em;
-  margin-bottom: 0.75rem;
+.stateText {
+  max-width: 52ch;
+  margin: 0;
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  overflow-wrap: anywhere;
 }
 
-.dark .paymentBadge {
-  background: rgba(167, 139, 250, 0.12);
-  color: #e2e8f0;
-}
-
-.paymentStatus {
+.stateActions {
   display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  font-size: 0.85rem;
-  color: #48bb78;
-  font-weight: 600;
+  flex-wrap: wrap;
+  gap: var(--sf-space-3);
+  margin-top: var(--sf-space-2);
 }
 
-.paymentStatusDot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #48bb78;
-  animation: pulse 2s infinite;
+/* ---- Loading: the page's own line boxes as placeholders ------------------ */
+.skHero {
+  display: grid;
+  justify-items: center;
+  gap: var(--sf-space-3);
 }
 
-.paymentStatusPending {
-  color: #d69e2e;
+.skMark {
+  --size: 64px;
+  margin-bottom: var(--sf-space-3);
 }
 
-.paymentStatusPending .paymentStatusDot {
-  background: #d69e2e;
+.skEyebrow {
+  width: 8rem;
+  height: var(--sf-text-eyebrow);
 }
 
-.paymentStatusFailed {
-  color: #e53e3e;
+.skTitle {
+  width: min(22rem, 90%);
+  height: var(--sf-text-display-lg);
 }
 
-.paymentStatusFailed .paymentStatusDot {
-  background: #e53e3e;
+.skLead {
+  width: min(26rem, 100%);
+  height: var(--sf-text-md);
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.5; }
+.skChip {
+  width: min(16rem, 100%);
+  height: 54px;
+  margin-top: var(--sf-space-5);
 }
 
-/* ===== Action Buttons ===== */
-.actionsCard {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+.skFacts {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--sf-space-5);
+  padding-block: var(--sf-space-6);
+  border-block: var(--sf-hairline);
 }
 
-.btnTrack {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
+.skFact,
+.skBlock,
+.skItemText {
+  display: grid;
+  align-content: start;
+  gap: var(--sf-space-3);
+  min-width: 0;
+}
+
+.skLabel {
+  width: 5rem;
+  height: var(--sf-text-eyebrow);
+}
+
+.skText {
   width: 100%;
-  padding: 0.85rem 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+  height: var(--sf-text-sm);
 }
 
-.btnTrack:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
+.skShort {
+  width: 60%;
+  height: var(--sf-text-sm);
 }
 
-.dark .btnTrack {
-  background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
+.skHeading {
+  width: 12rem;
+  height: var(--sf-text-display-sm);
 }
 
-.dark .btnTrack:hover {
-  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.4);
+.skThumb {
+  width: 56px;
 }
 
-.btnContinue {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.85rem 1.5rem;
-  background: #ffffff;
-  color: #667eea;
-  border: 2px solid #667eea;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
+.skAmount {
+  width: 4.5rem;
+  height: var(--sf-text-sm);
 }
 
-.btnContinue:hover {
-  background: rgba(102, 126, 234, 0.06);
+/* ---- Breakpoints ---------------------------------------------------------- */
+@media (min-width: 601px) {
+  .details {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--sf-space-8);
+  }
 }
 
-.dark .btnContinue {
-  background: transparent;
-  color: #a78bfa;
-  border-color: #a78bfa;
-}
-
-.dark .btnContinue:hover {
-  background: rgba(167, 139, 250, 0.08);
-}
-
-.btnInvoice {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  width: 100%;
-  padding: 0.85rem 1.5rem;
-  background: #f7fafc;
-  color: #4a5568;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btnInvoice:hover {
-  background: #edf2f7;
-  border-color: #cbd5e0;
-}
-
-.dark .btnInvoice {
-  background: rgba(26, 31, 58, 0.6);
-  color: #a0aec0;
-  border-color: rgba(167, 139, 250, 0.15);
-}
-
-.dark .btnInvoice:hover {
-  background: rgba(167, 139, 250, 0.08);
-  border-color: rgba(167, 139, 250, 0.25);
-  color: #e2e8f0;
-}
-
-/* ===== Shared Buttons ===== */
-.btnPrimary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: #ffffff;
-  border: none;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btnPrimary:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-}
-
-.dark .btnPrimary {
-  background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%);
-}
-
-.btnSecondary {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 2rem;
-  background: transparent;
-  color: #667eea;
-  border: 1px solid #667eea;
-  border-radius: 10px;
-  font-size: 0.95rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.btnSecondary:hover {
-  background: rgba(102, 126, 234, 0.08);
-}
-
-.dark .btnSecondary {
-  color: #a78bfa;
-  border-color: #a78bfa;
-}
-
-.dark .btnSecondary:hover {
-  background: rgba(167, 139, 250, 0.1);
-}
-
-/* ===== Responsive ===== */
-@media (max-width: 768px) {
-  .page {
-    padding: 1rem 0 5rem;
+@media (max-width: 600px) {
+  .facts,
+  .skFacts {
+    grid-template-columns: minmax(0, 1fr);
   }
 
-  .container {
-    padding: 0 1rem;
+  .fact {
+    padding-inline: 0;
+    padding-block: var(--sf-space-5);
   }
 
-  .successTitle {
-    font-size: 1.5rem;
+  .fact + .fact {
+    border-inline-start: 0;
+    border-top: var(--sf-hairline);
   }
 
-  .checkCircle {
-    width: 76px;
-    height: 76px;
-  }
-
-  .checkSvg {
-    width: 44px;
-    height: 44px;
-  }
-
-  .orderNumberValue {
-    font-size: 1.15rem;
-    letter-spacing: 1px;
-  }
-
-  /* Touch-target sizing */
-  .btnCopyBanner {
-    padding: 0.6rem 0.95rem;
-    min-height: 40px;
-  }
-
-  .orderNumberRow {
+  .actions {
     flex-direction: column;
-    gap: 0.75rem;
+    align-items: stretch;
   }
 
-  .contentGrid {
-    grid-template-columns: 1fr;
-  }
-
-  .orderItem {
-    flex-direction: column;
-    align-items: flex-start;
-  }
-
-  .itemImage {
+  .action {
     width: 100%;
-    height: 120px;
   }
 
-  .itemPrice {
-    align-self: flex-end;
+  .continue {
+    align-self: center;
+    margin: var(--sf-space-3) 0 var(--sf-space-1);
+  }
+}
+
+@media (max-width: 480px) {
+  .item {
+    grid-template-columns: 56px minmax(0, 1fr);
   }
 
-  .notFoundActions {
+  .itemTotal {
+    grid-column: 2;
+    margin-top: var(--sf-space-2);
+    text-align: left;
+  }
+
+  /* The row is a grid item of the panel (justify-items: start): stretch it
+     across, so its buttons can run full width. */
+  .stateActions {
     flex-direction: column;
-    align-items: center;
+    justify-self: stretch;
   }
 
-  .deliveryBanner {
-    flex-direction: column;
-    text-align: center;
-    padding: 1.25rem;
+  .stateActions > * {
+    width: 100%;
+  }
+}
+
+/* The check is drawn at once; the tokens already collapse the duration, and
+   custom keyframes are switched off explicitly (DESIGN_SYSTEM §8). */
+@media (prefers-reduced-motion: reduce) {
+  .markCheck {
+    animation: none;
+    stroke-dashoffset: 0;
+  }
+}
+
+@media (forced-colors: active) {
+  .copyBubble {
+    border: 1px solid CanvasText;
+  }
+}
+
+/* Printing this page prints the invoice alone (Invoice.module.css): the
+   page's own sections give way. */
+@media print {
+  .page {
+    padding: 0;
+  }
+
+  .layout {
+    display: block;
+  }
+
+  .hero,
+  .facts,
+  .summary {
+    display: none;
   }
 }

@@ -1,0 +1,362 @@
+/* =============================================================================
+ * Invoice — prompts/DESIGN_SYSTEM.md §37.6
+ * =============================================================================
+ * A sheet of paper in both themes (so the light logo always sits on paper),
+ * and the page's print stylesheet: while an invoice is on the page, printing
+ * prints it alone, on A4, in ink, with no backgrounds.
+ *
+ * Tokens only. The sheet reads the fixed brand constants (--sf-brand-paper,
+ * --sf-brand-ink), never the mode-aware roles, which would turn it navy in
+ * dark mode. Its quieter text and its hairlines are ink mixed into paper with
+ * color-mix() (plain ink where color-mix() is not supported); in print every
+ * word is ink.
+ * ========================================================================== */
+
+/* On screen the section waits for "Print invoice" (the hidden attribute). */
+@media screen {
+  .invoice[hidden] {
+    display: none;
+  }
+}
+
+.sheet {
+  --invoice-ink: var(--sf-brand-ink);
+  --invoice-muted: var(--invoice-ink);
+  --invoice-rule: var(--invoice-ink);
+  padding: clamp(var(--sf-space-6), 5vw, var(--sf-space-12));
+  border: var(--sf-hairline);
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-brand-paper);
+  color: var(--invoice-ink);
+  font-family: var(--sf-font-sans);
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-normal);
+}
+
+@supports (color: color-mix(in srgb, currentColor, transparent)) {
+  .sheet {
+    --invoice-muted: color-mix(in srgb, var(--sf-brand-ink) 72%, var(--sf-brand-paper));
+    --invoice-rule: color-mix(in srgb, var(--sf-brand-ink) 20%, var(--sf-brand-paper));
+  }
+}
+
+/* ---- Head: the store on the left, "Invoice" and the order on the right --- */
+.head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--sf-space-6) var(--sf-space-10);
+  padding-bottom: var(--sf-space-6);
+  border-bottom: 1px solid var(--invoice-rule);
+}
+
+.store {
+  display: grid;
+  justify-items: start;
+  gap: 2px;
+  color: var(--invoice-muted);
+  font-style: normal;
+  overflow-wrap: anywhere;
+}
+
+/* 56px (the invoice minimum), with clear space under it. */
+.logo {
+  margin-bottom: var(--sf-space-4);
+}
+
+.storeName {
+  color: var(--invoice-ink);
+  font-weight: var(--sf-font-semibold);
+}
+
+.meta {
+  display: grid;
+  justify-items: end;
+  gap: var(--sf-space-3);
+  text-align: right;
+}
+
+.title {
+  margin: 0;
+  color: var(--invoice-ink);
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-md);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+}
+
+.facts,
+.payment {
+  display: grid;
+  gap: var(--sf-space-1);
+  margin: 0;
+}
+
+.fact {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--sf-space-3);
+}
+
+.fact dt {
+  color: var(--invoice-muted);
+}
+
+.fact dd {
+  margin: 0;
+  font-weight: var(--sf-font-medium);
+  font-variant-numeric: tabular-nums;
+  overflow-wrap: anywhere;
+}
+
+/* ---- Bill to, ship to ----------------------------------------------------- */
+.parties {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--sf-space-6);
+  padding-block: var(--sf-space-6);
+}
+
+.label {
+  margin: 0 0 var(--sf-space-2);
+  color: var(--invoice-muted);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-semibold);
+  line-height: var(--sf-leading-normal);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.lines {
+  display: grid;
+  gap: 2px;
+  margin: 0;
+}
+
+.lines p {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.lines .name {
+  font-weight: var(--sf-font-medium);
+}
+
+.phone {
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Items ------------------------------------------------------------------ */
+.table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.table th,
+.table td {
+  padding: var(--sf-space-3) var(--sf-space-2);
+  border-bottom: 1px solid var(--invoice-rule);
+  text-align: left;
+  vertical-align: top;
+}
+
+.table th:first-child,
+.table td:first-child {
+  padding-inline-start: 0;
+}
+
+.table th:last-child,
+.table td:last-child {
+  padding-inline-end: 0;
+}
+
+.table thead th {
+  padding-top: var(--sf-space-2);
+  border-bottom-color: var(--invoice-ink);
+  color: var(--invoice-muted);
+  font-size: var(--sf-text-2xs);
+  font-weight: var(--sf-font-semibold);
+  letter-spacing: var(--sf-tracking-eyebrow);
+  text-transform: uppercase;
+}
+
+.table tbody th {
+  font-weight: var(--sf-font-medium);
+  overflow-wrap: anywhere;
+}
+
+/* Figures line up in their columns; names keep their natural spacing. */
+.table .num {
+  text-align: right;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---- Totals ----------------------------------------------------------------- */
+.totals {
+  display: grid;
+  gap: var(--sf-space-2);
+  width: min(100%, 20rem);
+  margin: var(--sf-space-6) 0 0 auto;
+}
+
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--sf-space-4);
+}
+
+.row dt {
+  min-width: 0;
+  color: var(--invoice-muted);
+  overflow-wrap: anywhere;
+}
+
+.row dd {
+  margin: 0;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.rowTotal {
+  margin-top: var(--sf-space-1);
+  padding-top: var(--sf-space-3);
+  border-top: 1px solid var(--invoice-ink);
+}
+
+.rowTotal dt {
+  color: var(--invoice-ink);
+  font-weight: var(--sf-font-semibold);
+}
+
+.rowTotal dd {
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-lg);
+  font-variant-numeric: lining-nums tabular-nums;
+}
+
+.rowPaid {
+  padding-top: var(--sf-space-2);
+  border-top: 1px solid var(--invoice-rule);
+}
+
+.rowPaid dt {
+  color: var(--invoice-ink);
+  font-weight: var(--sf-font-medium);
+}
+
+.rowPaid dd {
+  font-weight: var(--sf-font-medium);
+}
+
+/* ---- Foot: the payment, the note -------------------------------------------- */
+.foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: var(--sf-space-4) var(--sf-space-8);
+  margin-top: var(--sf-space-8);
+  padding-top: var(--sf-space-6);
+  border-top: 1px solid var(--invoice-rule);
+}
+
+.payment .fact {
+  justify-content: flex-start;
+}
+
+.note {
+  margin: 0;
+  color: var(--invoice-muted);
+  font-size: var(--sf-text-xs);
+}
+
+/* ---- Narrow screens (the on-screen sheet only; print uses the A4 page) ---- */
+@media (max-width: 600px) {
+  .meta {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .fact {
+    justify-content: flex-start;
+  }
+}
+
+@media (max-width: 480px) {
+  .sheet {
+    font-size: 0.8125rem;
+  }
+
+  .parties {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .table th,
+  .table td {
+    padding-inline: var(--sf-space-1);
+  }
+
+  .table thead th {
+    letter-spacing: 0.04em;
+  }
+}
+
+/* ---- Print ------------------------------------------------------------------ */
+/* A named page, so these margins and the A4 size apply to the invoice alone
+   (printing any other page, or the admin, keeps the browser's defaults). */
+@page sf-invoice {
+  size: A4;
+  margin: 16mm 15mm 18mm;
+}
+
+@media print {
+  /* While an invoice is on the page, the rest of the app gives way: nothing
+     beside #root (portals, the loading screen), nothing in .App but the main
+     content (the header, footer and bottom bar), and no backgrounds. Scoped
+     with :has(), so printing any other page is unchanged; the admin
+     (body.admin-area) never matches. The body's background is written inline
+     by ThemeContext (navy-ink in dark mode), hence the one !important. */
+  :global(body:not(.admin-area)):has(.invoice) > :not(:global(#root)),
+  :global(body:not(.admin-area)):has(.invoice) :global(.App) > :not(:global(.main-content)) {
+    display: none;
+  }
+
+  :global(body:not(.admin-area)):has(.invoice) {
+    background: none !important;
+  }
+
+  :global(body:not(.admin-area)):has(.invoice) :global(.App),
+  :global(body:not(.admin-area)):has(.invoice) :global(.main-content) {
+    min-height: 0;
+    padding: 0;
+    background: none;
+  }
+
+  /* Printed whether or not "Print invoice" has revealed it. */
+  .invoice,
+  .invoice[hidden] {
+    display: block;
+  }
+
+  .sheet {
+    --invoice-muted: var(--invoice-ink);
+    page: sf-invoice;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: none;
+    font-size: 0.8125rem;
+  }
+
+  .head,
+  .parties,
+  .table tr,
+  .totals,
+  .foot {
+    break-inside: avoid;
+  }
+}

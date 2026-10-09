@@ -360,6 +360,7 @@ Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
 | `onDark` | boolean, optional | auto mode only: `true` when the logo sits on a dark surface whatever the theme (footer, scrim), `false` on a light one. |
 | `height` | number (px), default 40 | width is derived: 28 → 85, 40 → 121, 48 → 145, 56 → 169. |
 | `priority` | boolean, default `false` | `true` (the header logo only): `loading="eager"` + `fetchpriority="high"`. Otherwise `loading="lazy"`. |
+| `loading` | `"eager"` \| `"lazy"`, optional | overrides the loading the line above sets, without touching the fetch priority. Since Prompt 27 the order invoice passes `"eager"`: its logo sits in a section hidden until printing, and browsers do not load a lazy image for printing (§37.7). |
 | `className` | string | appended to the module class (`display: block; max-width: 100%; height: auto`). |
 | other props | — | passed to the `<img>` (e.g. `style`, `data-*`). |
 
@@ -2380,3 +2381,118 @@ Everything else (ink, secondary and muted text on the page, surface and sand; th
 - **Busy, not disabled:** the primary stays focusable while an order is placed.
 - **A press counts only once its step is on screen**, so a double-click can never skip the review.
 - **The summary opens itself on the Review step on phones**, where its figures are what the shopper is confirming.
+
+## 37. Order confirmation and invoice
+
+Written by Prompt 27. Files: `src/pages/OrderConfirmation/OrderConfirmation.js` + `.module.css` (`/order-confirmation/:orderNumber`, where checkout lands) and `src/pages/OrderConfirmation/Invoice.js` + `.module.css` (the printable invoice and the page's print stylesheet). No new tokens and no new primitives: the badges, card, panel, buttons, skeletons, eyebrows and display type are §16's; the summary rows and thumbnails follow Order History's (§34.4); the copy button is Order History's (§34.2). `BrandLogo` gained an optional `loading` prop (§10). The read is the old page's, verbatim: `orders.getByOrderNumber(<the URL's number>)`, normalised as `response?.data || response?.order || response`, with its three outcomes (loading; a failed read, which offers a retry and never says "not found"; no order). So are the derived figures and their fallbacks (`taxAmount ?? tax ?? 0`, `shippingAmount ?? shipping ?? 0`, `discountAmount ?? 0`, `amountPayable ?? total − storeCreditUsed`) and the payment-status switch's cases (plus `voided`).
+
+### 37.1 Structure
+
+- One column on `--sf-container-narrow` (720px plus the gutter), `clamp(32px, 6vw, 64px)` above, `--sf-section-y` below, `clamp(32px, 5vw, 48px)` between blocks: the thank-you, the facts row, the summary card and, once revealed, the invoice.
+- **Headings:** the `h1` is the thank-you (or the state's title); the summary card is a region named by its `h2` "Order summary" (`.sf-display-sm`), with the eyebrow `h3`s "Delivery address" and "Price details"; the invoice is a region named by its `h2` "Invoice". The facts are a `<dl>`.
+
+### 37.2 The thank-you
+
+- Centred. A 64px mark: a 1px ink circle (`currentColor` = `--sf-color-text`) and a 1.5px check drawn by one stroke (`pathLength="1"`, `stroke-dashoffset` 1 → 0 over `--sf-duration-slow` after `--sf-duration-fast`, `--sf-ease-out`). Once the animation ends the path takes `.markDrawn` (no animation, drawn): printing hides the thank-you and shows it again, which would otherwise restart the stroke.
+- The eyebrow, the `h1` (`.sf-display-lg`) "Thank you, *Bappi*." with the delivery address's first name as the accent italic (caramel; "Thank you." without a first name), then one line (17px secondary, 46ch) that says only what the status fields say (37.8).
+- **The order number:** a hairline chip (radius sm): the label "Order number" (12px eyebrow type, muted) over the number (17px, 500, 0.04em, tabular), and Order History's 44px borderless copy button (`aria-label` "Copy order number ORD-…"; muted glyph, ink on hover, a check in `--sf-color-success` while "Copied" shows). The note "Copied" (or "Couldn't copy") is a small ink tooltip over the button (`--sf-color-primary` with primary-contrast 12px text, radius md, `--sf-shadow-sm`; a `CanvasText` border in forced colours) inside a `role="status"` region that stays in the page; it goes after 2 seconds, and a second copy re-announces (a new key). The copy goes through `copyToClipboard`, so a refused copy says so.
+- "Placed on <time>June 12, 2026</time>" (14px muted; `formatDate`, en-US like every storefront date).
+
+### 37.3 The facts row
+
+- A `<dl>` between hairlines (`border-block`), three columns from 601px with hairlines between them (24px block padding, 20px inline, the outer ones flush), stacked up to 600px with hairlines between. Each: the eyebrow `<dt>` and the value (15px ink).
+- **Delivery** (37.8's delivery fact), with "Tracking number …" (14px muted, tabular) under it for a shipped order that has one.
+- **Payment:** the method by checkout's names (Cash on delivery, Credit or debit card, UPI, Net banking, Wallet, Store credit; any other value upper-cased as before; "Not recorded" without one), then the status as an `.sf-badge`: Paid `--success`; Failed `--error`; Refunded, Partially refunded and Not charged (voided, or never collected on a closed order) quiet sand with muted text (`.badgeQuiet`, Order History's); Pay on delivery (cash on delivery, pending, the order still able to arrive) `--info`; Pending (any other pending payment) `--warning`.
+- **Help:** "Questions? Contact us", the link (`.sf-btn--link` at the text's size, its 44px hit area) to `/support?order=<number>` (Prompt 28 prefills the form from `?order=`).
+
+### 37.4 The summary card
+
+- `.sf-card.sf-card--hairline`, padding `clamp(20px, 4vw, 32px)`, 24px between parts: the head (`h2` and "2 items", 14px muted), the items, the details, the actions.
+- **Items:** hairline rows: the 56px 4:5 thumbnail (sand, a hairline frame, `alt=""` since the name is beside it, lazy, `PLACEHOLDER_IMG` + `onImageError`), the name (`item.name || item.productName`, Playfair 15px), the variant when recorded apart (`variantName`, 13px muted), "Qty: 2", and the line total on the right (price × quantity, 15px 500, tabular, "Line total" for screen readers); up to 480px the line total moves under the quantity.
+- **Details:** "Delivery address" (`normalizeOrderAddress`; the name in ink 500, the lines in 14px secondary, "Phone: …"; "Shipping address not available" without one) and "Price details" (a `<dl>`: Subtotal; "Discount (CODE)" as −₹ when above 0; Shipping or "Free"; Tax; Total under a hairline, the figure in Playfair `--sf-text-lg` with lining tabular figures; with store credit, "Store credit" −₹ and the last row named by Order History's rule: "Amount due" while the payment is pending, none once voided or failed, else "Amount paid"). Side by side from 601px.
+- **Actions** under a hairline: "Track order" (`.sf-btn--primary`, a link to `/orders`), "Print invoice" (`.sf-btn--ghost`, `aria-controls` the invoice), and "Continue shopping" at the end (`.sf-btn--link` to `/products`). Up to 600px the two buttons run full width with the link centred under them.
+
+### 37.5 States
+
+| State | When | What shows |
+|---|---|---|
+| Loading | every read (arrival, Try again) | a visually hidden `h1` "Loading your order", then placeholders in the page's own line boxes (the mark, eyebrow, title, line and chip; three facts; the card's heading, two item rows and the two detail blocks), `aria-hidden`, in an `aria-busy` wrapper |
+| Error | the read rejects | a sand `.sf-panel`: the `h1` "We couldn't load your order." (`.sf-display-sm`), "Something went wrong while loading order ORD-…. Please check your connection and try again.", a primary "Try again" (the same read) and a ghost "Order history" (`/orders`) |
+| Not found | no order in the answer | the same panel: "We couldn't find this order.", "Order ORD-… may have been placed in a different session.", a primary "Go to home" (`/`) and a ghost "Order history" |
+| Loaded | an order | 37.1 |
+
+Up to 480px the panels' buttons run full width (their row stretches across the panel's grid).
+
+### 37.6 The invoice
+
+- **Always in the page, hidden on screen until "Print invoice":** the page renders `Invoice` once the order is in, inside a `<section hidden>` named by its `h2`. Pressing "Print invoice" removes `hidden`, waits for the invoice's logo to load (at most 3 seconds; the store's name is printed beside it anyway), then calls `window.print()` on the next frame; the first time, the page's status line says "Your invoice is below the order summary." It stays open afterwards (a second press prints again, unannounced). Because the print stylesheet prints the invoice whether or not it was revealed, the browser's own Print (Ctrl+P) prints it too.
+- **A sheet of paper in both themes:** `--sf-brand-paper` with `--sf-brand-ink` text, a `--sf-hairline` frame, radius sm, padding `clamp(24px, 5vw, 48px)`. It reads only the fixed brand constants (the mode-aware roles would turn it navy in dark mode, under a logo that must sit on paper). Its quieter text (labels, the store's lines, the note) is `color-mix(in srgb, ink 72%, paper)` (6.64 : 1), its hairlines `color-mix(in srgb, ink 20%, paper)`, both inside `@supports` (plain ink without `color-mix()`); the rules under the table head and over the total are full ink.
+- **Content:** the store (an `<address>`: `BrandLogo variant="light" height={56} loading="eager"`, then `APP_NAME` in 600, `SUPPORT_ADDRESS`, `SUPPORT_EMAIL`, `SUPPORT_PHONE` from `constants.js`); "Invoice" (Playfair, display-md) with "Order number" and "Order date" (a `<dl>`, right-aligned from 601px); "Bill to" (the order's `billingAddress`, else its delivery address) and "Ship to" (`normalizeOrderAddress`), 11px uppercase labels; the items `<table>`, named by a visually hidden caption "Items in order ORD-…": `<th scope="col">` Item, Variant (only when an item records `variantName`; checkout writes "Name - Variant" as the name), Qty, Unit price, Line total, and one `<th scope="row">` per item; the totals (a `<dl>` at most 20rem wide, right-aligned) with the page's own figures, passed in, so the two cannot disagree; the payment method and status (the badge's words); "This is a system-generated invoice." (12px). No invoice number, GSTIN or registration number: none is known.
+- **The tax row:** "Tax (18% GST)" (checkout's format) when `settings.store.taxRate` (the invoice's one read, `settings.get()`) accounts for the order's tax by checkout's formula (`round((subtotal − discount) × rate / 100)` equals `taxAmount`); otherwise, and when settings cannot be read, plain "Tax". An order does not record the rate it was taxed at.
+
+### 37.7 Printing
+
+- **Scope:** `Invoice.module.css` holds the page's print rules, scoped with `:has()` to a page that has an invoice on it: `body:not(.admin-area):has(.invoice)` hides everything beside `#root` (portals, the loading screen) and everything in `.App` but `.main-content` (the header, footer and bottom bar), and drops `.App` / `.main-content`'s min-height, padding and backgrounds. The body's background is written inline by `ThemeContext` (navy-ink in dark mode), hence the one `!important` (`background: none`). Printing any other storefront page, or any admin page, is unchanged; a browser without `:has()` prints the whole page (the header still hides itself).
+- **The page's own sections** (the thank-you, the facts, the card) are `display: none` in print (`OrderConfirmation.module.css`).
+- **The page box:** `.sheet { page: sf-invoice }` and `@page sf-invoice { size: A4; margin: 16mm 15mm 18mm }`: a named page, so the A4 size and margins apply to the invoice alone (admin pages still print at the browser's default size; checked).
+- **The sheet in print:** no padding, frame or background; every word in `--sf-brand-ink` (the muted mix becomes ink); 13px text; `break-inside: avoid` on the head, the parties, each table row, the totals and the foot; the table head repeats on every page. A short order prints on one A4 page (measured in Chromium: all 11 seeded orders, in both themes and by both paths, and both orders placed through checkout); a 30-line order took three, with the head repeated and no row split.
+- **Pure black is not needed:** the brand ink (`#1c1a17`) prints as black, so the print rules use no literal.
+- **Two Chromium facts the code works around:** a lazy image is not loaded for printing (hence the logo's `loading="eager"`: in dark mode the header shows the white logo, so the light one is not otherwise cached), and an in-flow table caption under a named page forces a page break between the caption and the table (hence the visually hidden caption).
+
+### 37.8 What the lines say (from the status fields)
+
+The stage is read in Order History's `deriveOrderStatus` order: returned (fulfilment) › cancelled (fulfilment) › failed (payment) › refunded (payment) › delivered › shipped › placed.
+
+| Stage | Eyebrow | Mark | Line under the thank-you | Delivery fact |
+|---|---|---|---|---|
+| placed, cash on delivery to collect | Order confirmed | ✓ | Your order is placed. Pay when it arrives. | We'll email tracking details when your order ships. |
+| placed, paid | Order confirmed | ✓ | Your payment was received and your order is being prepared. | (the same) |
+| placed, another pending payment | Order confirmed | ✓ | Your order is placed. Its payment is still pending. | (the same) |
+| shipped | Order confirmed | ✓ | Your order is on its way. (+ "Pay when it arrives." for cash on delivery to collect) | Your order has shipped. (+ its tracking number) |
+| delivered | Order confirmed | ✓ | Your order was delivered. | Delivered on <`deliveredAt`, else `updatedAt`>. |
+| cancelled | Order cancelled | — | This order was cancelled on <`cancelledAt`>. (or "This order was cancelled.") | This order was not shipped. (or the delivered/shipped fact when the fields say so) |
+| returned | Order returned | — | This order was returned. | (the same rule) |
+| failed | Payment failed | — | The payment for this order didn't go through. | (the same rule) |
+| refunded | Order refunded | — | The payment for this order was refunded. | (the same rule) |
+
+No estimated date anywhere: an order does not store its delivery method, so "placed + 5 days" was invented and is gone.
+
+### 37.9 Focus and announcements
+
+| After | Focus moves to |
+|---|---|
+| Arriving (the read settles) | the `h1` (the thank-you, or the state's title), a reading position without a ring, only when focus is nowhere (`<body>`); it is never taken from where the shopper has put it |
+| Try again | the loading `h1` "Loading your order" while the read runs; then the thank-you, or the new "Try again" if it failed again |
+| Copy, Print invoice | stays on the button; the status regions speak ("Copied" / "Couldn't copy"; "Your invoice is below the order summary." the first time) |
+
+Keyboard order from the `h1`: Copy order number › Contact us › Track order › Print invoice › Continue shopping, each with its primitive's ring.
+
+### 37.10 Motion
+
+| What | Values | Reduced motion |
+|---|---|---|
+| The check | one stroke over `--sf-duration-slow` after `--sf-duration-fast` (`--sf-ease-out`), once per visit | drawn from the first frame (the keyframes are switched off) |
+| The thank-you, the facts, the card | `Reveal` (fade and 20px rise over 0.9s), staggered 0 / 90 / 180ms | fade only |
+| The invoice | none (it appears as the print dialog opens) | — |
+| Buttons, links | the primitives' colour changes | collapse |
+
+### 37.11 New contrast pairs
+
+| Pairing | Light | Dark | Min |
+|---|---|---|---|
+| Confirmation: pending badge (warning on warning-bg) on the page tone | 4.62 ✓ | 6.79 ✓ | 4.5:1 |
+| Confirmation: quiet badge (muted on sand) on the page tone | 5.15 ✓ | 5.81 ✓ | 4.5:1 |
+| Invoice: text (brand ink) on the paper sheet (both modes) | 16.25 ✓ | 16.25 ✓ | 4.5:1 |
+| Invoice: labels and store lines (ink 72% into paper) on the sheet (both modes) | 6.64 ✓ | 6.64 ✓ | 4.5:1 |
+| Invoice: hairline (ink 20% into paper) vs the paper sheet | 1.52 | 1.52 | info |
+| Invoice: the paper sheet vs the page | 1.00 | 17.22 | info |
+
+Everything else is in §14, §16.8, §34.10 and §36.12: ink, secondary and muted text on the page and the surface; the success, error and info badges (the COD note's and the order alert's pairs on the page tone); the copy note (primary-contrast on primary); the check glyph in the success tone; the focus ring; the primary, ghost and link buttons. In print everything is ink on white paper.
+
+### 37.12 Decisions to keep
+
+- **The read and the figures are the old page's**; a 404 from the Laravel API is still a failed read (the error panel), as before.
+- **No invented date and no claim beyond the status fields:** the line, the delivery fact, the eyebrow and the mark all follow the stage (37.8).
+- **The invoice is always in the page** (hidden on screen until "Print invoice"), so Ctrl+P prints the invoice, never the screen layout; on screen it is paper in both themes; in print it is ink on paper.
+- **The print rules are scoped by `:has(.invoice)` and a named page,** so no other page, and never the admin, prints differently.
+- **The invoice's figures come from the page,** so the summary and the invoice can never disagree; its tax label names a rate only when the rate adds up to the order's tax.

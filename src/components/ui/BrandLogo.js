@@ -30,12 +30,17 @@ const useIsDarkMode = () => {
  * height   rendered height in px (default 40; minimum 28, see DESIGN_SYSTEM.md).
  * priority eager-load with fetchpriority="high" (the header logo); otherwise
  *          the image is lazy-loaded.
+ * loading  "eager" | "lazy", overriding the default above without touching
+ *          the fetch priority: a logo in a hidden section that must be ready
+ *          to print (the order invoice) passes "eager", since browsers do not
+ *          load a lazy image for printing.
  */
 const BrandLogo = ({
   variant = "auto",
   onDark,
   height = 40,
   priority = false,
+  loading,
   className,
   ...rest
 }) => {
@@ -51,7 +56,7 @@ const BrandLogo = ({
       width={Math.round(height * LOGO_RATIO)}
       height={height}
       decoding="async"
-      loading={priority ? "eager" : "lazy"}
+      loading={loading || (priority ? "eager" : "lazy")}
       // React 18.2 does not know the camelCase prop; the lowercase attribute
       // passes straight through to the DOM.
       fetchpriority={priority ? "high" : undefined}
