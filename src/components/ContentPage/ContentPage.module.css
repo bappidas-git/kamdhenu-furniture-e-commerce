@@ -70,9 +70,9 @@
   text-decoration-color: var(--sf-color-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
-  transition: text-decoration-thickness var(--sf-duration-fast) var(--sf-ease-out);
 }
 
+/* The underline thickens on hover, at once (as in .sf-prose). */
 @media (hover: hover) {
   .contact a:hover {
     text-decoration-thickness: 2px;

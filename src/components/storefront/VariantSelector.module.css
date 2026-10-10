@@ -149,7 +149,6 @@
   border: 1px solid var(--sf-color-border-strong);
   border-radius: var(--sf-radius-pill);
   background-color: var(--sf-color-sand);
-  transition: box-shadow var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 /* Chosen: a 2px ink ring, 2px clear of the circle. */

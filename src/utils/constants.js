@@ -285,40 +285,6 @@ export const SUPPORT_CATEGORIES = [
   { value: "other", label: "Something else" },
 ];
 
-// Framer Motion animation variants
-export const ANIMATION_VARIANTS = {
-  fadeIn: {
-    initial: { opacity: 0 },
-    animate: { opacity: 1 },
-    exit: { opacity: 0 },
-  },
-  slideUp: {
-    initial: { y: 50, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: -50, opacity: 0 },
-  },
-  slideDown: {
-    initial: { y: -50, opacity: 0 },
-    animate: { y: 0, opacity: 1 },
-    exit: { y: 50, opacity: 0 },
-  },
-  slideLeft: {
-    initial: { x: 50, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: -50, opacity: 0 },
-  },
-  slideRight: {
-    initial: { x: -50, opacity: 0 },
-    animate: { x: 0, opacity: 1 },
-    exit: { x: 50, opacity: 0 },
-  },
-  scale: {
-    initial: { scale: 0.8, opacity: 0 },
-    animate: { scale: 1, opacity: 1 },
-    exit: { scale: 0.8, opacity: 0 },
-  },
-};
-
 // Breakpoints
 export const BREAKPOINTS = {
   XS: 480,

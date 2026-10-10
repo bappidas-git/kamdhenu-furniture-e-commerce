@@ -4,6 +4,7 @@ import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import ProductCard, { ProductCardSkeleton } from "../storefront/ProductCard";
 import BrandLogo from "../ui/BrandLogo";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { overlayPanelMotion } from "../ui/motionPresets";
 import { TOKENS } from "../../theme/tokens";
 import {
   DEBOUNCE_MS,
@@ -54,12 +55,12 @@ import styles from "./SearchModal.module.css";
 // to the control that opened the overlay. A route change closes it.
 // =============================================================================
 
-const { duration, easeOut, easeInOut } = TOKENS.motion;
-// Results enter 40ms apart; from the eighth on they arrive together.
-const RESULT_STAGGER = 0.04;
+const { duration, easeOut, riseDistance, staggerFast } = TOKENS.motion;
+// Results enter --sf-stagger-fast (40ms) apart, rising --sf-rise-distance
+// (8px) as they fade in; from the eighth on they arrive together.
+const RESULT_STAGGER = staggerFast;
 const STAGGER_CAP = 8;
-// How far a result rises as it fades in (px).
-const RESULT_RISE = 8;
+const RESULT_RISE = riseDistance;
 // Card boxes held while the catalogue loads or the first search settles:
 // two rows at three across, three rows at two.
 const SKELETON_COUNT = 6;
@@ -418,9 +419,7 @@ const SearchModal = ({ open, onClose }) => {
           aria-modal="true"
           aria-label="Product search"
           tabIndex={-1}
-          initial={reduceMotion ? false : { opacity: 0 }}
-          animate={{ opacity: 1, transition: { duration: reduceMotion ? 0 : duration.base, ease: easeOut } }}
-          exit={{ opacity: 0, transition: { duration: reduceMotion ? 0 : duration.base, ease: easeInOut } }}
+          {...overlayPanelMotion("dialog", reduceMotion)}
         >
           <span className={cx(styles.progress, busy && styles.progressActive)} aria-hidden="true" />
 

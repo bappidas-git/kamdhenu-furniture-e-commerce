@@ -163,8 +163,8 @@ const AddToCartBar = ({
           "Sold out"
         ) : added ? (
           <>
-            Added
-            <svg className={styles.check} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+            <span className="sf-fade-in">Added</span>
+            <svg className={cx("sf-fade-in", styles.check)} viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
               <path d="M5 12.5l4.5 4.5L19 7.5" />
             </svg>
           </>

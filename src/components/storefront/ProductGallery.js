@@ -7,10 +7,10 @@ import styles from "./ProductGallery.module.css";
 // ProductGallery — trustworthy product media (Prompt 16)
 // =============================================================================
 // One 4:5 frame with a hairline edge and every photograph stacked inside it, so
-// changing the view is a crossfade (--sf-duration) rather than a reload. A strip
-// of 56px thumbnails sits beside the frame from 769px (a vertical hairline
-// strip) and under it below that (a horizontal row). The strip hides when the
-// product has a single image.
+// changing the view is a crossfade (--sf-duration-slow) rather than a reload.
+// A strip of 56px thumbnails sits beside the frame from 769px (a vertical
+// hairline strip) and under it below that (a horizontal row). The strip hides
+// when the product has a single image.
 //
 // Honest media only: the one overlay is a quiet "Sale" chip, shown when the
 // caller passes a real discount (> 0); no percentage badge, no dots.

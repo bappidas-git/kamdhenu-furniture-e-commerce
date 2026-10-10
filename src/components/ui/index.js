@@ -6,6 +6,15 @@ export { default as Reveal, staggerDelay } from "./Reveal";
 export { default as SectionHeading } from "./SectionHeading";
 export { default as renderAccent, stripAccent } from "./renderAccent";
 export { default as Marquee } from "./Marquee";
+export { default as CountDisc } from "./CountDisc";
+export {
+  OVERLAY_ENTER,
+  OVERLAY_EXIT,
+  cssEase,
+  overlayBackdropMotion,
+  overlayPanelMotion,
+  prefersReducedMotion,
+} from "./motionPresets";
 export {
   default as useFocusTrap,
   getFocusableElements,

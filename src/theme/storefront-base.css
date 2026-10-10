@@ -196,10 +196,11 @@
   cursor: pointer;
   user-select: none;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--sf-duration) var(--sf-ease-out),
-    border-color var(--sf-duration) var(--sf-ease-out), color var(--sf-duration) var(--sf-ease-out),
-    text-decoration-color var(--sf-duration) var(--sf-ease-out),
-    transform var(--sf-duration-fast) var(--sf-ease-out);
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out),
+    color var(--sf-duration-fast) var(--sf-ease-out),
+    text-decoration-color var(--sf-duration-fast) var(--sf-ease-out),
+    transform var(--sf-duration-press) var(--sf-ease-out);
 }
 
 @media (hover: hover) {
@@ -210,7 +211,7 @@
   }
 }
 
-/* Press: a quiet 0.99 scale; never a lift. */
+/* Press: a quiet 0.99 scale over --sf-duration-press; never a lift. */
 :where(body:not(.admin-area)) .sf-btn:active:where(:not(:disabled, [aria-disabled="true"])) {
   transform: scale(0.99);
 }
@@ -366,8 +367,8 @@
   font-size: 0.9375rem;
   line-height: var(--sf-leading-normal);
   appearance: none;
-  transition: border-color var(--sf-duration-fast) var(--sf-ease-out),
-    box-shadow var(--sf-duration-fast) var(--sf-ease-out);
+  /* The border colour eases; the focus ring (a box-shadow) arrives at once. */
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 :where(body:not(.admin-area)) .sf-textarea {
   height: auto;
@@ -459,8 +460,8 @@
 :where(body:not(.admin-area)) .sf-radio input { border-radius: 50%; }
 :where(body:not(.admin-area)) :is(.sf-check, .sf-radio) input::before {
   content: "";
-  transform: scale(0);
-  transition: transform var(--sf-duration-fast) var(--sf-ease-out);
+  opacity: 0;
+  transition: opacity var(--sf-duration-fast) var(--sf-ease-out);
 }
 /* The check mark is a clipped square in currentColor (accent-contrast). */
 :where(body:not(.admin-area)) .sf-check input::before {
@@ -482,7 +483,7 @@
 }
 :where(body:not(.admin-area)) .sf-radio input:checked { border-color: var(--sf-color-accent); }
 :where(body:not(.admin-area)) :is(.sf-check, .sf-radio) input:is(:checked, :indeterminate)::before {
-  transform: scale(1);
+  opacity: 1;
 }
 
 /* Switch: a pill that turns ink when on (<input type="checkbox" role="switch">). */
@@ -576,8 +577,9 @@
   white-space: nowrap;
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
-  transition: background-color var(--sf-duration) var(--sf-ease-out),
-    border-color var(--sf-duration) var(--sf-ease-out), color var(--sf-duration) var(--sf-ease-out);
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    border-color var(--sf-duration-fast) var(--sf-ease-out),
+    color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 @media (hover: hover) {
@@ -657,7 +659,8 @@
   text-decoration: none;
   white-space: nowrap;
   cursor: pointer;
-  transition: color var(--sf-duration) var(--sf-ease-out), box-shadow var(--sf-duration) var(--sf-ease-out);
+  /* The colour eases; the selected underline (a box-shadow) arrives at once. */
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 @media (hover: hover) {
@@ -708,6 +711,21 @@
 
 @media (prefers-reduced-motion: reduce) {
   :where(body:not(.admin-area)) .sf-skeleton::after { animation: none; opacity: 0; }
+}
+
+/* Micro-feedback: what appears in answer to an action ("Added" and its
+   check) fades in over --sf-duration-fast, never scales. Put the class on the
+   element that mounts with the new state. Static under reduced motion. */
+:where(body:not(.admin-area)) .sf-fade-in {
+  animation: sf-fade-in var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+@keyframes sf-fade-in {
+  from { opacity: 0; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(body:not(.admin-area)) .sf-fade-in { animation: none; }
 }
 
 /* 9. ACCESSIBILITY ------------------------------------------------------------- */

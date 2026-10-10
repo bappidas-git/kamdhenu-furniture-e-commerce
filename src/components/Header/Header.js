@@ -9,12 +9,13 @@ import apiService from "../../services/api";
 import { getCategoryScopeIds, resolveCategory } from "../../utils/categories";
 import { SUPPORT_PHONE, FREE_SHIPPING_THRESHOLD } from "../../utils/constants";
 import { formatCurrency } from "../../utils/helpers";
-import { BrandLogo } from "../ui";
+import { TOKENS } from "../../theme/tokens";
+import { BrandLogo, CountDisc, cssEase } from "../ui";
 import CartDrawer from "../CartDrawer/CartDrawer";
 import SidebarMenu from "../SidebarMenu/SidebarMenu";
 import AuthModal from "../AuthModal/AuthModal";
 import SearchModal from "../SearchModal/SearchModal";
-import { Avatar, Divider, Menu, MenuItem } from "@mui/material";
+import { Avatar, Divider, Fade, Menu, MenuItem } from "@mui/material";
 import {
   DarkModeOutlined,
   FavoriteBorderOutlined,
@@ -52,9 +53,13 @@ import styles from "./Header.module.css";
 
 const COMPACT_AFTER = 80; // px of scroll before the header compacts
 
+// The account menu fades (no grow-and-scale): in over --sf-duration with
+// --sf-ease-out, out over --sf-duration-exit with --sf-ease-in-out.
+const MENU_DURATION = { enter: TOKENS.motion.durationMs.base, exit: TOKENS.motion.durationMs.exit };
+const MENU_EASING = { enter: cssEase(TOKENS.motion.easeOut), exit: cssEase(TOKENS.motion.easeInOut) };
+
 const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, "")}`;
 const initialOf = (user) => (user?.firstName || user?.name || "U").charAt(0).toUpperCase();
-const countText = (count) => (count > 99 ? "99+" : String(count));
 const countLabel = (label, count) =>
   count > 0 ? `${label}, ${count} ${count === 1 ? "piece" : "pieces"}` : `${label}, empty`;
 
@@ -320,11 +325,7 @@ const Header = () => {
               >
                 <span className={styles.actionIcon}>
                   <FavoriteBorderOutlined />
-                  {wishlistCount > 0 && (
-                    <span className={`sf-count ${styles.count}`} aria-hidden="true">
-                      {countText(wishlistCount)}
-                    </span>
-                  )}
+                  <CountDisc count={wishlistCount} className={styles.count} />
                 </span>
                 <span className={styles.actionLabel} aria-hidden="true">
                   Wishlist
@@ -339,11 +340,7 @@ const Header = () => {
               >
                 <span className={styles.actionIcon}>
                   <ShoppingBagOutlined />
-                  {cartCount > 0 && (
-                    <span className={`sf-count ${styles.count}`} aria-hidden="true">
-                      {countText(cartCount)}
-                    </span>
-                  )}
+                  <CountDisc count={cartCount} className={styles.count} />
                 </span>
                 <span className={styles.actionLabel} aria-hidden="true">
                   Cart
@@ -372,6 +369,9 @@ const Header = () => {
         PaperProps={{ className: styles.accountMenu, sx: { minWidth: 248 } }}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
+        TransitionComponent={Fade}
+        transitionDuration={MENU_DURATION}
+        TransitionProps={{ easing: MENU_EASING }}
       >
         {isAuthenticated
           ? [

@@ -42,8 +42,10 @@ const iconButtonTouchOverrides = {
 // (adminTheme.js), so none of this reaches it.
 // ---------------------------------------------------------------------------
 const sf = (token) => `var(--sf-${token})`;
+// Hover, focus and selection colours change over --sf-duration-fast, the
+// press over --sf-duration-press (DESIGN_SYSTEM.md §8).
 const transitionOf = (...props) =>
-  props.map((prop) => `${prop} ${sf("duration")} ${sf("ease-out")}`).join(", ");
+  props.map((prop) => `${prop} ${sf("duration-fast")} ${sf("ease-out")}`).join(", ");
 
 // The ripple is off (colour-only feedback), so keyboard focus gets the ring.
 const focusRing = {
@@ -80,7 +82,7 @@ const storefrontComponents = {
         fontFamily: sf("font-sans"),
         fontSize: sf("text-sm"),
         lineHeight: sf("leading-tight"),
-        transition: `${transitionOf("background-color", "border-color", "color", "text-decoration-color")}, transform ${sf("duration-fast")} ${sf("ease-out")}`,
+        transition: `${transitionOf("background-color", "border-color", "color", "text-decoration-color")}, transform ${sf("duration-press")} ${sf("ease-out")}`,
         "&:active": { transform: "scale(0.99)" },
         // Repeated here: disableElevation clears the focus box-shadow.
         "&.Mui-focusVisible": focusRing,
@@ -148,6 +150,13 @@ const storefrontComponents = {
         },
       }),
       ...iconButtonTouchOverrides,
+    },
+  },
+  // Icons recolour with their control over the same --sf-duration-fast, and
+  // collapse with it under reduced motion (MUI's own is a 200ms fill).
+  MuiSvgIcon: {
+    styleOverrides: {
+      root: { transition: transitionOf("fill") },
     },
   },
   // .sf-count: a small ink disc with paper digits, whatever the color prop.
@@ -230,7 +239,7 @@ const storefrontComponents = {
         borderRadius: sf("radius-sm"),
         backgroundColor: sf("color-surface"),
         fontFamily: sf("font-sans"),
-        transition: transitionOf("box-shadow"),
+        // No transition: the focus ring (a box-shadow) arrives at once.
         "& .MuiOutlinedInput-notchedOutline": { borderColor: sf("color-border-strong") },
         "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: sf("color-text-muted") },
         "&.Mui-focused": { boxShadow: sf("shadow-focus") },

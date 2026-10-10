@@ -12,8 +12,9 @@ import { APP_NAME } from "../../utils/constants";
 import { getDepartmentFeature } from "../../content/navigationContent";
 import { groupCategoryTree } from "../Header/groupCategoryTree";
 import BrandLogo from "../ui/BrandLogo";
+import CountDisc from "../ui/CountDisc";
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
-import { TOKENS } from "../../theme/tokens";
 import styles from "./SidebarMenu.module.css";
 
 // =============================================================================
@@ -44,12 +45,9 @@ import styles from "./SidebarMenu.module.css";
 // when the route changes.
 // =============================================================================
 
-const { duration, easeOut, easeInOut } = TOKENS.motion;
-
 const cx = (...names) => names.filter(Boolean).join(" ");
 const listingPath = (category) => `/products?category=${categoryParam(category)}`;
 const toList = (data) => (Array.isArray(data) ? data : (data && data.data) || []);
-const countText = (count) => (count > 99 ? "99+" : String(count));
 
 const initialOf = (user) =>
   (user?.firstName || user?.name || user?.email || "U").trim().charAt(0).toUpperCase() || "U";
@@ -176,18 +174,6 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
   const loadingDepartments = categories === null && !failed;
   const departmentsFailed = categories === null && failed;
 
-  const panelMotion = reduceMotion
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-      }
-    : {
-        initial: { x: "-100%" },
-        animate: { x: 0 },
-        exit: { x: "-100%", transition: { duration: duration.base, ease: easeInOut } },
-      };
-
   return (
     <AnimatePresence>
       {open && (
@@ -196,10 +182,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
             className={styles.backdrop}
             aria-hidden="true"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
-            transition={{ duration: duration.slow, ease: easeOut }}
+            {...overlayBackdropMotion}
           />
           <motion.div
             ref={panelRef}
@@ -208,8 +191,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
             aria-modal="true"
             aria-label="Menu"
             tabIndex={-1}
-            transition={{ duration: duration.slow, ease: easeOut }}
-            {...panelMotion}
+            {...overlayPanelMotion("left", reduceMotion)}
           >
             <div className={styles.top}>
               <BrandLogo height={28} className={styles.logo} />
@@ -403,11 +385,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
                         }
                       >
                         <span>My wishlist</span>
-                        {wishlistCount > 0 && (
-                          <span className="sf-count" aria-hidden="true">
-                            {countText(wishlistCount)}
-                          </span>
-                        )}
+                        <CountDisc count={wishlistCount} />
                       </Link>
                     </li>
                     {user && (

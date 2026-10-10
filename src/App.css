@@ -21,7 +21,7 @@ body {
   flex-direction: column;
   position: relative;
   background-color: var(--sf-color-bg);
-  transition: background-color 0.3s ease;
+  transition: background-color var(--sf-duration) var(--sf-ease-in-out);
 }
 
 body.dark .App {
@@ -37,7 +37,7 @@ body.dark .App {
   padding-bottom: 80px;
   min-height: calc(100vh - 70px);
   background-color: var(--sf-color-bg);
-  transition: background-color 0.3s ease;
+  transition: background-color var(--sf-duration) var(--sf-ease-in-out);
 }
 
 body.dark .main-content {
@@ -291,6 +291,12 @@ body.admin-area.dark .swal2-html-container {
 body.light:not(.admin-area) .swal2-container,
 body.dark:not(.admin-area) .swal2-container {
   --swal2-backdrop: var(--sf-color-overlay);
+  --swal2-backdrop-transition: background-color var(--sf-duration) var(--sf-ease-out);
+}
+
+body.light:not(.admin-area) .swal2-container.swal2-backdrop-hide,
+body.dark:not(.admin-area) .swal2-container.swal2-backdrop-hide {
+  --swal2-backdrop-transition: background-color var(--sf-duration-exit) var(--sf-ease-in-out);
 }
 
 /* Popup: surface, ink, hairline, radius md. Confirm = ink, cancel = ghost. */
@@ -309,6 +315,8 @@ body.dark:not(.admin-area) .swal2-popup {
   --swal2-cancel-button-box-shadow: inset 0 0 0 1px var(--sf-color-primary);
   --swal2-action-button-focus-box-shadow: var(--sf-shadow-focus);
   --swal2-close-button-color: var(--sf-color-text-muted);
+  --swal2-close-button-transition: color var(--sf-duration-fast) var(--sf-ease-out);
+  --swal2-input-transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
   --swal2-timer-progress-bar-background: var(--sf-color-accent);
   --swal2-toast-border: var(--sf-hairline);
   --swal2-toast-box-shadow: var(--sf-shadow-md);
@@ -342,9 +350,9 @@ body.dark:not(.admin-area) .swal2-popup .swal2-styled {
   font-size: var(--sf-text-sm);
   font-weight: var(--sf-font-medium);
   letter-spacing: var(--sf-tracking-button);
-  transition: background-color var(--sf-duration) var(--sf-ease-out),
-    box-shadow var(--sf-duration-fast) var(--sf-ease-out),
-    transform var(--sf-duration-fast) var(--sf-ease-out);
+  transition: background-color var(--sf-duration-fast) var(--sf-ease-out),
+    color var(--sf-duration-fast) var(--sf-ease-out),
+    transform var(--sf-duration-press) var(--sf-ease-out);
 }
 
 body.light:not(.admin-area) .swal2-popup .swal2-styled:active,
@@ -403,9 +411,42 @@ body.dark:not(.admin-area) .swal2-toast .swal2-timer-progress-bar {
   height: 2px;
 }
 
+/* Motion: popups and toasts fade in rising --sf-rise-distance over
+   --sf-duration and leave over --sf-duration-exit, as the storefront's own
+   dialogs do (SweetAlert's own popup drops 50px and scales from 0.9, and its
+   toast wobbles). Icons do not animate. */
+body.light:not(.admin-area) .swal2-popup,
+body.dark:not(.admin-area) .swal2-popup {
+  --swal2-show-animation: sf-swal-in var(--sf-duration) var(--sf-ease-out);
+  --swal2-hide-animation: sf-swal-out var(--sf-duration-exit) var(--sf-ease-in-out) forwards;
+  --swal2-toast-show-animation: sf-swal-in var(--sf-duration) var(--sf-ease-out);
+  --swal2-toast-hide-animation: sf-swal-out var(--sf-duration-exit) var(--sf-ease-in-out) forwards;
+  --swal2-icon-animations: false;
+}
+
+@keyframes sf-swal-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--sf-rise-distance));
+  }
+}
+
+@keyframes sf-swal-out {
+  to {
+    opacity: 0;
+    transform: translateY(var(--sf-rise-distance));
+  }
+}
+
+/* The storefront page's background eases with the theme toggle on the
+   tokens (the admin keeps the shared body rule above). */
+body:not(.admin-area) {
+  transition: background-color var(--sf-duration) var(--sf-ease-in-out);
+}
+
 /* Reduced motion: no zoom-in, slide or icon animation; popups appear and
    leave at once (SweetAlert skips its animationend wait when there is no
-   animation). */
+   animation), and the toasts' timer bar, which shrinks, is not drawn. */
 @media (prefers-reduced-motion: reduce) {
   body.light:not(.admin-area) .swal2-popup,
   body.dark:not(.admin-area) .swal2-popup {
@@ -414,5 +455,10 @@ body.dark:not(.admin-area) .swal2-toast .swal2-timer-progress-bar {
     --swal2-toast-show-animation: none;
     --swal2-toast-hide-animation: none;
     --swal2-icon-animations: false;
+  }
+
+  body.light:not(.admin-area) .swal2-timer-progress-bar-container,
+  body.dark:not(.admin-area) .swal2-timer-progress-bar-container {
+    display: none;
   }
 }

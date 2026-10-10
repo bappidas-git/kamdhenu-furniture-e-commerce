@@ -250,6 +250,16 @@
   color: var(--sf-color-accent);
 }
 
+/* The heart fills while saved, fading over --sf-duration-fast (no burst). */
+.wishlist path {
+  fill-opacity: 0;
+  transition: fill-opacity var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.wishlisted path {
+  fill-opacity: 1;
+}
+
 .wishlist:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;

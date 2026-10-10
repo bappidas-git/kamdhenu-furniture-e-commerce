@@ -29,11 +29,15 @@
   background-color: var(--sf-color-bg);
   font-family: var(--sf-font-sans);
   transform: translateY(100%);
-  transition: transform var(--sf-duration) var(--sf-ease-out);
+  /* Leaving: --sf-duration-exit with --sf-ease-in-out (the transition of the
+     state being entered applies). */
+  transition: transform var(--sf-duration-exit) var(--sf-ease-in-out);
 }
 
+/* Arriving: --sf-duration with --sf-ease-out. */
 .visible {
   transform: translateY(0);
+  transition: transform var(--sf-duration) var(--sf-ease-out);
 }
 
 @media (max-width: 768px) {
@@ -121,22 +125,9 @@
   padding-inline: var(--sf-space-4);
 }
 
+/* "Added ✓": the word and the check fade in (.sf-fade-in), no scale. */
 .check {
   flex: none;
-  animation: bar-check-in var(--sf-duration) var(--sf-ease-out);
-}
-
-@keyframes bar-check-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .check {
-    animation: none;
-  }
 }
 
 @media print {

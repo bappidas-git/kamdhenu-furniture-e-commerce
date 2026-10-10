@@ -63,9 +63,10 @@ const COPY_FEEDBACK_MS = 2000;
 // one (capped), else a typical automatic set.
 const skeletonCount = (ids, fallback, cap) => Math.min(ids?.length || fallback, cap);
 
-const { duration, easeOut, easeInOut } = TOKENS.motion;
-// Grid cards entering after a chip press: 40ms apart for the first eight.
-const ENTER_STAGGER = 0.04;
+const { duration, easeOut, easeInOut, riseDistance, staggerFast } = TOKENS.motion;
+// Grid cards entering after a chip press: --sf-stagger-fast (40ms) apart for
+// the first eight, rising --sf-rise-distance (8px).
+const ENTER_STAGGER = staggerFast;
 
 const CheckGlyph = () => (
   <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true" focusable="false">
@@ -276,10 +277,10 @@ const CouponTicket = ({ coupon, feedback, onCopy }) => {
           >
             {copied ? (
               <>
-                <span className="sf-btn__icon">
+                <span className="sf-btn__icon sf-fade-in">
                   <CheckGlyph />
                 </span>
-                Copied
+                <span className="sf-fade-in">Copied</span>
               </>
             ) : failed ? (
               "Couldn’t copy"
@@ -794,8 +795,10 @@ const SpecialOffers = () => {
                           <motion.li
                             key={product.id}
                             className={styles.item}
-                            layout={!reduceMotion}
-                            initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+                            // Position only: a card that changes rows (and so
+                            // height) glides there without being stretched.
+                            layout={reduceMotion ? false : "position"}
+                            initial={{ opacity: 0, y: reduceMotion ? 0 : riseDistance }}
                             animate={{
                               opacity: 1,
                               y: 0,

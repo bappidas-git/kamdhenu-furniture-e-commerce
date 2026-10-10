@@ -55,7 +55,9 @@
   padding-bottom: var(--sf-space-3);
   border-bottom: 1px solid var(--sf-color-border);
   color: var(--sf-color-text-muted);
-  transition: color var(--sf-duration) var(--sf-ease-out), border-color var(--sf-duration) var(--sf-ease-out);
+  /* A state change: --sf-duration with --sf-ease-in-out. */
+  transition: color var(--sf-duration) var(--sf-ease-in-out),
+    border-color var(--sf-duration) var(--sf-ease-in-out);
 }
 
 .stepperItem[data-state="done"] {

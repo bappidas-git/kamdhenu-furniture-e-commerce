@@ -88,8 +88,9 @@
   }
 }
 
-/* The answer unfolds from 0 to its own height. Closing keeps it visible until
-   the fold has finished, then hides it. */
+/* The answer unfolds from 0 to its own height, a state change both ways
+   (--sf-duration, --sf-ease-in-out), like the order panels. Closing keeps it
+   visible until the fold has finished, then hides it. */
 .panel {
   display: grid;
   grid-template-rows: 0fr;
@@ -101,7 +102,7 @@
 .open .panel {
   grid-template-rows: 1fr;
   visibility: visible;
-  transition: grid-template-rows var(--sf-duration) var(--sf-ease-out), visibility 0s linear 0s;
+  transition: grid-template-rows var(--sf-duration) var(--sf-ease-in-out), visibility 0s linear 0s;
 }
 
 /* 8px of room on each side, so the answer link's focus outline is not clipped

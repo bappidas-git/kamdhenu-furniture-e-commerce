@@ -74,7 +74,9 @@
   object-fit: cover;
   opacity: 0;
   user-select: none;
-  transition: opacity var(--sf-duration) var(--sf-ease-out),
+  /* An image crossfade (--sf-duration-slow). The one leaving waits under the
+     new one until that has faded in, so the frame never dims midway. */
+  transition: opacity var(--sf-duration-slow) var(--sf-ease-out) var(--sf-duration-slow),
     transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
@@ -85,6 +87,8 @@
 .imageActive {
   z-index: 1;
   opacity: 1;
+  transition: opacity var(--sf-duration-slow) var(--sf-ease-out),
+    transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
 /* Hover-zoom is for a mouse (the component listens to mouse pointers only). */

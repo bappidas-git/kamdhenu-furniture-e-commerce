@@ -2,8 +2,8 @@ import React, { useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { onImageError, PLACEHOLDER_IMG } from "../../utils/helpers";
-import { TOKENS } from "../../theme/tokens";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import styles from "./ReviewModal.module.css";
 
 // =============================================================================
@@ -43,8 +43,6 @@ const MESSAGES = {
   rating: "Choose a star rating",
   failed: "We couldn’t send your review. Try again in a moment.",
 };
-
-const { duration, easeOut, easeInOut } = TOKENS.motion;
 
 const cx = (...names) => names.filter(Boolean).join(" ");
 
@@ -226,18 +224,6 @@ const ReviewModal = ({ open, onClose, product, existing, onSubmit, isDarkMode })
     }
   };
 
-  const dialogMotion = reduceMotion
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-      }
-    : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: 8, transition: { duration: duration.base, ease: easeInOut } },
-      };
-
   const counter = (fieldId, length, max) => (
     <p id={fieldId} className={cx("sf-field__hint", styles.count)}>
       <span aria-hidden="true">
@@ -257,10 +243,7 @@ const ReviewModal = ({ open, onClose, product, existing, onSubmit, isDarkMode })
             className={styles.backdrop}
             aria-hidden="true"
             onClick={requestClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
-            transition={{ duration: duration.base, ease: easeOut }}
+            {...overlayBackdropMotion}
           />
           <motion.div
             ref={dialogRef}
@@ -270,8 +253,7 @@ const ReviewModal = ({ open, onClose, product, existing, onSubmit, isDarkMode })
             aria-labelledby={id("title")}
             aria-describedby={id("product")}
             tabIndex={-1}
-            transition={{ duration: duration.base, ease: easeOut }}
-            {...dialogMotion}
+            {...overlayPanelMotion("dialog", reduceMotion)}
           >
             <button
               type="button"

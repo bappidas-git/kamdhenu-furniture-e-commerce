@@ -314,8 +314,8 @@ const CopyIcon = () => (
   </Icon>
 );
 
-const CheckIcon = () => (
-  <Icon size={16}>
+const CheckIcon = ({ className }) => (
+  <Icon size={16} className={className}>
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </Icon>
 );
@@ -731,7 +731,7 @@ const OrderHistory = () => {
       aria-label={label}
       data-copied={copiedId === value || undefined}
     >
-      {copiedId === value ? <CheckIcon /> : <CopyIcon />}
+      {copiedId === value ? <CheckIcon className="sf-fade-in" /> : <CopyIcon />}
     </button>
   );
 

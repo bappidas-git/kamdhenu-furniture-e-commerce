@@ -1,6 +1,6 @@
 # A & S Urbanseat — Design System
 
-The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy") and update a value here whenever they change it in the CSS.
+The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy"; Prompt 30: "Motion and micro-interactions") and update a value here whenever they change it in the CSS.
 
 - **Source of truth:** `src/theme/storefront-tokens.css`. If this document and the CSS disagree, the CSS wins; fix the document.
 - **Mirrors:** `src/theme/colors.js` (storefront MUI palette) and `src/theme/tokens.js` (`TOKENS`, the JS mirror for framer-motion and inline styles).
@@ -24,7 +24,7 @@ The storefront is a premium, editorial, warm-minimalist boutique: warm paper sur
 | `--sf-font-*`, `--sf-text-*`, `--sf-leading-*`, `--sf-tracking-*`, `--sf-measure` | typography | no |
 | `--sf-space-*`, `--sf-section-y`, `--sf-gutter`, `--sf-container*`, `--sf-tap-target` | spacing and layout | no |
 | `--sf-radius-*`, `--sf-hairline`, `--sf-shadow-*` | shape and depth | shadows and hairline: yes |
-| `--sf-ease-*`, `--sf-duration*`, `--sf-transition*`, `--sf-reveal-distance`, `--sf-stagger` | motion (collapse under reduced motion) | no |
+| `--sf-ease-*`, `--sf-duration*`, `--sf-transition*`, `--sf-reveal-distance`, `--sf-rise-distance`, `--sf-stagger*` | motion (collapse under reduced motion) | no |
 | `--sf-z-*` | stacking | no |
 
 **How to use.** CSS Modules: `color: var(--sf-color-text)`. JS (framer-motion, inline styles): `import { TOKENS } from "../../theme/tokens"`. MUI (only the header uses MUI on the storefront): `theme.palette.*`, built from `colors.js` in `ThemeContext`.
@@ -287,19 +287,25 @@ Cards carry **no** shadow by default (a hairline on hover instead). No coloured 
 
 | Token | Value | Use |
 |---|---|---|
-| `--sf-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)` | entrances, reveals, hovers |
-| `--sf-ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` | state changes (open/close, toggles) |
-| `--sf-duration-fast` | 160ms | hover, press, colour changes |
-| `--sf-duration` | 320ms | state changes, drawers, menus |
-| `--sf-duration-slow` | 640ms | image crossfades |
+| `--sf-ease-out` | `cubic-bezier(0.22, 1, 0.36, 1)` | entrances: reveals, overlays arriving, hovers, micro-feedback |
+| `--sf-ease-in-out` | `cubic-bezier(0.65, 0, 0.35, 1)` | state changes (open/close, toggles, the header compacting) and exits |
+| `--sf-duration-press` | 120ms | the press scale (0.99) |
+| `--sf-duration-fast` | 160ms | hover, focus and colour changes; micro-feedback ("Added", "Copied", the wishlist heart) |
+| `--sf-duration-exit` | 240ms | overlays leaving; the page fade |
+| `--sf-duration` | 320ms | state changes; overlays arriving (drawers, menus, modals, sheets) |
+| `--sf-duration-slow` | 640ms | image crossfades and the 1.03 image hover scale |
 | `--sf-duration-reveal` | 900ms | scroll reveals, hero entrance |
 | `--sf-reveal-distance` | 20px | reveal rise |
-| `--sf-stagger` | 90ms | delay between items in a sequence (cap groups at 8 items) |
+| `--sf-rise-distance` | 8px | the short rise of dialogs, toasts and results (menus drop by it) |
+| `--sf-stagger` | 90ms | delay between items in a reveal sequence (cap groups at 8 items) |
+| `--sf-stagger-fast` | 40ms | delay between results that answer an action (search results, the offers grid after a chip press; the first 8) |
 | `--sf-transition-fast` / `--sf-transition` / `--sf-transition-slow` | `160ms` / `320ms` / `640ms` + `--sf-ease-out` | shorthand: `transition: color var(--sf-transition-fast)` |
 
-**Reduced motion.** Under `@media (prefers-reduced-motion: reduce)` every duration becomes `0.01ms`, `--sf-stagger` 0ms and `--sf-reveal-distance` 0, so CSS transitions built from tokens collapse on their own. framer-motion: Prompt 06 wraps the storefront in `<MotionConfig reducedMotion="user">`; components also check `useReducedMotion()` for transforms (parallax, scale). Custom `@keyframes` must be disabled under the media query.
+**JS mirror** (`TOKENS.motion` in `tokens.js`): `easeOut` and `easeInOut` (cubic-bezier arrays); `duration.{press, fast, exit, base, slow, reveal}` in seconds and `durationMs.*` in milliseconds; `revealDistance` 20, `riseDistance` 8; `stagger` 0.09 / `staggerMs` 90 and `staggerFast` 0.04 / `staggerFastMs` 40. `scripts/check-contrast.js` fails if the mirror drifts from the CSS (every `durationMs` key needs its `--sf-duration-<key>`, `base` being `--sf-duration`).
 
-**Language.** Subtle, slow, elegant: fades and short rises, image scale 1.03 on hover, colour-only button hovers, press scale 0.99. No springs, bounces, `translateY` lifts on cards, pulsing or attention-seeking loops. Animate only `opacity` and `transform`.
+**Reduced motion.** Under `@media (prefers-reduced-motion: reduce)` every duration becomes `0.01ms`, both staggers 0ms and both distances 0, so CSS transitions built from tokens collapse on their own. framer-motion: Prompt 06 wraps the storefront in `<MotionConfig reducedMotion="user">`, which drops transforms and layout animations and keeps opacity, so overlays and reveals still fade; components also check `useReducedMotion()` (or `prefersReducedMotion()` outside React, section 40.3) for what framer does not cover: rises written as `y`, height unfolds, JS scrolls (`"instant"`). Custom `@keyframes` must be disabled under the media query. The storefront's `html` drops `scroll-behavior: smooth` under it (`index.css`). Section 40.8 lists what each surface does.
+
+**Language** (Prompt 30, section 40). Slow, subtle and consistent: fades and short rises, image scale 1.03 on hover, colour-only button hovers, press scale 0.99 over 120ms. No springs, bounces or overshoot, no panel scaling in or out, no `translateY` lifts on cards, no pops on counts, no pulsing or attention-seeking loops (the pausable marquee is the one loop). Animate only `opacity` and `transform` (hover and state colours aside); the order history panels and the FAQ answers are the only height animations.
 
 **Standard reveal recipe (framer-motion).** JS reads the mirror in `TOKENS.motion` (seconds and cubic-bezier arrays):
 
@@ -318,7 +324,7 @@ const reduce = useReducedMotion();
 />
 ```
 
-Stagger children with `staggerChildren: TOKENS.motion.stagger` (0.09s).
+Use `<Reveal>` (section 16.4), which is this recipe; stagger a group with `delay={staggerDelay(index)}` (`TOKENS.motion.stagger`, 0.09s, capped at 8 items).
 
 ---
 
@@ -510,7 +516,7 @@ Mirror check: colors.js and tokens.js match storefront-tokens.css ✓ · Contras
 - [ ] Sections use `--sf-section-y`, containers `--sf-container-*` with `--sf-gutter`, separations `--sf-hairline`, radii from the scale.
 - [ ] Every control is ≥ 44px and shows `--sf-shadow-focus` on `:focus-visible`, in both modes, including on sand, navy and photography.
 - [ ] Logos only through `<BrandLogo />` with the right variant for the background.
-- [ ] Motion from the motion tokens / `TOKENS.motion`; verify with reduced motion on.
+- [ ] Motion from the motion tokens / `TOKENS.motion` and the language in section 40 (overlays through `overlayPanelMotion`, reveals through `<Reveal>`, micro-feedback through `.sf-fade-in` and `<CountDisc>`); verify with reduced motion on.
 - [ ] Check light and dark mode, and 360 / 768 / 1024 / 1440px.
 - [ ] Add new component-level colour pairs to `scripts/check-contrast.js` and run it (it must exit 0); if a token value changes, update sections 3–4, 12 and 14 here.
 - [ ] Keep the admin identical: scoped globals, no edits to the shared `App.css` rules, keep the `MuiCssBaseline` pin; compare admin screenshots before and after.
@@ -542,7 +548,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | | `.sf-display-xl/lg/md/sm` | Playfair on the display scale; inherits its colour (works on navy); `<em>` = the accent italic (accent from md up, accent-text at sm); `text-wrap: balance` |
 | | `.sf-prose` | 66ch measure, 17px / 1.7, secondary text; serif `h2` (display-sm, hairline above) and `h3`/`h4` (20px); lists, `strong`, `hr`; links ink with a 1px accent underline (2px on hover) |
 | | `.sf-muted`, `.sf-price`, `.sf-compare`, `.sf-sale` | muted text; price (sans 500, tabular, no wrap); compare-at (muted, 1px strike: add `<span class="sf-visually-hidden">Was</span>`); sale (accent-text 500) |
-| Buttons | `.sf-btn` | 44px, sans 14px 500, 0.02em, radius sm, `0 20px`; colour-only hover (`--sf-duration`, `--sf-ease-out`), press `scale(0.99)`, focus ring, `:disabled` / `[aria-disabled="true"]` 50% + `not-allowed` |
+| Buttons | `.sf-btn` | 44px, sans 14px 500, 0.02em, radius sm, `0 20px`; colour-only hover (`--sf-duration-fast`, `--sf-ease-out`), press `scale(0.99)` over `--sf-duration-press`, focus ring, `:disabled` / `[aria-disabled="true"]` 50% + `not-allowed` |
 | | `--primary` | ink, paper text; hover navy (white in dark mode) |
 | | `--ghost` | transparent, 1px ink border; hover ink 6% tint (`--sf-color-primary-soft`) |
 | | `--danger` | destructive actions: the error token with primary-contrast text; hover mixes 15% of the text tone in (`color-mix`, where supported). Also a SweetAlert confirm: `customClass: { confirmButton: "sf-btn sf-btn--danger" }` (Prompt 21, §31.8) |
@@ -551,17 +557,18 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | | `--sm` (36px; 44px on touch screens), `--lg` (52px, 16px text), `--block` (full width), `--icon` (square, needs `aria-label`), `.sf-btn__icon` (1.25em icon slot; MUI icons fit) | |
 | Fields | `.sf-field` | grid: label, control, hint, error (8px gap) |
 | | `.sf-field__label` (or a bare `<label>` child), `.sf-field__hint`, `.sf-field__error` | 13px 500 ink label; 13px muted hint; 13px error text with a circled "!" (never colour alone) |
-| | `.sf-input`, `.sf-select`, `.sf-textarea` | 44px (textarea 120px min), 1px `--sf-color-border-strong`, radius sm, surface, 15px (16px on touch screens, so iOS never zooms); hover darkens the border; focus = 1px accent border + ring; `[aria-invalid="true"]` = error border (kept while focused); `[readonly]` / `:disabled` = sand; dark mode sets `color-scheme: dark` for native pickers |
+| | `.sf-input`, `.sf-select`, `.sf-textarea` | 44px (textarea 120px min), 1px `--sf-color-border-strong`, radius sm, surface, 15px (16px on touch screens, so iOS never zooms); hover darkens the border; focus = 1px accent border + ring (the border colour eases over `--sf-duration-fast`, the ring arrives at once); `[aria-invalid="true"]` = error border (kept while focused); `[readonly]` / `:disabled` = sand; dark mode sets `color-scheme: dark` for native pickers |
 | | `.sf-select` chevron | two 1.5px strokes in `currentColor` (see 16.8) |
-| | `.sf-check`, `.sf-radio`, `.sf-switch` | on the `<label>`: 44px row, 12px gap; the native `<input>` inside becomes a 20px box / circle (accent when checked, check mark in accent-contrast, `:indeterminate` dash) or a 36 × 20 pill (ink when on) |
+| | `.sf-check`, `.sf-radio`, `.sf-switch` | on the `<label>`: 44px row, 12px gap; the native `<input>` inside becomes a 20px box / circle (accent when checked, check mark in accent-contrast fading in over `--sf-duration-fast`, `:indeterminate` dash) or a 36 × 20 pill (ink when on) |
 | Badges | `.sf-badge` (+ `--ink`, `--paper`, `--sand`, `--accent`, `--success`, `--warning`, `--error`, `--info`) | 11px uppercase tracked label, radius sm; default = sand; `--accent` = discount tint; semantic = soft tint + matching text; `--paper` is fixed (photos, dark surfaces) |
-| Chips | `.sf-chip` (+ `--selected`) | 32px hairline pill, 14px; hover ink border; `--selected`, `[aria-pressed="true"]` and `[aria-checked="true"]` = ink fill with paper text |
-| Counts | `.sf-count` | 18px ink disc, 10px paper digits, tabular |
+| Chips | `.sf-chip` (+ `--selected`) | 32px hairline pill, 14px; hover ink border (colours over `--sf-duration-fast`); `--selected`, `[aria-pressed="true"]` and `[aria-checked="true"]` = ink fill with paper text |
+| Counts | `.sf-count` | 18px ink disc, 10px paper digits, tabular. Render it with `<CountDisc>` (section 40.5), which fades a changed number in |
 | Surfaces | `.sf-card` (+ `--hairline`), `.sf-panel` (+ `--hairline`) | surface / sand, radius sm, no shadow, fluid 16–24px padding (`--sf-card-padding`, e.g. `0` for media cards) |
 | | `.sf-hairline` | a 1px `--sf-hairline` rule (on `<hr>` or any block) |
 | | `.sf-divider--dot` | inline `·` separator: `<span class="sf-divider--dot" aria-hidden="true"></span>` |
-| Tabs | `.sf-tabs`, `.sf-tab`, `.sf-tabpanel` | hairline strip (scrolls sideways without a scrollbar), 44px eyebrow-style tabs, `[aria-selected="true"]` = ink text + 1px ink underline, 24px panel spacing; roving focus and arrow keys are the consumer's job |
+| Tabs | `.sf-tabs`, `.sf-tab`, `.sf-tabpanel` | hairline strip (scrolls sideways without a scrollbar), 44px eyebrow-style tabs, `[aria-selected="true"]` = ink text + 1px ink underline (the colour eases over `--sf-duration-fast`, the underline arrives at once), 24px panel spacing; roving focus and arrow keys are the consumer's job |
 | Skeletons | `.sf-skeleton` (+ `--text`, `--image`, `--circle`) | sand block with a slow (1.6s) surface shimmer, static under reduced motion; `--text` 0.75em lines (the last of several at 60%), `--image` uses `aspect-ratio: var(--ratio, 4 / 5)`, `--circle` uses `--size` (40px). Mark skeletons `aria-hidden="true"`; set `aria-busy="true"` on the loading region |
+| Motion | `.sf-fade-in` | micro-feedback: an element that mounts in answer to an action ("Added" and its check, "Copied") fades in over `--sf-duration-fast` (`--sf-ease-out`), never scales; static under reduced motion. Put it on the element that mounts with the new state |
 | A11y | `.sf-visually-hidden`, `.sf-skip-link`, `.sf-focus` | screen-reader-only text; the "Skip to content" link (off-screen until focused, then an ink tab top-left above everything; Prompt 31 adds it to `App.js`); the focus ring for custom focusable elements |
 
 ### 16.3 Markup patterns
@@ -595,7 +602,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 
 ### 16.4 React primitives (`src/components/ui`)
 
-Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`, since Prompt 09 `BottomDrawer`, `useFocusTrap`, `useBodyScrollLock`, `useBodyScrollLocked` and `getFocusableElements` (section 19), and since Prompt 12 `Marquee` (section 22.6)).
+Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccent } from "../../components/ui";` (it also exports `staggerDelay` and `stripAccent`, since Prompt 09 `BottomDrawer`, `useFocusTrap`, `useBodyScrollLock`, `useBodyScrollLocked` and `getFocusableElements` (section 19), since Prompt 12 `Marquee` (section 22.6), and since Prompt 30 `CountDisc` and the overlay motion presets (sections 40.3 and 40.5)).
 
 **`<Reveal>`**: the standard scroll reveal (section 8). Fades in with a 20px rise once the element is 10% inside the viewport (`whileInView`, `viewport={{ once, margin: "-10% 0px" }}`, `TOKENS.motion` duration 0.9s and ease-out). With reduced motion (`useReducedMotion()`, and `MotionConfig` around the storefront) it only fades: no transform.
 
@@ -642,20 +649,21 @@ Import from the barrel: `import { BrandLogo, Reveal, SectionHeading, renderAccen
 
 ### 16.5 Storefront MUI overrides (`ThemeContext.js`)
 
-Only the controls the storefront shell renders (today the header: `IconButton`, `Badge`, `Avatar`, `Menu`, `MenuItem`, `Typography`, `Divider`), plus the few a later prompt might reach for. Every value is a `var(--sf-*)`, so the overrides flip with `body.dark` and collapse with the reduced-motion tokens. The admin has its own `ThemeProvider` and never sees them. The `MuiCssBaseline` body pin (section 13) and `MuiPaper` `backgroundImage: none` stay exactly as Prompt 01 left them.
+Only the controls the storefront shell renders (today the header: `IconButton`, `Badge`, `Avatar`, `Menu`, `MenuItem`, `Typography`, `Divider`), plus the few a later prompt might reach for. Every value is a `var(--sf-*)`, so the overrides flip with `body.dark` and collapse with the reduced-motion tokens; hover, focus and selection colours change over `--sf-duration-fast` (`transitionOf`). The admin has its own `ThemeProvider` and never sees them. The `MuiCssBaseline` body pin (section 13) and `MuiPaper` `backgroundImage: none` stay exactly as Prompt 01 left them.
 
 | Component | Override |
 |---|---|
 | `MuiButtonBase` | ripple off (colour-only feedback); `.Mui-focusVisible` = `--sf-shadow-focus` |
-| `MuiButton` | `.sf-btn` metrics; contained primary = ink → navy hover; outlined primary = ghost; text = link (stone underline, accent on hover); `size` small 36 / large 52; press 0.99; disabled 50%; other `color`s keep their palette colour |
+| `MuiButton` | `.sf-btn` metrics; contained primary = ink → navy hover; outlined primary = ghost; text = link (stone underline, accent on hover); `size` small 36 / large 52; press 0.99 over `--sf-duration-press`; disabled 50%; other `color`s keep their palette colour |
 | `MuiIconButton` | 44px (medium), radius sm, ink unless a `color` is set, sand hover (none on touch); the small-size touch override is kept |
+| `MuiSvgIcon` | `fill` changes over `--sf-duration-fast` with its control (MUI's own 200ms fill transition did not collapse under reduced motion; Prompt 30) |
 | `MuiBadge` | 18px ink disc, paper 10px digits, whatever the `color` prop (the header's counts) |
 | `MuiAvatar` | sand, ink serif monogram, hairline |
 | `MuiPopover`, `MuiMenu` | surface, hairline, `--sf-shadow-sm`, radius sm (no blur, no translucency) |
 | `MuiMenuItem` | 44px at every breakpoint, sans 14px, sand hover; keyboard focus = sand + inset ring; selected = accent-soft |
 | `MuiDivider` | `--sf-color-border` |
 | `MuiDrawer` | solid surface, `--sf-shadow-lg`, navy overlay backdrop |
-| `MuiOutlinedInput`, `MuiTextField` | border-strong boundary, radius sm, surface; focus = 1px accent border + ring; error border; disabled sand; label muted → accent-text when focused |
+| `MuiOutlinedInput`, `MuiTextField` | border-strong boundary, radius sm, surface; focus = 1px accent border + ring (at once: no box-shadow transition); error border; disabled sand; label muted → accent-text when focused |
 | `MuiChip` | 32px pill; default filled = sand, outlined = hairline; `color="primary"` = ink (selected) |
 | `MuiSkeleton` | sand, `wave` by default (no pulse), wave off under reduced motion |
 | `MuiTabs`, `MuiTab` | hairline strip, 24px gap, 1px ink indicator; eyebrow-style 44px tabs, muted → ink; focus outline inside |
@@ -670,13 +678,15 @@ Appended after the shared SweetAlert block and scoped `body.light:not(.admin-are
 - **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` were left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out", since Prompt 22 the address delete in `Profile.js` (§32.4) and since Prompt 24 the order cancel in `OrderHistory.js` (§34.5) use it; "Clear all" in `WishlistContext.js` still passes a hex.
 - **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
 - **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
-- **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation).
+- **Motion (Prompt 30):** popups and toasts fade in rising `--sf-rise-distance` over `--sf-duration` (`--sf-ease-out`) and leave over `--sf-duration-exit` (`--sf-ease-in-out`): the `sf-swal-in` / `sf-swal-out` keyframes, set through `--swal2-show-animation`, `--swal2-hide-animation` and their toast twins, replace SweetAlert's 50px drop with a 0.9 scale and the toast's wobble. Icons never animate (`--swal2-icon-animations: false`). The backdrop fades over `--sf-duration` in and `--sf-duration-exit` out; buttons change colour over `--sf-duration-fast` and press over `--sf-duration-press`; the close button and inputs ease their colour over `--sf-duration-fast`. The admin's SweetAlert motion is unchanged (verified).
+- **Reduced motion:** show/hide/toast animations and icon animations are off (SweetAlert closes at once when there is no animation), and the toasts' timer bar, which shrinks, is not drawn.
 
 ### 16.7 Reduced motion
 
 - `src/App.js` wraps the storefront route's `<div className="App">` (inside `DealsConfigProvider`) in `<MotionConfig reducedMotion="user">`: with the OS setting on, every storefront framer-motion animation skips transforms and layout animation and keeps opacity. The admin routes are not wrapped.
 - CSS transitions built from the duration tokens collapse on their own; the skeleton keyframes, the MUI skeleton wave and the SweetAlert animations are switched off explicitly.
 - `Reveal` also reads `useReducedMotion()`, so it starts without a transform.
+- Since Prompt 30 (section 40.8): overlays fade instead of sliding (including the search overlay and the mega-menu, which used to appear at once), the page fade stays (opacity only), the storefront `html` drops `scroll-behavior: smooth` and JS scrolls pass `"instant"`, `.sf-fade-in` and the SweetAlert timer bar are off, and MUI's icon fill transition collapses with the tokens.
 
 ### 16.8 Decisions and exceptions
 
@@ -713,14 +723,14 @@ Written by Prompt 07. Files: `src/components/Header/Header.js` (shell), `MegaMen
 | 768–1023px | main 64 | menu · logo 40px · search, theme, account, cart |
 | ≥ 1024px | utility strip 32 → out of view · main 88 → 64 visible · department row 48 (two lines, 92, at 1024–1279 with the seeded six departments) | search trigger · logo 48 → 36px · account, wishlist, cart (labels under the icons from 1280px) |
 
-- Surface `--sf-color-bg` (paper / navy-ink), hairlines `--sf-hairline`, no gradient, no shadow at rest; `--sf-shadow-sm` only when compact. The mega-menu panel uses `--sf-color-bg`, `--sf-shadow-md` and a bottom hairline.
+- Surface `--sf-color-bg` (paper / navy-ink), hairlines `--sf-hairline`, no gradient, no shadow at rest; `--sf-shadow-sm` only when compact (on a `::after` layer that fades in over `--sf-duration`, so no box-shadow is animated). The mega-menu panel uses `--sf-color-bg`, `--sf-shadow-md` and a bottom hairline.
 - Stacking: the header is `--sf-z-header` (50); the panel sits inside it at `--sf-z-megamenu` (55). Drawers and modals (≥ 1000) stay above both. Page content must stay below 50.
 - Department row type: sans 13px / 500 / uppercase / 0.12em from 1440px; 12px / 0.1em at 1024–1439px and 0.08em at 1024–1279px, so long department names fit before the row has to wrap.
 
 ### 17.2 Sticky header, compaction and `--sf-header-height`
 
 - The header is `position: sticky; top: 0` and in the page flow, so there is no spacer. Pages start right under it; never add top margins or paddings that assume a fixed header.
-- Past 80px of scroll it compacts **with transforms only**: it slides up by `--hdr-compact-shift` (56px at ≥ 1024px), so the utility strip leaves the viewport (then `visibility: hidden`), the main row shows 64px with its content re-centred, and the logo scales to 36px. Its box never changes size, so nothing below it moves and no layout shift is recorded. Below 1024px compaction only adds the shadow. Never hidden on scroll down.
+- Past 80px of scroll it compacts **with transforms only**, over `--sf-duration` with `--sf-ease-in-out` (a state change): it slides up by `--hdr-compact-shift` (56px at ≥ 1024px), so the utility strip leaves the viewport (then `visibility: hidden`), the main row shows 64px with its content re-centred, and the logo scales to 36px. Its box never changes size, so nothing below it moves and no layout shift is recorded. Below 1024px compaction only adds the shadow. Never hidden on scroll down.
 - **Contract:** `--sf-header-height` on `<html>` is the visible header height, updated before paint on resize and on every frame of the slide. Use it for every offset below the header:
   - sticky elements: `top: calc(var(--sf-header-height) + 24px)` (listing rail, checkout summary, product gallery, account rail);
   - anchor targets: `scroll-margin-top: calc(var(--sf-header-height) + 16px)`;
@@ -731,7 +741,7 @@ Written by Prompt 07. Files: `src/components/Header/Header.js` (shell), `MegaMen
 
 - Data: `groupCategoryTree(categories)` (exported from `Header/groupCategoryTree.js` and re-exported by `MegaMenu.js`) turns the `categories.getAll()` list into departments (`getMainMenuCategories`) → groups (direct children) → links (descendants, depth-first, in `orderCategoriesHierarchically` order). Every link is `/products?category=${categoryParam(category)}`.
 - Panel: one instance under the department row, in the DOM only while open; a column per group (eyebrow link + its children), four to a row; a flat department gets a serif introduction (name, description, "Shop all"); the feature column shows the department's admin-managed `image` at 4:5 (`object-fit: cover`, lazy, `onImageError`) with the eyebrow/line/"Shop all <Department>" copy (`navigationContent.js` overrides by slug); every panel ends with "View all departments" (`/products`).
-- Motion: opacity 0 → 1 and `y` −8 → 0 over `--sf-duration` (`TOKENS.motion.duration.base`) with `--sf-ease-out`; exit `duration.fast`; nothing under reduced motion.
+- Motion: opacity 0 → 1 and `y` −8px (`--sf-rise-distance`) → 0 over `--sf-duration` with `--sf-ease-out`; out over `--sf-duration-exit` with `--sf-ease-in-out` (`overlayPanelMotion("menu")`, section 40.3); under reduced motion it only fades. The feature image scales to 1.03 on hover (pointer devices, not under reduced motion).
 - Interaction model (keyboard and pointer) is documented at the top of `MegaMenu.js` and in `BUILD_LOG.md` (Prompt 07).
 
 ---
@@ -820,18 +830,18 @@ Every drawer, sheet and modal on the storefront should behave the same way. The 
 | Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. Every overlay sets it through this hook (search since Prompt 15, the cart drawer since Prompt 18, the auth modal since Prompt 20), and BottomNav listens to it through `useBodyScrollLocked()`. |
 | Stacking | Backdrops and panels at `--sf-z-overlay` (1000); modals at `--sf-z-modal` (1100); the full-screen search at `--sf-z-search` (1400, section 25.1); BottomNav (58) is always beneath them |
 | Backdrop | `--sf-color-overlay`, no blur; a click closes the layer |
-| Motion | Enter with `--sf-ease-out`; exit in `--sf-duration` with `--sf-ease-in-out`; under reduced motion, opacity only (an explicit `useReducedMotion()` variant, on top of `MotionConfig`) |
+| Motion | `overlayPanelMotion(kind, reduceMotion)` and `overlayBackdropMotion` (section 40.3): enter over `--sf-duration` with `--sf-ease-out`, leave over `--sf-duration-exit` with `--sf-ease-in-out`; side panels slide from their edge, the bottom sheet slides up, dialogs fade rising 8px, menus fade dropping 8px; never a scale. Under reduced motion, opacity only (an explicit variant, on top of `MotionConfig`) |
 
 ### 19.2 SidebarMenu
 
 | Part | Spec |
 |---|---|
-| Panel | Fixed on the left, `min(360px, 88vw)` wide, full height; `--sf-color-bg` (paper / navy-ink); `border-right: var(--sf-hairline)`, square corners, `--sf-shadow-lg`; safe-area padding. It slides in over `--sf-duration-slow` with `--sf-ease-out` (no spring) and out over `--sf-duration` with `--sf-ease-in-out`. |
+| Panel | Fixed on the left, `min(360px, 88vw)` wide, full height; `--sf-color-bg` (paper / navy-ink); `border-right: var(--sf-hairline)`, square corners, `--sf-shadow-lg`; safe-area padding. It slides in over `--sf-duration` with `--sf-ease-out` (no spring) and out over `--sf-duration-exit` with `--sf-ease-in-out`, the backdrop fading with it. |
 | Top row | 60px plus the top inset, with a hairline below: `<BrandLogo height={28} />` (auto variant: the white logo in dark mode) and a 44px "Close menu" button, which takes focus on open |
 | Account block | **Guest:** the serif line "Sign in for faster checkout and order tracking." (20px), a `.sf-btn--primary --block` "Sign in" (`onClose(); onOpenAuth()`) and a `.sf-btn--ghost --block` "Create account" (`onOpenAuth("signup")`). **Signed in:** a 48px hairline circle with the serif initial (or the user's image), name, email, and a "My account" link (`/profile`). |
 | Shop | An accordion built by `groupCategoryTree` (`Header/groupCategoryTree.js`), the same grouping as the mega-menu. Department rows are 48px, in the display serif at 20px, with a plus/minus glyph (a swap, as in the footer). Only one department is open at a time (`aria-expanded`, `aria-controls`). The open panel (`role="group"`, named by its department) is indented 16px and lists "Shop all <Department>" (or the `navigationContent.js` `ctaLabel`), then each group as an eyebrow link (12px, 600, 0.16em, uppercase, ink) with its leaves beneath (sans 15px, secondary, 48px rows; deeper levels indented 16px more). A flat department is a plain link. "View all products" (`/products`) closes the section. A loading skeleton shows on the first read; on failure, a message and "Try again". |
 | Discover | New arrivals `/products?sort=newest` · Best sellers `/products?sort=popular` · Offers `/special-offers` (only while the deals page is enabled and its config has loaded) · Our story `/about` |
-| Account | "My orders" (signed in) or "Track order" (guest) → `/orders` · "My wishlist" → `/wishlist`, with a `.sf-count` and an `aria-label` that carries the number · "Sign out" (signed in: `logout()`, then `navigate("/")`) |
+| Account | "My orders" (signed in) or "Track order" (guest) → `/orders` · "My wishlist" → `/wishlist`, with a `.sf-count` (`<CountDisc>`) and an `aria-label` that carries the number · "Sign out" (signed in: `logout()`, then `navigate("/")`) |
 | Settings | Help & support `/support` · "Dark mode": a `<button role="switch" aria-checked>` that calls `toggleTheme`, drawn as the `.sf-switch` pill |
 | Legal | Terms · Privacy · Cookies (13px, muted, 44px targets) and `© {year} {APP_NAME}` |
 | Rhythm | Sections are separated by a hairline, have 20px vertical padding and use `.sf-eyebrow` `h2` titles. Rows are 48px. Rows get an accent underline on hover and on the current page. |
@@ -849,11 +859,11 @@ Behaviour:
 | Part | Spec |
 |---|---|
 | When | Up to 768px: `display: block` under `@media (max-width: 768px)`, the same query as the footer's reserve, so from 769px it is gone |
-| Items | Home `/` · Shop `/products` (the chair glyph) · Search (opens the bar's own search overlay) · Wishlist `/wishlist` (`.sf-count`, "99+" above 99; the link's `aria-label` reads "Wishlist, N items") · Account (`/profile` when signed in; `openAuthModal("login")` for guests). The cart stays in the header. |
+| Items | Home `/` · Shop `/products` (the chair glyph) · Search (opens the bar's own search overlay) · Wishlist `/wishlist` (`.sf-count` through `<CountDisc>`, "99+" above 99; the link's `aria-label` reads "Wishlist, N items") · Account (`/profile` when signed in; `openAuthModal("login")` for guests). The cart stays in the header. |
 | Look | Paper with a top hairline; no blur, no shadow. Items are 56px tall in a grid of five, capped at 560px and centred on tablets. Glyphs are 24px outline icons; labels are 11px, 500, uppercase, 0.08em (0.04em below 360px). Items are muted; the current one is ink, with a 2px caramel mark on the hairline (drawn as a border, so it also shows in forced-colours mode). Keyboard focus shows a 2px focus outline inset by 4px. |
 | Height | 57px plus the bottom inset, within the footer's 96px reserve (§18.5) |
 | `aria-current` | `"page"` on `/`, `/products`, `/wishlist`, `/profile`; `"true"` for Shop on `/products/:slug` and for Account on `/orders` |
-| Scroll | Past 80px, a scroll down of 6px or more slides the bar away (transform only, `--sf-duration`, `--sf-ease-out`); a scroll up brings it back. Keyboard focus inside the bar (`:focus-visible`, not the focus a tapped link keeps) keeps it on screen, and focusing it brings it back. |
+| Scroll | Past 80px, a scroll down of 6px or more slides the bar away (transform only, `--sf-duration-exit`, `--sf-ease-in-out`); a scroll up brings it back (`--sf-duration`, `--sf-ease-out`). Keyboard focus inside the bar (`:focus-visible`, not the focus a tapped link keeps) keeps it on screen, and focusing it brings it back. |
 | Overlays | While any overlay holds the body scroll lock, the bar is shown, stays put (scroll is ignored) and is `inert`. It is beneath every overlay and out of the tab order and the accessibility tree. |
 | Search | It keeps its own `SearchModal` instance; the header owns the other. The modal caches the catalogue at module level, so both instances share one fetch, and they can never be open together. When the overlay closes, focus returns to the Search button. |
 
@@ -888,7 +898,7 @@ import { BottomDrawer } from "../../components/ui";
 - **Handle:** a 36 × 4px drag handle in `--sf-color-border-strong`. It is visual only; there is no drag-to-dismiss.
 - **Header:** 56px with a hairline below, holding the title (display-sm serif) and a 44px "Close" button.
 - **Body:** scrolls with `overscroll-behavior: contain`.
-- **Motion:** slides up (`y: 100% → 0`) over `--sf-duration` with `--sf-ease-out`; fades under reduced motion.
+- **Motion:** slides up (`y: 100% → 0`) over `--sf-duration` with `--sf-ease-out` and back down over `--sf-duration-exit` with `--sf-ease-in-out` (`overlayPanelMotion("bottom")`); fades under reduced motion.
 
 ### 19.5 Notes for later prompts
 
@@ -1003,7 +1013,7 @@ Order after the assurance strip: Shop by space · story block 1 · Featured Coll
 
 ### 21.4 Story blocks
 
-Image 7 / text 5 from 768px (mirrored: text 5 / image 7), stacked below with the image first; text vertically centred. Eyebrow `.sf-eyebrow--rule`, title `.sf-display-lg` with the accent, body 17px / `--sf-leading-relaxed` / secondary / 48ch, ghost CTA. The image frame is 4:5 on sand. `Reveal` on both halves (the text 90ms later).
+Image 7 / text 5 from 768px (mirrored: text 5 / image 7), stacked below with the image first; text vertically centred. Eyebrow `.sf-eyebrow--rule`, title `.sf-display-lg` with the accent, body 17px / `--sf-leading-relaxed` / secondary / 48ch, ghost CTA. The image frame is 4:5 on sand. `Reveal` on both halves (the text 90ms later). The photograph scales to 1.03 inside its frame on hover, over `--sf-duration-slow` (pointer devices, not under reduced motion; Prompt 30).
 
 ### 21.5 Complete the space
 
@@ -1120,7 +1130,7 @@ useEffect(() => { if (near) startTheRead(); }, [near]);
   | `returns` | `{returns}` 7 | `STOREFRONT_CONFIG.returnsWindowDays`, only when `resolveTrustBadgeDetail("easyReturns")` is not null (> 0) |
 
 - **Layout:** three columns from 768px, stacked on phones. Each step: a 4:5 image frame (sand while it loads, lazy image with `width`/`height`), the serif numeral (20px, `--sf-color-accent-text`, `aria-hidden`: the `<ol>` numbers the steps) beside the step's `.sf-eyebrow`, the title (`h3`, Playfair 24px, 400), the body (sans 15px, `--sf-leading-body`, secondary, 40ch). `Reveal` per step, 90ms apart.
-- **The page's one lift:** the image rises 4px (`translateY(-4px)`, `--sf-duration-slow`, `--sf-ease-out`) while the pointer rests on the step (or focus is inside it), only under `(hover: hover)` and without reduced motion. The steps carry no links, so in practice it is a hover cue.
+- **No lift (Prompt 30):** while the pointer rests on a step (or focus is inside it), its photograph scales to 1.03 inside the frame over `--sf-duration-slow` (`--sf-ease-out`), as the tiles' and stories' do, only under `(hover: hover)` and without reduced motion. The 4px rise it had before broke the no-lift rule. The steps carry no links, so in practice it is a hover cue.
 - **Loading:** each body is laid out invisibly with `promiseBodyLayout(step)` (every sentence, fillers in place of the values; `visibility: hidden`, `aria-hidden`) under two skeleton lines, so the step already has its height.
 
 ### 22.6 `Marquee`
@@ -1200,11 +1210,11 @@ The props are the pre-Prompt 13 props, unchanged. The card makes no API calls. I
 | Rating row | only when `totalReviews > 0`: 12px stars in ink and "(12)" in muted 12px; one accessible image, "Rated 4.5 out of 5, 12 reviews" (the visible count is `aria-hidden`) |
 | Price | `PriceBlock size="sm" showSavings={false}` (23.3) |
 | Chips | stacked at the image's top-left: "Sold out" (`stock === 0`), "Sale" (a real compare-at price: `getProductMinPrice(product).discount > 0`), "New" (`hot`), in that priority, two at most. `.sf-badge` at 10px, brand paper on brand ink in both modes (16.25 : 1) |
-| Wishlist | a 36px hairline disc at the top-right (a 44px target through `::after`): the page tone at 93% behind an ink outline heart, filled with the accent when saved; `aria-pressed`, "Save to wishlist" / "Remove from wishlist"; on hover the outline turns caramel |
-| Quick add, touch (the base layout) | a persistent 44px "+" disc at the image's bottom-right (the heart's disc), `aria-label="Add <name> to cart"`; a check for 1.2s after a tap |
-| Quick add, `(hover: hover)` | a 44px bar along the image's bottom edge: the page tone at 93%, "Add to cart" in ink (sans 14px, 500). It slides up (`--sf-duration`, `--sf-ease-out`) on card hover and on keyboard focus inside the card (`--qa`); focus left behind by a click does not keep it up once the pointer leaves (`:has(:focus-visible)`). Hover inverts it to `--sf-color-primary` with `--sf-color-primary-contrast` text; it reads "Added" for 1.2s after a click |
+| Wishlist | a 36px hairline disc at the top-right (a 44px target through `::after`): the page tone at 93% behind an ink outline heart, filled with the accent when saved (the fill fades in over `--sf-duration-fast` through `fill-opacity`; no scale); `aria-pressed`, "Save to wishlist" / "Remove from wishlist"; on hover the outline turns caramel |
+| Quick add, touch (the base layout) | a persistent 44px "+" disc at the image's bottom-right (the heart's disc), `aria-label="Add <name> to cart"`; a check for 1.2s after a tap (fading in: `.sf-fade-in`) |
+| Quick add, `(hover: hover)` | a 44px bar along the image's bottom edge: the page tone at 93%, "Add to cart" in ink (sans 14px, 500). It slides up (`--sf-duration`, `--sf-ease-out`) on card hover and on keyboard focus inside the card (`--qa`); focus left behind by a click does not keep it up once the pointer leaves (`:has(:focus-visible)`). Hover inverts it to `--sf-color-primary` with `--sf-color-primary-contrast` text; it reads "Added" for 1.2s after a click (the word and its check fade in: `.sf-fade-in`) |
 | Sold out | the image at 60%; the quick add disabled and labelled "Sold out" (bar text muted, the disc at 50%) |
-| Hover, `(hover: hover)` | the image scales to 1.03 over `--sf-duration-slow` (`--sf-ease-out`); the second photograph (`images[1]`) fades in over it once loaded (mounted on the first mouse or pen hover, never on touch: lazy, `aria-hidden`, empty alt); the stone hairline appears around the image (opacity); the name's underline turns caramel while the link is hovered |
+| Hover, `(hover: hover)` | the image scales to 1.03 over `--sf-duration-slow` (`--sf-ease-out`); the second photograph (`images[1]`) fades in over it once loaded (mounted on the first mouse or pen hover, never on touch: lazy, `aria-hidden`, empty alt); the stone hairline appears around the image (opacity, `--sf-duration-fast`); the name's underline turns caramel while the link is hovered |
 | Focus | link: `--sf-shadow-focus`. Discs: the caramel ring inside a 2px page-tone ring (`0 0 0 2px focus, 0 0 0 4px bg`), so one of the two stands out on any photograph. Bar: a 2px inset caramel outline (an inset box-shadow would sit under its fill) |
 | Reduced motion | no scale and no slide; the bar appears by opacity; durations collapse to 0.01ms |
 | Forced colours | the chips and the bar carry a transparent outline the system draws; stars use `CanvasText` / `GrayText` |
@@ -1404,8 +1414,8 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 
 | What | Values | Reduced motion |
 |---|---|---|
-| Overlay | opacity 0 → 1, `--sf-duration`, `--sf-ease-out`; out the same with `--sf-ease-in-out` | none |
-| Results | opacity 0 → 1 and an 8px rise, `--sf-duration`, `--sf-ease-out`, 40ms apart for the first eight; the rest arrive with the eighth | none |
+| Overlay | opacity 0 → 1 and an 8px rise (`--sf-rise-distance`), `--sf-duration`, `--sf-ease-out`; out over `--sf-duration-exit` with `--sf-ease-in-out` (`overlayPanelMotion("dialog")`) | opacity only |
+| Results | opacity 0 → 1 and an 8px rise (`--sf-rise-distance`), `--sf-duration`, `--sf-ease-out`, 40ms apart (`--sf-stagger-fast`) for the first eight; the rest arrive with the eighth | none |
 | Hairline | 2.4s grow-and-retract while busy | still, full width |
 
 ### 25.7 Contrast
@@ -1444,7 +1454,7 @@ import { ProductGallery, ProductGallerySkeleton } from "../../components/storefr
 // zoom (default STOREFRONT_CONFIG.gallery.zoom), fit="cover" | "contain", className
 ```
 
-- **Frame:** 4:5 (`aspect-ratio`), sand, radius sm, a hairline drawn over the photograph's edge (`::after`). Every photograph is stacked in it; the active one is at full opacity and the change is a crossfade over `--sf-duration` (`--sf-ease-out`), instant under reduced motion. `object-fit: cover` by default; `fit="contain"` keeps whole photographs with sand around them, for real photography that needs it.
+- **Frame:** 4:5 (`aspect-ratio`), sand, radius sm, a hairline drawn over the photograph's edge (`::after`). Every photograph is stacked in it; the active one is at full opacity and the change is a crossfade over `--sf-duration-slow` (`--sf-ease-out`): the new photograph fades in over the old one, which waits beneath at full opacity until it has, so the frame never dims midway (Prompt 30); instant under reduced motion. `object-fit: cover` by default; `fit="contain"` keeps whole photographs with sand around them, for real photography that needs it.
 - **Images:** `width="1200" height="1500"`, `decoding="async"`; the first `loading="eager"` and `fetchpriority="high"` (the page's largest paint), the others lazy. Only the shown image is named ("Name, view 2"); the others have empty alt.
 - **The one overlay:** "Sale" as `.sf-badge--paper` (brand ink on brand paper, 16.25 : 1 over any photograph) at the frame's top-left, when the caller's real `discount` is > 0. No percentage badge, no dots.
 - **Strip:** 56px square hairline thumbnails (inactive at 60% opacity; the active one with an ink border), a vertical strip beside the frame from 769px (it takes no height of its own and scrolls beside the frame when long) and a horizontal row under it below that, each with 6px of focus room. Hidden when there is one image.
@@ -1490,7 +1500,7 @@ In order, with the gap above each:
 ### 26.6 The sticky bar
 
 - **When:** up to 768px, whenever the buy box's actions are out of view (the unchanged `IntersectionObserver`, `rootMargin: "0px 0px -10% 0px"`): below the fold on load, and again once they have scrolled past. Hidden, it is `aria-hidden` and its button leaves the tab order.
-- **Look:** paper (`--sf-color-bg`) with a top hairline, 64px plus the home-indicator inset, `--sf-gutter` sides: a 40px thumbnail (hairline edge), the name in Playfair 15px on one line, the price (sans 14px 500) with the chosen option after a dot (13px muted), and a compact 44px `.sf-btn--primary` (at least 7.75rem wide, so "Added" or "Out of stock" never moves the text). It slides up over `--sf-duration`. No shadow.
+- **Look:** paper (`--sf-color-bg`) with a top hairline, 64px plus the home-indicator inset, `--sf-gutter` sides: a 40px thumbnail (hairline edge), the name in Playfair 15px on one line, the price (sans 14px 500) with the chosen option after a dot (13px muted), and a compact 44px `.sf-btn--primary` (at least 7.75rem wide, so "Added" or "Out of stock" never moves the text). It slides up over `--sf-duration` (`--sf-ease-out`) and away over `--sf-duration-exit` (`--sf-ease-in-out`). No shadow.
 - **Stacking:** `--sf-z-stickybar` (60), replacing the old `z-index: 1300`: above the bottom nav (`--sf-z-bottomnav`, 58), which it covers while shown, and below every drawer, sheet and modal (≥ 1000) and the search overlay (1400). Verified with `elementFromPoint` at 360px: the bar over the nav; the opened cart drawer over the bar.
 - **Keyboard:** while the bar is shown, `html` gets `scroll-padding-bottom: calc(64px + inset + 16px)` (an `html:has(.visible)` rule), so focused or scrolled-to content stops above the bar instead of under it. If keyboard focus (`:focus-visible`) lands on something the bar covers where it rests (the fixed bottom nav), the bar steps aside until focus moves on.
 
@@ -1501,7 +1511,7 @@ In order, with the gap above each:
 
 ### 26.8 Motion
 
-The gallery's crossfade (`--sf-duration`), the zoom's scale (`--sf-duration-slow`), the "Added" check (opacity and scale 0.6 → 1 over `--sf-duration`) and the sticky bar's slide (`--sf-duration`); all collapse under reduced motion. No lifts: the old hover lifts on the buttons, chips, swatches and thumbnails are gone. The page keeps its fade from before this prompt (Prompt 30's).
+The gallery's crossfade (`--sf-duration-slow`), the zoom's scale (`--sf-duration-slow`), the "Added" state (the word and its check fade in over `--sf-duration-fast`, `.sf-fade-in`; no scale since Prompt 30), the wishlist heart's fill (`--sf-duration-fast`) and the sticky bar's slide (in over `--sf-duration`, away over `--sf-duration-exit`); all collapse under reduced motion. No lifts: the old hover lifts on the buttons, chips, swatches and thumbnails are gone. The page's own fade wrapper is gone since Prompt 30: every page fades through `PageTransition` (section 40.4).
 
 ### 26.9 Contrast
 
@@ -1583,7 +1593,7 @@ A thin wrapper around the site's one rail: `SectionHeading` (eyebrow "Related", 
 
 ### 27.7 Motion
 
-`Reveal` on each section: the description, the table (90ms after it), the reviews, the set's panel and the related rail. The nav links' colour and underline change over `--sf-duration`, and the jumps scroll smoothly (instantly under reduced motion). Nothing else moves.
+`Reveal` on each section: the description, the table (90ms after it), the reviews, the set's panel and the related rail. The nav links' colour changes over `--sf-duration-fast` (the underline arrives at once), and the jumps scroll smoothly (instantly under reduced motion). Nothing else moves.
 
 ### 27.8 New contrast pairs
 
@@ -1641,14 +1651,15 @@ Written by Prompt 18. Files: `src/components/CartDrawer/CartDrawer.js` + `.modul
 
 | What | Values | Reduced motion |
 |---|---|---|
-| Panel | slides in from the right over `--sf-duration-slow` (`--sf-ease-out`); out over `--sf-duration` (`--sf-ease-in-out`) | opacity only |
-| Backdrop | fades in over `--sf-duration-slow`, out over `--sf-duration` | same |
-| Free-delivery block | drawn at once when known on opening; arriving later (the first opening) it unfolds from no height over `--sf-duration`, so the lines move down smoothly | opacity only |
-| Progress fill | `scaleX` to the new share over `--sf-duration-slow` (`--sf-ease-out`) | instant |
-| Removed line | folds its height to 0 and fades over `--sf-duration` (`--sf-ease-in-out`); the rows are `layout="position"` (the panel is a `layoutRoot`, the middle a `layoutScroll`) | fades in place, then the rows close up |
+| Panel | slides in from the right over `--sf-duration` (`--sf-ease-out`); out over `--sf-duration-exit` (`--sf-ease-in-out`) (`overlayPanelMotion("right")`) | opacity only |
+| Backdrop | fades in over `--sf-duration`, out over `--sf-duration-exit` | same |
+| Free-delivery block | drawn at once when known on opening; arriving later (the first opening) it fades in over `--sf-duration` while the lines and promises below glide down (framer `layout="position"`, a transform) | it fades in; the lines move down at once |
+| Progress fill | `scaleX` to the new share over `--sf-duration` (`--sf-ease-in-out`) | instant |
+| Removed line | fades out in place over `--sf-duration-exit` (`--sf-ease-in-out`); then the lines, the promises and the empty message below glide up over `--sf-duration` (`--sf-ease-in-out`): `layout="position"` inside the panel's `LayoutGroup` (the panel is a `layoutRoot`, the middle a `layoutScroll`). Nothing animates its height | fades in place, then the rows close up at once |
 | A line added while open | fades in over `--sf-duration` | same |
+| The empty state | fades in over `--sf-duration` | same |
 
-Lines clip their content so the fold reaches 0; each reaches 8px into the gutters, where the focus rings and hit areas at its edges fit.
+Lines clip their content; each reaches 8px into the gutters, where the focus rings and hit areas at its edges fit. Measured (Prompt 30, mock-mode production build): the removed line is gone 255ms after the click and the glide has settled by 571ms; no line changes height or scales on any frame, and the drawer lays out only at mount and when its delivery data arrives.
 
 ### 28.6 Contrast
 
@@ -1704,7 +1715,7 @@ Inside `.sf-container--wide`, on paper:
 - **Repeated names:** leaf names repeat across tiers, so a chip whose name another chip shares also names its parent: "High-Back Chairs · Essentials" and "High-Back Chairs · Premium" (the dot `aria-hidden`, a visually hidden comma; `chipContexts`). The seeded grid has none; the automatic grid has seven such pairs.
 - **Row buttons:** on `(hover: hover)` screens from 768px, while the row overflows, two 44px hairline squares (the product rail's) after it: "Previous categories" / "Next categories", `aria-controls` the row, `aria-disabled` at either end; a press scrolls the row by max(180px, 60% of its width). They show at 1024px with the seeded grid; at 1440px the row fits.
 - **Status:** a visually hidden polite status: "Showing all 8 pieces." or "Showing 1 piece in Beds.".
-- **Grid:** storefront `ProductCard`s, two columns, three from 1024px, with the listing's gaps (16 / 24px columns, 32 / 40px rows). Each card is a `motion.li` inside `AnimatePresence mode="popLayout" initial={false}`: after a press, entering cards fade in with an 8px rise over `--sf-duration` (40ms apart for the first eight), leaving cards fade out over `--sf-duration-fast` (popped out of the flow, against the `position: relative` list) and the others slide into place (`layout`). Under reduced motion the cards only fade and nothing slides. The list reveals once as it scrolls in (`Reveal`).
+- **Grid:** storefront `ProductCard`s, two columns, three from 1024px, with the listing's gaps (16 / 24px columns, 32 / 40px rows). Each card is a `motion.li` inside `AnimatePresence mode="popLayout" initial={false}`: after a press, entering cards fade in with an 8px rise (`--sf-rise-distance`) over `--sf-duration` (40ms apart, `--sf-stagger-fast`, for the first eight), leaving cards fade out over `--sf-duration-fast` (popped out of the flow, against the `position: relative` list) and the others glide into place (`layout="position"`: position only, so a card that changes rows, and so height, is never stretched; Prompt 30). Under reduced motion the cards only fade and nothing slides. The list reveals once as it scrolls in (`Reveal`).
 
 ### 29.6 States
 
@@ -1720,7 +1731,7 @@ As before, the data read starts alongside the config read (the context's default
 
 ### 29.7 Motion
 
-Ticket and deal-card reveals (`Reveal`, 90ms apart), the grid's reveal and its popLayout re-flow (29.5), the chip row's smooth scrolling, and the copy button's colour change (`--sf-duration`). No page-level fade and no hero entrance (the `h1` is the page's largest paint). Under reduced motion: opacity only, instant scrolling.
+Ticket and deal-card reveals (`Reveal`, 90ms apart), the grid's reveal and its popLayout re-flow (29.5), the chip row's smooth scrolling, the copy button's colour change (`--sf-duration-fast`) and its "Copied" fading in (`.sf-fade-in`). No page-level fade of its own (the shared page fade, section 40.4) and no hero entrance (the `h1` is the page's largest paint). Under reduced motion: opacity only, instant scrolling.
 
 ### 29.8 New contrast pairs
 
@@ -1794,11 +1805,11 @@ No field needed `inputmode="numeric"` (there is no code or PIN field). Required 
 
 | What | Values | Reduced motion |
 |---|---|---|
-| Dialog | opacity 0 → 1 and an 8px rise over `--sf-duration` (`--sf-ease-out`); out the same way with `--sf-ease-in-out` | opacity only |
-| Overlay | fades over `--sf-duration` | same |
+| Dialog | opacity 0 → 1 and an 8px rise over `--sf-duration` (`--sf-ease-out`); out over `--sf-duration-exit` with `--sf-ease-in-out` (`overlayPanelMotion("dialog")`) | opacity only |
+| Overlay | fades in over `--sf-duration`, out over `--sf-duration-exit` | same |
 | Panels | cross-fade: out `--sf-duration-fast`, in `--sf-duration` | same (opacity) |
 | Tab underline | `translateX` over `--sf-duration` (`--sf-ease-in-out`) | instant (the tokens collapse) |
-| Meter segments, Show / Hide | colour over `--sf-duration` / `--sf-duration-fast` | instant |
+| Meter segments, Show / Hide | colour over `--sf-duration` (`--sf-ease-in-out`) / `--sf-duration-fast` | instant |
 
 ### 30.8 New contrast pairs
 
@@ -1898,7 +1909,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 ### 31.7 The feedback toast
 
 - Fixed bottom-right, 24px from the edges, `max-width: min(380px, 100vw - 48px)`; up to 768px full width 16px from the sides and 16px above the bottom nav (57px plus the home-indicator inset). `z-index: calc(var(--sf-z-bottomnav) + 1)`.
-- The surface, a hairline, a 2px caramel bar on its left edge (a border), `--sf-radius-md`, `--sf-shadow-md`; the tone's 18px glyph in `currentColor` (a check in `--sf-color-success`, a circled "!" in `--sf-color-error`), the message (sans 14px), and a 36px "Dismiss message" icon button (44px on touch screens). It enters with an 8px rise and a fade over `--sf-duration` (no animation under reduced motion).
+- The surface, a hairline, a 2px caramel bar on its left edge (a border), `--sf-radius-md`, `--sf-shadow-md`; the tone's 18px glyph in `currentColor` (a check in `--sf-color-success`, a circled "!" in `--sf-color-error`), the message (sans 14px), and a 36px "Dismiss message" icon button (44px on touch screens). It enters with an 8px rise (`--sf-rise-distance`) and a fade over `--sf-duration` (no animation under reduced motion).
 - The status line (`role="status"`, polite) stays in the page while empty, so each message is announced as it arrives; without a message the toast has no frame and no size and lets clicks through. It clears itself after 4 seconds, and a tab switch clears it (both unchanged). The legacy sections' messages use it as they did.
 
 ### 31.8 `.sf-btn--danger`
@@ -1915,7 +1926,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 
 ### 31.10 Motion
 
-`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration`). The old page's header drop, sidebar slide and section slides are gone (Addresses and Change password reveal like the Profile card, §32.6; Store credit reveals its balance card, §33.6). Under reduced motion: opacity only, instant scrolling.
+`Reveal` on the Profile card only; the toast's rise; colour changes on the links and chips (`--sf-duration-fast`). The old page's header drop, sidebar slide and section slides are gone (Addresses and Change password reveal like the Profile card, §32.6; Store credit reveals its balance card, §33.6). Under reduced motion: opacity only, instant scrolling.
 
 ### 31.11 New contrast pairs
 
@@ -1991,7 +2002,7 @@ SweetAlert, unchanged words: "Delete this address?" / "This address will be remo
 
 ### 32.6 Motion
 
-`Reveal` on the Addresses section and on the Change password card (the Profile card's fade and 20px rise; opacity only under reduced motion), on arrival and after every tab switch: the two carry a `key`, because the sections share their place in the tree and React would otherwise reuse the previous section's already-revealed element (no reveal at all after a switch). The old sideways slides are gone. Colour changes only: the meter's segments over `--sf-duration`, Show / Hide over `--sf-duration-fast`. Focus scrolls are instant under reduced motion.
+`Reveal` on the Addresses section and on the Change password card (the Profile card's fade and 20px rise; opacity only under reduced motion), on arrival and after every tab switch: the two carry a `key`, because the sections share their place in the tree and React would otherwise reuse the previous section's already-revealed element (no reveal at all after a switch). The old sideways slides are gone. Colour changes only: the meter's segments over `--sf-duration` (`--sf-ease-in-out`), Show / Hide over `--sf-duration-fast`. Focus scrolls are instant under reduced motion.
 
 ### 32.7 New contrast pairs
 
@@ -2154,7 +2165,8 @@ The listing's (§24.7) without the per-page select: `nav "Pagination"` under a h
 |---|---|---|
 | Track and Details panels | unfold from no height with a fade over `--sf-duration` (`--sf-ease-in-out`); fold the same way | opacity only (framer's `reducedMotion` leaves height alone, so the page spells it out) |
 | Chevrons | turn 180° over `--sf-duration` | instant (the tokens collapse) |
-| Review dialog and overlay | the auth modal's: fade and an 8px rise over `--sf-duration` (`--sf-ease-out`), out with `--sf-ease-in-out` | opacity only |
+| Review dialog and overlay | the auth modal's: fade and an 8px rise over `--sf-duration` (`--sf-ease-out`), out over `--sf-duration-exit` with `--sf-ease-in-out` | opacity only |
+| Copy buttons | the check fades in (`.sf-fade-in`) and shows for 2s | static |
 | Cards, chips, buttons | no entrance; colour changes only (the primitives') | — |
 
 Focus scrolls (pagination) are instant under reduced motion.
@@ -2246,7 +2258,7 @@ Cold-load layout shift (Chromium, 900px-tall window, production build), at 1440 
 | What | Values | Reduced motion |
 |---|---|---|
 | A piece leaving | dims to 0.5 over `--sf-duration-fast` for the 300ms; then fades out over `--sf-duration` (`--sf-ease-in-out`), lifted out of the grid (`popLayout`) | the same fades |
-| The other pieces | glide into the gap (framer `layout`) over `--sf-duration` (`--sf-ease-out`); a new sort order glides the same way | no movement (`layout` off) |
+| The other pieces | glide into the gap (framer `layout="position"`: position only, so a piece that changes rows is never stretched) over `--sf-duration` (`--sf-ease-out`); a new sort order glides the same way | no movement (`layout` off) |
 | A piece coming back (a failed removal restored by the context) | fades in over `--sf-duration-fast` | the same fade |
 | First paint (the skeleton, then the pieces) | no entrance | — |
 
@@ -2278,7 +2290,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 ### 36.2 The stepper
 
 - `<ol aria-label="Checkout progress">` of four hairline segments in a grid (8px gaps; 4px up to 600px). Each: the serif numeral (`--sf-text-lg`, lining, `aria-hidden`) and the eyebrow label over a 1px line.
-- **States** (`data-state`): done = ink line and ink text, with ", done" for screen readers; current = a 2px `--sf-color-accent` underline (1px less padding, so the text stays level), ink text, `aria-current="step"`; upcoming = stone line, muted text. Colours move over `--sf-duration`.
+- **States** (`data-state`): done = ink line and ink text, with ", done" for screen readers; current = a 2px `--sf-color-accent` underline (1px less padding, so the text stays level), ink text, `aria-current="step"`; upcoming = stone line, muted text. Colours move over `--sf-duration` (`--sf-ease-in-out`).
 - **Up to 600px** the labels are visually hidden (still read) and one line under the segments shows "Step 2 of 4 · Shipping" (eyebrow, secondary, `aria-hidden`: the list says the same).
 - Forced colours: upcoming `GrayText`, current `Highlight`.
 
@@ -2350,7 +2362,8 @@ A panel fading out is `inert`. Every control shows its primitive's ring; the hea
 
 | What | Values | Reduced motion |
 |---|---|---|
-| A step change | the outgoing panel fades out over `--sf-duration-fast` (`--sf-ease-in-out`), then the incoming one fades in over `--sf-duration` (`--sf-ease-out`), rising 8px (`AnimatePresence mode="wait"`, none on arrival) | opacity only |
+| A step change | the outgoing panel fades out over `--sf-duration-fast` (`--sf-ease-in-out`), then the incoming one fades in over `--sf-duration` (`--sf-ease-out`), rising 8px (`--sf-rise-distance`) (`AnimatePresence mode="wait"`, none on arrival) | opacity only |
+| The page on a step change | scrolls to the top, smoothly | at once (`"instant"`) |
 | Stepper segments, method bars, address borders | colour over `--sf-duration` / `--sf-duration-fast` | collapse (token durations) |
 | Summary chevron | rotates 180° over `--sf-duration` (`--sf-ease-in-out`) | collapse |
 | Skeletons | the primitive's shimmer | static |
@@ -2474,6 +2487,7 @@ Keyboard order from the `h1`: Copy order number › Contact us › Track order �
 | The check | one stroke over `--sf-duration-slow` after `--sf-duration-fast` (`--sf-ease-out`), once per visit | drawn from the first frame (the keyframes are switched off) |
 | The thank-you, the facts, the card | `Reveal` (fade and 20px rise over 0.9s), staggered 0 / 90 / 180ms | fade only |
 | The invoice | none (it appears as the print dialog opens) | — |
+| Copy buttons | the check and the "Copied" bubble fade in (`.sf-fade-in`) | static |
 | Buttons, links | the primitives' colour changes | collapse |
 
 ### 37.11 New contrast pairs
@@ -2646,8 +2660,10 @@ Keyboard order on Support: Full name › Email address › Phone number › Orde
 |---|---|---|
 | The policies' sections, About's blocks, values and close, the Help centre's questions and contact block, the Support form card | `Reveal` (fade and 20px rise over 0.9s) | fade only |
 | The Help centre's topic cards, About's three values | `Reveal`, staggered by `staggerDelay` | fade only |
-| An answer opening or closing | `grid-template-rows` 0fr → 1fr over `--sf-duration` (`--sf-ease-out` opening, `--sf-ease-in-out` closing); `visibility` switches after the fold; the plus turns to a minus over the same time | none (the transitions are off) |
-| A topic card on hover | the border to ink, the arrow to accent and 4px right, over `--sf-duration` | the duration tokens collapse |
+| An answer opening or closing | `grid-template-rows` 0fr → 1fr over `--sf-duration` with `--sf-ease-in-out` both ways (a state change; one of the sanctioned height animations, section 40.7); `visibility` switches after the fold; the plus turns to a minus over the same time | none (the transitions are off) |
+| A topic card on hover | the border to ink and the arrow to accent over `--sf-duration-fast`; nothing moves (the arrow's 4px nudge is gone since Prompt 30) | the duration tokens collapse |
+| About's story photographs on hover | scale to 1.03 inside their frames over `--sf-duration-slow` (pointer devices) | none |
+| Contact and review links on hover | the underline thickens at once (no transition) | — |
 | The 404, the frame's header, the crash fallback | none | — |
 
 ### 38.12 Contrast
@@ -2803,3 +2819,119 @@ Hints sit under the label, describe the expected input, and end without a full s
 | Default title and description | `public/index.html`, `public/manifest.json` |
 
 The test suites assert copy word for word: change a string and its test together. Admin-managed copy (category descriptions, product copy, shipping method names, coupon descriptions, the offers hero, `settings.store.tagline`, `settings.seo`) is the client's, edited in the admin; suggested wording is listed in `prompts/BUILD_LOG.md` (Prompt 29, "Needs client confirmation"), never written into `db.json` by a prompt.
+
+---
+
+## 40. Motion and micro-interactions
+
+Written by Prompt 30, which audited every storefront animation against one motion language and brought each into line; the audit table (surface → animation → conforms? → fix) is in `BUILD_LOG.md`, Prompt 30. Files: the tokens (section 8), `src/components/ui/motionPresets.js`, `src/components/ui/CountDisc.js`, `src/components/PageTransition/PageTransition.js`, `src/components/ScrollToTop/ScrollToTop.js`, `.sf-fade-in` in `storefront-base.css`, and the SweetAlert block at the end of `App.css` (§16.6).
+
+### 40.1 The language
+
+| Interaction | Duration | Easing | What changes |
+|---|---|---|---|
+| Hover, focus, colour | `--sf-duration-fast` (160ms) | `--sf-ease-out` | colour, a hairline or an underline; images scale to 1.03 over `--sf-duration-slow` |
+| Press | `--sf-duration-press` (120ms) | `--sf-ease-out` | scale 0.99, buttons only |
+| State change (open/close, toggle, the header compacting, the stepper) | `--sf-duration` (320ms) | `--sf-ease-in-out` | opacity, transform; the collapsibles' height (40.7) |
+| Overlay arriving | `--sf-duration` (320ms) | `--sf-ease-out` | a slide from its edge, or a fade with an 8px rise (dialogs) or drop (menus) |
+| Overlay leaving | `--sf-duration-exit` (240ms) | `--sf-ease-in-out` | the same, reversed |
+| Scroll reveal | `--sf-duration-reveal` (900ms) | `--sf-ease-out` | opacity 0 → 1 and a 20px rise, once, at 10% inside the viewport; `<Reveal>` only; ≤ 90ms stagger, groups capped at 8; the hero's copy on mount |
+| Results answering an action | `--sf-duration`, 40ms apart (the first 8) | `--sf-ease-out` | opacity and an 8px rise |
+| Image crossfade | `--sf-duration-slow` (640ms) | `--sf-ease-out` | opacity |
+| Micro-feedback ("Added", "Copied", a count) | `--sf-duration-fast` / `--sf-duration` | `--sf-ease-out` / `--sf-ease-in-out` | opacity only (40.5) |
+| Page change | `--sf-duration-exit` (240ms) | `--sf-ease-out` | `<main>`'s opacity (40.4) |
+| Skeleton shimmer | 1.6s loop | linear | the shimmer band; static under reduced motion |
+| Marquee | 60s per pass through the phrases | linear | the track; pausable (§22.6) |
+
+**Never:** springs, bounce or overshoot; a panel or popover scaling in or out (the account menu's MUI `Grow`, which scaled from 0.75, is now `Fade`); `translateY` lifts on cards or images; pops, bursts or wobbles (the SweetAlert toast's wobble and popup zoom are replaced, the "Added" check's 0.6 scale is gone); an arrow or label that moves on hover; anything that loops for attention. A grep for `spring`, `bounce` and `whileHover={{ scale` over the storefront finds nothing.
+
+**Kept on purpose:** the hero media's 1.04 → 1 settle on mount (the page's entrance, §20.3) and the 6% parallax; the order confirmation's one-stroke check (§37.10); the hairline in the search field while busy (§25.6).
+
+### 40.2 Performance
+
+- Animate `opacity` and `transform` only; hover and state colours repaint without layout. No `box-shadow`, `width`, `height` or `top` transitions: the header's compact shadow is a `::after` layer that fades, the field and tab focus rings arrive at once. The exceptions are the collapsibles (40.7).
+- framer `layout` is always `layout="position"`: a box that changes size snaps to it and only its position glides, so a stretched card (a scale) never shows. The cart drawer, the wishlist grid and the offers grid use it.
+- `will-change` only on the hero media, and only while motion is allowed.
+- Measured in Chromium traces (mock-mode production build; `BUILD_LOG.md`, Prompt 30): no long task while scrolling the home page or opening the cart drawer or the mega-menu; every transform and opacity animation runs on the compositor (only colour hovers and the header strip's discrete `visibility` flip paint); the cart drawer lays out at mount and once when its delivery data arrives, never per frame (the old drawer laid out on every frame for 350ms).
+
+### 40.3 Overlays: `motionPresets.js`
+
+```jsx
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui"; // the barrel
+
+const reduceMotion = useReducedMotion();
+
+<AnimatePresence>
+  {open && (
+    <React.Fragment key="layer">
+      <motion.div className={styles.backdrop} aria-hidden="true" onClick={onClose} {...overlayBackdropMotion} />
+      <motion.div role="dialog" aria-modal="true" {...overlayPanelMotion("right", reduceMotion)}>…</motion.div>
+    </React.Fragment>
+  )}
+</AnimatePresence>
+```
+
+| Kind | Hidden state | Used by |
+|---|---|---|
+| `"right"` | `x: "100%"` | the cart drawer |
+| `"left"` | `x: "-100%"` | the sidebar |
+| `"bottom"` | `y: "100%"` | `BottomDrawer` (the filter sheet) |
+| `"dialog"` | `opacity: 0, y: 8` | the auth modal, the review modal, the search overlay |
+| `"menu"` | `opacity: 0, y: -8` | the mega-menu |
+
+Every kind arrives with `OVERLAY_ENTER` (`--sf-duration`, `--sf-ease-out`) and leaves with `OVERLAY_EXIT` (`--sf-duration-exit`, `--sf-ease-in-out`); the transitions travel inside the preset, so the element needs no `transition` prop. The backdrop fades on the same timings. With `reduceMotion` (or an unknown kind) the panel only fades. The account menu (MUI) takes `TransitionComponent={Fade}`, `transitionDuration={{ enter: 320, exit: 240 }}` and `TransitionProps={{ easing: { enter: cssEase(easeOut), exit: cssEase(easeInOut) } }}` from `TOKENS.motion`. `cssEase(curve)` turns a `TOKENS.motion` array into `cubic-bezier(…)` for CSS, the Web Animations API and MUI; `prefersReducedMotion()` reads the media query where a hook's value would have to become an effect dependency (false where `matchMedia` is missing). Focus is never lost while a layer animates: it moves in within two frames of opening and is back on the trigger within one frame of Escape, and a leaving layer is `inert` (verified for every overlay, with motion on and reduced).
+
+### 40.4 Page changes and scrolling
+
+- **The fade:** `<PageTransition className="main-content">` renders the storefront's `<main>` in `App.js`. When the path changes it runs opacity 0 → 1 over 240ms (`--sf-duration-exit`, ease-out) on `<main>` with the Web Animations API, started in a layout effect so the first frame of the new page is already transparent; it leaves no inline style behind. Opacity only: a vertical move would fight the scroll position (the instant jump to the top, the browser's restoration on back). No fade on the first page, on a search or hash change on the same path, or on a `REPLACE` navigation (the product page's legacy-id redirect). It runs under reduced motion too (opacity only). Pages carry no fade wrapper of their own.
+- **`AnimatePresence mode="wait"` stays** around `<Routes>`. `<Routes>` is not keyed by location, on purpose, so it runs no exit animations: a page stays mounted while only its URL changes (the product page's redirect, the account tabs) and no page waits for another to leave.
+- **A route change lands at the top at once:** `ScrollToTop` calls `window.scrollTo({ top: 0, left: 0, behavior: "instant" })` in a layout effect (a browser that refuses `"instant"` gets `scrollTo(0, 0)` with the smooth rule held off for the call), so the new page is never drawn at the old offset and never scrolls visibly. A `REPLACE` that only corrects the URL leaves the scroll where it is.
+- **Back and forward** leave the position to the browser's restoration, so the page comes back where it was left; on `popstate` the root's smooth rule is held off for a second, so the restore is a jump rather than an animated scroll.
+- **In-page jumps** (anchor links, the product page's section nav, focus moves, pagination) keep `scroll-behavior: smooth` and pass `"instant"` under reduced motion; under reduced motion the storefront `html` drops the smooth rule as well. The admin's routes keep their old `scrollTo(0, 0)`.
+
+### 40.5 Micro-feedback
+
+| What | How |
+|---|---|
+| "Added" (the card's quick add, the product page, the sticky bar) | the word and its check mount with `.sf-fade-in` (160ms, opacity); back to "Add to cart" after 1.2s |
+| "Copied" (offer codes, order numbers, the confirmation) | the check (and the word or bubble) mount with `.sf-fade-in`; back after 2s |
+| The wishlist heart | the fill fades in over 160ms (`fill-opacity`); no scale |
+| Quantity steppers | the number changes in place; `aria-live` announces it |
+| Count discs (the header's cart and wishlist, the sidebar, the bottom nav, the listing's filter count) | `<CountDisc count={n} className={styles.count} />`: nothing at 0, "99+" above 99, `aria-hidden` (the control's name carries the number); a changed number fades in over `--sf-duration` (`--sf-ease-in-out`), never on first paint, never with a scale |
+| Toasts and confirms (SweetAlert) | fade in rising 8px, leave over 240ms; static icons (§16.6) |
+
+### 40.6 Hover
+
+- Images in cards, the space tiles, the story blocks, the promise steps, About's photographs and the mega-menu feature scale to 1.03 inside their frame over `--sf-duration-slow` (`--sf-ease-out`), only under `(hover: hover) and (prefers-reduced-motion: no-preference)`.
+- Cards: a stone hairline fades in around the image and the name's underline turns caramel. Never a lift or a shadow.
+- Buttons, chips, tabs, links and icons: colour only, over `--sf-duration-fast`; underline thickness changes at once.
+
+### 40.7 Collapsibles
+
+Height animates in two places only, each a state change over `--sf-duration` with `--sf-ease-in-out`: the order history's Track and Details panels (framer, height 0 → auto with a fade; opacity only under reduced motion, §34.9) and the FAQ answers (`grid-template-rows` 0fr → 1fr; off under reduced motion, §38.11). The cart drawer's lines and free-delivery block fade while the rows around them glide instead (§28.5).
+
+### 40.8 Reduced motion, surface by surface
+
+| Surface | Under reduced motion |
+|---|---|
+| Reveals | fade only (900ms), no rise |
+| The hero | no settle, no parallax; the copy shows at once; the film does not autoplay |
+| Overlays (drawers, the sheet, dialogs, search, the mega-menu, the account menu) | fade only |
+| The page change | the 240ms fade stays (opacity) |
+| Scrolling | instant: route changes always, in-page jumps and JS scrolls under reduced motion |
+| The marquee | the static list, no track and no control |
+| Hover scales | none |
+| Skeletons | static sand |
+| CSS transitions | collapse to 0.01ms with the tokens (MUI's icon fill included) |
+| `.sf-fade-in`, the SweetAlert animations and its timer bar | off |
+| Layout glides (the cart drawer, the wishlist, the offers grid) | the rows close up at once |
+
+Verified (Prompt 30): after scrolling through eleven storefront pages with reduced motion on, no CSS animation runs, no CSS transition is longer than 0.01ms, no Web Animation is still running at rest, the marquee is still and the hero does not move on scroll.
+
+### 40.9 Checklist for later prompts
+
+- [ ] Durations and easings from section 8 / `TOKENS.motion` only: no literal `ms`, `s` or `ease` in a transition or a framer prop.
+- [ ] Overlays through `overlayPanelMotion` / `overlayBackdropMotion` (or MUI `Fade` on the same timings); reveals through `<Reveal>`; micro-feedback through `.sf-fade-in` and `<CountDisc>`.
+- [ ] No springs, no scaling panels, no lifts, no pops; framer `layout` as `"position"`.
+- [ ] Opacity and transform only, no new `will-change`; record the interaction in DevTools Performance and look for layout on every frame.
+- [ ] Reduced motion: transforms off, custom `@keyframes` off, JS scrolls `"instant"`; focus never lost while anything animates.

@@ -144,8 +144,9 @@ export const paidRowLabel = (order) => {
 };
 
 // Glyphs (strokes in currentColor)
-const Icon = ({ children }) => (
+const Icon = ({ children, className }) => (
   <svg
+    className={className}
     viewBox="0 0 24 24"
     width="16"
     height="16"
@@ -168,8 +169,8 @@ const CopyIcon = () => (
   </Icon>
 );
 
-const CheckIcon = () => (
-  <Icon>
+const CheckIcon = ({ className }) => (
+  <Icon className={className}>
     <path d="M5 12.5l4.5 4.5L19 7.5" />
   </Icon>
 );
@@ -504,11 +505,11 @@ const OrderConfirmation = () => {
                 aria-label={`Copy order number ${displayNumber}`}
                 data-copied={copyNote.copied || undefined}
               >
-                {copyNote.copied ? <CheckIcon /> : <CopyIcon />}
+                {copyNote.copied ? <CheckIcon className="sf-fade-in" /> : <CopyIcon />}
               </button>
               <span role="status" className={styles.copyStatus}>
                 {copyNote.text && (
-                  <span key={copyNote.key} className={styles.copyBubble}>
+                  <span key={copyNote.key} className={cx("sf-fade-in", styles.copyBubble)}>
                     {copyNote.text}
                   </span>
                 )}

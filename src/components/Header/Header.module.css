@@ -23,8 +23,21 @@
   color: var(--sf-color-text);
   font-family: var(--sf-font-sans);
   overflow-anchor: none;
-  transition: transform var(--sf-duration-slow) var(--sf-ease-out),
-    box-shadow var(--sf-duration-slow) var(--sf-ease-out);
+  transition: transform var(--sf-duration) var(--sf-ease-in-out);
+}
+
+/* The compact state's shadow lives on its own layer and fades in, so the
+   change animates opacity rather than a box-shadow. Behind the header's
+   content, inside its stacking context; only the shadow shows, below it. */
+.header::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  box-shadow: var(--sf-shadow-sm);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--sf-duration) var(--sf-ease-in-out);
 }
 
 @media (min-width: 768px) {
@@ -48,11 +61,12 @@
 /* Compact (past 80px of scroll): the header slides up by the utility strip
    and the main row's extra height, so the strip leaves the viewport and the
    main row shows 64px; the row's content re-centres and the logo scales to
-   36px. Transforms only: the header's box, and so everything below it, never
-   moves, and no layout shift is recorded. The shadow is the only one the
-   header ever shows. */
-.compact {
-  box-shadow: var(--sf-shadow-sm);
+   36px. A state change: --sf-duration with --sf-ease-in-out. Transforms only:
+   the header's box, and so everything below it, never moves, and no layout
+   shift is recorded. The shadow (::after) is the only one the header ever
+   shows. */
+.compact::after {
+  opacity: 1;
 }
 
 @media (min-width: 1024px) {
@@ -79,7 +93,7 @@
      leave the tab order too. */
   .compact .utility {
     visibility: hidden;
-    transition: visibility 0s linear var(--sf-duration-slow);
+    transition: visibility 0s linear var(--sf-duration);
   }
 }
 
@@ -194,7 +208,7 @@
   max-width: var(--sf-container-wide);
   margin-inline: auto;
   padding-inline: var(--sf-gutter);
-  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+  transition: transform var(--sf-duration) var(--sf-ease-in-out);
 }
 
 /* Centre the row's content in the part of the row still in view. */
@@ -235,7 +249,7 @@
   height: var(--hdr-logo-h);
   width: auto;
   transform-origin: center;
-  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+  transition: transform var(--sf-duration) var(--sf-ease-in-out);
 }
 
 .compact .logoLink .logo {
