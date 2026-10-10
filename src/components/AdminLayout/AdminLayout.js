@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate, useLocation, Outlet, Navigate } from "react-router-dom";
 import {
   Box,
@@ -304,7 +305,11 @@ const AdminLayout = () => {
   };
 
   const handleLogout = async () => {
-    handleMenuClose();
+    // Close the menu before the confirm opens. While open, the menu hides the
+    // rest of the page from screen readers (aria-hidden on #root); SweetAlert
+    // saves the aria-hidden it finds when it opens and puts it back when it
+    // closes, so a confirm opened over the open menu left the admin hidden.
+    flushSync(handleMenuClose);
     // Confirm first so logging out isn't a one-click accident.
     const result = await Swal.fire({
       title: "Log out?",
