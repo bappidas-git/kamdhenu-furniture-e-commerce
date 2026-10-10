@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { CloseOutlined } from "@mui/icons-material";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
-import { TOKENS } from "../../theme/tokens";
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import styles from "./BottomDrawer.module.css";
 
 // =============================================================================
@@ -28,11 +28,10 @@ import styles from "./BottomDrawer.module.css";
 // Behaviour: role="dialog" + aria-modal, Escape and the backdrop close it,
 // Tab stays inside, focus returns to the opener, the page behind does not
 // scroll. Rendered in a portal on <body>, so a transformed ancestor never
-// re-anchors it. Motion: slides up over --sf-duration with --sf-ease-out; a
+// re-anchors it. Motion (motionPresets): slides up over --sf-duration with
+// --sf-ease-out and leaves over --sf-duration-exit with --sf-ease-in-out; a
 // plain fade under reduced motion.
 // =============================================================================
-
-const { duration, easeOut, easeInOut } = TOKENS.motion;
 
 const BottomDrawer = ({
   open,
@@ -63,18 +62,6 @@ const BottomDrawer = ({
   const label = ariaLabel || (typeof title === "string" ? title : undefined);
   const labelledBy = !label && title ? titleId : undefined;
 
-  const sheetMotion = reduceMotion
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-      }
-    : {
-        initial: { y: "100%" },
-        animate: { y: 0 },
-        exit: { y: "100%", transition: { duration: duration.base, ease: easeInOut } },
-      };
-
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -83,10 +70,7 @@ const BottomDrawer = ({
             className={styles.backdrop}
             aria-hidden="true"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
-            transition={{ duration: duration.base, ease: easeOut }}
+            {...overlayBackdropMotion}
           />
           <motion.div
             ref={sheetRef}
@@ -97,8 +81,7 @@ const BottomDrawer = ({
             tabIndex={-1}
             className={className ? `${styles.sheet} ${className}` : styles.sheet}
             style={{ maxHeight }}
-            transition={{ duration: duration.base, ease: easeOut }}
-            {...sheetMotion}
+            {...overlayPanelMotion("bottom", reduceMotion)}
           >
             <span className={styles.handle} aria-hidden="true" />
             <div className={styles.header}>

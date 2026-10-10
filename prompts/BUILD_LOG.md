@@ -3797,3 +3797,146 @@ Hype removed as well: "Free delivery unlocked" → "Free delivery on this order"
   - now: "Limited Time" / "Special Offers & Deals" / "Discover unbeatable prices on top products. New deals drop daily — don't miss out!";
   - proposed: "This week" / "Special offers" / "A short list of pieces at a lower price for now, plus codes you can use at checkout.".
 - **`RETURN_REASONS` wording,** if a storefront return form is added.
+
+---
+
+## Prompt 30 — Motion and micro-interactions
+
+**Date:** 2026-10-10. **Result:** every storefront animation now speaks one motion language: slow, quiet and token-based, with no springs, lifts, pops or scaling panels, and every animation collapses or reduces to a fade under `prefers-reduced-motion`. **52 surfaces audited, 40 fixed** (table below). Route changes land at the top at once and fade `<main>` in over 240ms (opacity only); overlays share one set of presets (in 320ms, out 240ms); micro-feedback ("Added", "Copied", the wishlist heart, the count discs) is an opacity change. The language is written down in `prompts/DESIGN_SYSTEM.md` §40, and §8 carries the new tokens. **Motion only:** no data, API call, route, storage key or behaviour changed; `db.json`, `api.js`, `adminTheme.js` and every admin file are untouched.
+
+### Audit
+
+Legend: ✓ conforms, ✗ fixed. RM = reduced motion.
+
+| # | Surface | Animation (before) | Conforms? | Fix |
+|---|---|---|---|---|
+| 1 | Routes (`App.js`) | `AnimatePresence mode="wait"` around an unkeyed `<Routes>`: no exit ever ran; only the product page faded (0.3s, its own wrapper) | ✗ | one 240ms opacity fade on `<main>` per path change after the first (`PageTransition`); the product page's wrapper removed; `AnimatePresence` kept |
+| 2 | `ScrollToTop` | `scrollTo(0, 0)` after paint, so the root's smooth `scroll-behavior` animated the scroll between pages (32 in-between frames measured) | ✗ | `behavior: "instant"` (fallback `(0, 0)` with the smooth rule held off) before paint; back/forward leave the browser's restoration, the smooth rule held off on `popstate` |
+| 3 | `html { scroll-behavior: smooth }` | inherited by the admin; smooth under RM too | ✗ | kept; storefront-only `auto` under RM (`html:has(> body:not(.admin-area))`) |
+| 4 | `Reveal` | 900ms, 20px, once, −10% margin, `staggerDelay` capped at 8 | ✓ | — |
+| 5 | `ANIMATION_VARIANTS` (`constants.js`) | unused; 50px slides and a 0.8 scale | ✗ | deleted |
+| 6 | Tokens | no press or exit durations, no short-rise or fast-stagger tokens | ✗ | `--sf-duration-press` 120ms, `--sf-duration-exit` 240ms, `--sf-rise-distance` 8px, `--sf-stagger-fast` 40ms, mirrored in `TOKENS.motion`, collapsed under RM |
+| 7 | `body` / `.App` / `.main-content` | `background-color 0.3s ease` (literals) | ✗ | tokens (320ms, ease-in-out); a storefront `body` rule after the shared one |
+| 8 | `.sf-btn` | colour 320ms, press 160ms | ✗ | colour 160ms, press 120ms |
+| 9 | `.sf-chip`, `.sf-tab` | colour 320ms; the tab's underline a `box-shadow` transition | ✗ | colour 160ms; the underline at once |
+| 10 | `.sf-input`, `.sf-select`, `.sf-textarea` | `box-shadow` transition (the focus ring) | ✗ | border colour only; the ring at once |
+| 11 | `.sf-check`, `.sf-radio` | the mark scaled 0 → 1 | ✗ | the mark fades |
+| 12 | `.sf-switch`, the skip link, `.sf-skeleton` (1.6s shimmer, off under RM) | — | ✓ | — |
+| 13 | Storefront MUI (`ThemeContext`) | hovers 320ms; press 160ms; `MuiOutlinedInput` box-shadow transition; MUI's own 200ms icon `fill` transition, which never collapsed under RM | ✗ | hovers 160ms, press 120ms, no box-shadow transition; `MuiSvgIcon` fill over `--sf-duration-fast` |
+| 14 | The header's account menu | MUI `Grow` (scale 0.75 → 1) | ✗ | `Fade`, 320ms in (ease-out) / 240ms out (ease-in-out) |
+| 15 | SweetAlert (storefront) | the popup dropped 50px and scaled from 0.9; the toast wobbled ±2°; icons animated; buttons had a box-shadow transition | ✗ | fade with an 8px rise in 320ms, out 240ms; static icons; colour 160ms, press 120ms; the timer bar hidden under RM |
+| 16 | Header compaction | 640ms ease-out slide plus a `box-shadow` transition | ✗ | 320ms ease-in-out; the shadow on a `::after` layer that fades |
+| 17 | Mega-menu | in 320ms with a −8px drop ✓; out 160ms ease-out; instant under RM; the feature image's hover scale not gated on RM | ✗ | the shared preset: out 240ms ease-in-out, a fade under RM; the scale gated |
+| 18 | Sidebar | in 640ms, out 320ms | ✗ | in 320ms, out 240ms (preset) |
+| 19 | Bottom nav | slide 320ms ease-out both ways | ✗ | back in 320ms ease-out, away 240ms ease-in-out |
+| 20 | Count discs (header, sidebar, bottom nav, the listing's filter count) | changed instantly | ✗ | `CountDisc`: a new number fades in over 320ms; no pop |
+| 21 | Bottom sheet | in 320ms ✓, out 320ms | ✗ | out 240ms (preset) |
+| 22 | Hero | copy rises on mount (900ms, 90ms apart); media settles 1.04 → 1; parallax ≤ 6%, transform only; `will-change` on the media only; the film does not autoplay under RM | ✓ | — |
+| 23 | Assurance strip | 640ms fade when its data arrives, off under RM | ✓ | — |
+| 24 | Space tiles, the anchor image | 1.03 on hover, gated on RM | ✓ | — |
+| 25 | Story images (home, About) | no hover | ✗ | 1.03 on hover, gated on RM |
+| 26 | Promise steps | the image frame lifted 4px | ✗ | the photograph scales 1.03 in its clipped frame |
+| 27 | Product rails, review carousel | smooth paging, instant under RM | ✓ | — |
+| 28 | Marquee | 60s per pass, linear, pausable, static under RM; `will-change` on the track | ✗ | `will-change` removed |
+| 29 | Product card | 1.03 over 640ms ✓; the second photograph crossfades over 640ms ✓; hairline 320ms; "Added" swapped instantly; the heart filled instantly | ✗ | hairline 160ms; "Added" and its check fade in (160ms, 1.2s as before); the heart's fill fades over 160ms |
+| 30 | Listing list row | "Added" and the heart instant | ✗ | as the card |
+| 31 | Listing | the first six cards reveal; pagination scroll instant under RM | ✓ | — |
+| 32 | Product gallery | crossfade 320ms; both images mid-fade at once, so the frame dimmed | ✗ | 640ms; the outgoing image waits beneath until the new one is in |
+| 33 | Product page and sticky bar "Added" | the check scaled 0.6 → 1 | ✗ | the word and check fade in (160ms) |
+| 34 | Product page heart | a press scale with no transition; the fill instant | ✗ | press 120ms; fill 160ms |
+| 35 | Sticky add-to-cart bar | slide 320ms both ways | ✗ | in 320ms ease-out, away 240ms ease-in-out |
+| 36 | Product page section nav | colour and box-shadow 320ms | ✗ | colour 160ms; the underline at once |
+| 37 | Variant swatches | box-shadow transition | ✗ | the ring at once |
+| 38 | Cart drawer | in 640ms / out 320ms; a removed line folded its height; the late free-delivery block unfolded its height; the fill 640ms ease-out | ✗ | presets 320 / 240; a removed line fades, then the rows below glide (`layout="position"`, `LayoutGroup`); the block fades in while the list glides; the fill 320ms ease-in-out |
+| 39 | Search overlay | a fade only (instant under RM); the field's box-shadow transition | ✗ | fade with an 8px rise (preset), a fade under RM; no box-shadow transition |
+| 40 | Search results, checkout steps | 8px rise, 40ms apart (≤ 8): state changes | ✓ | literals → tokens |
+| 41 | Offers grid | as row 40, but framer `layout` (size and position): a card that changed rows, and so height, was stretched (scaleY 1.033 → 1 measured) | ✗ | `layout="position"`; literals → tokens |
+| 42 | Auth modal, review modal | in 320ms ✓, out 320ms | ✗ | out 240ms (preset); the strength meter's segments ease-in-out |
+| 43 | Order history panels | height unfolds over 320ms ease-in-out, a fade under RM (the sanctioned collapsibles) | ✓ | — |
+| 44 | FAQ answers | `grid-template-rows` unfold, opening ease-out | ✗ | kept as a third collapsible; opening ease-in-out |
+| 45 | Help topic cards | border 320ms; the arrow nudged 4px right | ✗ | border 160ms; the arrow changes colour only |
+| 46 | The contact line, the review carousel's product link | `text-decoration-thickness` transition | ✗ | the underline changes at once |
+| 47 | Checkout | the per-step scroll smooth even under RM; stepper colours ease-out | ✗ | instant under RM; ease-in-out |
+| 48 | Order confirmation | the check draws once (one stroke), off under RM; `Reveal` 0 / 90 / 180ms | ✓ | — (the stroke kept: once, paint only, 40px) |
+| 49 | Profile, store credit | keyed reveals; the feedback toast's 8px rise | ✓ | the rise from the token |
+| 50 | Wishlist grid | the leaving piece fades ✓; the others glide with framer `layout` (size and position) | ✗ | `layout="position"` (as row 41) |
+| 51 | Copy buttons (offers, orders, confirmation) | "Copied" 2s, swapped instantly | ✗ | the check (and word or bubble) fade in (160ms) |
+| 52 | Loading screen (`public/index.html`) | 2.4s hairline, static under RM | ✓ | — (outside `src`) |
+
+### What changed
+
+| File | Change |
+|---|---|
+| `src/theme/storefront-tokens.css`, `src/theme/tokens.js` | the four new motion tokens and their JS mirror (`duration.press`, `duration.exit`, `riseDistance`, `staggerFast` and the `*Ms` twins), collapsed under RM; the comments name each duration's use. No existing value changed |
+| `scripts/check-contrast.js` | the mirror check also covers `riseDistance` → `--sf-rise-distance`, `staggerFastMs` → `--sf-stagger-fast` and each stagger's seconds against its milliseconds |
+| New `src/components/ui/motionPresets.js` (+ test) | `overlayPanelMotion(kind, reduceMotion)` (`right`, `left`, `bottom`, `dialog`, `menu`), `overlayBackdropMotion`, `OVERLAY_ENTER`, `OVERLAY_EXIT`, `cssEase`, `prefersReducedMotion`; exported from the `ui` barrel |
+| New `src/components/ui/CountDisc.js` (+ test) | the `.sf-count` disc: nothing at 0, "99+" above 99, `aria-hidden`, a changed number fades in; exported from the barrel |
+| New `src/components/PageTransition/PageTransition.js` (+ test) | the page fade on `<main>` (Web Animations API, 240ms, ease-out, opacity only) |
+| `src/components/ScrollToTop/ScrollToTop.js` (+ new test) | instant scroll before paint; back/forward and URL-correcting replaces left alone; the smooth rule held off for 1s on `popstate`; the admin branch unchanged |
+| `src/App.js` | `<PageTransition className="main-content">` replaces `<main className="main-content">`; `AnimatePresence mode="wait"` kept, with a comment |
+| `src/index.css` | the storefront `html` drops smooth scrolling under RM (the existing rule untouched) |
+| `src/App.css` | `.App` / `.main-content` on the tokens; appended after the shared rules: the storefront SweetAlert motion (keyframes `sf-swal-in`, `sf-swal-out`, backdrop, buttons, close button, inputs, static icons, the timer bar hidden under RM) and a storefront `body` transition. The admin's inherited rules are byte-identical |
+| `src/theme/storefront-base.css` | `.sf-btn`, `.sf-chip`, `.sf-tab`, fields, check and radio marks (row 8–11); new `.sf-fade-in` |
+| `src/context/ThemeContext.js` | hover colours 160ms, press 120ms, no input box-shadow transition, new `MuiSvgIcon` override (storefront theme only) |
+| `src/utils/constants.js` | `ANIMATION_VARIANTS` deleted |
+| Overlays: `CartDrawer`, `SidebarMenu`, `BottomDrawer`, `AuthModal`, `ReviewModal`, `SearchModal`, `Header/MegaMenu`, `Header` (account menu) | the presets (rows 14–21, 38, 39, 42) |
+| Header, bottom nav, sticky bar | compaction, slide timings, `CountDisc` (rows 16, 19, 20, 35) |
+| Cards and product page: `ProductCard`, `ProductListRow`, `ProductDetails`, `ProductGallery`, `AddToCartBar`, `VariantSelector`, `ReviewCarousel` | rows 29–37, 46 |
+| Pages: `Home`, `AboutUs`, `HelpCenter`, `Products`, `Checkout`, `SpecialOffers`, `Wishlist`, `OrderHistory`, `OrderConfirmation`, `Profile`; components `ContentPage`, `FAQ`, `Marquee` | rows 25, 26, 28, 40, 41, 44–47, 49–51 |
+| Tests | 4 new suites (38 tests); `Checkout.test.js` +1 (the instant step scroll under RM); `ProductCard.test.js` asserts the "Added" fade |
+| `prompts/DESIGN_SYSTEM.md` | §8 (tokens, mirror, reduced motion, language), §15, §16.2–16.7, the motion notes of §17, §19, §21–23, §25–38, and the new §40 |
+
+### `ANIMATION_VARIANTS`
+
+Deleted. Nothing imported it (`grep` over `src`), and its variants (50px slides, a 0.8 scale-in) contradicted the language; the tokens and the presets are the shared vocabulary now.
+
+### Decisions
+
+- **One overlay vocabulary.** Every drawer, sheet, dialog and menu spreads `overlayPanelMotion(kind, reduceMotion)` and the backdrop `overlayBackdropMotion`: in over 320ms ease-out, out over 240ms ease-in-out; side panels slide from their edge, the sheet slides up, dialogs rise 8px, the mega-menu drops 8px. Under reduced motion every one of them fades (`MotionConfig` would otherwise show them at once).
+- **The page fade lives on `<main>`.** A single `PageTransition` replaces per-page wrappers: one place, nothing for a new page to forget. It is started before paint with the Web Animations API, so the first frame of the new page is already transparent and no inline style is left behind. The first page of a visit is not faded (it is the LCP).
+- **Back and forward keep the shopper's place.** The browser restores the scroll position (as it did before, but the smooth rule animated that restore); it is now a jump.
+- **framer `layout` is `"position"` everywhere**, so a box that changes size never shows a stretch. Found by the browser QA on the offers grid (a card moving to a row of a different height was scaled 3.3% for 320ms); the wishlist grid had the same setting.
+- **Micro-feedback is opacity.** `.sf-fade-in` (160ms) for whatever mounts in answer to an action; `CountDisc` for the counts. The "Added" timings stay as Prompt 29 noted (1.2s on cards, 1.4s on the product page).
+- **Hover scale stays at 640ms.** "Hover 160ms" applies to colour; a 160ms image scale reads as a jump, and every 1.03 scale already used `--sf-duration-slow`.
+
+### Deviations from the prompt, and why
+
+1. **The page fade is on `<main>`, not on "each page's wrapper"** (above). Same effect (240ms, opacity only); the product page's own 0.3s wrapper is gone.
+2. **`AnimatePresence mode="wait"` is kept but runs no exits.** `<Routes>` is not keyed by location; keying it would remount a page whenever only its URL changes (the product page's legacy-id redirect, the account tabs) and make each page wait for the last to leave.
+3. **Back/forward do not scroll to the top.** "`ScrollToTop` must scroll instantly on route change" holds for every forward navigation; a back press returns to where the page was left, instantly.
+4. **A third collapsible:** the FAQ answers keep their `grid-template-rows` unfold (now ease-in-out both ways) beside the order history's two panels. Replacing it with a fade would make the answers jump the page.
+5. **Kept:** the hero media's 1.04 → 1 settle on mount (the page's entrance, not a hover scale) and the confirmation's one-stroke check (once per visit, paint only, off under RM).
+6. **Search results, the offers grid and checkout steps animate as state changes** (8px, 40ms apart, ≤ 8 items), not with `Reveal`: they answer an action rather than a scroll.
+7. **Overlays fade under reduced motion,** including the search overlay and the mega-menu, which used to appear at once. Opacity is not motion, and it matches what `MotionConfig` does for the other layers.
+8. **The SweetAlert toasts' timer bar** still shrinks (a progress indicator; the toasts' contexts are out of scope) and is hidden under reduced motion.
+9. **Beyond the listed files:** `ThemeContext.js` (the storefront MUI theme: durations and `MuiSvgIcon`), `App.css` (the storefront SweetAlert block), `scripts/check-contrast.js` (mirror checks) and the new tests. The admin's `ScrollToTop` branch is unchanged.
+10. **The count disc fades** in the sidebar and on the listing's filter count as well as on the cart button; "Copied" fades like "Added".
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **72 suites, 1,258 tests** (68 / 1,219 before; +38 in the four new suites, +1 in `Checkout.test.js`), no console warnings.
+- **Build:** `CI=true npm run build` prints "Compiled successfully" with no warnings. Gzip: JS 437.34 → 438.13 kB, CSS 52.92 → 53.16 kB.
+- **Lint:** ESLint (the project's config) reports nothing in the new files and nothing new in the changed ones; the pre-existing findings are identical to `HEAD` (`ProductCard.test.js` 18, `check-contrast.js` 1).
+- **Checks:** `node scripts/check-contrast.js` (contrast and the token mirror, including the new tokens) and `node scripts/validate-db.js` pass. `db.json` is unchanged (SHA-256 `5cbc3088…`), and so are `api.js`, `adminTheme.js` and every admin file.
+- **Static sweeps:** no `spring`, `bounce`, `stiffness`, `whileHover` or `whileTap` in storefront code; no literal duration in a storefront transition or framer prop (the shared `body` rule in `App.css`, which the admin inherits, keeps its `0.3s`; the marquee's `var(--marquee-duration, 60s)` fallback is set inline from `speed`).
+- **Browser QA:** Playwright and Chromium against mock-mode production builds of `HEAD` and of this branch, on JSON Server with a scratch `db.json`, with motion allowed and reduced, sampling every frame. **343 checks, all passing** in a final full run on the finished build (figures below are from that run):
+  - **Pages (25):** a route change from 1,200px lands at 0 on its first frame (`HEAD`: 32 in-between frames); `<main>` fades over 240ms (opaque after ~210ms), never transformed; no fade on the first page, a search change or the legacy redirect; back returns to 1,200px on its first frame (`HEAD`: an animated restore); the smooth rule comes back after the restore and is `auto` under RM.
+  - **Overlays (56):** the cart drawer, sidebar, search, auth modal, mega-menu and filter sheet enter from the right direction, never scale, settle 233–264ms after their first frame (`HEAD`: drawer 520ms, sidebar 492ms) and are gone 272–315ms after Escape, input latency included; under RM, fade only.
+  - **Micro-interactions and hovers (32):** card scale 1.03, hairline, "Added", heart fill, count discs, toasts and confirms, the gallery crossfade (no dimming), the sticky and bottom bars, header compaction with no box-shadow animation, the story and step images, `will-change` only on the hero media. (One check was too strict and was widened: with `--sf-ease-out` the 1.03 scale comes within 0.0005 of its end at about 68% of its 640ms, 433–453ms measured; a new check reads the 0.64s duration and the curve directly.)
+  - **Cart, account, checkout, offers, wishlist (74):** a removed line fades out (gone 257ms after the click) and the rows glide up (settled at 573ms) with no height change and no scale, the list closing at once under RM; the late free-delivery block fades in while the lines glide; focus goes to the next Remove, then to "Your cart is empty."; the account menu fades without scaling (`HEAD`: `matrix(0.75, …, 0.5625, …)` on its first frame) and returns focus; the Track panel unfolds (fades at full height under RM); the review modal rises 8px, leaves in 240ms and returns focus; checkout steps never overlap and rise 8px (none under RM); offer and wishlist cards never scale.
+  - **Reduced-motion sweep (47):** on eleven pages, after a scroll through each, no CSS animation runs, no transition is longer than 0.01ms and no Web Animation runs at rest; the marquee is the static list, the hero does not move on scroll, cards do not scale on hover. The first run found MUI's 200ms icon fill transition on every page; fixed (row 13).
+  - **Keyboard (56):** for each overlay and the mega-menu, with motion on and reduced, focus is never on `<body>` or inside an inert layer on any frame; it moves in within two frames and is back on the trigger within one frame of Escape; Tab stays inside.
+  - **Widths (44):** 360, 768, 1,024 and 1,440px: no horizontal overflow on seven pages while scrolling (sampled every frame, reveals running) or while overlays animate; mid-flight screenshots reviewed by eye.
+  - **Performance (8):** Chrome traces (DevTools timeline categories) of the home page scroll, the cart drawer opening and the mega-menu opening: no long task on either build; every transform and opacity animation on the compositor (only colour hovers and the header strip's discrete `visibility` flip paint; `HEAD` also animated the header's `box-shadow`); layouts after the first 250ms of the drawer opening: 16 on `HEAD` (one per frame for 350ms), 2 now; mega-menu 2 → 0.
+  - **Admin (1 + 24 screens):** login, dashboard, products, orders, categories and settings in light and dark at 1,440 and 390px are pixel-identical between `HEAD` and this branch; the admin's SweetAlert still plays `swal2-show` (0.3s) with its icon animation.
+- **Not available here:** a physical device, and screen readers (Prompt 31).
+
+### Notes for later prompts
+
+- **31 (responsive and a11y):** focus during transitions is verified (above). The skip link can target `<main>` through `PageTransition`, which passes `id` and `tabIndex` through. A route change still drops focus to `<body>` as before; moving it is Prompt 31's call. `CountDisc` is `aria-hidden`: the cart and wishlist controls carry the count in their names.
+- **32 (performance):** with lazy routes, keep the `Suspense` boundary inside `PageTransition` and a quiet fallback (the fade starts when the path changes, so a spinner would fade in instead of the page). `will-change` stays on the hero media only. The QA traces measured no long tasks from motion.
+- **34 (final QA):** the motion checks to repeat are §40.9 and the reduced-motion table in §40.8. The Playwright scripts were scratch files, not committed.
+
+### Needs client confirmation
+
+None.

@@ -21,6 +21,8 @@
   background-color: var(--sf-color-bg);
   font-family: var(--sf-font-sans);
   transform: translateY(0);
+  /* Coming back: --sf-duration with --sf-ease-out (the transition of the
+     state being entered applies). */
   transition: transform var(--sf-duration) var(--sf-ease-out);
 }
 
@@ -30,9 +32,11 @@
   }
 }
 
-/* Slid away on scroll down: a transform only, so nothing else moves. */
+/* Slid away on scroll down: a transform only, so nothing else moves. Leaving
+   is quicker: --sf-duration-exit with --sf-ease-in-out. */
 .hidden {
   transform: translateY(100%);
+  transition: transform var(--sf-duration-exit) var(--sf-ease-in-out);
 }
 
 .list {

@@ -8,6 +8,7 @@ import apiService, { getErrorMessage } from "../../services/api";
 import { IS_MOCK_API } from "../../services/baseURL";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import TRUST_ICONS from "../../components/storefront/trustIcons";
+import { prefersReducedMotion } from "../../components/ui/motionPresets";
 import { STOREFRONT_CONFIG, TOKENS } from "../../theme/tokens";
 import { formatCurrency, isValidPhone, onImageError, PLACEHOLDER_IMG } from "../../utils/helpers";
 import styles from "./Checkout.module.css";
@@ -77,7 +78,7 @@ const couponDiscountFor = (coupon, amount) => {
 
 // ---- Presentation helpers (Prompt 26) ----------------------------------------
 
-const { duration, easeOut, easeInOut } = TOKENS.motion;
+const { duration, easeOut, easeInOut, riseDistance } = TOKENS.motion;
 
 const cx = (...names) => names.filter(Boolean).join(" ");
 
@@ -320,7 +321,7 @@ const StepPanel = ({ reduceMotion, children }) => {
     <motion.section
       className={styles.panel}
       aria-labelledby="checkout-step-title"
-      initial={{ opacity: 0, y: reduceMotion ? 0 : 8 }}
+      initial={{ opacity: 0, y: reduceMotion ? 0 : riseDistance }}
       animate={{ opacity: 1, y: 0, transition: { duration: duration.base, ease: easeOut } }}
       exit={{ opacity: 0, transition: { duration: duration.fast, ease: easeInOut } }}
     >
@@ -451,7 +452,8 @@ const Checkout = () => {
   }, [user]);
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: "smooth" });
+    // Smooth, but at once under reduced motion.
+    window.scrollTo({ top: 0, behavior: prefersReducedMotion() ? "instant" : "smooth" });
   }, [step]);
 
   // ── Order math ────────────────────────────────────────────────────────────

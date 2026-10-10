@@ -21,6 +21,7 @@ import Header from "./components/Header/Header";
 import BottomNav from "./components/BottomNav/BottomNav";
 import Footer from "./components/Footer/Footer";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
+import PageTransition from "./components/PageTransition/PageTransition";
 import AdminLayout from "./components/AdminLayout/AdminLayout";
 
 // Storefront Pages
@@ -105,7 +106,11 @@ function App() {
                         <MotionConfig reducedMotion="user">
                         <div className="App">
                           <Header />
-                          <main className="main-content">
+                          {/* The page fade (240ms, opacity only) runs on <main>
+                              when the path changes; see PageTransition. <Routes>
+                              is not keyed by location, so AnimatePresence runs no
+                              exit animations and no page waits for another. */}
+                          <PageTransition className="main-content">
                             <AnimatePresence mode="wait">
                               <Routes>
                                 <Route path="/" element={<Home />} />
@@ -132,7 +137,7 @@ function App() {
                                 <Route path="*" element={<NotFound />} />
                               </Routes>
                             </AnimatePresence>
-                          </main>
+                          </PageTransition>
                           <Footer />
                           <BottomNav />
                         </div>

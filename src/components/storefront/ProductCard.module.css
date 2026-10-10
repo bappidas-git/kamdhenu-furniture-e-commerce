@@ -97,7 +97,7 @@
 .frame::after {
   border: var(--sf-hairline);
   opacity: 0;
-  transition: opacity var(--sf-duration) var(--sf-ease-out);
+  transition: opacity var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 .media {
@@ -296,6 +296,17 @@
 
 .wishlisted {
   color: var(--sf-color-accent);
+}
+
+/* The heart fills while saved: its fill fades in and out over
+   --sf-duration-fast (no scale burst). */
+.wishlist path {
+  fill-opacity: 0;
+  transition: fill-opacity var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+.wishlisted path {
+  fill-opacity: 1;
 }
 
 /* Quick add, touch layout: a persistent 44px "+" disc at the bottom-right. */

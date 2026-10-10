@@ -289,6 +289,24 @@ describe("the page frame", () => {
     expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "smooth" });
   });
 
+  test("under reduced motion a step change scrolls to the top at once", async () => {
+    const matchMedia = window.matchMedia;
+    window.matchMedia = jest.fn((query) => ({
+      matches: query === "(prefers-reduced-motion: reduce)",
+      addEventListener: () => {},
+      removeEventListener: () => {},
+      addListener: () => {},
+      removeListener: () => {},
+    }));
+    try {
+      await renderCheckout();
+      await goToShipping();
+      expect(window.scrollTo).toHaveBeenLastCalledWith({ top: 0, behavior: "instant" });
+    } finally {
+      window.matchMedia = matchMedia;
+    }
+  });
+
   test("under StrictMode (development) arriving still moves nothing, and a step change still focuses its heading", async () => {
     await renderCheckout({ strict: true });
     expect(document.body).toHaveFocus();

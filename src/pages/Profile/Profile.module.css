@@ -188,7 +188,7 @@
 @keyframes toast-in {
   from {
     opacity: 0;
-    transform: translateY(var(--sf-space-2));
+    transform: translateY(var(--sf-rise-distance));
   }
 }
 
@@ -517,7 +517,7 @@
 .segment {
   height: 0;
   border-top: 2px solid var(--sf-color-border);
-  transition: border-color var(--sf-duration) var(--sf-ease-out);
+  transition: border-color var(--sf-duration) var(--sf-ease-in-out);
 }
 
 .meter[data-level="1"] .segment:nth-child(-n + 1) {

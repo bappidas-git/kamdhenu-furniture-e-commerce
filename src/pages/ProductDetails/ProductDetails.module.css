@@ -246,23 +246,9 @@
   }
 }
 
-/* "Added ✓": the check settles in beside the label. */
+/* "Added ✓": the word and the check fade in (.sf-fade-in), no scale. */
 .check {
   flex: none;
-  animation: pdp-check-in var(--sf-duration) var(--sf-ease-out);
-}
-
-@keyframes pdp-check-in {
-  from {
-    opacity: 0;
-    transform: scale(0.6);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .check {
-    animation: none;
-  }
 }
 
 /* The heart: a 48px hairline circle, filled caramel once saved. */
@@ -281,7 +267,14 @@
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
   transition: border-color var(--sf-duration-fast) var(--sf-ease-out),
-    color var(--sf-duration-fast) var(--sf-ease-out);
+    color var(--sf-duration-fast) var(--sf-ease-out),
+    transform var(--sf-duration-press) var(--sf-ease-out);
+}
+
+/* The fill fades in while the piece is saved (no scale burst). */
+.wishlist svg {
+  fill-opacity: 0;
+  transition: fill-opacity var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 @media (hover: hover) {
@@ -303,6 +296,10 @@
 
 .wishlistActive {
   color: var(--sf-color-accent);
+}
+
+.wishlistActive svg {
+  fill-opacity: 1;
 }
 
 .sku {
@@ -415,8 +412,8 @@
   text-decoration: none;
   white-space: nowrap;
   color: var(--sf-color-text-secondary);
-  transition: color var(--sf-duration) var(--sf-ease-out),
-    box-shadow var(--sf-duration) var(--sf-ease-out);
+  /* The colour eases on hover; the underline (a box-shadow) arrives at once. */
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 @media (hover: hover) {

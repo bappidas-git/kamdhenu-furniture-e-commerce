@@ -1,13 +1,14 @@
 import React, { useCallback, useEffect, useId, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
+import { AnimatePresence, LayoutGroup, motion, useIsPresent, useReducedMotion } from "framer-motion";
 import { CloseOutlined } from "@mui/icons-material";
 import { useCart } from "../../hooks/useCart";
 import apiService from "../../services/api";
 import { formatCurrency, productPath, PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
 import { STOREFRONT_CONFIG, TOKENS, resolveTrustBadgeDetail } from "../../theme/tokens";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import PriceBlock from "../storefront/PriceBlock";
 import TRUST_ICONS from "../storefront/trustIcons";
 import { activeMethods, deliveryEstimate } from "./cartDelivery";
@@ -48,25 +49,28 @@ import styles from "./CartDrawer.module.css";
 // does not scroll. A plain click on a link closes it as it navigates; any
 // route change closes it too. Rendered in a portal on <body>.
 //
-// Motion: slides in over --sf-duration-slow with --sf-ease-out and leaves over
-// --sf-duration with --sf-ease-in-out; a removed line folds its height to 0.
-// Under reduced motion the panel and the lines only fade.
+// Motion (DESIGN_SYSTEM §28.5): the panel slides in over --sf-duration with
+// --sf-ease-out and leaves over --sf-duration-exit with --sf-ease-in-out, the
+// backdrop fading with it (motionPresets). Lines and the free-delivery block
+// come and go by opacity, and whatever sits below them glides to its new place
+// (framer's layout animation, a transform), so nothing animates its height.
+// Under reduced motion the panel and the lines only fade and the list closes
+// up at once.
 // =============================================================================
 
 const { duration, easeOut, easeInOut } = TOKENS.motion;
 
-// The free-delivery block: unfolds from no height; only fades under reduced
-// motion (MotionConfig leaves height animations alone, so this is explicit).
-const UNFOLD = {
-  initial: { height: 0, opacity: 0 },
-  animate: { height: "auto", opacity: 1, transition: { duration: duration.base, ease: easeOut } },
-  exit: { height: 0, opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-};
+// A line or the free-delivery block arriving or leaving: opacity only.
 const FADE = {
   initial: { opacity: 0 },
   animate: { opacity: 1, transition: { duration: duration.base, ease: easeOut } },
-  exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
+  exit: { opacity: 0, transition: { duration: duration.exit, ease: easeInOut } },
 };
+// What moves when a line or the block comes or goes (the lines below it, the
+// promises, the empty message) glides there: layout="position" with this
+// transition, inside the panel's LayoutGroup. MotionConfig drops the glide
+// under reduced motion.
+const GLIDE = { layout: { duration: duration.base, ease: easeInOut } };
 
 // A plain left click closes the drawer as the link navigates; a modified
 // click (new tab or window) leaves it open.
@@ -179,8 +183,8 @@ const StepIcon = ({ plus }) => (
   </svg>
 );
 
-const CartLine = ({ line, reduceMotion, onNavigate, onDecrease, onIncrease, onRemove, registerRemove }) => {
-  // While a removed line folds away it stays in the DOM: keep it out of the
+const CartLine = ({ line, onNavigate, onDecrease, onIncrease, onRemove, registerRemove }) => {
+  // While a removed line fades away it stays in the DOM: keep it out of the
   // tab order and the accessibility tree.
   const isPresent = useIsPresent();
   const href = productPath(line);
@@ -190,18 +194,7 @@ const CartLine = ({ line, reduceMotion, onNavigate, onDecrease, onIncrease, onRe
   const atMax = atStockLimit(line);
 
   return (
-    <motion.li
-      layout="position"
-      className={styles.line}
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      transition={{ duration: duration.base, ease: easeOut }}
-      exit={
-        reduceMotion
-          ? { opacity: 0, transition: { duration: duration.base, ease: easeInOut } }
-          : { opacity: 0, height: 0, transition: { duration: duration.base, ease: easeInOut } }
-      }
-    >
+    <motion.li layout="position" className={styles.line} {...FADE} transition={GLIDE}>
       {/* React 18 does not know `inert`; the empty string sets the attribute. */}
       <div className={styles.lineInner} inert={isPresent ? undefined : ""}>
         <Link to={href} className={styles.thumb} tabIndex={-1} aria-hidden="true" onClick={onNavigate}>
@@ -378,18 +371,6 @@ const CartDrawer = ({ open, onClose }) => {
 
   if (typeof document === "undefined") return null;
 
-  const panelMotion = reduceMotion
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-      }
-    : {
-        initial: { x: "100%" },
-        animate: { x: 0 },
-        exit: { x: "100%", transition: { duration: duration.base, ease: easeInOut } },
-      };
-
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -398,10 +379,7 @@ const CartDrawer = ({ open, onClose }) => {
             className={styles.backdrop}
             aria-hidden="true"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
-            transition={{ duration: duration.slow, ease: easeOut }}
+            {...overlayBackdropMotion}
           />
           <motion.div
             ref={panelRef}
@@ -412,8 +390,7 @@ const CartDrawer = ({ open, onClose }) => {
             aria-describedby={count > 0 ? countId : undefined}
             tabIndex={-1}
             layoutRoot
-            transition={{ duration: duration.slow, ease: easeOut }}
-            {...panelMotion}
+            {...overlayPanelMotion("right", reduceMotion)}
           >
             <div className={styles.header}>
               <div className={styles.heading}>
@@ -437,121 +414,124 @@ const CartDrawer = ({ open, onClose }) => {
               </button>
             </div>
 
-            {/* Already known when the drawer opens: drawn at once. Arriving
-                later (the first opening): it unfolds, so the lines below move
-                down smoothly instead of jumping. */}
-            <AnimatePresence initial={false}>
-              {showProgress && (
-                <motion.div
-                  key="progress"
-                  className={styles.progress}
-                  {...(reduceMotion ? FADE : UNFOLD)}
-                >
-                  <div className={styles.progressInner}>
-                    <p
-                      className={unlocked ? `${styles.progressLine} ${styles.unlocked}` : styles.progressLine}
-                      aria-live="polite"
-                      aria-atomic="true"
-                    >
-                      {unlocked ? (
-                        <>
-                          <svg
-                            className={styles.check}
-                            width="14"
-                            height="14"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            aria-hidden="true"
-                            focusable="false"
-                          >
-                            <polyline points="20 6 9 17 4 12" />
-                          </svg>
-                          Free delivery on this order
-                        </>
-                      ) : (
-                        <>
-                          Add <span className={styles.amount}>{formatCurrency(remaining)}</span> more for
-                          free delivery
-                        </>
-                      )}
-                    </p>
-                    <span className={styles.track} aria-hidden="true">
-                      <motion.span
-                        className={styles.fill}
-                        style={{ originX: 0 }}
-                        initial={{ scaleX: 0 }}
-                        animate={{ scaleX: ratio }}
-                        transition={{ duration: duration.slow, ease: easeOut }}
-                      />
-                    </span>
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-
-            <motion.div className={styles.body} layoutScroll>
-              {isEmpty ? (
-                <motion.div
-                  className={styles.empty}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ duration: duration.base, ease: easeOut }}
-                >
-                  <p ref={emptyRef} tabIndex={-1} className={`sf-display-sm ${styles.emptyTitle}`}>
-                    Your cart is empty.
-                  </p>
-                  <p className={styles.emptyLine}>
-                    Pieces you add will wait here until you are ready to check out.
-                  </p>
-                  <Link to="/products" className="sf-btn sf-btn--ghost" onClick={onNavigate}>
-                    Browse furniture
-                  </Link>
-                </motion.div>
-              ) : (
-                <>
-                  <ul className={styles.lines} aria-labelledby={titleId}>
-                    <AnimatePresence initial={false}>
-                      {lines.map((line) => (
-                        <CartLine
-                          key={line.id}
-                          line={line}
-                          reduceMotion={reduceMotion}
-                          onNavigate={onNavigate}
-                          onDecrease={handleDecrease}
-                          onIncrease={handleIncrease}
-                          onRemove={handleRemove}
-                          registerRemove={registerRemove}
+            <LayoutGroup>
+              {/* Already known when the drawer opens: drawn at once. Arriving
+                  later (the first opening): it fades in while the lines below
+                  glide down, instead of jumping. */}
+              <AnimatePresence initial={false}>
+                {showProgress && (
+                  <motion.div key="progress" className={styles.progress} {...FADE}>
+                    <div className={styles.progressInner}>
+                      <p
+                        className={unlocked ? `${styles.progressLine} ${styles.unlocked}` : styles.progressLine}
+                        aria-live="polite"
+                        aria-atomic="true"
+                      >
+                        {unlocked ? (
+                          <>
+                            <svg
+                              className={styles.check}
+                              width="14"
+                              height="14"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              aria-hidden="true"
+                              focusable="false"
+                            >
+                              <polyline points="20 6 9 17 4 12" />
+                            </svg>
+                            Free delivery on this order
+                          </>
+                        ) : (
+                          <>
+                            Add <span className={styles.amount}>{formatCurrency(remaining)}</span> more for
+                            free delivery
+                          </>
+                        )}
+                      </p>
+                      <span className={styles.track} aria-hidden="true">
+                        <motion.span
+                          className={styles.fill}
+                          style={{ originX: 0 }}
+                          initial={{ scaleX: 0 }}
+                          animate={{ scaleX: ratio }}
+                          transition={{ duration: duration.base, ease: easeInOut }}
                         />
-                      ))}
-                    </AnimatePresence>
-                  </ul>
+                      </span>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-                  {trustItems.length > 0 && (
-                    <ul className={styles.trust} aria-label="Our promises">
-                      {trustItems.map((item) => (
-                        <li key={item.id} className={styles.trustItem}>
-                          <TrustIcon name={item.icon} />
-                          <span>
-                            {item.label}
-                            {item.detail && (
-                              <>
-                                <span aria-hidden="true"> · </span>
-                                <span className="sf-visually-hidden">, </span>
-                                {item.detail}
-                              </>
-                            )}
-                          </span>
-                        </li>
-                      ))}
+              <motion.div className={styles.body} layoutScroll>
+                {isEmpty ? (
+                  <motion.div
+                    className={styles.empty}
+                    layout="position"
+                    initial={FADE.initial}
+                    animate={FADE.animate}
+                    transition={GLIDE}
+                  >
+                    <p ref={emptyRef} tabIndex={-1} className={`sf-display-sm ${styles.emptyTitle}`}>
+                      Your cart is empty.
+                    </p>
+                    <p className={styles.emptyLine}>
+                      Pieces you add will wait here until you are ready to check out.
+                    </p>
+                    <Link to="/products" className="sf-btn sf-btn--ghost" onClick={onNavigate}>
+                      Browse furniture
+                    </Link>
+                  </motion.div>
+                ) : (
+                  <>
+                    <ul className={styles.lines} aria-labelledby={titleId}>
+                      <AnimatePresence initial={false}>
+                        {lines.map((line) => (
+                          <CartLine
+                            key={line.id}
+                            line={line}
+                            onNavigate={onNavigate}
+                            onDecrease={handleDecrease}
+                            onIncrease={handleIncrease}
+                            onRemove={handleRemove}
+                            registerRemove={registerRemove}
+                          />
+                        ))}
+                      </AnimatePresence>
                     </ul>
-                  )}
-                </>
-              )}
-            </motion.div>
+
+                    {trustItems.length > 0 && (
+                      <motion.ul
+                        layout="position"
+                        transition={GLIDE}
+                        className={styles.trust}
+                        aria-label="Our promises"
+                      >
+                        {trustItems.map((item) => (
+                          <li key={item.id} className={styles.trustItem}>
+                            <TrustIcon name={item.icon} />
+                            <span>
+                              {item.label}
+                              {item.detail && (
+                                <>
+                                  <span aria-hidden="true"> · </span>
+                                  <span className="sf-visually-hidden">, </span>
+                                  {item.detail}
+                                </>
+                              )}
+                            </span>
+                          </li>
+                        ))}
+                      </motion.ul>
+                    )}
+                  </>
+                )}
+              </motion.div>
+            </LayoutGroup>
 
             {!isEmpty && (
               <div className={styles.footer}>

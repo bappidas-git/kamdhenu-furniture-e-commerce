@@ -10,6 +10,7 @@ import {
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../context/WishlistContext";
 import { useBodyScrollLocked } from "../ui/useFocusTrap";
+import CountDisc from "../ui/CountDisc";
 import SearchModal from "../SearchModal/SearchModal";
 import styles from "./BottomNav.module.css";
 
@@ -39,7 +40,6 @@ const HIDE_AFTER = 80; // px of scroll before the bar may hide
 const SCROLL_TOLERANCE = 6; // smaller moves (momentum jitter, rubber-banding) are ignored
 
 const cx = (...names) => names.filter(Boolean).join(" ");
-const countText = (count) => (count > 99 ? "99+" : String(count));
 
 // Keyboard focus inside `root`. A tapped link keeps focus too, but that must
 // not pin the bar on screen, so only :focus-visible counts.
@@ -187,11 +187,7 @@ const BottomNav = () => {
               {item(
                 FavoriteBorderOutlined,
                 "Wishlist",
-                wishlistCount > 0 ? (
-                  <span className={`sf-count ${styles.count}`} aria-hidden="true">
-                    {countText(wishlistCount)}
-                  </span>
-                ) : null
+                <CountDisc count={wishlistCount} className={styles.count} />
               )}
             </Link>
           </li>

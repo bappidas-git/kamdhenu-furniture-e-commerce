@@ -36,8 +36,8 @@ import styles from "./ProductCard.module.css";
 // hairline frames it and the "Add to cart" bar slides up from its bottom edge
 // (keyboard focus inside the card shows the bar too). Touch devices get a
 // persistent "+" button instead. For 1.2s after a click the bar reads "Added"
-// and the "+" turns into a check; the page's handler and CartContext own the
-// toast and the drawer.
+// and the "+" turns into a check, both fading in (an opacity swap, no pop);
+// the page's handler and CartContext own the toast and the drawer.
 //
 // Props:
 //   product           object  (required)
@@ -60,11 +60,13 @@ const ADDED_FOR_MS = 1200;
 // cut in the markup.
 const NAME_FALLBACK_LENGTH = 100;
 
-const HeartIcon = ({ filled }) => (
+// The fill is always there; the stylesheet shows it (fill-opacity) while the
+// piece is saved, fading over --sf-duration-fast.
+const HeartIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
     <path
       d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"
-      fill={filled ? "currentColor" : "none"}
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinejoin="round"
@@ -78,8 +80,8 @@ const PlusIcon = () => (
   </svg>
 );
 
-const CheckIcon = () => (
-  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
+const CheckIcon = ({ className }) => (
+  <svg className={className} viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
     <path
       d="M5 12.5l4.5 4.5L19 7.5"
       fill="none"
@@ -228,7 +230,7 @@ const ProductCard = ({
               aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
               onClick={() => onToggleWishlist(product)}
             >
-              <HeartIcon filled={Boolean(isWishlisted)} />
+              <HeartIcon />
             </button>
           )}
 
@@ -241,10 +243,10 @@ const ProductCard = ({
               onClick={handleQuickAdd}
             >
               <span className={styles.quickAddLabel} aria-hidden="true">
-                {outOfStock ? "Sold out" : added ? "Added" : "Add to cart"}
+                {outOfStock ? "Sold out" : added ? <span className="sf-fade-in">Added</span> : "Add to cart"}
               </span>
               <span className={styles.quickAddIcon} aria-hidden="true">
-                {added ? <CheckIcon /> : <PlusIcon />}
+                {added ? <CheckIcon className="sf-fade-in" /> : <PlusIcon />}
               </span>
             </button>
           )}

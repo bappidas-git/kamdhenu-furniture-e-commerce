@@ -37,11 +37,13 @@ const IMAGE_HEIGHT = 1500;
 // How long the quick add reads "Added" after a click (the card's timing).
 const ADDED_FOR_MS = 1200;
 
-const HeartIcon = ({ filled }) => (
+// The fill is always there; the stylesheet shows it (fill-opacity) while the
+// piece is saved, fading over --sf-duration-fast, as on the card.
+const HeartIcon = () => (
   <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" focusable="false">
     <path
       d="M20.84 4.61a5.5 5.5 0 00-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 00-7.78 7.78L12 21.23l8.84-8.84a5.5 5.5 0 000-7.78z"
-      fill={filled ? "currentColor" : "none"}
+      fill="currentColor"
       stroke="currentColor"
       strokeWidth="1.5"
       strokeLinejoin="round"
@@ -173,7 +175,7 @@ const ProductListRow = ({
               {/* The visible word changes for a moment; the name does not, so
                   the cart toast is the one announcement. */}
               <span aria-hidden="true">
-                {outOfStock ? "Sold out" : added ? "Added" : "Add to cart"}
+                {outOfStock ? "Sold out" : added ? <span className="sf-fade-in">Added</span> : "Add to cart"}
               </span>
               <span className="sf-visually-hidden">
                 {outOfStock ? `Sold out, ${name}` : `Add to cart, ${name}`}
@@ -188,7 +190,7 @@ const ProductListRow = ({
               aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
               onClick={() => onToggleWishlist(product)}
             >
-              <HeartIcon filled={Boolean(isWishlisted)} />
+              <HeartIcon />
             </button>
           )}
         </div>

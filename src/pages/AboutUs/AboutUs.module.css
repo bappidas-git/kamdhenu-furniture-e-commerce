@@ -50,6 +50,16 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+/* The story photographs scale to 1.03 inside their frames while the pointer
+   rests on them, as on the home page (pointer devices only; none under
+   reduced motion). */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .media:hover .image {
+    transform: scale(1.03);
+  }
 }
 
 .text {

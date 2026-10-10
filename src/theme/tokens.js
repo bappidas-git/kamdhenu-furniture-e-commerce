@@ -63,14 +63,22 @@ export const TOKENS = {
   // framer-motion takes seconds and cubic-bezier arrays; the *Ms values match
   // the CSS. Under reduced motion the CSS collapses on its own; JS callers
   // check useReducedMotion() (or rely on <MotionConfig reducedMotion="user">).
+  // press: the 0.99 press scale · fast: hover and colour · exit: overlays
+  // leaving, and the page fade · base: state changes, overlays arriving ·
+  // slow: image crossfades and hover scale · reveal: scroll reveals.
+  // riseDistance: the short rise of overlays, toasts and results;
+  // staggerFast: the stagger of results that answer an action (search, chips).
   motion: {
     easeOut: [0.22, 1, 0.36, 1],
     easeInOut: [0.65, 0, 0.35, 1],
-    duration: { fast: 0.16, base: 0.32, slow: 0.64, reveal: 0.9 },
-    durationMs: { fast: 160, base: 320, slow: 640, reveal: 900 },
+    duration: { press: 0.12, fast: 0.16, exit: 0.24, base: 0.32, slow: 0.64, reveal: 0.9 },
+    durationMs: { press: 120, fast: 160, exit: 240, base: 320, slow: 640, reveal: 900 },
     revealDistance: 20,
+    riseDistance: 8,
     stagger: 0.09,
     staggerMs: 90,
+    staggerFast: 0.04,
+    staggerFastMs: 40,
   },
 };
 

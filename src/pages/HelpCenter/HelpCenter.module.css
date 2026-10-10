@@ -90,7 +90,7 @@
   color: var(--sf-color-text);
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
-  transition: border-color var(--sf-duration) var(--sf-ease-out);
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 .topicTitle {
@@ -112,8 +112,7 @@
 .arrow {
   grid-area: arrow;
   color: var(--sf-color-text-muted);
-  transition: color var(--sf-duration) var(--sf-ease-out),
-    transform var(--sf-duration) var(--sf-ease-out);
+  transition: color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 @media (hover: hover) {
@@ -121,9 +120,9 @@
     border-color: var(--sf-color-primary);
   }
 
+  /* A hairline and colour change only; the arrow does not move. */
   .topic:hover .arrow {
     color: var(--sf-color-accent);
-    transform: translateX(var(--sf-space-1));
   }
 }
 

@@ -8,6 +8,7 @@ import { isEmailValid } from "../../utils/helpers";
 import { TOKENS } from "../../theme/tokens";
 import BrandLogo from "../ui/BrandLogo";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import styles from "./AuthModal.module.css";
 
 // =============================================================================
@@ -48,8 +49,9 @@ import styles from "./AuthModal.module.css";
 // request's own error is role="alert"; the info and success lines are
 // role="status". Rendered in a portal on <body> at --sf-z-modal.
 //
-// Motion: fades in with an 8px rise over --sf-duration (opacity only under
-// reduced motion); the forms cross-fade when the tab changes.
+// Motion (motionPresets): fades in rising 8px over --sf-duration and leaves
+// over --sf-duration-exit (opacity only under reduced motion); the forms
+// cross-fade when the tab changes.
 // =============================================================================
 
 const { duration, easeOut, easeInOut } = TOKENS.motion;
@@ -1003,18 +1005,6 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
 
   /* ---- Render ---- */
 
-  const dialogMotion = reduceMotion
-    ? {
-        initial: { opacity: 0 },
-        animate: { opacity: 1 },
-        exit: { opacity: 0, transition: { duration: duration.base, ease: easeInOut } },
-      }
-    : {
-        initial: { opacity: 0, y: 8 },
-        animate: { opacity: 1, y: 0 },
-        exit: { opacity: 0, y: 8, transition: { duration: duration.base, ease: easeInOut } },
-      };
-
   return createPortal(
     <AnimatePresence>
       {open && (
@@ -1023,10 +1013,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
             className={styles.backdrop}
             aria-hidden="true"
             onClick={onClose}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}
-            transition={{ duration: duration.base, ease: easeOut }}
+            {...overlayBackdropMotion}
           />
           <motion.div
             ref={dialogRef}
@@ -1036,8 +1023,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
             aria-labelledby={titleId}
             aria-describedby={subtitleId}
             tabIndex={-1}
-            transition={{ duration: duration.base, ease: easeOut }}
-            {...dialogMotion}
+            {...overlayPanelMotion("dialog", reduceMotion)}
           >
             <button
               type="button"

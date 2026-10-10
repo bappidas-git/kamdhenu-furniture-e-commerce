@@ -14,7 +14,7 @@ import { APP_DESCRIPTION } from "../../utils/constants";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import { buildCategoryMap, matchesSearch } from "../../components/SearchModal/searchData";
 import { ProductCard, ProductCardSkeleton, StarRating } from "../../components/storefront";
-import { BottomDrawer, Reveal, staggerDelay } from "../../components/ui";
+import { BottomDrawer, CountDisc, Reveal, staggerDelay } from "../../components/ui";
 import ProductListRow, { ProductListRowSkeleton } from "./ProductListRow";
 import styles from "./Products.module.css";
 
@@ -1339,13 +1339,9 @@ const Products = () => {
                 <FiltersIcon />
               </span>
               Filters
+              <CountDisc count={activeFilterCount} className={styles.filtersCount} />
               {activeFilterCount > 0 && (
-                <>
-                  <span className={`sf-count ${styles.filtersCount}`} aria-hidden="true">
-                    {activeFilterCount}
-                  </span>
-                  <span className="sf-visually-hidden">, {activeFilterCount} applied</span>
-                </>
+                <span className="sf-visually-hidden">, {activeFilterCount} applied</span>
               )}
             </button>
 

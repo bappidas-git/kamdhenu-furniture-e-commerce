@@ -533,9 +533,14 @@ Object.entries(TOKENS.motion.durationMs).forEach(([k, v]) =>
 expect("tokens.js", `cubic-bezier(${TOKENS.motion.easeOut.join(", ")})`, "--sf-ease-out", light, "motion.easeOut");
 expect("tokens.js", `cubic-bezier(${TOKENS.motion.easeInOut.join(", ")})`, "--sf-ease-in-out", light, "motion.easeInOut");
 expect("tokens.js", px(TOKENS.motion.revealDistance), "--sf-reveal-distance", light, "motion.revealDistance");
+expect("tokens.js", px(TOKENS.motion.riseDistance), "--sf-rise-distance", light, "motion.riseDistance");
 expect("tokens.js", `${TOKENS.motion.staggerMs}ms`, "--sf-stagger", light, "motion.staggerMs");
+expect("tokens.js", `${TOKENS.motion.staggerFastMs}ms`, "--sf-stagger-fast", light, "motion.staggerFastMs");
 Object.entries(TOKENS.motion.duration).forEach(([k, v]) => {
   if (Math.round(v * 1000) !== TOKENS.motion.durationMs[k]) mismatches.push(`tokens.js: motion.duration.${k} (${v}s) != durationMs.${k}`);
+});
+[["stagger", "staggerMs"], ["staggerFast", "staggerFastMs"]].forEach(([s, ms]) => {
+  if (Math.round(TOKENS.motion[s] * 1000) !== TOKENS.motion[ms]) mismatches.push(`tokens.js: motion.${s} != ${ms}`);
 });
 
 console.log("");

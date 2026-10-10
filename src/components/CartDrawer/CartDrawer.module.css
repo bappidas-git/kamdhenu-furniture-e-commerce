@@ -105,8 +105,8 @@
 }
 
 /* ---- Free delivery: the line and a 2px sand track with an ink fill -------- */
-/* The outer box folds (height animated from 0); the inner one carries the
-   padding and the rule, so the fold really starts at nothing. */
+/* The outer box fades in and out (CartDrawer.js); the inner one carries the
+   padding and the rule. */
 .progress {
   flex: none;
   overflow: hidden;
@@ -174,9 +174,10 @@
   list-style: none;
 }
 
-/* The list item has no padding or rule of its own and clips its content, so
-   a removed line folds all the way to 0. It reaches 8px into the gutters,
-   where the focus rings and hit areas at the line's edges fit. */
+/* The list item has no padding or rule of its own and clips its content. It
+   reaches 8px into the gutters, where the focus rings and hit areas at the
+   line's edges fit. A removed line fades out, then the lines below glide up
+   (CartDrawer.js). */
 .line {
   margin-inline: calc(-1 * var(--sf-space-2));
   overflow: hidden;

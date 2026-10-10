@@ -177,15 +177,19 @@
   --sf-tracking-button: 0.02em;
   --sf-measure: 66ch;                  /* comfortable line length */
 
-  /* ---- Motion (slow, quiet) --------------------------------------------- */
+  /* ---- Motion (slow, quiet; DESIGN_SYSTEM.md §8) ------------------------ */
   --sf-ease-out: cubic-bezier(0.22, 1, 0.36, 1);      /* entrances */
-  --sf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* state changes */
-  --sf-duration-fast: 160ms;           /* hover, press */
-  --sf-duration: 320ms;                /* state changes, drawers */
-  --sf-duration-slow: 640ms;           /* image crossfades */
+  --sf-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);   /* state changes, exits */
+  --sf-duration-press: 120ms;          /* the press scale (0.99) */
+  --sf-duration-fast: 160ms;           /* hover, focus and colour changes */
+  --sf-duration-exit: 240ms;           /* overlays leaving; the page fade */
+  --sf-duration: 320ms;                /* state changes, overlays arriving */
+  --sf-duration-slow: 640ms;           /* image crossfades and hover scale */
   --sf-duration-reveal: 900ms;         /* scroll reveals */
   --sf-reveal-distance: 20px;
+  --sf-rise-distance: 8px;             /* overlays, toasts, results: a short rise */
   --sf-stagger: 90ms;                  /* delay between items in a sequence */
+  --sf-stagger-fast: 40ms;             /* results that answer an action */
   --sf-transition-fast: var(--sf-duration-fast) var(--sf-ease-out);
   --sf-transition: var(--sf-duration) var(--sf-ease-out);
   --sf-transition-slow: var(--sf-duration-slow) var(--sf-ease-out);
@@ -288,11 +292,15 @@ body.dark {
 /* Respect users who prefer reduced motion — shared, applies storefront-wide. */
 @media (prefers-reduced-motion: reduce) {
   :root {
+    --sf-duration-press: 0.01ms;
     --sf-duration-fast: 0.01ms;
+    --sf-duration-exit: 0.01ms;
     --sf-duration: 0.01ms;
     --sf-duration-slow: 0.01ms;
     --sf-duration-reveal: 0.01ms;
     --sf-reveal-distance: 0px;
+    --sf-rise-distance: 0px;
     --sf-stagger: 0ms;
+    --sf-stagger-fast: 0ms;
   }
 }

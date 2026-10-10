@@ -165,8 +165,8 @@
   align-items: center;
   gap: var(--sf-space-2);
   border-bottom: 1px solid var(--sf-color-border-strong);
-  transition: border-color var(--sf-duration-fast) var(--sf-ease-out),
-    box-shadow var(--sf-duration-fast) var(--sf-ease-out);
+  /* The colour eases; the second pixel (a box-shadow) arrives at once. */
+  transition: border-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
 .field:focus-within {

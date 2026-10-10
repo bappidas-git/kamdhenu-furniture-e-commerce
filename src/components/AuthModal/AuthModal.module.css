@@ -212,7 +212,7 @@
 .segment {
   height: 0;
   border-top: 2px solid var(--sf-color-border);
-  transition: border-color var(--sf-duration) var(--sf-ease-out);
+  transition: border-color var(--sf-duration) var(--sf-ease-in-out);
 }
 
 .meter[data-score="1"] .segment:nth-child(-n + 1) { border-top-color: var(--sf-color-error); }

@@ -139,7 +139,9 @@ const SavedPiece = forwardRef(function SavedPiece(
       data-exiting={isPresent ? undefined : ""}
       // React 18 does not know `inert`; the empty string sets the attribute.
       inert={isPresent ? undefined : ""}
-      layout={!reduceMotion}
+      // Position only: a card that changes rows (and so height) glides there
+      // without being stretched; under reduced motion the grid closes up at once.
+      layout={reduceMotion ? false : "position"}
       initial={{ opacity: 0 }}
       animate={{ opacity: leaving ? LEAVING_OPACITY : 1 }}
       exit={{ opacity: 0, transition: { duration: duration.base, ease: easeInOut } }}

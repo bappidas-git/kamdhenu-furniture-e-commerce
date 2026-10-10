@@ -5,7 +5,7 @@ import { ClickAwayListener, useMediaQuery } from "@mui/material";
 import { categoryParam } from "../../utils/categories";
 import { PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
 import { getDepartmentFeature } from "../../content/navigationContent";
-import { TOKENS } from "../../theme/tokens";
+import { overlayPanelMotion } from "../ui/motionPresets";
 import styles from "./MegaMenu.module.css";
 
 // The grouping behind the panels, shared with the mobile sidebar (Prompt 09).
@@ -367,18 +367,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
               role="region"
               aria-label={`${openDepartment.category.name} menu`}
               className={styles.panel}
-              initial={reduceMotion ? false : { opacity: 0, y: -8 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={
-                reduceMotion
-                  ? { opacity: 0, transition: { duration: 0 } }
-                  : {
-                      opacity: 0,
-                      y: -8,
-                      transition: { duration: TOKENS.motion.duration.fast, ease: TOKENS.motion.easeOut },
-                    }
-              }
-              transition={{ duration: TOKENS.motion.duration.base, ease: TOKENS.motion.easeOut }}
+              {...overlayPanelMotion("menu", reduceMotion)}
               onKeyDown={onPanelKeyDown}
             >
               <MegaMenuPanel department={openDepartment} onNavigate={closeMenu} />

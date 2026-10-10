@@ -191,6 +191,15 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
+}
+
+/* The photograph scales to 1.03 inside its frame while the pointer rests on
+   it, as the tiles do (pointer devices only; none under reduced motion). */
+@media (hover: hover) and (prefers-reduced-motion: no-preference) {
+  .storyMedia:hover .storyImage {
+    transform: scale(1.03);
+  }
 }
 
 .storyText {
@@ -398,15 +407,15 @@
   overflow: hidden;
   border-radius: var(--sf-radius-sm);
   background-color: var(--sf-color-sand);
-  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
-/* The one lift the page allows: a step's image rises 4px while the pointer
-   rests on the step (pointer devices only; none under reduced motion). */
+/* No lift: while the pointer rests on a step, its photograph scales to 1.03
+   inside the frame, as the tiles' and stories' do (pointer devices only;
+   none under reduced motion). */
 @media (hover: hover) and (prefers-reduced-motion: no-preference) {
-  .step:hover .stepMedia,
-  .step:focus-within .stepMedia {
-    transform: translateY(-4px);
+  .step:hover .stepImage,
+  .step:focus-within .stepImage {
+    transform: scale(1.03);
   }
 }
 
@@ -415,6 +424,7 @@
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform var(--sf-duration-slow) var(--sf-ease-out);
 }
 
 .stepMeta {

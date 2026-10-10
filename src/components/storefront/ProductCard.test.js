@@ -204,6 +204,10 @@ test("quick add sends the built cart item and says Added for 1.2s", () => {
     expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(item));
     expect(onAddToCart.mock.calls[0][0]).toMatchObject({ id: "7-v2", variantId: "v2", price: 10800 });
     expect(add).toHaveTextContent("Added");
+    // An opacity swap: "Added" and the touch disc's check fade in (no pop).
+    expect(within(add).getByText("Added")).toHaveClass("sf-fade-in");
+    // eslint-disable-next-line testing-library/no-node-access -- the check is decorative (aria-hidden): no role to query
+    expect(add.querySelector("svg.sf-fade-in")).not.toBeNull();
 
     act(() => jest.advanceTimersByTime(1100));
     expect(add).toHaveTextContent("Added");

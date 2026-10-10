@@ -34,6 +34,14 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Storefront only: under reduced motion, anchor links and focus jumps land at
+   once. The rule above stays as it is for the admin, which inherits it. */
+@media (prefers-reduced-motion: reduce) {
+  html:has(> body:not(.admin-area)) {
+    scroll-behavior: auto;
+  }
+}
+
 /*
  * SweetAlert2 defaults to z-index 1060, which sits *below* MUI's modal layer
  * (Dialog = 1300). Without this, a confirm/validation popup fired while a
