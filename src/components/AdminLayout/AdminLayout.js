@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
+import { flushSync } from "react-dom";
 import { useNavigate, useLocation, Outlet, Navigate } from "react-router-dom";
 import {
   Box,
@@ -34,9 +35,8 @@ import { useThemeContext } from "../../context/ThemeContext";
 import buildAdminTheme from "../../theme/adminTheme";
 import useAdminBodyClass from "../../hooks/useAdminBodyClass";
 import apiService from "../../services/api";
+import { LOGO_URLS } from "../../utils/constants";
 import Swal from "sweetalert2";
-
-const LOGO = "https://placehold.co/160x40/4f46e5/ffffff?text=LOGO";
 
 const drawerWidth = 260;
 
@@ -305,7 +305,11 @@ const AdminLayout = () => {
   };
 
   const handleLogout = async () => {
-    handleMenuClose();
+    // Close the menu before the confirm opens. While open, the menu hides the
+    // rest of the page from screen readers (aria-hidden on #root); SweetAlert
+    // saves the aria-hidden it finds when it opens and puts it back when it
+    // closes, so a confirm opened over the open menu left the admin hidden.
+    flushSync(handleMenuClose);
     // Confirm first so logging out isn't a one-click accident.
     const result = await Swal.fire({
       title: "Log out?",
@@ -333,8 +337,10 @@ const AdminLayout = () => {
         }}
       >
         <img
-          src={LOGO}
+          src={mode === "dark" ? LOGO_URLS.white : LOGO_URLS.light}
           alt={process.env.REACT_APP_NAME || "Admin Panel"}
+          width={97}
+          height={32}
           style={{ height: 32, width: "auto" }}
         />
       </Box>

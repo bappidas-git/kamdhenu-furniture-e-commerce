@@ -4418,3 +4418,116 @@ Traced after: the add restyles `html` no more; one restyle of the drawer (63 ele
 - **Make the page inert once the drawer has slid in?** About 170ms instead of 252ms at 4× CPU, the drawer unchanged. For those first 320ms the backdrop takes the pointer, the focus trap holds Tab and `aria-modal` marks the dialog, but the page is not yet inert: a change to Prompt 31's overlay contract, so not made.
 - **App.css's universal `::-webkit-scrollbar` rule.** Scoped away from `html` (for example `body ::-webkit-scrollbar`), a restyle of `html` would cost one element instead of every one: the sticky bar showing or hiding, every SweetAlert toast and Back and Forward's scroll hold would stop restyling the whole page. The page's own scrollbar would then be the browser's default on desktop, and the design system forbids editing those rules, so it is a design decision.
 
+---
+
+## Prompt 33 — Admin logo swap
+
+**Date:** 2026-10-10. **Result:** the admin's two placeholder images (an indigo "LOGO" block in the sidebar and on the login card) are now the A & S Urbanseat logo: the full-colour artwork on the white surfaces in light mode, the white artwork on `#111927` in dark mode, switching as the shared theme is toggled. The rendered heights stay 32px (sidebar) and 56px (login), and explicit `width`/`height` attributes hold the logo's box while it loads. **Two files changed, logo lines only** (8 insertions, 5 deletions). In before-and-after screenshots of 16 admin states, no pixel changed outside the logo's box. No other admin file changed, and neither did `db.json`, `api.js` or the storefront. QA also turned up a pre-existing admin accessibility bug in the logout confirm; with the owner's go-ahead, the follow-up at the end of this entry fixes it ("Follow-up: the logout confirm and screen readers").
+
+### What changed
+
+| File | Lines (after) | Change |
+|---|---|---|
+| `src/components/AdminLayout/AdminLayout.js` | 37 | Added `import { LOGO_URLS } from "../../utils/constants";` after the `apiService` import. |
+| | was 39–40 | Removed `const LOGO = "https://placehold.co/160x40/4f46e5/ffffff?text=LOGO";` and the blank line after it, which would otherwise have left two blank lines together. |
+| | 335, 337–338 | The sidebar `<img>`: `src={mode === "dark" ? LOGO_URLS.white : LOGO_URLS.light}`, and `width={97}` and `height={32}` after the unchanged `alt`. `style={{ height: 32, width: "auto" }}` (line 339) is unchanged. |
+| `src/pages/Admin/AdminLogin.js` | 20 | Added `import { LOGO_URLS } from "../../utils/constants";` after the `useAdminBodyClass` import. |
+| | was 21 | Removed `const LOGO = "https://placehold.co/210x70/4f46e5/ffffff?text=LOGO";`. |
+| | 137, 139–140 | The login `<img>`: `src={isDarkMode ? LOGO_URLS.white : LOGO_URLS.light}`, and `width={169}` and `height={56}` after the unchanged `alt`. `style={{ height: 56, width: "auto" }}` (line 141) is unchanged. |
+| `prompts/BUILD_LOG.md` | — | This entry. |
+
+`git diff --stat origin/main` on the code: `AdminLayout.js | 7 ++++---` and `AdminLogin.js | 6 ++++--`, nothing else. The surrounding `Box`es and `Divider`, every `sx`, both `alt` expressions (still "A & S Urbanseat" through `REACT_APP_NAME`), the inline styles, and the "Admin Console" heading and subtitle are as they were. There is no `BrandLogo` import, no `onError` and no CSS.
+
+### Decisions
+
+- **The variant follows the mode already in scope:** `mode` from `useThemeContext()` in the layout, `isDarkMode` from `useTheme()` on the login page. Both read `ThemeContext`, so the AppBar's toggle swaps the sidebar's artwork at once. The login page has no toggle of its own; it shows the mode last set through the shared `theme` key (from the dashboard's AppBar or the storefront).
+- **`width`/`height` use `BrandLogo`'s rounding,** `Math.round(height * 1286 / 426)`: 97 at 32px, 169 at 56px. The browser takes the box's ratio from these attributes before the file arrives, and the inline `height` with `width: auto` still sets the rendered size: 96.59 × 32 and 169.05 × 56 once loaded (the artwork's own 3.0188 : 1).
+
+### Deviations from the prompt, and why
+
+None in the code. One formatting detail: the blank line after `AdminLayout.js`'s `LOGO` constant went with it (see the table).
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **84 suites, 1,408 tests**, the same as at `HEAD`, with no console warnings.
+- **Build:** `CI=true npm run build` prints "Compiled successfully" with no warnings. Built in JSON Server mode, `HEAD` and the branch differ only in `main.js`, which carries the admin (399.68 → 399.67 kB gzip, −8 B). `main.css` and all 22 page-chunk files are byte-identical, and `index.html` and `asset-manifest.json` differ only by the bundle's hash. The placeholder URLs are gone from the bundle.
+- **Lint:** ESLint reports nothing in either file, as at `HEAD`.
+- **Data:** `db.json` is unchanged (SHA-256 `5cbc3088…`), and so is `api.js`.
+
+**Browser QA** (Playwright 1.56.1, Chromium; JSON Server-mode production builds of `HEAD` (`a3381df`) and the branch, served side by side; JSON Server on a copy of `db.json`):
+
+| Check | Result |
+|---|---|
+| Variant per mode: login and dashboard, light and dark, at 360, 768, 1,024 and 1,440px (below 900px with the drawer opened from the hamburger) | 16 of 16: light shows `urbanseat-logo.png` on `rgb(255, 255, 255)`, dark shows `urbanseat-logo-white.png` on `rgb(17, 25, 39)` (`#111927`). The light logo never sits on the dark surface. |
+| Rendered size | Sidebar 96.59 × 32 and login 169.05 × 56 at every width; the artwork loaded at 1,286 × 426 (`naturalWidth`). The logos' top edges are where the placeholders' were. |
+| Nothing else changed | The 16 before-and-after screenshot pairs differ only inside the old placeholder's box (128 × 32, 168 × 56): **0 differing pixels outside it** (the AppBar, the notifications badge, the navigation, the login form and the page around them). |
+| No shift while loading | With the logo's response held for 2–2.5s, the sidebar's box is already 97 × 32 and the login's 169 × 56, at their final positions. The divider (y 64), the first nav item (y 73) and "Admin Console" do not move when the file arrives, and no layout-shift entry involves the image. Before, the placeholder sat at 0 × 32 and 0 × 56 until it arrived. |
+| Theme toggle, live | In the AppBar at 1,440px and with the 360px drawer: the light artwork, then the white artwork on `#111927`, then the light artwork again, without a reload. |
+| Login page in dark mode, reached through the app | Toggled to dark in the dashboard, then logged out through the SweetAlert confirm ("Stay Signed In" once, then "Log Out"): the login card shows the white logo at 169.05 × 56 on `#111927`, and the session is cleared. |
+| Keyboard | The login form's tab order is the same on both builds: email, password, Show password, Sign In, Back to Store. |
+| Modules | Dashboard, Products, Categories, Orders, Returns, Payments, Users, Shipping, Coupons, Special Offers, Reviews, Leads and Settings open with the same headings on both builds, and the Add Product dialog opens and closes. **No console error or warning** on either build in any run. |
+| Requests | The branch never requests `placehold.co`; the admin asks only for the light or the white PNG. |
+| Storefront | `/` at 1,440px (reduced motion): **0 differing pixels** between the builds, with the same title and header logo. |
+
+### Pre-existing issues noticed (not changed)
+
+- **After the logout confirm, the admin was hidden from screen readers.** Opening the account menu sets `aria-hidden="true"` on `#root` (MUI's modal behaviour), and "Logout" opened the SweetAlert confirm before MUI had taken that attribute off again. SweetAlert saves each element's `aria-hidden` when it opens (`data-previous-aria-hidden`) and restores it when it closes, so it put `true` back on `#root`. After either answer, `#root` stayed `aria-hidden="true"`: "Stay Signed In" left the whole dashboard hidden, and "Log Out" left the login page hidden (Playwright found neither "Account menu" nor "Sign In" by role). It was the same on `HEAD` and the branch, so the logo change did not cause it. **Fixed with the owner's go-ahead:** "Follow-up: the logout confirm and screen readers", at the end of this entry.
+
+### Notes for later prompts
+
+- **34 (admin diff):** to see the whole build's admin change, diff against the first commit (`91f7b51`). It shows `AdminLayout.js` (the logo, and the follow-up's logout fix), `AdminLogin.js` (the logo), the follow-up's new `AdminLayout.test.js`, and `AdminProducts.js` (+4 lines), Prompt 03's owner-approved follow-up ("Admin fix: variant attributes kept on save"), and nothing else. The logout fix changes no pixel (see the follow-up). A fresh clone's local `main` can be stale (this session's was `10847d4`, from August), so run `git fetch origin main` and compare with `origin/main`.
+- **34 (performance):** the admin's two `<img>`s load the original PNGs (light 141,685 B, white 57,581 B, each once, then cached), not the ~13 KB WebP copies `BrandLogo` takes through `srcset`. The brief sets `src` to `LOGO_URLS` and rules out `BrandLogo`; a `srcset` like `BrandLogo`'s would be a further admin change for the owner to approve.
+- Prompt 32's note for "33" (`usePageMeta`, `lazyPages.js`, Lighthouse) does not apply here: no storefront page was added, and every storefront chunk is byte-identical.
+
+### Needs client confirmation
+
+None.
+
+### Follow-up: the logout confirm and screen readers
+
+**Asked in the same session, on the same branch,** with the owner's go-ahead for this one admin change: fix the admin being hidden from screen readers after the logout confirm (above, "Pre-existing issues noticed").
+
+**The cause** (read in MUI 5.18.0, SweetAlert2 11.26.3 and react-dom 18.2.0). The account menu is a MUI `Menu`. While it is open, MUI's modal manager puts `aria-hidden="true"` on the body's other children, `#root` among them, and takes it off in an effect once React has rendered the menu closed. A `Popover` does not set `closeAfterTransition`, so that happens at the close, not after the fade. `handleLogout` called `handleMenuClose()` and then `Swal.fire()`. With `createRoot`, React renders a click's state change in a microtask after the handler, so SweetAlert opened over the still-open menu, saved `#root`'s `true`, and put it back when it closed. Measured with Playwright, the Prompt 33 build against the fix:
+
+| | Before (the Prompt 33 build) | After |
+|---|---|---|
+| While the confirm is open | `#root` not hidden (MUI took the attribute off after SweetAlert had set it), so the dashboard behind the dialog stayed readable. Focus on the Account button behind the backdrop: the menu handed it back after SweetAlert had moved it into the dialog. | `#root` hidden. Focus on "Log Out", SweetAlert's default, as on every other admin confirm. |
+| Escape | Nothing: SweetAlert listens for keys on its popup, and focus was outside it. | Cancels; focus back on the Account button. |
+| Enter (keyboard) | Re-opened the account menu behind the confirm, which stayed open. | Logs out. |
+| "Stay Signed In" | `#root` left `aria-hidden="true"`: the whole dashboard hidden; focus lost to `<body>`. | Nothing hidden; focus back on the Account button. |
+| "Log Out" | The login page hidden ("Sign In" not reachable by role). | The login page readable; the session cleared; the "Logged Out" toast. |
+
+**What changed**
+
+| File | Change |
+|---|---|
+| `src/components/AdminLayout/AdminLayout.js` | `import { flushSync } from "react-dom"`. `handleLogout` closes the menu with `flushSync(handleMenuClose)` (was `handleMenuClose()`), with a comment saying why. +6 / −1. |
+| New `src/components/AdminLayout/AdminLayout.test.js` | 2 tests on the real `AdminLayout`, MUI menu and SweetAlert (its build without the injected stylesheet: the same script, and jsdom cannot parse the CSS); only the network is stubbed. "Stay Signed In": the page is not `aria-hidden`, and the Account button is reachable by role and has focus. "Log Out": the sign-in page is reachable by role, and `apiService.admin.logout` ran. |
+| `prompts/BUILD_LOG.md` | This follow-up; the pre-existing item, the result line and the note for Prompt 34 point to it. |
+
+**Decisions**
+
+- **`flushSync`, not waiting for the menu's fade.** `flushSync` renders the closed menu at once, and React 18 runs a synchronous render's effects before `flushSync` returns (checked in both of react-dom 18.2.0's builds). So MUI has taken `aria-hidden` off `#root`, and handed focus back to the Account button, before SweetAlert looks. The confirm still opens on the same click. Opening it from the menu's `onExited` would also work, but it would hold the confirm back by the menu's fade (timed by MUI from the menu's height) and need a flag and a transition prop, for an attribute MUI releases at the close.
+- **Only this path needed it.** The admin has 75 `Swal.fire` calls in 11 files. 29 are toasts, and SweetAlert never touches `aria-hidden` for a toast. Of the 46 modal ones, the logout confirm was the only one opened while a MUI overlay was closing in the same run. The others open over a dialog that stays open until the alert has closed (the Orders, Returns, Payments, Leads and Reviews confirms, and the errors in `catch` blocks), or with nothing open. The storefront's Sign out (in the header's menu) shows only a toast, so it does not have this bug.
+
+**Verification**
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **85 suites, 1,410 tests** (+1 suite, +2 tests), with no console warnings; the new suite passed 3 runs of 3. **Mutation check:** with `handleMenuClose()` back in place, both new tests fail (the page keeps `aria-hidden`, and "Sign In" cannot be found by role).
+- **Build:** `CI=true npm run build` prints "Compiled successfully" with no warnings. JSON Server-mode `main.js`: 399.67 → 399.69 kB gzip.
+- **Lint:** ESLint reports nothing in either file.
+- **Browser** (Playwright 1.56.1, Chromium; JSON Server-mode production builds of the Prompt 33 commit `0497a77` and the fix, side by side): six paths, each on both builds: the mouse with "Stay Signed In", the mouse with Escape, the keyboard with Escape, a 390px phone with "Stay Signed In", the mouse with "Log Out", and the keyboard with Enter on the confirm. The fix gives the "After" column on all six, and the Prompt 33 build the "Before" column. No console error on either.
+- **Look:** the open confirm is pixel-identical at 1,440px, and so is the dashboard after cancelling. At 390px, 7–15 pixels differ on two rounded card corners under the backdrop; the unchanged build's own runs differ at the same corners (8 pixels), and the fix's three runs not at all.
+- **Smoke on the fix:** the account menu and the notifications popover hide `#root` while open and release it on Escape; the theme toggle works both ways; all 13 modules open; the Add Product dialog opens and closes; no console error. `db.json` is unchanged (SHA-256 `5cbc3088…`).
+
+**Pre-existing, not changed**
+
+- The account menu opens with focus on its panel rather than on an item (its first child is the name-and-email header), so the arrow keys do nothing until Tab moves focus into the list; ArrowDown then reaches Logout.
+
+**Notes for later prompts**
+
+- **Any screen:** open a modal SweetAlert only after a MUI `Menu`, `Popover` or `Dialog` closed by the same action has released the page. Close a menu or popover with `flushSync` first, as here. A `Dialog` releases only after its fade (`closeAfterTransition`), so open the alert from its `onExited`. Toasts are safe.
+
+**Needs client confirmation**
+
+None.
+
