@@ -17,7 +17,7 @@ import styles from "./AddToCartBar.module.css";
 // above the bottom nav (--sf-z-bottomnav), below every drawer and modal.
 //
 // Keyboard: while the bar is shown, the page keeps focused content clear of it
-// (scroll-padding in the stylesheet), and if keyboard focus lands on something
+// (scroll-padding on <html>, see below), and if keyboard focus lands on something
 // the bar covers (the fixed bottom nav), the bar steps aside until focus
 // moves on. Hidden, it is aria-hidden and its button leaves the tab order.
 //
@@ -36,6 +36,10 @@ const cx = (...names) => names.filter(Boolean).join(" ");
 
 // The bottom nav slides back over --sf-duration (320ms) when it takes focus.
 const YIELD_RECHECK_MS = 400;
+
+// On <html> while the bar is shown: the stylesheet gives the page its scroll
+// padding then (up to 768px, where the bar is drawn).
+const SHOWN_ATTRIBUTE = "data-sf-sticky-bar";
 
 // How far a sliding fixed ancestor (the bottom nav on its way back up) is
 // still translated: the element rests that much higher once it settles.
@@ -147,6 +151,18 @@ const AddToCartBar = ({
   };
 
   const visible = showBar && !yielding;
+
+  // An attribute set from here, not an html:has(.visible) rule: with :has() on
+  // <html>, every element added anywhere in the page (the cart drawer, a toast)
+  // restyled the whole document (Prompt 32 follow-up). An attribute, not a
+  // class: only the phone rule reads it, so on wider screens it restyles
+  // nothing (a class would, through SweetAlert's [class^=swal2] rule).
+  useEffect(() => {
+    if (!visible) return undefined;
+    const root = document.documentElement;
+    root.setAttribute(SHOWN_ATTRIBUTE, "");
+    return () => root.removeAttribute(SHOWN_ATTRIBUTE);
+  }, [visible]);
 
   return (
     <div

@@ -14,6 +14,7 @@ import {
   getProductMinPrice,
   productPath,
 } from "../../utils/helpers";
+import { TOKENS } from "../../theme/tokens";
 import db from "../../../db.json";
 import Wishlist, { SORT_OPTIONS, REMOVE_DELAY_MS, describeStock, toCardProduct } from "./Wishlist";
 
@@ -736,7 +737,8 @@ describe("the pieces", () => {
     expect(screen.getByTestId("cart")).toHaveTextContent("37-v1×1");
     expect(screen.getByRole("dialog", { name: "Cart" })).toBeInTheDocument();
     expect(screen.getByText("3 pieces")).toBeInTheDocument();
-    expect(toasts("Added to cart")).toHaveLength(1);
+    // The cart opened: its toast follows once the drawer has slid in.
+    await waitFor(() => expect(toasts("Added to cart")).toHaveLength(1));
   });
 
   test("Move to cart adds the same line as the quick add, then the piece leaves without a Removed toast", async () => {
@@ -793,6 +795,10 @@ describe("the pieces", () => {
     await settle();
     expect(screen.getByText("2 pieces")).toBeInTheDocument();
     expect(apiService.wishlist.remove).toHaveBeenCalledTimes(1);
+    // The cart's toast follows the drawer's first frame and its entrance.
+    act(() => {
+      jest.advanceTimersByTime(TOKENS.motion.durationMs.base + 50);
+    });
     expect(toasts("Added to cart")).toHaveLength(1);
     expect(toasts("Removed from wishlist")).toHaveLength(0);
   });

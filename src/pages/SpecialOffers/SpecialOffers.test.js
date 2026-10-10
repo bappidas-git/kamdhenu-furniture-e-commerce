@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { act, fireEvent, isInaccessible, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { DealsConfigProvider } from "../../context/DealsConfigContext";
 import { buildCartItem, getProductMaxDiscount, getProductMinPrice, formatCurrency } from "../../utils/helpers";
@@ -24,7 +24,7 @@ jest.mock("../../services/api", () => ({
     coupons: { getActive: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
 
 // jsdom has no IntersectionObserver (Reveal uses one): report every observed
@@ -75,7 +75,7 @@ beforeEach(() => {
   addToCart = jest.fn();
   toggleWishlist = jest.fn();
   wishlisted = new Set();
-  useCart.mockReturnValue({ addToCart });
+  useCartActions.mockReturnValue({ addToCart });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => wishlisted.has(id) });
   writeText = jest.fn().mockResolvedValue(undefined);
   Object.defineProperty(navigator, "clipboard", { value: { writeText }, configurable: true });

@@ -35,9 +35,11 @@ html {
 }
 
 /* Storefront only: under reduced motion, anchor links and focus jumps land at
-   once. The rule above stays as it is for the admin, which inherits it. */
+   once. The rule above stays as it is for the admin, which inherits it. The
+   storefront marks <html> itself (StorefrontRoot.js): an html:has() rule here
+   restyled the whole page on every element added to it. */
 @media (prefers-reduced-motion: reduce) {
-  html:has(> body:not(.admin-area)) {
+  html[data-sf-storefront] {
     scroll-behavior: auto;
   }
 }

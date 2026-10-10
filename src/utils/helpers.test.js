@@ -1,5 +1,5 @@
 import db from "../../db.json";
-import { formatDate, formatDateIN, getCartSavings, parseSpecifications } from "./helpers";
+import { formatCurrency, formatDate, formatDateIN, getCartSavings, parseSpecifications } from "./helpers";
 
 describe("parseSpecifications", () => {
   test("splits a seeded description into its prose and its specification pairs", () => {
@@ -139,5 +139,19 @@ describe("getCartSavings (Prompt 32)", () => {
     expect(getCartSavings([{ price: 600, quantity: 2 }])).toBe(0);
     expect(getCartSavings([])).toBe(0);
     expect(getCartSavings(undefined)).toBe(0);
+  });
+});
+
+// The follow-up to Prompt 32: one formatter per currency, made on first use
+// (an opening cart formats a dozen amounts in one frame). The output is what
+// a new Intl.NumberFormat per call gave.
+describe("formatCurrency", () => {
+  test("rupees in the Indian grouping, other currencies in en-US, whichever comes first", () => {
+    expect(formatCurrency(1234567.5)).toBe("₹12,34,567.50");
+    expect(formatCurrency(1234567.5, "USD")).toBe("$1,234,567.50");
+    expect(formatCurrency(0, "INR")).toBe("₹0.00");
+    expect(formatCurrency(999)).toBe("₹999.00");
+    expect(formatCurrency(1149.999, "USD")).toBe("$1,150.00");
+    expect(formatCurrency(1149.999)).toBe("₹1,150.00");
   });
 });

@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import usePageMeta from "../../hooks/usePageMeta";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
@@ -458,7 +458,7 @@ const isAdminConfig = (config) =>
 // ── Main Component ───────────────────────────────────────────────────────────
 
 const SpecialOffers = () => {
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const { toggleWishlist, isInWishlist } = useWishlist();
   // The whole page is admin-managed via this config (master toggle, hero,
   // timer, featured coupon/product selections).

@@ -23,6 +23,7 @@ import Footer from "./components/Footer/Footer";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import PageTransition from "./components/PageTransition/PageTransition";
 import SkipLink, { MAIN_CONTENT_ID } from "./components/SkipLink/SkipLink";
+import StorefrontRoot from "./components/StorefrontRoot/StorefrontRoot";
 import LazyPageBoundary from "./components/LazyPage/LazyPage";
 import AdminLayout from "./components/AdminLayout/AdminLayout";
 
@@ -109,6 +110,8 @@ function App() {
                             reduced-motion setting: transforms are skipped,
                             opacity still fades. The admin routes are not wrapped. */}
                         <MotionConfig reducedMotion="user">
+                        {/* <html data-sf-storefront>: the root's storefront-only rules. */}
+                        <StorefrontRoot />
                         <div className="App">
                           {/* "Skip to content" (<a class="sf-skip-link"
                               href="#main-content">): the first focusable

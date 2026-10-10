@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
 import { CartProvider, useCart } from "../../context/CartContext";
-import { STOREFRONT_CONFIG } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TOKENS } from "../../theme/tokens";
 import db from "../../../db.json";
 import { preloadPageFor } from "../../pages/lazyPages";
 import CartDrawer from "./CartDrawer";
@@ -561,17 +561,31 @@ describe("footer and navigation", () => {
     expect(currentLocation()).toBe("/products");
   });
 
-  test("opening a cart with pieces starts loading checkout; an empty cart does not (Prompt 32)", async () => {
+  test("opening a cart with pieces starts loading checkout once it has slid in; an empty cart does not (Prompt 32)", async () => {
     const { unmount } = renderDrawer({ lines: [] });
     await openDrawer();
+    await act(() => new Promise((resolve) => setTimeout(resolve, TOKENS.motion.durationMs.base + 100)));
     expect(preloadPageFor).not.toHaveBeenCalled();
     unmount();
 
     renderDrawer();
     expect(preloadPageFor).not.toHaveBeenCalled();
     const { dialog } = await openDrawer();
+    // Not in the opening frame, nor while the panel slides in (the follow-up
+    // to Prompt 32): after its entrance, --sf-duration.
+    await act(() => new Promise((resolve) => setTimeout(resolve, 100)));
+    expect(preloadPageFor).not.toHaveBeenCalled();
     await waitForStore(dialog);
-    expect(preloadPageFor).toHaveBeenCalledWith("/checkout");
+    await waitFor(() => expect(preloadPageFor).toHaveBeenCalledWith("/checkout"));
+  });
+
+  test("a cart closed before it has slid in does not start loading checkout", async () => {
+    renderDrawer();
+    await openDrawer();
+    pressEscape();
+    await dialogGone();
+    await act(() => new Promise((resolve) => setTimeout(resolve, TOKENS.motion.durationMs.base + 100)));
+    expect(preloadPageFor).not.toHaveBeenCalled();
   });
 
   test("Checkout closes the drawer as it navigates", async () => {

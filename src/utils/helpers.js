@@ -13,14 +13,24 @@ export const onImageError = (e) => {
   e.currentTarget.src = PLACEHOLDER_IMG;
 };
 
+// One formatter per currency, made on first use: building an Intl.NumberFormat
+// costs far more than formatting with one, and an opening cart formats a
+// dozen amounts in a single frame (Prompt 32 follow-up). Same output as before.
+const currencyFormats = new Map();
+
 export const formatCurrency = (amount, currency = "INR") => {
-  const locale = currency === "INR" ? "en-IN" : "en-US";
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  let format = currencyFormats.get(currency);
+  if (!format) {
+    const locale = currency === "INR" ? "en-IN" : "en-US";
+    format = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    currencyFormats.set(currency, format);
+  }
+  return format.format(amount);
 };
 
 // Get the minimum price from product variants

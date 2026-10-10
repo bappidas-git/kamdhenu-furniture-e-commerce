@@ -1,9 +1,11 @@
 import React from "react";
 import { act, render, screen, waitFor } from "@testing-library/react";
 import "@testing-library/jest-dom";
+import Swal from "sweetalert2";
 import apiService from "../services/api";
+import { TOKENS } from "../theme/tokens";
 import { AuthProvider } from "./AuthContext";
-import { CartProvider, useCart } from "./CartContext";
+import { CartProvider, useCart, useCartActions } from "./CartContext";
 
 // CartContext's mirror of a signed-in cart to the account (the duplicate-read
 // follow-up, Prompt 32): the account's cart is read once on a page load, and
@@ -163,4 +165,150 @@ test("a guest's cart is never written to an account", async () => {
   await pastTheDebounce();
   expect(apiService.cart.getCart).not.toHaveBeenCalled();
   expect(apiService.cart.addToCart).not.toHaveBeenCalled();
+});
+
+// ── The toasts and the two contexts (the follow-up to Prompt 32) ───────────────
+// An add that opens the drawer holds its toast until the drawer has painted and
+// slid in: SweetAlert's classes on <html> restyled the whole page inside the
+// drawer's first frame. And the actions live in a context of their own, so a
+// component that only adds to the cart does not re-render when it changes.
+describe("toasts and the actions' own context", () => {
+  afterEach(() => {
+    jest.useRealTimers();
+  });
+
+  const renderGuestCart = (extra = null) =>
+    render(
+      <AuthProvider>
+        <CartProvider>
+          <Probe />
+          {extra}
+        </CartProvider>
+      </AuthProvider>
+    );
+  const toastTitles = () => Swal.fire.mock.calls.map(([options]) => options.title);
+
+  test("an add that opens the drawer shows its toast after the drawer's first frame and entrance", () => {
+    jest.useFakeTimers();
+    renderGuestCart();
+    act(() => {
+      latest.addToCart(line(2, 1));
+    });
+    expect(screen.getByTestId("lines")).toHaveTextContent("2-v1×1");
+    expect(latest.isCartOpen).toBe(true);
+    expect(Swal.fire).not.toHaveBeenCalled();
+
+    // The first frame (requestAnimationFrame), then all but the last moment
+    // of the entrance: still held.
+    act(() => {
+      jest.advanceTimersByTime(16 + TOKENS.motion.durationMs.base - 1);
+    });
+    expect(Swal.fire).not.toHaveBeenCalled();
+
+    act(() => {
+      jest.advanceTimersByTime(20);
+    });
+    expect(Swal.fire).toHaveBeenCalledTimes(1);
+    expect(Swal.fire).toHaveBeenCalledWith(
+      expect.objectContaining({
+        toast: true,
+        icon: "success",
+        title: "Added to cart",
+        text: "Piece 2 is in your cart.",
+      })
+    );
+  });
+
+  test("a second add of the same line says Cart updated, held the same way", () => {
+    jest.useFakeTimers();
+    renderGuestCart();
+    act(() => {
+      latest.addToCart(line(2, 1));
+    });
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    act(() => {
+      latest.addToCart(line(2, 1));
+    });
+    expect(screen.getByTestId("lines")).toHaveTextContent("2-v1×2");
+    expect(toastTitles()).toEqual(["Added to cart"]);
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(toastTitles()).toEqual(["Added to cart", "Cart updated"]);
+  });
+
+  test("an add that leaves the drawer closed (Buy now) shows its toast at once", () => {
+    renderGuestCart();
+    act(() => {
+      latest.addToCart(line(2, 1), 1, { openDrawer: false });
+    });
+    expect(latest.isCartOpen).toBe(false);
+    expect(toastTitles()).toEqual(["Added to cart"]);
+  });
+
+  test("a cart toast fired while one is held replaces it, as it would a shown one", () => {
+    jest.useFakeTimers();
+    renderGuestCart();
+    act(() => {
+      latest.addToCart(line(2, 1));
+    });
+    act(() => {
+      latest.removeFromCart("2-v1");
+    });
+    expect(toastTitles()).toEqual(["Removed from cart"]);
+    act(() => {
+      jest.advanceTimersByTime(1000);
+    });
+    expect(toastTitles()).toEqual(["Removed from cart"]);
+  });
+
+  test("the actions never change: a component that reads only them does not re-render with the cart", () => {
+    let probeCalls = 0;
+    const seen = [];
+    const ActionsProbe = () => {
+      probeCalls += 1;
+      seen.push(useCartActions());
+      return null;
+    };
+    renderGuestCart(<ActionsProbe />);
+    const callsBefore = probeCalls;
+
+    act(() => {
+      latest.addToCart(line(2, 1));
+    });
+    act(() => {
+      latest.updateQuantity("2-v1", 3);
+    });
+    act(() => {
+      latest.setIsCartOpen(false);
+    });
+    expect(screen.getByTestId("lines")).toHaveTextContent("2-v1×3");
+    expect(probeCalls).toBe(callsBefore);
+    expect(new Set(seen).size).toBe(1);
+    expect(Object.keys(seen[0]).sort()).toEqual([
+      "addToCart",
+      "clearCart",
+      "removeFromCart",
+      "setIsCartOpen",
+      "toggleCart",
+      "updateQuantity",
+    ]);
+    // useCart still has the whole cart, the actions included.
+    expect(latest.addToCart).toBe(seen[0].addToCart);
+    expect(latest.getCartItemCount()).toBe(3);
+    expect(latest.getCartTotal()).toBe(2997);
+  });
+
+  test("both hooks need the provider", () => {
+    const Lost = ({ hook }) => {
+      hook();
+      return null;
+    };
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    expect(() => render(<Lost hook={useCartActions} />)).toThrow("useCartActions must be used within a CartProvider");
+    expect(() => render(<Lost hook={useCart} />)).toThrow("useCart must be used within a CartProvider");
+    console.error.mockRestore();
+  });
 });

@@ -5,19 +5,41 @@ import React, {
   useEffect,
   useRef,
   useCallback,
+  useMemo,
 } from "react";
 import { useAuth } from "./AuthContext";
 import apiService from "../services/api";
+import { TOKENS } from "../theme/tokens";
 import Swal from "sweetalert2";
 
-const CartContext = createContext();
+// Two contexts (Prompt 32 follow-up): the cart's state (its lines, whether the
+// drawer is open, the totals) and its actions. The actions never change, so a
+// component that only adds to the cart (a product page, a listing) reads them
+// with useCartActions and does not re-render when the cart changes; before,
+// every add re-rendered the whole product page under the opening drawer.
+const CartStateContext = createContext(null);
+const CartActionsContext = createContext(null);
 
+/** The cart's state and actions; re-renders whenever the cart changes. */
 export const useCart = () => {
-  const context = useContext(CartContext);
-  if (!context) {
+  const state = useContext(CartStateContext);
+  const actions = useContext(CartActionsContext);
+  if (!state || !actions) {
     throw new Error("useCart must be used within a CartProvider");
   }
-  return context;
+  return useMemo(() => ({ ...state, ...actions }), [state, actions]);
+};
+
+/**
+ * The cart's actions alone (addToCart, removeFromCart, updateQuantity,
+ * clearCart, toggleCart, setIsCartOpen), the same for the provider's life.
+ */
+export const useCartActions = () => {
+  const actions = useContext(CartActionsContext);
+  if (!actions) {
+    throw new Error("useCartActions must be used within a CartProvider");
+  }
+  return actions;
 };
 
 // Canonical line key. A cart "line" is uniquely identified by its product and
@@ -120,6 +142,10 @@ const cartToast = (options) =>
     ...options,
   });
 
+// How long an opening drawer takes to slide in (or, under reduced motion, to
+// fade in): --sf-duration (motionPresets' OVERLAY_ENTER).
+const DRAWER_ENTER_MS = TOKENS.motion.durationMs.base;
+
 export const CartProvider = ({ children }) => {
   const { user } = useAuth();
   const [cartItems, setCartItems] = useState([]);
@@ -148,6 +174,41 @@ export const CartProvider = ({ children }) => {
   useEffect(() => {
     cartItemsRef.current = cartItems;
   }, [cartItems]);
+
+  // ── Toasts ────────────────────────────────────────────────────────────────
+  // An add that opens the drawer holds its toast ("Added to cart") until the
+  // drawer has painted and slid in. The open cart is its own confirmation: the
+  // toast is clipped out of sight while the cart is open and is there to be
+  // announced (role="alert", Prompt 31), which it still is, a beat later.
+  // Fired with the click, SweetAlert's classes on <html> restyled the whole
+  // page twice inside the drawer's first frame (Prompt 32 follow-up). Any
+  // cart toast fired meanwhile replaces the held one, as it would a shown one.
+  const heldToast = useRef({ frame: 0, timer: 0 });
+  const dropHeldToast = useCallback(() => {
+    cancelAnimationFrame(heldToast.current.frame);
+    clearTimeout(heldToast.current.timer);
+  }, []);
+  useEffect(() => dropHeldToast, [dropHeldToast]);
+
+  const showToast = useCallback(
+    (options) => {
+      dropHeldToast();
+      cartToast(options);
+    },
+    [dropHeldToast]
+  );
+
+  // After the drawer's first frame (requestAnimationFrame runs just before
+  // it is painted), then its entrance.
+  const showToastOnceOpen = useCallback(
+    (options) => {
+      dropHeldToast();
+      heldToast.current.frame = requestAnimationFrame(() => {
+        heldToast.current.timer = setTimeout(() => cartToast(options), DRAWER_ENTER_MS);
+      });
+    },
+    [dropHeldToast]
+  );
 
   // ── Persistence: load once on mount ──────────────────────────────────────
   useEffect(() => {
@@ -310,34 +371,39 @@ export const CartProvider = ({ children }) => {
         ];
       });
 
-      cartToast({
+      const toast = {
         icon: "success",
         title: wasUpdate ? "Cart updated" : "Added to cart",
         text: wasUpdate
           ? `Quantity of ${incoming.name} updated.`
           : `${incoming.name} is in your cart.`,
-      });
+      };
 
-      if (openDrawer) setIsCartOpen(true);
+      if (openDrawer) {
+        setIsCartOpen(true);
+        showToastOnceOpen(toast);
+      } else {
+        showToast(toast);
+      }
     } catch (error) {
       console.error("Error adding to cart:", error);
-      cartToast({
+      showToast({
         icon: "error",
         title: "Couldn’t add to cart",
         text: "Try again in a moment.",
         timer: 2000,
       });
     }
-  }, []);
+  }, [showToast, showToastOnceOpen]);
 
   const removeFromCart = useCallback((itemId) => {
     setCartItems((prev) => prev.filter((item) => item.id !== itemId));
-    cartToast({
+    showToast({
       icon: "info",
       title: "Removed from cart",
       timer: 1500,
     });
-  }, []);
+  }, [showToast]);
 
   const updateQuantity = useCallback(
     (itemId, newQuantity) => {
@@ -362,12 +428,12 @@ export const CartProvider = ({ children }) => {
     // a side effect of something bigger (e.g. an order was just placed).
     setCartItems([]);
     if (!options.silent) {
-      cartToast({
+      showToast({
         icon: "info",
         title: "Cart cleared",
       });
     }
-  }, []);
+  }, [showToast]);
 
   const getCartTotal = useCallback(
     () =>
@@ -382,19 +448,18 @@ export const CartProvider = ({ children }) => {
 
   const toggleCart = useCallback(() => setIsCartOpen((open) => !open), []);
 
-  const value = {
-    cartItems,
-    isCartOpen,
-    isLoading,
-    addToCart,
-    removeFromCart,
-    updateQuantity,
-    clearCart,
-    getCartTotal,
-    getCartItemCount,
-    toggleCart,
-    setIsCartOpen,
-  };
+  const state = useMemo(
+    () => ({ cartItems, isCartOpen, isLoading, getCartTotal, getCartItemCount }),
+    [cartItems, isCartOpen, isLoading, getCartTotal, getCartItemCount]
+  );
+  const actions = useMemo(
+    () => ({ addToCart, removeFromCart, updateQuantity, clearCart, toggleCart, setIsCartOpen }),
+    [addToCart, removeFromCart, updateQuantity, clearCart, toggleCart]
+  );
 
-  return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
+  return (
+    <CartActionsContext.Provider value={actions}>
+      <CartStateContext.Provider value={state}>{children}</CartStateContext.Provider>
+    </CartActionsContext.Provider>
+  );
 };

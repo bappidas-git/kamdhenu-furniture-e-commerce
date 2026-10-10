@@ -1,7 +1,7 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback, useImperativeHandle, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useReducedMotion } from "framer-motion";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import usePageMeta from "../../hooks/usePageMeta";
 import useStructuredData from "../../hooks/useStructuredData";
 import { useWishlist } from "../../context/WishlistContext";
@@ -183,16 +183,60 @@ const LoadError = ({ onRetry }) => (
   </div>
 );
 
+// ─── The buy box's Add to cart ──────────────────────────────────────────────
+// After an add (from here or from the sticky bar) it reads "Added" with a check
+// for 1.4s; `confirm()`, on its ref, starts that. The moment is the button's
+// own state, so only the button re-renders for it: held by the page, every add
+// re-rendered the whole page under the opening drawer (Prompt 32 follow-up).
+const ADDED_MS = 1400;
+const AddToCartButton = React.memo(
+  React.forwardRef(function AddToCartButton({ soldOut, onClick }, ref) {
+    const [added, setAdded] = useState(false);
+    useImperativeHandle(
+      ref,
+      () => ({
+        confirm: () => {
+          setAdded(true);
+          setTimeout(() => setAdded(false), ADDED_MS);
+        },
+      }),
+      []
+    );
+    return (
+      <button
+        type="button"
+        className={cx("sf-btn sf-btn--primary sf-btn--lg sf-btn--block", styles.addToCart)}
+        onClick={onClick}
+        disabled={soldOut}
+      >
+        {soldOut ? (
+          "Sold out"
+        ) : added ? (
+          <>
+            <span className="sf-fade-in">Added</span>
+            <svg className={cx("sf-fade-in", styles.check)} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
+              <path d="M5 12.5l4.5 4.5L19 7.5" />
+            </svg>
+          </>
+        ) : (
+          "Add to cart"
+        )}
+      </button>
+    );
+  })
+);
+
 // ═══════════════════════════════════════════════════════════════════════════
 const ProductDetails = () => {
   // Route is /products/:slug (slug canonical; legacy numeric id still resolves).
   const { slug } = useParams();
   const navigate = useNavigate();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const reduceMotion = useReducedMotion();
   const reviewsRef = useRef(null); // the reviews section: the ratings row's jump target
   const buyBoxRef = useRef(null); // anchor for the sticky mobile Add-to-Cart bar
+  const addButtonRef = useRef(null); // the buy box's Add to cart (its "Added" moment)
   // Numbers each product load; one that is no longer the latest (the shopper
   // has moved on) applies nothing when it settles, nor do the reviews, related
   // and bundle reads it started.
@@ -209,7 +253,6 @@ const ProductDetails = () => {
   const [loadError, setLoadError] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
-  const [added, setAdded] = useState(false);
   // One product's approved reviews: status "loading", "loaded" or "error".
   // A product whose reviews are not in here yet reads as loading.
   const [reviewsState, setReviewsState] = useState({
@@ -521,8 +564,7 @@ const ProductDetails = () => {
   const handleAddClick = useCallback(() => {
     if (isOutOfStock) return;
     handleAddToCart();
-    setAdded(true);
-    setTimeout(() => setAdded(false), 1400);
+    if (addButtonRef.current) addButtonRef.current.confirm();
   }, [handleAddToCart, isOutOfStock]);
 
   const handleBuyNow = useCallback(async () => {
@@ -708,28 +750,7 @@ const ProductDetails = () => {
 
             {/* Primary / secondary CTAs (standard copy, clear hierarchy) */}
             <div className={styles.actions} ref={buyBoxRef}>
-              <button
-                type="button"
-                className={cx(
-                  "sf-btn sf-btn--primary sf-btn--lg sf-btn--block",
-                  styles.addToCart
-                )}
-                onClick={handleAddClick}
-                disabled={isOutOfStock}
-              >
-                {isOutOfStock ? (
-                  "Sold out"
-                ) : added ? (
-                  <>
-                    <span className="sf-fade-in">Added</span>
-                    <svg className={cx("sf-fade-in", styles.check)} viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" focusable="false">
-                      <path d="M5 12.5l4.5 4.5L19 7.5" />
-                    </svg>
-                  </>
-                ) : (
-                  "Add to cart"
-                )}
-              </button>
+              <AddToCartButton ref={addButtonRef} soldOut={isOutOfStock} onClick={handleAddClick} />
               <button
                 type="button"
                 className={cx("sf-btn sf-btn--ghost sf-btn--lg sf-btn--block", styles.buyNow)}

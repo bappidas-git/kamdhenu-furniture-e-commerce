@@ -1,6 +1,6 @@
 import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import useNearViewport from "../../hooks/useNearViewport";
 import usePageMeta from "../../hooks/usePageMeta";
@@ -438,7 +438,7 @@ const PromiseSteps = ({ data, sectionRef }) => {
 // ══════════════════════════════════════════════════════════════════════════════
 
 const Home = () => {
-  const { addToCart, setIsCartOpen } = useCart();
+  const { addToCart, setIsCartOpen } = useCartActions();
   const { toggleWishlist, isInWishlist } = useWishlist();
   usePageMeta({ title: PAGE_TITLE });
 

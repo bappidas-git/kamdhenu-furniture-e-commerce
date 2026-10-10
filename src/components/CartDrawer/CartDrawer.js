@@ -65,7 +65,9 @@ import styles from "./CartDrawer.module.css";
 // up at once.
 // =============================================================================
 
-const { duration, easeOut, easeInOut } = TOKENS.motion;
+const { duration, durationMs, easeOut, easeInOut } = TOKENS.motion;
+// The panel's entrance (motionPresets' OVERLAY_ENTER).
+const PANEL_ENTER_MS = durationMs.base;
 
 // A line or the free-delivery block arriving or leaving: opacity only.
 const FADE = {
@@ -300,9 +302,13 @@ const CartDrawer = ({ open, onClose }) => {
 
   // Checkout loads on its first visit (src/pages/lazyPages.js). An open cart
   // with pieces in it is the likeliest way there, so its code starts loading
-  // now and Checkout opens without the page skeleton (Prompt 32).
+  // once the drawer has slid in, and Checkout opens without the page skeleton
+  // (Prompt 32). Not in the opening frame, which it cost ~10ms at 4× CPU, nor
+  // during the slide, which the chunk's stylesheet would restyle on arrival.
   useEffect(() => {
-    if (open && !isEmpty) preloadPageFor("/checkout");
+    if (!open || isEmpty) return undefined;
+    const timer = setTimeout(() => preloadPageFor("/checkout"), PANEL_ENTER_MS);
+    return () => clearTimeout(timer);
   }, [open, isEmpty]);
   const delivery = describeDelivery(store, estimate, subtotal);
 

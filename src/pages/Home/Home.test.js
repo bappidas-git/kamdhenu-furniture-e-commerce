@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { stripAccent } from "../../components/ui";
 import {
@@ -36,7 +36,7 @@ jest.mock("../../services/api", () => ({
     shipping: { getMethods: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
 // The hero and the strip have their own tests (Prompt 10).
 jest.mock("../../components/HeroSection/HeroSection", () => ({
@@ -151,7 +151,7 @@ beforeEach(() => {
   addToCart = jest.fn(() => Promise.resolve());
   setIsCartOpen = jest.fn();
   toggleWishlist = jest.fn();
-  useCart.mockReturnValue({ addToCart, setIsCartOpen });
+  useCartActions.mockReturnValue({ addToCart, setIsCartOpen });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => id === FEATURED[1].id });
   localStorage.clear();
 });

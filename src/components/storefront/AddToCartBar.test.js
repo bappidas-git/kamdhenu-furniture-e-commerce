@@ -133,3 +133,44 @@ test("steps aside while keyboard focus sits on something it covers", () => {
   });
   expect(bar()).toHaveAttribute("aria-hidden", "false");
 });
+
+// The page's scroll padding while the bar is shown comes from an attribute the
+// bar sets on <html> (the follow-up to Prompt 32): an html:has(.visible) rule
+// restyled the whole page on every element added anywhere in it.
+test("marks <html> while it is shown (the stylesheet's scroll padding), and only then", () => {
+  jest.useFakeTimers();
+  const root = document.documentElement;
+  const { unmount } = render(<Page {...props} onAddToCart={() => {}} />);
+  expect(root).not.toHaveAttribute("data-sf-sticky-bar");
+
+  setBuyBoxInView(false);
+  expect(root).toHaveAttribute("data-sf-sticky-bar");
+
+  setBuyBoxInView(true);
+  expect(root).not.toHaveAttribute("data-sf-sticky-bar");
+
+  // Stepping aside for keyboard focus hides it: the padding goes with it.
+  setBuyBoxInView(false);
+  Object.defineProperty(bar(), "offsetHeight", { configurable: true, value: 64 });
+  const covered = screen.getByTestId("covered");
+  covered.getBoundingClientRect = () => ({ top: window.innerHeight - 40, bottom: window.innerHeight - 10, left: 0, right: 100 });
+  const clear = screen.getByRole("button", { name: "In the buy box" });
+  clear.getBoundingClientRect = () => ({ top: 100, bottom: 140, left: 0, right: 100 });
+  act(() => {
+    covered.focus();
+    jest.runOnlyPendingTimers();
+  });
+  expect(bar()).toHaveAttribute("aria-hidden", "true");
+  expect(root).not.toHaveAttribute("data-sf-sticky-bar");
+
+  act(() => {
+    clear.focus();
+    jest.runOnlyPendingTimers();
+  });
+  expect(bar()).toHaveAttribute("aria-hidden", "false");
+  expect(root).toHaveAttribute("data-sf-sticky-bar");
+
+  // Leaving the page takes it away.
+  unmount();
+  expect(root).not.toHaveAttribute("data-sf-sticky-bar");
+});

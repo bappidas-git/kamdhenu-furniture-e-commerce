@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, useId } from "react";
 import { useSearchParams } from "react-router-dom";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import usePageMeta from "../../hooks/usePageMeta";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
@@ -255,7 +255,7 @@ const FiltersSkeleton = () => (
 // ---------------------------------------------------------------------------
 const Products = () => {
   const [searchParams, setSearchParams] = useSearchParams();
-  const { addToCart } = useCart();
+  const { addToCart } = useCartActions();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const uid = useId();
 

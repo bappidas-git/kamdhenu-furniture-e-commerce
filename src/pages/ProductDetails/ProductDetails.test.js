@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import "@testing-library/jest-dom";
 import { useReducedMotion } from "framer-motion";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { buildCartItem } from "../../utils/helpers";
 import db from "../../../db.json";
@@ -31,7 +31,7 @@ jest.mock("../../services/api", () => ({
     shipping: { getMethods: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
 // Checkout's code loads on demand; Buy now asks for it ahead of the click.
 jest.mock("../lazyPages", () => ({ preloadPageFor: jest.fn() }));
@@ -102,7 +102,7 @@ beforeEach(() => {
   addToCart = jest.fn();
   toggleWishlist = jest.fn();
   wishlisted = new Set();
-  useCart.mockReturnValue({ addToCart });
+  useCartActions.mockReturnValue({ addToCart });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => wishlisted.has(id) });
 });
 
@@ -676,6 +676,20 @@ test("the delivery facts come from the live methods and settings", async () => {
   expect(screen.queryByText("Same Day Delivery")).not.toBeInTheDocument();
 });
 
+// The follow-up to Prompt 32: an add re-renders the button for its "Added"
+// moment, not the page around it, which used to re-render whole (the gallery,
+// the reviews, the related pieces) under the opening drawer. The page calls
+// useWishlist once per render; nothing else here does.
+test("Add to cart re-renders the button for its Added moment, not the page", async () => {
+  renderAt("/products/covered-plastic-shoe-rack");
+  await loaded();
+  const pageRenders = useWishlist.mock.calls.length;
+  fireEvent.click(within(buyBox()).getByRole("button", { name: "Add to cart" }));
+  expect(addToCart).toHaveBeenCalledTimes(1);
+  expect(within(buyBox()).getByRole("button", { name: "Added" })).toBeInTheDocument();
+  expect(useWishlist.mock.calls.length).toBe(pageRenders);
+});
+
 // ── The sticky bar ──────────────────────────────────────────────────────────
 
 test("the sticky bar follows the buy box and adds the chosen variant", async () => {
@@ -699,6 +713,8 @@ test("the sticky bar follows the buy box and adds the chosen variant", async () 
 
   fireEvent.click(barButton());
   expect(addToCart).toHaveBeenCalledWith(expect.objectContaining({ id: "11-v1" }), 1, undefined);
+  // The bar's button and the buy box's both read Added, as before.
+  expect(screen.getAllByRole("button", { name: "Added" })).toHaveLength(2);
 });
 
 // ── Below the first screen (Prompt 17) ─────────────────────────────────────
