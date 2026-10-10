@@ -58,10 +58,25 @@
 /* ── The countdown row ────────────────────────────────────────────────── */
 
 .countdown {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-3) var(--sf-space-8);
   margin-top: clamp(var(--sf-space-8), 4vw, var(--sf-space-12));
   padding-block: var(--sf-space-5);
   border-top: var(--sf-hairline);
   border-bottom: var(--sf-hairline);
+}
+
+/* "Hide seconds" / "Show seconds": quiet, after the clock (WCAG 2.2.2); on
+   phones on its own line under it. */
+.secondsToggle {
+  --sf-btn-fg: var(--sf-color-text-secondary);
+  --sf-btn-fg-hover: var(--sf-color-text);
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-normal);
 }
 
 /* The label and the clock share a baseline (the figures'); on phones the
@@ -438,17 +453,6 @@
   }
 }
 
-/* .sf-chip is 32px; ::after gives it a 44px-tall target. */
-.chip {
-  position: relative;
-}
-
-.chip::after {
-  content: "";
-  position: absolute;
-  inset: -6px 0;
-}
-
 .chipDot {
   opacity: 0.6;
 }
@@ -647,10 +651,12 @@
 }
 
 /* The countdown's box: the label over the clock on phones, one row above. */
+/* Phones: the label, the clock under it, then the seconds toggle's line. */
 .skeletonClock {
   display: flex;
   align-items: center;
-  height: calc(var(--sf-text-sm) * var(--sf-leading-normal) + var(--sf-space-3) + 1.75rem * 1.1 + var(--sf-space-1) + var(--sf-text-eyebrow) * var(--sf-leading-normal));
+  width: 100%;
+  height: calc(var(--sf-text-sm) * var(--sf-leading-normal) + var(--sf-space-3) + 1.75rem * 1.1 + var(--sf-space-1) + var(--sf-text-eyebrow) * var(--sf-leading-normal) + var(--sf-space-3) + var(--sf-text-sm) * var(--sf-leading-normal));
 }
 
 .skeletonClock > span {

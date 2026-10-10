@@ -22,6 +22,7 @@ import BottomNav from "./components/BottomNav/BottomNav";
 import Footer from "./components/Footer/Footer";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import PageTransition from "./components/PageTransition/PageTransition";
+import SkipLink, { MAIN_CONTENT_ID } from "./components/SkipLink/SkipLink";
 import AdminLayout from "./components/AdminLayout/AdminLayout";
 
 // Storefront Pages
@@ -105,12 +106,18 @@ function App() {
                             opacity still fades. The admin routes are not wrapped. */}
                         <MotionConfig reducedMotion="user">
                         <div className="App">
+                          {/* "Skip to content" (<a class="sf-skip-link"
+                              href="#main-content">): the first focusable
+                              element, before the header. It also takes focus
+                              left outside <main> on a route change; see SkipLink. */}
+                          <SkipLink />
                           <Header />
                           {/* The page fade (240ms, opacity only) runs on <main>
                               when the path changes; see PageTransition. <Routes>
                               is not keyed by location, so AnimatePresence runs no
-                              exit animations and no page waits for another. */}
-                          <PageTransition className="main-content">
+                              exit animations and no page waits for another. The
+                              skip link's target: focusable from script only. */}
+                          <PageTransition id={MAIN_CONTENT_ID} tabIndex={-1} className="main-content">
                             <AnimatePresence mode="wait">
                               <Routes>
                                 <Route path="/" element={<Home />} />

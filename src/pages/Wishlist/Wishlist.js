@@ -486,7 +486,8 @@ const Wishlist = () => {
     );
   } else if (count > 0) {
     results = (
-      <ul ref={listRef} className={styles.grid} aria-label="Saved pieces">
+      // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+      <ul role="list" ref={listRef} className={styles.grid} aria-label="Saved pieces">
         <AnimatePresence mode="popLayout" initial={false}>
           {sortedItems.map((item) => (
             <SavedPiece

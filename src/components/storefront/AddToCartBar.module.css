@@ -2,7 +2,7 @@
  * AddToCartBar — the sticky mobile bar (Prompt 16)
  * =============================================================================
  * Up to 768px only. Paper with a top hairline, 64px plus the home-indicator
- * inset: a 40px thumbnail, the name (Playfair 15px, one line), the price (sans
+ * inset: a 40px thumbnail (from 400px), the name (Playfair 15px, one line), the price (sans
  * 14px, 500) and the chosen option, and a compact 44px .sf-btn--primary.
  * It slides up over --sf-duration and sits at --sf-z-stickybar: above the
  * bottom nav (--sf-z-bottomnav), below every drawer and modal. No shadow, no
@@ -74,6 +74,15 @@
   display: flex;
   flex-direction: column;
   min-width: 0;
+}
+
+/* Below 400px the thumbnail gives its room to the text, so the chosen option
+   ("2 shelves") is not cut to "2…" beside the price. The name stays one line:
+   it repeats the page's h1 (Prompt 31). */
+@media (max-width: 399.98px) {
+  .thumb {
+    display: none;
+  }
 }
 
 .name {

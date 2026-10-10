@@ -43,6 +43,14 @@ test("explicit variants ignore the theme", () => {
   expect(logo()).toHaveAttribute("src", LOGO_URLS.white);
 });
 
+test("names its variant for the forced-colours ground (Prompt 31)", () => {
+  const { unmount } = renderInTheme(<BrandLogo variant="light" />);
+  expect(logo()).toHaveAttribute("data-logo-variant", "light");
+  unmount();
+  renderInTheme(<BrandLogo variant="white" />);
+  expect(logo()).toHaveAttribute("data-logo-variant", "white");
+});
+
 test("reserves its box from the 1286 × 426 artwork and lazy-loads by default", () => {
   renderInTheme(<BrandLogo height={28} className="extra" />);
   const img = logo();

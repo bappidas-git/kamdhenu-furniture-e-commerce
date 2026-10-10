@@ -87,16 +87,6 @@
   padding-block: 7px;
 }
 
-/* 32px chips with a 44px hit area: the inset is measured from the padding
-   box, inside the 1px border, so 7px reaches 6px past the pill's edge. */
-.filter { position: relative; }
-
-.filter::after {
-  content: "";
-  position: absolute;
-  inset: -7px 0;
-}
-
 /* ---- Results -------------------------------------------------------------------------- */
 .results { min-width: 0; }
 
@@ -191,6 +181,10 @@
   --sf-btn-fg-hover: var(--sf-color-text);
   --sf-btn-bg-hover: var(--sf-color-primary-soft);
   flex: none;
+  /* Above the line that follows: the 44px button overhangs its text-high row
+     (the negative margins above), and "Placed on" would otherwise take the
+     clicks on its lower edge (Prompt 31). */
+  position: relative;
 }
 
 .copy[data-copied="true"] { --sf-btn-fg: var(--sf-color-success); }

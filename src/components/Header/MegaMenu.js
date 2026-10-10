@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import { AnimatePresence, motion, useIsPresent, useReducedMotion } from "framer-motion";
 import { ClickAwayListener, useMediaQuery } from "@mui/material";
 import { categoryParam } from "../../utils/categories";
 import { PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
@@ -55,6 +55,19 @@ const isKeyboardFocus = (element) => {
     return true;
   }
 };
+
+// The panel's layer. While it leaves (its 240ms exit) it is inert: a quick Tab
+// past "Our story" would otherwise land in the leaving panel's links, and
+// focus would drop to <body> when the panel unmounts a moment later.
+const PanelLayer = React.forwardRef(function PanelLayer({ children, ...rest }, ref) {
+  const isPresent = useIsPresent();
+  return (
+    // React 18 does not know `inert`; the empty string sets the attribute.
+    <motion.div ref={ref} {...rest} inert={isPresent ? undefined : ""}>
+      {children}
+    </motion.div>
+  );
+});
 
 const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeDepartments }) => {
   const location = useLocation();
@@ -360,7 +373,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
 
         <AnimatePresence>
           {openDepartment && (
-            <motion.div
+            <PanelLayer
               key="megamenu-panel"
               ref={panelRef}
               id={panelIdOf(openDepartment.category)}
@@ -371,7 +384,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
               onKeyDown={onPanelKeyDown}
             >
               <MegaMenuPanel department={openDepartment} onNavigate={closeMenu} />
-            </motion.div>
+            </PanelLayer>
           )}
         </AnimatePresence>
       </nav>

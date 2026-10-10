@@ -678,7 +678,7 @@ const ProductDetails = () => {
                 type="button"
                 className={cx(styles.wishlist, wishlisted && styles.wishlistActive)}
                 onClick={() => toggleWishlist(product)}
-                aria-label={wishlisted ? "Remove from wishlist" : "Save to wishlist"}
+                aria-label="Save to wishlist"
                 aria-pressed={wishlisted}
               >
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor" stroke="currentColor" strokeWidth="1.5" strokeLinejoin="round" aria-hidden="true" focusable="false">

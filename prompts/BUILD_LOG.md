@@ -3940,3 +3940,94 @@ Deleted. Nothing imported it (`grep` over `src`), and its variants (50px slides,
 ### Needs client confirmation
 
 None.
+
+---
+
+## Prompt 31 — Responsive and accessibility pass
+
+**Date:** 2026-10-10. **Result:** every storefront route and overlay audited at 320–1920px and 667 × 375, in both modes, against WCAG 2.2 AA and the storefront's 44px touch rule; **39 findings: 29 fixed, 9 checked and kept (pass), 1 deferred** (per-page titles, Prompt 32). axe reports no violation of any impact on 162 page states, 50 overlay states and every checkout step (before: 130 minor nodes, card photographs whose alt repeated their link); no page scrolls sideways; no pointer target is under 44 × 44 at 360px; keyboard focus is never hidden under the header or a bar (12 stops before, forwards and backwards); the page behind every drawer and dialog is `inert`; Lighthouse Accessibility is 100 on home, listing, product and checkout, mobile and desktop. A "Skip to content" link leads the page, and focus is placed on every route change. **Markup, CSS, ARIA and focus only:** no data, API call, route or behaviour changed; `db.json`, `api.js` and every admin file are untouched, and the admin is pixel-identical.
+
+### Audit
+
+The method, the before-and-after measures and the full findings table (route → width / mode → issue → WCAG → fix → status) are in **`prompts/QA_RESPONSIVE_A11Y.md`**. In short:
+
+| Measure | Before | After |
+|---|---|---|
+| axe violations (pages, overlays, checkout) | 0 serious or critical; 130 minor nodes (102 on pages, 28 in search) | 0 |
+| Pages scrolling sideways | 1 (`/profile?tab=wallet`, 320px) | 0 |
+| Pointer targets under 44 × 44 at 360px | 12 kinds on pages (156 instances); 19 in overlays; 21 across checkout's steps | 0 |
+| Keyboard stops hidden under a fixed or sticky layer | 12 | 0 |
+| Focus dropped to `<body>` while tabbing | the mega-menu | never |
+| Text clipped (and under 1.4.12 spacing) | card names, a brand, the sticky bar's option | the sticky bar's one-line name only (kept) |
+| Lighthouse Accessibility | — | 100 × 8 |
+
+### What changed
+
+| File | Change |
+|---|---|
+| New `src/components/SkipLink/SkipLink.js` (+ test) | the skip link (the prompt's markup); activating it focuses `<main>` without writing the hash; on a route change, focus left outside `<main>` moves to it (`isFocusUnplaced` for pages that focus their heading); installs the focus guard |
+| New `src/components/ui/useFocusNotObscured.js` (+ test) | the keyboard focus guard (WCAG 2.4.11), exported from the `ui` barrel with `revealFromLayers` |
+| `src/App.js` | `<SkipLink />` first in `.App`; `<PageTransition id="main-content" tabIndex={-1}>` |
+| `src/theme/storefront-base.css` | the skip link shows on `:focus-visible` (with a `:focus` fallback); `main[tabindex="-1"]` takes focus without a ring; `.sf-chip` carries a 44px-tall `::after`; `.sf-btn--link`'s `::after` is never under 44px across |
+| `src/components/ui/useFocusTrap.js` (+ test) | `inertOutside`: the page outside an open layer is `inert` (not the backdrop, not SweetAlert), lifted before focus returns |
+| `src/components/Header/MegaMenu.js` (+ test), `Header.js`, `Header.module.css` | the leaving panel is `inert`; the account button is named "Account"; the logo link's 44px target |
+| `src/components/ui/BrandLogo.js`, `.module.css` (+ test) | `data-logo-variant`; the logo keeps its ground in forced colours |
+| `src/components/storefront/AddToCartBar.js`, `.module.css` | steps aside for the bottom nav where it will rest, not mid-slide; no thumbnail below 400px |
+| `ProductCard.js`, `.module.css`; `ProductListRow.js`; `ProductDetails.js` | decorative card photograph; "Add to cart, <name>"; one name for the wishlist toggles; names in full on phones |
+| `Breadcrumb.module.css`; `ProductDetails.module.css`, `Products.module.css` | wrapped trails 44px apart on phones and touch; 44 × 44 link targets; the reserved trail heights |
+| `CartDrawer.js`, `.module.css` | the line name's 44px target (the clamp on an inner span); success toasts clipped while the cart is open; the whole panel scrolls at 500px tall or less |
+| `ReviewCarousel.module.css` | the product link's 44px target; the dots are position marks on touch screens |
+| `Footer.module.css`, `SidebarMenu.module.css` | 44px-wide targets for short footer and legal links |
+| `SearchModal.module.css`, `AccountNav.module.css`, `SpecialOffers.module.css`, `Profile.module.css`, `Products.module.css`, `OrderHistory.module.css`; `Products.js`, `OrderHistory.js` | the per-page 42px chip hit areas removed in favour of the primitive; 12px between wrapped chip lines; unused class references dropped |
+| `OrderHistory.module.css` | the copy button above the line after it |
+| `Profile.module.css`, `Profile.js` | the ledger's order number breaks at 320px; the address delete confirm starts on "Keep address" |
+| `SpecialOffers.js`, `.module.css` (+ test) | "Hide seconds" / "Show seconds" beside the countdown; the skeleton reserves its line |
+| `src/context/WishlistContext.js` | the "Clear all" confirm's options only: starts on "Keep wishlist", `sf-btn--danger` instead of `#d32f2f` |
+| `role="list"` (with a lint note): `CartDrawer`, `ProductRail`, `ReviewsSection`, `FrequentlyBoughtTogether`, `SearchModal`, `OrderHistory` (3), `HelpCenter`, `SpecialOffers` (4), `Profile` (2), `OrderConfirmation`, `Products`, `Home` (2), `Checkout` (3), `Wishlist` | 23 content lists keep their semantics in Safari |
+| `src/pages/OrderConfirmation/OrderConfirmation.js` | the heading's arrival focus treats the skip link as "nowhere" |
+| Tests | 2 new suites (15 tests); 3 more tests (inert outside a layer, the logo variant, "Hide seconds"); the mega-menu test also checks that the leaving panel is inert; card names updated in 9 suites ("Add to cart, <name>", "Save <name> to wishlist" with `aria-pressed`, "Sold out, <name>", the decorative photograph) |
+| `prompts/DESIGN_SYSTEM.md` | §10 (forced colours), §16.2, §17.3, §19.1, §22.4, §23.1, §24.1, §26.6, §28.4, §29.2, and the new §41 (the pass's rules and a checklist) |
+| New `prompts/QA_RESPONSIVE_A11Y.md`; `prompts/00_INDEX.md` | the audit; the index points to it |
+
+### Tokens
+
+No token was added or changed: `storefront-tokens.css` is untouched, and `check-contrast.js` passes as before (every pair, both modes, and the mirror check). The primitives changed in `storefront-base.css` (listed above, documented in §16.2 and §41).
+
+### Decisions
+
+- **Focus placement on a route change goes to the skip link,** as a full page load would: the next Tab starts at the top, Enter skips to the content, a screen reader hears that the page changed. Moving it to each page's `h1` would need every page to opt in; pages that already focus their heading (the order confirmation) keep doing so.
+- **A JS focus guard, not `scroll-padding`:** Chromium applies the root's `scroll-padding` to controls inside the sticky header too, so focusing the header's own links jumped the page up by the padding (measured: 300px).
+- **Touch targets through invisible `::after` areas,** centred on the drawn control, so no layout moves; where two lines of targets would overlap (breadcrumbs, wrapped chips) the lines move apart instead of shrinking the areas.
+- **Carousel dots** cannot be 44px each in a phone's width; on touch screens they mark the position, and swiping and the 44px arrows move the carousel. They stay buttons for a keyboard and a screen reader.
+- **Card names in full on phones:** a cut name hides what tells two chairs apart, and the longest names need four lines on a 116px rail card. The two-line clamp stays from 768px.
+- **The cart's success toast is clipped, not removed,** while the cart is open: it stays announced, and Checkout is free to tap.
+
+### Deviations from the prompt, and why
+
+1. **`src/context/WishlistContext.js`** is outside the listed files: only the "Clear all" confirm's options changed (focus on the harmless choice; the token-styled danger button for a hex colour), to match the other destructive confirms. No logic changed.
+2. **Route-change focus** goes beyond "add the skip link": without it, focus stayed on the link just used in the header or footer (WCAG 2.4.3).
+3. **Lighthouse's experimental label-in-name audit** (unscored) still lists the card link (named by the product, described by the brand, as Prompt 13 set it) and the header's and bottom bar's Wishlist / Cart with their counts; each name starts with its visible label. Kept, with the reasoning in `QA_RESPONSIVE_A11Y.md` (row 34).
+4. **The sticky bar's name** stays one line with an ellipsis at 320–360px: it repeats the page's `h1`.
+
+### Deferred
+
+- **Per-page document titles (WCAG 2.4.2):** every route has the same title. Prompt 32 owns `usePageMeta`.
+- **Screen readers:** none can run in this environment. The flows to walk with VoiceOver and NVDA are listed in `QA_RESPONSIVE_A11Y.md` §1 (for Prompt 34 or the client).
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **74 suites, 1,276 tests** (72 / 1,258 before: +15 in the two new suites, +3 elsewhere), no console warnings. One full run made while three browsers were auditing timed out an existing order-confirmation focus test (its `waitFor` allows 1s; the code path is unchanged); it passes on its own and in two further full runs.
+- **Build:** `CI=true npm run build` prints "Compiled successfully" (no warnings). Gzip (`gzip -c`): JS 443,779 → 445,522 bytes, CSS 53,758 → 54,087 bytes.
+- **Lint:** ESLint reports nothing in the new files; the changed files carry the same 92 findings as at `HEAD` (all `testing-library/*` in test files), none new.
+- **Checks:** `node scripts/check-contrast.js` and `node scripts/validate-db.js` pass. `db.json` is unchanged (SHA-256 `5cbc3088…`), and so are `api.js`, `server.js`, `package.json`, `public/index.html` and every admin file.
+- **Browser QA:** Playwright 1.56.1 (Chromium 141) against JSON Server-mode production builds of `HEAD` and this branch, axe-core 4.7.0 and Lighthouse 12.2.1; details in `QA_RESPONSIVE_A11Y.md`. Reduced motion: on six routes nothing animates at rest and every transition is 0.01ms. Print: the invoice is one A4 page in both modes, with nothing from the shell (the skip link included). Keyboard: 4,059 stops on 18 routes at 390 and 1,440px, forwards and backwards, plus 1,042 in dark mode on 7 routes: none hidden, none without a visible indicator, no trap. Admin: login, dashboard, products, orders, categories, settings and reviews at 1,440 and 390px are pixel-identical between the builds once their web fonts have loaded, every element's box identical, no skip link, nothing `inert`.
+- **Trust claims:** none found in the source or in the rendered text of 13 routes (no counts, awards, certifications, years or guarantees).
+
+### Notes for later prompts
+
+- **32 (performance and SEO):** add the per-page titles (`usePageMeta`, row 32 of the findings). With lazy routes, keep the `Suspense` boundary inside `<main id="main-content">`, so the skip link and route-change focus keep their target. Build audits in JSON Server mode: `npm run build` alone reads `.env.production`, which points at the live API.
+- **34 (final QA):** repeat DESIGN_SYSTEM §41.6, and walk the screen-reader flows listed in `QA_RESPONSIVE_A11Y.md` §1.
+
+### Needs client confirmation
+
+None.

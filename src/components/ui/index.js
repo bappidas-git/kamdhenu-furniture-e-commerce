@@ -18,8 +18,10 @@ export {
 export {
   default as useFocusTrap,
   getFocusableElements,
+  inertOutside,
   useBodyScrollLock,
   useBodyScrollLocked,
 } from "./useFocusTrap";
+export { default as useFocusNotObscured, revealFromLayers } from "./useFocusNotObscured";
 // The shared bottom sheet keeps its historical folder; exported here too.
 export { default as BottomDrawer } from "../BottomDrawer/BottomDrawer";

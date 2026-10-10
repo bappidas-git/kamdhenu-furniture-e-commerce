@@ -110,7 +110,8 @@ const HelpCenter = () => {
           <h2 id="help-topics-title" className={cx("sf-display-sm", styles.sectionTitle)}>
             Browse by topic
           </h2>
-          <ul className={styles.topicList}>
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+          <ul role="list" className={styles.topicList}>
             {topics.map((topic, index) => (
               <Reveal as="li" key={topic.id} delay={staggerDelay(index)} className={styles.topicItem}>
                 <Link to={topic.to} className={styles.topic}>

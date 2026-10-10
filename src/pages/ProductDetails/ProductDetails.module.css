@@ -28,12 +28,13 @@
 
 /* ── Breadcrumb ──────────────────────────────────────────────────────────── */
 /* The trail's room is held while the category reads finish: two lines of the
-   13px trail (and the list's 4px row gap) on phones, where a deep category
-   wraps, and one line from 768px. */
+   13px trail on phones, where a deep category wraps (44px apart there, so the
+   links' targets never overlap: the line, then 44px), and one line from
+   768px. */
 .crumbs {
   --crumb-line: calc(0.8125rem * 1.5);
   display: flow-root;
-  min-height: calc(var(--crumb-line) * 2 + var(--sf-space-1));
+  min-height: calc(var(--crumb-line) + var(--sf-tap-target));
   margin-bottom: var(--sf-space-4);
 }
 

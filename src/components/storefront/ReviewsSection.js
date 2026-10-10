@@ -263,7 +263,8 @@ const ReviewsSection = forwardRef(function ReviewsSection(
             </div>
           ) : (
             list.length > 0 && (
-              <ul className={styles.list}>
+              // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+              <ul role="list" className={styles.list}>
                 {list.map((review, index) => (
                   <li key={review.id ?? index} className={styles.item}>
                     <Review review={review} />

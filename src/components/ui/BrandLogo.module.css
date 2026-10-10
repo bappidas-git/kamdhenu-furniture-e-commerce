@@ -6,3 +6,20 @@
   height: auto;
   user-select: none;
 }
+
+/* Windows contrast themes replace the page colours but not the artwork, so a
+   light logo would vanish on a dark canvas (and the white one on a light
+   canvas). Each variant keeps the ground it was drawn for. */
+@media (forced-colors: active) {
+  .logo {
+    forced-color-adjust: none;
+  }
+
+  .logo[data-logo-variant="light"] {
+    background-color: var(--sf-brand-paper);
+  }
+
+  .logo[data-logo-variant="white"] {
+    background-color: var(--sf-brand-navy);
+  }
+}

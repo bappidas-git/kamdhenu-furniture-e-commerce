@@ -51,7 +51,9 @@ import styles from "./SpecialOffers.module.css";
 //
 // Accessibility: the countdown is role="timer", named by a summary that
 // changes at most once a minute ("Offers end in 5 hours and 12 minutes"); its
-// ticking figures are hidden from assistive technology. The chips are
+// ticking figures are hidden from assistive technology. "Hide seconds" takes
+// the ticking figure away, so the clock changes once a minute (WCAG 2.2.2,
+// Prompt 31); "Show seconds" brings it back. The chips are
 // aria-pressed toggles; a status line says what the grid shows. Each copy
 // button is named "Copy coupon code X", and a status line says whether the
 // code was copied.
@@ -100,6 +102,7 @@ const Chevron = ({ back }) => (
 // In its own component so the once-a-second tick re-renders this row only.
 const OfferCountdown = ({ timer }) => {
   const countdown = useDealsCountdown(timer);
+  const [showSeconds, setShowSeconds] = useState(true);
   const showCountdown = timer?.enabled !== false && countdown.show;
   const timerEnded = timer?.enabled !== false && countdown.ended;
 
@@ -123,13 +126,26 @@ const OfferCountdown = ({ timer }) => {
               <span className={styles.figure}>{pad(minutes)}</span>
               <span className={`sf-eyebrow ${styles.unitLabel}`}>Minutes</span>
             </span>
-            <span className={styles.separator}>:</span>
-            <span className={styles.unit}>
-              <span className={styles.figure}>{pad(seconds)}</span>
-              <span className={`sf-eyebrow ${styles.unitLabel}`}>Seconds</span>
-            </span>
+            {showSeconds && (
+              <>
+                <span className={styles.separator}>:</span>
+                <span className={styles.unit}>
+                  <span className={styles.figure}>{pad(seconds)}</span>
+                  <span className={`sf-eyebrow ${styles.unitLabel}`}>Seconds</span>
+                </span>
+              </>
+            )}
           </span>
         </div>
+        {/* Its name follows its text, so no aria-pressed (as the password
+            fields' Show / Hide). */}
+        <button
+          type="button"
+          className={`sf-btn sf-btn--link ${styles.secondsToggle}`}
+          onClick={() => setShowSeconds((shown) => !shown)}
+        >
+          {showSeconds ? "Hide seconds" : "Show seconds"}
+        </button>
       </div>
     );
   }
@@ -671,7 +687,8 @@ const SpecialOffers = () => {
                 <TicketSkeletons count={skeletonCount(config.featuredCouponIds, 4, 6)} />
               ) : featuredCoupons.length > 0 ? (
                 <>
-                  <ul className={styles.tickets}>
+                  {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                  <ul role="list" className={styles.tickets}>
                     {featuredCoupons.map((coupon, index) => (
                       <Reveal
                         as="li"
@@ -718,7 +735,8 @@ const SpecialOffers = () => {
               <section className={styles.section} aria-labelledby="offers-today-title">
                 <div className="sf-container sf-container--wide">
                   <SectionHeading id="offers-today-title" eyebrow="Today" title="Deal of the *day*." />
-                  <ul className={styles.deals}>
+                  {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                  <ul role="list" className={styles.deals}>
                     {dealOfTheDay.map((product, idx) => {
                       const minPrice = getProductMinPrice(product);
                       const saving = minPrice.originalPrice - minPrice.sellingPrice;
@@ -757,7 +775,8 @@ const SpecialOffers = () => {
                     <span key={i} className={`sf-skeleton ${styles.chipSkeleton}`} />
                   ))}
                 </div>
-                <ul className={styles.grid}>
+                {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                <ul role="list" className={styles.grid}>
                   {Array.from({ length: skeletonCount(config.featuredProductIds, 6, 9) }, (_, i) => (
                     <li key={i} className={styles.item}>
                       <ProductCardSkeleton />
@@ -789,7 +808,8 @@ const SpecialOffers = () => {
                       : `Showing all ${pieces(gridProducts.length)}.`}
                   </p>
                   <Reveal>
-                    <ul className={styles.grid}>
+                    {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                    <ul role="list" className={styles.grid}>
                       <AnimatePresence mode="popLayout" initial={false}>
                         {filteredProducts.map((product, index) => (
                           <motion.li

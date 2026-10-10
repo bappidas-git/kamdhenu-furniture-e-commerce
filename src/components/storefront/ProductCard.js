@@ -29,7 +29,11 @@ import styles from "./ProductCard.module.css";
 // Structure: an <article> named by the product name. One link wraps the image
 // and the titles; the chips, the wishlist toggle and the quick add sit over
 // the image in a sibling layer, so no control is nested in the link. Tab
-// order: the link, the heart, the quick add.
+// order: the link, the heart, the quick add. Names (Prompt 31): the link is
+// named by the product's name, so the photograph is decorative (alt=""); the
+// heart is a toggle with one name, "Save {name} to wishlist", and its state
+// in aria-pressed; the quick add is "Add to cart, {name}", its visible label
+// first (WCAG 2.5.3).
 //
 // Pointer devices: on hover the photograph scales to 1.03, crossfades to the
 // second photograph (mounted on the first hover, lazy, shown once loaded), a
@@ -56,8 +60,8 @@ const IMAGE_WIDTH = 1200;
 const IMAGE_HEIGHT = 1500;
 // How long the quick add reads "Added" after a click.
 const ADDED_FOR_MS = 1200;
-// CSS clamps every name to two lines; only a name longer than this is also
-// cut in the markup.
+// CSS clamps every name to two lines from 768px (phones show it whole); only
+// a name longer than this is also cut in the markup.
 const NAME_FALLBACK_LENGTH = 100;
 
 // The fill is always there; the stylesheet shows it (fill-opacity) while the
@@ -169,10 +173,13 @@ const ProductCard = ({
       >
         <span className={styles.frame}>
           <span className={styles.media}>
+            {/* Decorative: the link is named by the product's name below
+                (Prompt 31; a repeated alt would be read twice). */}
             <img
               className={styles.image}
               src={image}
-              alt={name}
+              alt=""
+              aria-hidden="true"
               width={IMAGE_WIDTH}
               height={IMAGE_HEIGHT}
               loading="lazy"
@@ -227,7 +234,7 @@ const ProductCard = ({
               type="button"
               className={`${styles.wishlist} ${isWishlisted ? styles.wishlisted : ""}`}
               aria-pressed={Boolean(isWishlisted)}
-              aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
+              aria-label={`Save ${name} to wishlist`}
               onClick={() => onToggleWishlist(product)}
             >
               <HeartIcon />
@@ -239,7 +246,7 @@ const ProductCard = ({
               type="button"
               className={`${styles.quickAdd} ${added ? styles.added : ""}`}
               disabled={outOfStock}
-              aria-label={outOfStock ? "Sold out" : `Add ${name} to cart`}
+              aria-label={outOfStock ? `Sold out, ${name}` : `Add to cart, ${name}`}
               onClick={handleQuickAdd}
             >
               <span className={styles.quickAddLabel} aria-hidden="true">

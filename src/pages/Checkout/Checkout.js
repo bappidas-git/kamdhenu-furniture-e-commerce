@@ -1035,7 +1035,8 @@ const Checkout = () => {
       <p className={styles.stepIntro}>
         {itemCount} {itemCount === 1 ? "piece" : "pieces"}
       </p>
-      <ul className={styles.lines} aria-label="Items in your cart">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+      <ul role="list" className={styles.lines} aria-label="Items in your cart">
         {cartItems.map(renderCartLine)}
       </ul>
       {renderCoupon()}
@@ -1597,7 +1598,8 @@ const Checkout = () => {
         Review your order
       </StepHeading>
 
-      <ul className={styles.lines} aria-label="Items in your order">
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+      <ul role="list" className={styles.lines} aria-label="Items in your order">
         {cartItems.map((item) => (
           <li key={item.id} className={styles.line}>
             <span className={styles.thumb}>
@@ -1784,7 +1786,8 @@ const Checkout = () => {
             Order summary
           </h2>
 
-          <ul className={styles.summaryLines} aria-label="Items">
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+          <ul role="list" className={styles.summaryLines} aria-label="Items">
             {cartItems.slice(0, 3).map((item) => (
               <li key={item.id} className={styles.summaryLine}>
                 <span className={styles.summaryLineText}>

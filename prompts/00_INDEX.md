@@ -40,7 +40,7 @@
 | 28 | `28_static-legal-and-support-pages.md` | About, Help (revived `FAQ`), Support, policies from `legalContent.js`, 404 page, `ErrorBoundary` | 01–08, 24 |
 | 29 | `29_copy-and-microcopy-pass.md` | One voice across all strings; voice guide | 01–28 |
 | 30 | `30_motion-and-micro-interactions.md` | Motion audit and refinement, reduced-motion safety | 01–29 |
-| 31 | `31_responsive-and-accessibility-pass.md` | Responsive + WCAG AA audit and fixes, skip link | 01–30 |
+| 31 | `31_responsive-and-accessibility-pass.md` | Responsive + WCAG AA audit and fixes, skip link (audit: `QA_RESPONSIVE_A11Y.md`) | 01–30 |
 | 32 | `32_performance-seo-and-conversion-audit.md` | Lighthouse, images, fonts, code splitting, `usePageMeta`, JSON-LD, conversion checklist | 01–31 |
 | 33 | `33_admin-logo-swap.md` | Replace the two admin logo placeholders; nothing else | 01 |
 | 34 | `34_final-qa-and-parity.md` | Full walkthrough, parity, admin diff, `QA_CHECKLIST.md`, zero known issues | 01–33 |
@@ -122,6 +122,7 @@ Sequencing rules honoured: design system first; brand identity and catalogue dat
 | Data | `db.json` all other collections, `FREE_SHIPPING_THRESHOLD`, `scripts/validate-db.js` | 05 | content only |
 | Cross-cutting passes | copy (29), motion (30), responsive/a11y (31, adds the skip link in `App.js`), performance/SEO/conversion (32, adds `hooks/usePageMeta.js`, lazy routes in `App.js`) | 29–32 | fix in place, no new surfaces |
 | Admin | `components/AdminLayout/AdminLayout.js`, `pages/Admin/AdminLogin.js` (logo lines only) | 33 | the only admin change |
+| Responsive and accessibility audit | `prompts/QA_RESPONSIVE_A11Y.md` (method, findings, before and after) | 31 | |
 | Final QA | `prompts/QA_CHECKLIST.md` | 34 | |
 
 Contexts (`Auth`, `Cart`, `Wishlist`, `Order`, `DealsConfig`, `Admin`) keep their logic in every prompt; only their toast wording may change (Prompt 29). `src/services/api.js`, `src/utils/categories.js` (additive helper allowed in 09), `src/utils/dealsConfig.js`, `src/utils/authStorage.js`, `src/theme/adminTheme.js`, `src/hooks/useAdminBodyClass.js`, `server.js`, `package.json` dependencies are never changed.

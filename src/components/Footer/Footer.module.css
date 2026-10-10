@@ -80,8 +80,16 @@
 }
 
 .logoLink {
+  position: relative;
   display: block;
   border-radius: var(--sf-radius-sm);
+}
+
+/* A 44px-tall target around the 40px logo (Prompt 31). */
+.logoLink::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - var(--sf-tap-target)) / 2) 0;
 }
 
 .logoLink:focus-visible {
@@ -276,10 +284,18 @@
   border-radius: 1px;
 }
 
-/* 44px targets on phones and touch screens. */
+/* 44px targets on phones and touch screens: 44px tall, and a short label
+   ("Terms") 44px across through ::after, without moving the row. */
 @media (max-width: 767.98px), (pointer: coarse) {
   .link {
+    position: relative;
     min-height: var(--sf-tap-target);
+  }
+
+  .link::after {
+    content: "";
+    position: absolute;
+    inset: 0 min(0px, (100% - var(--sf-tap-target)) / 2);
   }
 }
 

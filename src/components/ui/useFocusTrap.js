@@ -15,11 +15,19 @@ import { useEffect, useRef, useState } from "react";
 // Only the most recently opened trap reacts, so a layer opened from inside
 // another one owns Tab and Escape until it closes.
 //
+// The rest of the page is inert while the layer is open (Prompt 31): out of
+// reach of the pointer, the keyboard and a screen reader's virtual cursor,
+// which `aria-modal="true"` alone does not guarantee in every screen reader.
+// What is made inert: the siblings of the container and of each of its
+// ancestors up to <body>, except decorative (aria-hidden) ones such as the
+// layer's own backdrop, which must still take the closing click, and
+// SweetAlert's containers, whose toasts must still be announced. On close,
+// inert is lifted before focus goes back to the opener.
+//
 // Focus is not forcibly pulled back when it lands outside the container:
-// `aria-modal="true"` already hides the page from assistive technology, and a
-// popover or SweetAlert dialog opened from inside the layer renders elsewhere
-// in the document and must keep its own focus. Tab still re-enters the
-// container when focus has fallen back to <body>.
+// a popover or SweetAlert dialog opened from inside the layer renders
+// elsewhere in the document and must keep its own focus. Tab still re-enters
+// the container when focus has fallen back to <body>.
 //
 // Companions in this file: useBodyScrollLock(active) locks the page scroll the
 // way the storefront's other overlays do (an inline `overflow: hidden` on
@@ -75,6 +83,30 @@ const focusElement = (element) => {
 // Open traps, oldest first; only the last one handles keys.
 const openTraps = [];
 
+// Never made inert: they hold no page content.
+const KEEP_TAGS = new Set(["SCRIPT", "STYLE", "LINK", "META", "TEMPLATE", "NOSCRIPT"]);
+
+/**
+ * Make everything outside `container` inert (see above). Returns the undo:
+ * it lifts inert from exactly the elements this call set it on.
+ */
+export const inertOutside = (container) => {
+  const changed = [];
+  for (let node = container; node && node !== document.body && node.parentElement; node = node.parentElement) {
+    for (const sibling of node.parentElement.children) {
+      if (sibling === node || KEEP_TAGS.has(sibling.tagName) || sibling.hasAttribute("inert")) continue;
+      if (sibling.getAttribute("aria-hidden") === "true" || sibling.classList.contains("swal2-container")) {
+        continue;
+      }
+      sibling.setAttribute("inert", "");
+      changed.push(sibling);
+    }
+  }
+  return () => {
+    changed.forEach((element) => element.removeAttribute("inert"));
+  };
+};
+
 /**
  * @param {{ current: HTMLElement | null }} containerRef  the dialog, drawer or sheet
  * @param {object}   options
@@ -103,6 +135,7 @@ export default function useFocusTrap(containerRef, options = {}) {
       const initial = latest.current.initialFocusRef && latest.current.initialFocusRef.current;
       focusElement(initial || getFocusableElements(container)[0] || container);
     }
+    const restoreOutside = container ? inertOutside(container) : () => {};
 
     const onKeyDown = (event) => {
       if (!isTopmost() || event.defaultPrevented) return;
@@ -146,6 +179,8 @@ export default function useFocusTrap(containerRef, options = {}) {
       document.removeEventListener("keydown", onKeyDown);
       const index = openTraps.indexOf(trap);
       if (index !== -1) openTraps.splice(index, 1);
+      // Before focus goes back: the opener is in the part made inert.
+      restoreOutside();
 
       const { returnFocus = true, returnFocusRef } = latest.current;
       if (!returnFocus) return;

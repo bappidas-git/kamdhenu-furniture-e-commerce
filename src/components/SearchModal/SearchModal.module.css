@@ -229,20 +229,13 @@
 }
 
 /* ── Chips ────────────────────────────────────────────────────────────── */
-/* .sf-chip is 32px; ::after gives each one a 44px-tall target that does not
-   move the row. Chip rows keep at least 8px between chips. */
+/* .sf-chip is 32px with a 44px-tall hit area (the primitive's ::after).
+   Chip rows keep 8px between chips and 12px between lines. */
 
 .chip {
-  position: relative;
   max-width: 100%;
   white-space: normal;
   text-align: left;
-}
-
-.chip::after {
-  content: "";
-  position: absolute;
-  inset: -6px 0;
 }
 
 .chipList {

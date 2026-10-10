@@ -833,7 +833,8 @@ const OrderHistory = () => {
       <div className={styles.details}>
         <div className={styles.block}>
           <h4 className={cx("sf-eyebrow", styles.panelTitle)}>Items</h4>
-          <ul className={styles.items}>
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+          <ul role="list" className={styles.items}>
             {orderItems.map((item, i) => {
               const canReview = reviewable && item.productId != null;
               const existing = canReview ? reviewFor(item.productId) : null;
@@ -1010,7 +1011,8 @@ const OrderHistory = () => {
 
           <div className={styles.cardBody}>
             {visibleItems.length > 0 && (
-              <ul className={styles.thumbs} aria-label="Items in this order">
+              // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+              <ul role="list" className={styles.thumbs} aria-label="Items in this order">
                 {visibleItems.map((item, i) => (
                   <li key={i} className={styles.thumb}>
                     <img
@@ -1185,7 +1187,8 @@ const OrderHistory = () => {
         </div>
       );
     }
-    return <ul className={styles.list}>{paginatedOrders.map(renderOrder)}</ul>;
+    // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+    return <ul role="list" className={styles.list}>{paginatedOrders.map(renderOrder)}</ul>;
   };
 
   return (
@@ -1251,7 +1254,7 @@ const OrderHistory = () => {
                 <button
                   key={filter}
                   type="button"
-                  className={cx("sf-chip", styles.filter)}
+                  className="sf-chip"
                   aria-pressed={activeFilter === filter}
                   // A pressed chip un-presses back to All.
                   onClick={() => setActiveFilter(activeFilter === filter && filter !== "All" ? "All" : filter)}

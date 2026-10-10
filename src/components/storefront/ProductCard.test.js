@@ -58,7 +58,12 @@ test("is an article named by the product, with one link around its image and nam
   // The buttons are not inside the link.
   expect(within(links[0]).queryByRole("button")).not.toBeInTheDocument();
 
-  const image = within(links[0]).getByRole("img", { name: "Teak Lounge Chair" });
+  // The photograph is decorative: the link is named by the product's name.
+  expect(within(links[0]).queryByRole("img")).not.toBeInTheDocument();
+  // eslint-disable-next-line testing-library/no-node-access -- a decorative image has no role to query
+  const image = links[0].querySelector("img");
+  expect(image).toHaveAttribute("alt", "");
+  expect(image).toHaveAttribute("aria-hidden", "true");
   expect(image).toHaveAttribute("src", "/img/7-front.jpg");
   expect(image).toHaveAttribute("width", "1200");
   expect(image).toHaveAttribute("height", "1500");
@@ -72,7 +77,8 @@ test("links by id without a slug, and falls back to the placeholder image", () =
     </MemoryRouter>
   );
   expect(screen.getByRole("link")).toHaveAttribute("href", "/products/7");
-  expect(screen.getByRole("img", { name: "Teak Lounge Chair" })).toHaveAttribute("src", PLACEHOLDER_IMG);
+  // eslint-disable-next-line testing-library/no-node-access -- the photograph is decorative: no role to query
+  expect(screen.getByRole("link").querySelector("img")).toHaveAttribute("src", PLACEHOLDER_IMG);
 });
 
 test("shows the full name (CSS clamps it); only a very long name is cut in the markup", () => {
@@ -91,7 +97,6 @@ test("shows the full name (CSS clamps it); only a very long name is cut in the m
     </MemoryRouter>
   );
   expect(screen.getByRole("article")).toHaveAccessibleName(`${"x".repeat(100)}...`);
-  expect(screen.getByRole("img")).toHaveAttribute("alt", long);
 });
 
 test("omits the brand eyebrow when there is no brand", () => {
@@ -154,7 +159,7 @@ describe("chips come from data alone, two at most", () => {
   });
 });
 
-test("the wishlist toggle is a pressed button with Save / Remove labels", () => {
+test("the wishlist toggle is a pressed button with one name", () => {
   const onToggleWishlist = jest.fn();
   const item = product();
   const { rerender } = render(
@@ -172,7 +177,8 @@ test("the wishlist toggle is a pressed button with Save / Remove labels", () => 
       <ProductCard product={item} onToggleWishlist={onToggleWishlist} isWishlisted />
     </MemoryRouter>
   );
-  expect(screen.getByRole("button", { name: `Remove ${item.name} from wishlist` })).toHaveAttribute("aria-pressed", "true");
+  // The state is aria-pressed; the name stays (WAI-ARIA APG toggle button).
+  expect(screen.getByRole("button", { name: `Save ${item.name} to wishlist` })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("hides the heart and the quick add when their handlers are omitted", () => {
@@ -197,7 +203,7 @@ test("quick add sends the built cart item and says Added for 1.2s", () => {
         <ProductCard product={item} onAddToCart={onAddToCart} />
       </MemoryRouter>
     );
-    const add = screen.getByRole("button", { name: "Add Teak Lounge Chair to cart" });
+    const add = screen.getByRole("button", { name: "Add to cart, Teak Lounge Chair" });
     expect(add).toHaveTextContent("Add to cart");
     fireEvent.click(add);
     // The cheapest variant, exactly as the product page would add it.
@@ -214,7 +220,7 @@ test("quick add sends the built cart item and says Added for 1.2s", () => {
     act(() => jest.advanceTimersByTime(150));
     expect(add).toHaveTextContent("Add to cart");
     // The accessible name stays put (the cart toast announces the add).
-    expect(add).toHaveAccessibleName("Add Teak Lounge Chair to cart");
+    expect(add).toHaveAccessibleName("Add to cart, Teak Lounge Chair");
   } finally {
     jest.useRealTimers();
   }
@@ -223,7 +229,7 @@ test("quick add sends the built cart item and says Added for 1.2s", () => {
 test("a sold-out card disables the quick add and labels it Sold out", () => {
   const onAddToCart = jest.fn();
   renderCard({ product: product({ stock: 0 }), onAddToCart });
-  const button = screen.getByRole("button", { name: "Sold out" });
+  const button = screen.getByRole("button", { name: "Sold out, Teak Lounge Chair" });
   expect(button).toBeDisabled();
   expect(button).toHaveTextContent("Sold out");
   fireEvent.click(button);

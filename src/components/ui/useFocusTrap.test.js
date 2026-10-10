@@ -119,6 +119,36 @@ test("returns focus to the opener on close", () => {
   expect(opener).toHaveFocus();
 });
 
+test("makes the rest of the page inert while open, but not a backdrop or SweetAlert, and lifts it on close", () => {
+  const backdrop = document.createElement("div");
+  backdrop.setAttribute("aria-hidden", "true");
+  const toasts = document.createElement("div");
+  toasts.className = "swal2-container";
+  const elsewhere = document.createElement("div");
+  elsewhere.setAttribute("inert", "");
+  document.body.append(backdrop, toasts, elsewhere);
+  try {
+    const { rerender } = render(<Page open={false} onClose={() => {}} />);
+    rerender(<Page open onClose={() => {}} />);
+    expect(screen.getByRole("button", { name: "Opener" })).toHaveAttribute("inert");
+    expect(screen.getByRole("button", { name: "Page after" })).toHaveAttribute("inert");
+    expect(screen.getByRole("dialog")).not.toHaveAttribute("inert");
+    // The backdrop still takes the closing click; toasts are still announced.
+    expect(backdrop).not.toHaveAttribute("inert");
+    expect(toasts).not.toHaveAttribute("inert");
+
+    rerender(<Page open={false} onClose={() => {}} />);
+    expect(screen.getByRole("button", { name: "Opener" })).not.toHaveAttribute("inert");
+    expect(screen.getByRole("button", { name: "Page after" })).not.toHaveAttribute("inert");
+    // Only what the trap made inert is lifted.
+    expect(elsewhere).toHaveAttribute("inert");
+  } finally {
+    backdrop.remove();
+    toasts.remove();
+    elsewhere.remove();
+  }
+});
+
 test("does not take focus back from a layer that focused itself in the meantime", () => {
   const { rerender } = render(<Page open={false} onClose={() => {}} />);
   screen.getByRole("button", { name: "Opener" }).focus();

@@ -272,7 +272,9 @@
 }
 
 /* Inline text link; the underline turns accent on hover. ::after extends the
-   hit area to 44px without moving the layout. */
+   hit area to 44px without moving the layout: 14px above and below the line,
+   6px either side, and never less than 44px across, so a short label ("Edit")
+   is a full target too (Prompt 31). */
 :where(body:not(.admin-area)) .sf-btn--link {
   --sf-btn-size: 0;
   --sf-btn-focus: none;
@@ -285,7 +287,11 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.3em;
 }
-:where(body:not(.admin-area)) .sf-btn--link::after { content: ""; position: absolute; inset: -14px -6px; }
+:where(body:not(.admin-area)) .sf-btn--link::after {
+  content: "";
+  position: absolute;
+  inset: min(-14px, (100% - var(--sf-tap-target)) / 2) min(-6px, (100% - var(--sf-tap-target)) / 2);
+}
 
 @media (hover: hover) {
   :where(body:not(.admin-area)) .sf-btn--link:hover:where(:not(:disabled, [aria-disabled="true"])) {
@@ -594,6 +600,16 @@
   color: var(--sf-color-primary-contrast);
 }
 :where(body:not(.admin-area)) .sf-chip:is(:disabled, [aria-disabled="true"]) { opacity: 0.5; cursor: not-allowed; }
+/* A 44px-tall hit area (--sf-tap-target) on the 32px pill, without moving the
+   row: ::after, centred on the padding box (inside the 1px border). Chips
+   that wrap keep 12px between lines and scrolling rows 8px of padding above
+   and below, so the areas never overlap (Prompt 31). */
+:where(body:not(.admin-area)) :where(a, button, label).sf-chip { position: relative; }
+:where(body:not(.admin-area)) :where(a, button, label).sf-chip::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - var(--sf-tap-target)) / 2) 0;
+}
 
 /* Cart / wishlist count: a small ink disc with paper digits. */
 :where(body:not(.admin-area)) .sf-count {
@@ -742,7 +758,10 @@
   white-space: nowrap !important;
 }
 
-/* "Skip to content": off-screen until focused, then an ink tab top-left. */
+/* "Skip to content" (SkipLink, the first child of .App): off-screen until it
+   has keyboard focus, then an ink tab top-left. A route change can move focus
+   to it from script (SkipLink): only :focus-visible shows it, so after a click
+   or a tap it stays out of sight. */
 :where(body:not(.admin-area)) .sf-skip-link {
   position: fixed;
   top: var(--sf-space-3);
@@ -762,17 +781,24 @@
   transform: translateY(calc(-100% - var(--sf-space-6)));
   transition: transform var(--sf-duration-fast) var(--sf-ease-out);
 }
-:where(body:not(.admin-area)) .sf-skip-link:focus { transform: none; }
+:where(body:not(.admin-area)) .sf-skip-link:focus-visible { transform: none; }
+/* Browsers without :focus-visible show it on any focus. */
+@supports not selector(:focus-visible) {
+  :where(body:not(.admin-area)) .sf-skip-link:focus { transform: none; }
+}
 
 /* Focus rings. The transparent outline becomes a real outline in forced-colours
    mode, where box-shadow is dropped. .sf-focus gives any custom control the ring. */
 :where(body:not(.admin-area)) :is(.sf-btn, .sf-chip, .sf-focus):focus-visible,
 :where(body:not(.admin-area)) :is(.sf-check, .sf-radio, .sf-switch) input:focus-visible,
-:where(body:not(.admin-area)) .sf-skip-link:focus {
+:where(body:not(.admin-area)) .sf-skip-link:focus-visible {
   outline: 2px solid transparent;
   outline-offset: 2px;
   box-shadow: var(--sf-btn-focus, var(--sf-shadow-focus));
 }
+/* The skip link's target, <main id="main-content" tabIndex={-1}>: a reading
+   position reached from script, not a control, so no ring. */
+:where(body:not(.admin-area)) main[tabindex="-1"]:focus { outline: none; }
 /* Inline and scrolling elements use an outline (a box-shadow would wrap or clip). */
 :where(body:not(.admin-area)) :is(.sf-btn--link, .sf-prose a):focus-visible {
   outline: 2px solid var(--sf-color-focus);

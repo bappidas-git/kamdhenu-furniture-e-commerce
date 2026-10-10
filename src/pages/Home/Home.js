@@ -146,7 +146,8 @@ const ShopBySpace = ({ categories, loading }) => {
     <section className={`sf-section ${styles.section}`} aria-labelledby="home-spaces-title">
       <div className="sf-container sf-container--wide">
         <SectionHeading id="home-spaces-title" eyebrow={copy.eyebrow} title={copy.title} />
-        <ul className={styles.spaces} aria-busy={loading || undefined}>
+        {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+        <ul role="list" className={styles.spaces} aria-busy={loading || undefined}>
           {loading
             ? SPACES.map((space) => (
                 <li key={space.key} aria-hidden="true">
@@ -283,7 +284,8 @@ const CompleteTheSpace = ({ curation, onAddToCart, onToggleWishlist, isInWishlis
 
           <Reveal className={styles.companions} delay={staggerDelay(2)}>
             <h3 className={`sf-eyebrow ${styles.companionsTitle}`}>{copy.companionsLabel}</h3>
-            <ul className={styles.companionGrid}>
+            {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+            <ul role="list" className={styles.companionGrid}>
               {companions.map((product) => (
                 <li key={product.id}>
                   <ProductCard

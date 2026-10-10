@@ -5,7 +5,9 @@
  * the current page in ink at 500. The "›" separators are drawn here, with an
  * empty alternative text so they stay out of the accessibility tree. The
  * trail wraps on narrow screens. Each link's hit area is 44px tall without
- * moving the row. Tokens only (prompts/DESIGN_SYSTEM.md).
+ * moving the row; on phones and touch screens wrapped lines sit 44px apart,
+ * so the hit areas of links on two lines never overlap (Prompt 31). Tokens
+ * only (prompts/DESIGN_SYSTEM.md).
  * ========================================================================== */
 
 .breadcrumb {
@@ -23,6 +25,13 @@
   margin: 0;
   padding: 0;
   list-style: none;
+}
+
+/* 44px from line to line: the 19.5px line plus 24.5px. */
+@media (max-width: 767.98px), (pointer: coarse) {
+  .list {
+    row-gap: calc(var(--sf-tap-target) - 0.8125rem * var(--sf-leading-normal));
+  }
 }
 
 .item {
@@ -56,11 +65,12 @@
     text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
 }
 
-/* A 44px-tall target around the 19.5px line, without moving the row. */
+/* A 44px target around the 19.5px line, without moving the row: 4px either
+   side, and 44px across for a short crumb. */
 .link::after {
   content: "";
   position: absolute;
-  inset: -12px -4px;
+  inset: min(-12px, (100% - var(--sf-tap-target)) / 2) min(-4px, (100% - var(--sf-tap-target)) / 2);
 }
 
 @media (hover: hover) {

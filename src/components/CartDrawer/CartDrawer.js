@@ -212,7 +212,7 @@ const CartLine = ({ line, onNavigate, onDecrease, onIncrease, onRemove, register
         <div className={styles.details}>
           <div className={styles.lineHead}>
             <Link to={href} className={styles.name} onClick={onNavigate}>
-              {line.name}
+              <span className={styles.nameText}>{line.name}</span>
             </Link>
             <button
               ref={(element) => registerRemove(line.id, element)}
@@ -488,7 +488,8 @@ const CartDrawer = ({ open, onClose }) => {
                   </motion.div>
                 ) : (
                   <>
-                    <ul className={styles.lines} aria-labelledby={titleId}>
+                    {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                    <ul role="list" className={styles.lines} aria-labelledby={titleId}>
                       <AnimatePresence initial={false}>
                         {lines.map((line) => (
                           <CartLine

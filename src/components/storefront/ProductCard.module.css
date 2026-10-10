@@ -145,7 +145,8 @@
   color: var(--sf-color-text-muted);
 }
 
-/* Two lines at most; the underline turns caramel when the link is hovered. */
+/* Two lines at most from 768px (in full on phones, below); the underline
+   turns caramel when the link is hovered. */
 .name {
   display: -webkit-box;
   overflow: hidden;
@@ -162,6 +163,21 @@
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
   transition: text-decoration-color var(--sf-duration-fast) var(--sf-ease-out);
+}
+
+/* Phones: the brand and the name in full. A 116px rail card needs up to four
+   lines for the catalogue's longest names (five with WCAG 1.4.12's text
+   spacing), and a cut name hides what tells two pieces apart (Prompt 31). */
+@media (max-width: 767.98px) {
+  .brand {
+    white-space: normal;
+  }
+
+  .name {
+    display: block;
+    overflow: visible;
+    -webkit-line-clamp: none;
+  }
 }
 
 /* ── Rating and price ─────────────────────────────────────────────────── */

@@ -325,7 +325,7 @@ const shownNames = () =>
     .map((button) => button.getAttribute("aria-label").slice("Remove ".length, -" from wishlist".length));
 const removeButton = (name) => screen.getByRole("button", { name: `Remove ${name} from wishlist` });
 const moveButton = (name) => screen.getByRole("button", { name: `Move to cart, ${name}` });
-const quickAdd = (name) => screen.getByRole("button", { name: `Add ${name} to cart` });
+const quickAdd = (name) => screen.getByRole("button", { name: `Add to cart, ${name}` });
 const toasts = (title) => Swal.fire.mock.calls.filter(([options]) => options?.title === title);
 // Waits that span the 300ms dim or a 320ms fade-out get room under load.
 const SLOW = { timeout: 3000 };
@@ -644,12 +644,14 @@ describe("the pieces", () => {
       "/products/bentwood-style-cafe-chair"
     );
     expect(within(card).getByText("Sale")).toBeInTheDocument();
-    expect(within(card).getByRole("img", { name: BENTWOOD })).toBeInTheDocument();
+    // The photograph is decorative (alt=""): the link carries the name.
+    // eslint-disable-next-line testing-library/no-node-access -- a decorative image has no role to query
+    expect(within(card).getByRole("link", { name: BENTWOOD }).querySelector("img")).toHaveAttribute("alt", "");
     expect(within(card).getByRole("img", { name: "Rated 4.5 out of 5, 2 reviews" })).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /^Save .+ to wishlist$/ })).not.toBeInTheDocument();
     expect(within(card).queryByRole("button", { name: /^Remove .+ from wishlist$/ })).not.toBeInTheDocument();
     expect(within(item).getByText("In stock")).toBeInTheDocument();
-    expect(within(item).getByRole("button", { name: `Add ${BENTWOOD} to cart` })).toBeEnabled();
+    expect(within(item).getByRole("button", { name: `Add to cart, ${BENTWOOD}` })).toBeEnabled();
     expect(within(item).getByRole("button", { name: `Move to cart, ${BENTWOOD}` })).toBeEnabled();
     expect(within(item).getByRole("button", { name: `Remove ${BENTWOOD} from wishlist` })).toHaveTextContent(
       "Remove"
@@ -896,7 +898,7 @@ describe("the pieces", () => {
 
     const rackItem = pieceItem("Wide Plastic Shoe Rack");
     expect(within(rackItem).getByText("Sold out", { selector: "span.sf-badge" })).toBeInTheDocument();
-    expect(within(rackItem).getByRole("button", { name: "Sold out" })).toBeDisabled();
+    expect(within(rackItem).getByRole("button", { name: "Sold out, Wide Plastic Shoe Rack" })).toBeDisabled();
     expect(within(rackItem).getByRole("button", { name: "Move to cart, Wide Plastic Shoe Rack" })).toBeDisabled();
     expect(within(rackItem).getByRole("button", { name: "Remove Wide Plastic Shoe Rack from wishlist" })).toBeEnabled();
     expect(within(rackItem).getByText("Sold out", { selector: "p" })).toBeInTheDocument();
@@ -905,7 +907,7 @@ describe("the pieces", () => {
     const alnaItem = pieceItem("Iron Alna (Clothes Stand)");
     expect(within(alnaItem).queryByText(/stock/i)).not.toBeInTheDocument();
     expect(within(alnaItem).getByRole("button", { name: "Move to cart, Iron Alna (Clothes Stand)" })).toBeEnabled();
-    expect(within(alnaItem).getByRole("button", { name: "Add Iron Alna (Clothes Stand) to cart" })).toBeEnabled();
+    expect(within(alnaItem).getByRole("button", { name: "Add to cart, Iron Alna (Clothes Stand)" })).toBeEnabled();
 
     const seatItem = pieceItem("2-Seater Waiting Chair");
     expect(within(seatItem).getByText("In stock")).toBeInTheDocument();
