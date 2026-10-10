@@ -4034,7 +4034,7 @@ None.
 
 ## Prompt 32 — Performance, SEO and conversion audit
 
-**Date:** 2026-10-10. **Result:** every storefront route now has its own title, description and sharing tags (`usePageMeta`); the product page publishes `Product` JSON-LD that the schema.org validator passes with no error or warning; 14 storefront pages load on demand in 11 chunks, while home, the listing, the product page and the whole admin stay in the main bundle. Main JS **444.1 → 398.0 KB** gzip (−10.4%), main CSS **53.5 → 34.8 KB** (−34.9%); a cold home visit transfers **907 → 720 KB** and makes **12 → 8** API calls. Lighthouse mobile (medians of 3, `HEAD` and the branch interleaved): **LCP 0.6–1.1s faster** on all four audited pages; Accessibility, Best Practices and SEO **100** before and after; **Performance 44–55 → 46–52, below the ≥ 85 target** (why, with an experiment, below). Layout shift is **under 0.05 on every storefront route** at 360, 768, 1,024 and 1,440px (worst 0.038; before, up to 0.56). Conversion checklist: 9 items walked on every surface, **4 passed as found, 5 failed and were fixed**; two empty-on-failure states remain, outside the presentation layer. No API call, data shape or route changed; `db.json`, `api.js`, every context and every admin file are untouched; the admin stays eager, keeps index.html's title and is pixel-identical.
+**Date:** 2026-10-10. **Result:** every storefront route now has its own title, description and sharing tags (`usePageMeta`); the product page publishes `Product` JSON-LD that the schema.org validator passes with no error or warning; 14 storefront pages load on demand in 11 chunks, while home, the listing, the product page and the whole admin stay in the main bundle. Main JS **444.1 → 398.0 KB** gzip (−10.4%), main CSS **53.5 → 34.8 KB** (−34.9%); a cold home visit transfers **907 → 720 KB** and makes **12 → 8** API calls. Lighthouse mobile (medians of 3, `HEAD` and the branch interleaved): **LCP 0.6–1.1s faster** on all four audited pages; Accessibility, Best Practices and SEO **100** before and after; **Performance 44–55 → 46–52, below the ≥ 85 target** (why, with an experiment, below). Layout shift is **under 0.05 on every storefront route** at 360, 768, 1,024 and 1,440px (worst 0.038; before, up to 0.56). Conversion checklist: 9 items walked on every surface, **4 passed as found, 5 failed and were fixed**. A follow-up in the same branch ("Follow-up: read errors", at the end of this entry) makes failed wallet, coupon, deals-config and wishlist reads show an error with Try again instead of an empty state. No API call, data shape or route changed; `db.json` and every admin file are untouched (`api.js` and two contexts change in the follow-up only); the admin stays eager, keeps index.html's title and is pixel-identical.
 
 ### Lighthouse (mobile)
 
@@ -4209,8 +4209,8 @@ Walked on every storefront surface with the production build (decision points at
 | 4 | Low-friction forms | **Pass** | Newsletter, sign in, create account, checkout's address and payment, support, help search, profile, addresses, password, the listing's filters: every field labelled; `autocomplete` on every personal, address, card and password field (`given-name`, `tel`, `address-line1`, `postal-code`, `cc-number`, `cc-exp`, `cc-csc`, `new-password`…); `inputmode` for email, phone, PIN, card and price fields; inline errors that say how to fix ("Enter a 6-digit PIN"), focus on the first; names and phone prefilled from the account; a new address typed at checkout survives Continue and Back. |
 | 5 | Persistent search and cart, sticky mobile add-to-cart, 44px targets | **Pass** | Search and cart in the header on every route (and in the bottom bar on phones); the product page's sticky bar (Add to cart, 44px) whenever the buy box is out of view at 390px; Prompt 31's 44px audit (no target under 44 × 44 at 360px) unchanged by this prompt. |
 | 6 | Perceived performance: skeletons, reserved image space, lazy below the fold, prioritised hero | **Fail → fixed** | Skeletons with `aria-busy` on every data route (slow-API run: home, listing, product, order confirmation, orders, store credit, wishlist, offers; checkout's summary says "Loading"). Failures found: the listing's LCP photograph was lazy; loading states that moved the page (wishlist 0.42–0.56, account pages, the header row); pages loaded on demand needed a fallback. Fixed as above; every route now under 0.05. |
-| 7 | Honest urgency only | **Fail → fixed** | When the deals config could not be read, api.js's fallback (`{ enabled: true }`) filled in `dealsConfig.js`'s built-ins: "Limited Time", "Discover unbeatable prices… don't miss out!" and a countdown to midnight no one had set. Now the countdown and the hero's tag and line show only from a config the admin saved (it carries `updatedAt`, or a hero of its own); otherwise the plain "Special offers" and no countdown. Stock lines come from each product's data ("In stock", "Only N left" at its own threshold). |
-| 8 | Empty, loading, error and success states on every surface | **Fail → fixed** (2 limits) | Error states with "Try again" on the listing, the product page, order confirmation, My orders and the offers page; checkout keeps the cart and its summary. Found: the product page called every failed read "not found" (and would have asked not to be indexed): a 404 still says "We couldn't find that piece."; any other failure now says "We couldn't load this piece." with Try again. **Left:** store credit shows ₹0.00 and the wishlist "Nothing saved yet." when their reads fail, because `api.js` answers a failed wallet read with 0 and [] and `WishlistContext` keeps the device's list without an error flag (both outside presentation; see the notes). |
+| 7 | Honest urgency only | **Fail → fixed** | When the deals config could not be read, api.js's fallback (`{ enabled: true }`) filled in `dealsConfig.js`'s built-ins: "Limited Time", "Discover unbeatable prices… don't miss out!" and a countdown to midnight no one had set. Now the countdown and the hero's tag and line show only from a config the admin saved (it carries `updatedAt`, or a hero of its own); otherwise the plain "Special offers" and no countdown. Since the follow-up, a config read that fails shows the offers' error panel with Try again, and only a config that does not exist yet (404) shows the plain page. Stock lines come from each product's data ("In stock", "Only N left" at its own threshold). |
+| 8 | Empty, loading, error and success states on every surface | **Fail → fixed** | Error states with "Try again" on the listing, the product page, order confirmation, My orders and the offers page; checkout keeps the cart and its summary. Found: the product page called every failed read "not found" (and would have asked not to be indexed): a 404 still says "We couldn't find that piece."; any other failure now says "We couldn't load this piece." with Try again. Also found: store credit showed ₹0.00, the wishlist "Nothing saved yet." and the offers "No codes right now." when their reads failed, because `api.js` answered those failures with 0, [] or a default config and `WishlistContext` kept the device's list without an error flag. Fixed in the follow-up ("Follow-up: read errors"). |
 | 9 | SEO and sharing basics | **Fail → fixed** | Before: one title and description for every route, a static `og:url`, no structured data. Now as in "SEO and sharing". |
 
 ### What changed
@@ -4259,7 +4259,7 @@ Walked on every storefront surface with the production build (decision points at
 2. **Checkout's Performance fell 3 points** (55 → 52) while its LCP improved by 0.6s: the code split the brief asks for adds a second render step on a cold load. The way there during a visit warms the chunk ahead of the click.
 3. **Files beyond the brief's list:** `src/services/sharedReads.js` and the read call sites in `Header.js`, `Footer.js`, `AssuranceStrip.js`, `Home.js`, `Products.js` and `ProductDetails.js` (the brief's "consolidate duplicate fetches": the same `apiService` calls and answers, only merged when simultaneous); `src/index.js`'s loader hand-off (a blank-page gap that Suspense made longer); the checkout warm-up in `CartDrawer.js` and `ProductDetails.js`; `startTransition` in `Home.js`.
 4. **The product page's failed read** now shows its own state instead of "not found": the read is unchanged, only what the page shows for a non-404 failure.
-5. **Left as found, outside presentation:** store credit (₹0.00) and the wishlist (empty) on a failed read; a failed coupon read looks like "no codes" (Prompt 19's note); the duplicate reads listed under "Network"; the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
+5. **Left as found, outside presentation:** the duplicate reads listed under "Network"; the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
 6. **Google's Rich Results Test** cannot reach a local build; the schema.org validator was used, and the test is listed for Prompt 34.
 7. **`settings.seo` in `db.json` is not read:** the admin cannot edit it, and reading it would add a request to every page; the defaults live in `constants.js` and `index.html`.
 
@@ -4280,7 +4280,6 @@ Walked on every storefront surface with the production build (decision points at
 
 - **33:** a new storefront page calls `usePageMeta` once (DESIGN_SYSTEM §42.1) and, off the purchase path, goes in `lazyPages.js` (§42.3); measure Lighthouse against `HEAD` with the same harness (JSON Server mode, interleaved runs, medians).
 - **34 (final QA):** Google's Rich Results Test on a public product URL; DESIGN_SYSTEM §42.9; the cart drawer's opening cost at 4× CPU (a `CartContext` render question, not presentation).
-- **Backend / client:** to tell a failed read from an empty one, `api.js`'s wallet, coupon and deals reads would need to rethrow (or the Laravel API to answer errors the client can see); `WishlistContext` would need an error flag.
 
 ### Needs client confirmation
 
@@ -4288,3 +4287,39 @@ Walked on every storefront surface with the production build (decision points at
 - **Sitemap hosting:** a sitemap has to be generated from the catalogue (the Laravel API) and served from the production domain; then add its `Sitemap:` line to `robots.txt`.
 - **Per-page link previews** need prerendering or server rendering (not possible with Create React App alone): confirm whether they matter for launch.
 - **Shipping and returns as structured data** (optional, for Google's merchant listings): the returns window is still a placeholder (`STOREFRONT_CONFIG.returnsWindowDays`).
+
+### Follow-up: read errors
+
+**Asked in the same session, on the same branch:** show errors when wallet, coupon and deals reads fail. Before, `api.js` answered a failed read with an empty value (a balance of 0, an empty ledger, no coupons, `{ enabled: true }`), and `WishlistContext` kept the device's list without saying the account's read had failed. So a failure looked like a real empty state: "₹0.00" of store credit, "No codes right now.", "Nothing saved yet.", and checkout silently hid a customer's credit.
+
+| File | Change |
+|---|---|
+| `src/services/api.js` | `wallet.getBalance`, `wallet.getTransactions`, `coupons.getActive` and `deals.getConfig` rethrow a failure; a 404 (nothing there: no wallet, no coupon list, no saved config) keeps its empty answer (`isNotFound`). The ledger's balance read is split: `readWalletBalance` throws (used by `getBalance`), and `computeWalletBalance`, used by the ledger writes, still reads a failure as 0, so refunds and debits behave exactly as before. The admin reads none of these methods. |
+| `src/context/DealsConfigContext.js` | `error`: true while no config has been read and the last read failed. A read that fails after one has succeeded keeps the config already read. `refresh` returns its promise. |
+| `src/pages/SpecialOffers/SpecialOffers.js` | A config that cannot be read, or a coupon read that fails, shows the page's error panel ("We couldn't load the offers."), never "No codes right now." or a default countdown. Try again reads the config first, then the offers. |
+| `src/pages/Profile/Profile.js` | Unchanged: its "We couldn't load your store credit." state now shows when the reads fail. |
+| `src/pages/Checkout/Checkout.js`, `.module.css` | A balance that cannot be read shows a note where the store credit goes ("We couldn't load your store credit. Check your connection and try again.", Try again). When the read works, focus moves to the credit's switch (or the step's heading when there is no credit). |
+| `src/context/WishlistContext.js` | `loadError` and `reloadWishlist()`. Signing out clears the error, and the loading flag, which a read cut short by a sign-out used to leave on. |
+| `src/pages/Wishlist/Wishlist.js`, `.module.css` | "We couldn't load your wishlist." with Try again, in place of "Nothing saved yet.". Pieces saved on the device stay below the panel, which says whose they are. Focus waits on the h1 during the read, and returns to Try again if it fails again. |
+| Tests | New `src/services/api.reads.test.js` (18 tests, both API modes). New or rewritten tests in `SpecialOffers` (config failure and retry, 404, a coupon failure, a failed refetch keeping the config), `Checkout` (the note and its retry), `Wishlist` (3) and `WishlistContext` (2). |
+
+**Decisions**
+
+- **404 still means "nothing there".** A Laravel backend without a saved deals config, wallet or coupons answers 404. Treating that as an error would put an error on pages that are simply empty.
+- **Without its config, the offers page shows an error, not offers.** It cannot know whether the admin switched the page off or what it features, so showing default offers could contradict the admin. The header's Offers link stays (the default `enabled`), as before.
+- **Checkout keeps the payment step usable:** the note sits where the credit would be, and the customer can pay without it.
+
+**Verification**
+
+- `CI=true npm test -- --passWithNoTests` exits 0: **81 suites, 1,387 tests**, no console warnings.
+- `CI=true npm run build` compiles with no warnings; the JSON Server-mode build is the same. ESLint reports nothing new in the 11 changed files.
+- **Mutation checks:** removing the error flag from each surface (the deals context, the offers page, checkout, the wishlist context) fails its new tests.
+- **Browser** (Playwright, production build, JSON Server): 16 of 16 checks pass:
+  - offers with the config read failing (500, and the network dropping): the error, the plain title, no countdown, no offers; Try again shows the admin's page with focus on the codes;
+  - offers with no config (404): the plain page and its codes; a coupon read failing: the error, then the codes after Try again; coupons 404: "No codes right now.";
+  - store credit: the error, then ₹2,302.00 after Try again;
+  - checkout: the note, then the credit with focus on its switch;
+  - wishlist: the error, never the empty state, then the account's three pieces;
+  - the admin's Special Offers page loads as before.
+- **Layout:** the new states at 390 and 1,440px: no page scrolls sideways.
+

@@ -3085,7 +3085,17 @@ Every storefront route measures under 0.05 at 360, 768, 1024 and 1440px (`BUILD_
 
 - **Savings beside the buy action:** "You save ₹X on these pieces" in the cart drawer (under the subtotal) and in checkout's review (under Amount payable), from `getCartSavings` (`src/utils/helpers.js`): the lines' own compare-at savings × quantity, to the paisa. Display only, no total uses it; hidden at ₹0.
 - **A failed product read is not a missing piece:** a 404 shows "We couldn’t find that piece." with **Browse furniture** (not found, `noindex`); any other failure shows "We couldn’t load this piece." with **Try again**, which reads it again.
-- **Urgency only when real:** the offers countdown and the hero's tag and line come only from a deals config the admin has saved: one that carries `updatedAt` (api.js stamps every admin save) or a hero of its own. When the read fails (api.js then answers `{ enabled: true }`, which `normalizeDealsConfig` fills with the built-in defaults), the page shows its plain title and no countdown, never `dealsConfig.js`'s "Limited Time" copy or its timer to midnight.
+- **Urgency only when real:** the offers countdown and the hero's tag and line come only from a deals config the admin has saved: one that carries `updatedAt` (api.js stamps every admin save) or a hero of its own. A config that does not exist yet (api.js answers its 404 with `{ enabled: true }`, which `normalizeDealsConfig` fills with the built-in defaults) shows the plain title and no countdown, never `dealsConfig.js`'s "Limited Time" copy or its timer to midnight. A config that cannot be read shows the page's error panel (next rule).
+- **A failed read is never shown as empty.** `api.js` rethrows a failed wallet, coupon or deals-config read; a 404 keeps meaning "nothing there" (`isNotFound`). Each surface shows its error with **Try again** (§39.5):
+
+  | Surface | When | Shows |
+  |---|---|---|
+  | Special offers | the deals config (`DealsConfigContext`'s `error`) or the products, categories or coupons cannot be read | "We couldn’t load the offers." in place of the offers; the plain title, no countdown |
+  | Store credit (`/profile?tab=wallet`) | the balance or the ledger cannot be read | "We couldn’t load your store credit." in place of the balance and ledger |
+  | Checkout, payment step | the balance cannot be read | a note in the store credit's place; the customer can still pay without it |
+  | Wishlist | the account's list cannot be read (`WishlistContext`'s `loadError`, `reloadWishlist()`) | "We couldn’t load your wishlist." in place of "Nothing saved yet."; pieces saved on the device stay below it, said as such |
+
+  A read that fails after one has worked (the deals config read again on focus) keeps what was read. A new storefront read follows the same rule: rethrow and show an error, and answer only a 404 with the empty value.
 
 ### 42.9 Checklist for later prompts
 
@@ -3095,4 +3105,5 @@ Every storefront route measures under 0.05 at 360, 768, 1024 and 1440px (`BUILD_
 - [ ] Images: `width` and `height`, `decoding="async"`, lazy below the fold, eager above it with `fetchpriority="high"` on the likely LCP; `onError` on images from data; no remote placeholder URLs.
 - [ ] Anything that loads after the first paint reserves its size: layout shift under 0.05 at 360–1440px.
 - [ ] Structured data states only what the page shows; no rating without real ratings, no `review` entries.
+- [ ] A read that fails shows an error with Try again, never an empty state; only a 404 answers with the empty value (§42.8).
 - [ ] Measure in JSON Server mode against `HEAD`, with the same Lighthouse version and the same runs, before claiming a change.
