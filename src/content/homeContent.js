@@ -62,10 +62,11 @@ export const HOME_SECTIONS = {
     railLabel: "Featured pieces",
   },
   // Lists the products the admin flags as trending; the copy claims no
-  // numbers (no views, no "N sold").
+  // numbers (no views, no "N sold") and no customer behaviour the flag
+  // cannot back.
   trending: {
     eyebrow: "Trending",
-    title: "What people are *choosing*.",
+    title: "Pieces of the *moment*.",
     viewAll: { label: "View all", to: "/products?sort=popular" },
     railLabel: "Trending pieces",
   },
@@ -204,7 +205,7 @@ export const PROMISE_STEPS = [
     body: [
       "Check out securely online with cards, UPI or net banking.",
       {
-        text: "Or choose cash on delivery and pay when your furniture arrives.",
+        text: "Or choose Cash on Delivery and pay when your furniture arrives.",
         requires: "cod",
       },
     ],
@@ -263,7 +264,7 @@ export const MARQUEE_PHRASES = [
 // newsletter band (so it carries no form of its own). `title` takes one
 // `*accent*` word; `secondary: null` hides the second button.
 export const CLOSING_CTA = {
-  eyebrow: "When you're ready",
+  eyebrow: "When you’re ready",
   title: "Find the piece that *fits*.",
   line: "Browse the full collection, or talk to us about the space you are furnishing.",
   primary: { label: "Shop the collection", to: "/products" },

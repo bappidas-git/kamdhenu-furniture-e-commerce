@@ -103,11 +103,11 @@ const resultsText = () => liveRegion().textContent.replace(/\s+/g, " ").trim();
 // outline opening the active department, the URL re-applied to the fields)
 // can land a little later in jsdom, so tests wait for it explicitly.
 const waitForResults = () =>
-  waitFor(() => expect(resultsText()).not.toBe("Loading products…"));
+  waitFor(() => expect(resultsText()).not.toBe("Loading pieces…"));
 // The product and filter counts are visually hidden text after a comma; jsdom
 // computes a space before it that browsers do not.
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-const counted = (label, count, noun = "products") =>
+const counted = (label, count, noun = "pieces") =>
   new RegExp(`^${escapeRegExp(label)}\\s?, ${count} ${noun}$`);
 // The product an article (card or row) is named by.
 const articleName = (article) =>
@@ -143,7 +143,7 @@ test("a leaf deep link names the category, walks its ancestors and lists its pro
   expect(within(trail).getByText("Chairs with Arms")).toHaveAttribute("aria-current", "page");
 
   await waitForResults();
-  expect(resultsText()).toBe("Showing 3 products");
+  expect(resultsText()).toBe("Showing 3 pieces");
   expect(screen.getAllByRole("article")).toHaveLength(3);
   expect(within(chips()).getByRole("button", { name: "Remove Chairs with Arms" })).toBeInTheDocument();
   expect(currentUrl()).toBe("/products?category=plastic-essentials-armchairs");
@@ -153,7 +153,7 @@ test("a department deep link with a sort and a page keeps all three", async () =
   renderAt("/products?category=home-furniture&sort=price-low&page=2");
   await screen.findByRole("heading", { level: 1, name: "Home Furniture" });
   await waitForResults();
-  expect(resultsText()).toBe("Showing 13–24 of 29 products");
+  expect(resultsText()).toBe("Showing 13–24 of 29 pieces");
   expect(params().get("page")).toBe("2");
   expect(params().get("sort")).toBe("price-low");
   expect(screen.getByRole("combobox", { name: "Sort" })).toHaveValue("price-low");
@@ -183,7 +183,7 @@ test("a search deep link titles the results and offers the query as a chip", asy
     await screen.findByRole("heading", { level: 1, name: "Results for “chair”" })
   ).toBeInTheDocument();
   await waitForResults();
-  expect(resultsText()).toBe("Showing 1–12 of 42 products");
+  expect(resultsText()).toBe("Showing 1–12 of 42 pieces");
   const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
   expect(within(trail).getAllByRole("listitem").map((li) => li.textContent)).toEqual([
     "Home",
@@ -205,7 +205,7 @@ test("a search lists exactly what the search overlay counts, category names incl
   // The overlay's 20: the waiting chairs and benches match through their
   // category's slug (office-essentials-waiting, office-premium-waiting), which
   // the old name, tag, brand and description filter missed (it found 14).
-  expect(resultsText()).toBe(`Showing 1–12 of ${overlay.length} products`);
+  expect(resultsText()).toBe(`Showing 1–12 of ${overlay.length} pieces`);
   const names = screen.getAllByRole("article").map(articleName);
   expect(names).toContain("2-Seater Waiting Chair");
   expect(names.every((name) => overlay.some((p) => p.name === name))).toBe(true);
@@ -216,7 +216,7 @@ test("a legacy numeric category link is rewritten to its slug", async () => {
   await screen.findByRole("heading", { level: 1, name: "Plastic Furniture" });
   await waitFor(() => expect(currentUrl()).toBe("/products?category=plastic-furniture"));
   await waitForResults();
-  expect(resultsText()).toBe("Showing 1–12 of 21 products");
+  expect(resultsText()).toBe("Showing 1–12 of 21 pieces");
   expect(within(rail()).getByRole("checkbox", { name: counted("Plastic Furniture", 21) })).toBeChecked();
 });
 
@@ -228,7 +228,7 @@ test("with no category the page is All furniture", async () => {
   expect(within(trail).queryByRole("link", { name: "Furniture" })).not.toBeInTheDocument();
   expect(within(trail).getByText("All furniture")).toHaveAttribute("aria-current", "page");
   await waitForResults();
-  expect(resultsText()).toBe("Showing 1–12 of 84 products");
+  expect(resultsText()).toBe("Showing 1–12 of 84 pieces");
   expect(chips()).not.toBeInTheDocument();
 });
 
@@ -238,7 +238,7 @@ test("several categories read as a list in the title", async () => {
     await screen.findByRole("heading", { level: 1, name: "Sofas and Beds" })
   ).toBeInTheDocument();
   await waitForResults();
-  expect(resultsText()).toBe("Showing 7 products");
+  expect(resultsText()).toBe("Showing 7 pieces");
 });
 
 // ── Category outline ─────────────────────────────────────────────────────────
@@ -283,7 +283,7 @@ test("ticking a category filters, resets the page and never folds the department
   await waitFor(() =>
     expect(params().get("category")).toBe("plastic-essentials-armchairs,plastic-premium")
   );
-  expect(resultsText()).toBe("Showing 10 products");
+  expect(resultsText()).toBe("Showing 10 pieces");
   expect(screen.getByRole("heading", { level: 1, name: "Chairs with Arms and Premium" })).toBeInTheDocument();
 
   // Unticking everything in the department leaves it open under the pointer.
@@ -330,7 +330,7 @@ test("Min and Max apply with the button, swap when inverted, and show as a chip"
     const price = getProductMinPrice(p).sellingPrice;
     return price >= 1000 && price <= 5000;
   }).length;
-  expect(resultsText()).toBe(`Showing 1–12 of ${inRange} products`);
+  expect(resultsText()).toBe(`Showing 1–12 of ${inRange} pieces`);
   expect(within(chips()).getByRole("button", { name: "Remove ₹1,000 – ₹5,000" })).toBeInTheDocument();
   // The matching quick range reads as pressed.
   expect(within(rail()).getByRole("button", { name: "₹1,000 – ₹5,000" })).toHaveAttribute(
@@ -353,7 +353,7 @@ test("a quick range applies its bounds; pressing it again clears them", async ()
   expect(above).toHaveAttribute("aria-pressed", "true");
   expect(within(chips()).getByRole("button", { name: "Remove Above ₹5,000" })).toBeInTheDocument();
   const above5000 = PRODUCTS.filter((p) => getProductMinPrice(p).sellingPrice >= 5000).length;
-  expect(resultsText()).toBe(`Showing 1–12 of ${above5000} products`);
+  expect(resultsText()).toBe(`Showing 1–12 of ${above5000} pieces`);
 
   fireEvent.click(above);
   await waitFor(() => expect(params().get("min_price")).toBeNull());
@@ -365,8 +365,8 @@ test("Under ₹500 matches nothing in the seeded catalogue and says so", async (
   await waitForResults();
   fireEvent.click(within(rail()).getByRole("button", { name: "Under ₹500" }));
   await waitFor(() => expect(params().get("max_price")).toBe("500"));
-  expect(resultsText()).toBe("No products found");
-  expect(screen.getByRole("heading", { level: 2, name: "Nothing here yet." })).toBeInTheDocument();
+  expect(resultsText()).toBe("No pieces to show");
+  expect(screen.getByRole("heading", { level: 2, name: "No pieces to show." })).toBeInTheDocument();
   expect(within(chips()).getByRole("button", { name: "Remove Under ₹500" })).toBeInTheDocument();
 });
 
@@ -379,13 +379,13 @@ test("a rating filters, a second press clears it, and the URL only drops the pag
   fireEvent.click(four);
   await waitFor(() => expect(four).toBeChecked());
   const fourUp = PRODUCTS.filter((p) => (p.rating || 0) >= 4).length;
-  expect(resultsText()).toBe(`Showing 1–12 of ${fourUp} products`);
+  expect(resultsText()).toBe(`Showing 1–12 of ${fourUp} pieces`);
   expect(currentUrl()).toBe("/products");
   expect(within(chips()).getByRole("button", { name: "Remove 4 stars & up" })).toBeInTheDocument();
 
   fireEvent.click(four);
   await waitFor(() => expect(four).not.toBeChecked());
-  expect(resultsText()).toBe("Showing 1–12 of 84 products");
+  expect(resultsText()).toBe("Showing 1–12 of 84 pieces");
 });
 
 test("discount, in-stock and brand filters narrow the results and show as chips", async () => {
@@ -394,7 +394,7 @@ test("discount, in-stock and brand filters narrow the results and show as chips"
 
   fireEvent.click(within(rail()).getByRole("radio", { name: "10% or more" }));
   const discounted = PRODUCTS.filter((p) => getProductMinPrice(p).discount >= 10).length;
-  await waitFor(() => expect(resultsText()).toBe(`Showing 1–12 of ${discounted} products`));
+  await waitFor(() => expect(resultsText()).toBe(`Showing 1–12 of ${discounted} pieces`));
   expect(within(chips()).getByRole("button", { name: "Remove 10% off or more" })).toBeInTheDocument();
 
   const inStock = within(rail()).getByRole("switch", { name: "In stock only" });
@@ -407,7 +407,7 @@ test("discount, in-stock and brand filters narrow the results and show as chips"
     (p) => p.brand === "Winsome" && getProductMinPrice(p).discount >= 10 && p.stock > 0
   ).length;
   await waitFor(() =>
-    expect(resultsText()).toBe(`Showing ${winsomeOnSale} ${winsomeOnSale === 1 ? "product" : "products"}`)
+    expect(resultsText()).toBe(`Showing ${winsomeOnSale} ${winsomeOnSale === 1 ? "piece" : "pieces"}`)
   );
   expect(within(chips()).getByRole("button", { name: "Remove Winsome" })).toBeInTheDocument();
   // Session-only facets stay out of the URL.
@@ -464,7 +464,7 @@ test("pagination: numbers, Previous / Next, the current page, and per page", asy
 
   fireEvent.click(within(pagination).getByRole("button", { name: "Next page" }));
   await waitFor(() => expect(params().get("page")).toBe("2"));
-  expect(resultsText()).toBe("Showing 13–24 of 84 products");
+  expect(resultsText()).toBe("Showing 13–24 of 84 pieces");
   expect(within(pagination).getByRole("button", { name: "Page 2" })).toHaveAttribute(
     "aria-current",
     "page"
@@ -479,7 +479,7 @@ test("pagination: numbers, Previous / Next, the current page, and per page", asy
     target: { value: "24" },
   });
   await waitFor(() => expect(currentUrl()).toBe("/products?per_page=24"));
-  expect(resultsText()).toBe("Showing 1–24 of 84 products");
+  expect(resultsText()).toBe("Showing 1–24 of 84 pieces");
   expect(screen.getAllByRole("article")).toHaveLength(24);
 });
 
@@ -487,7 +487,7 @@ test("a page past the end is clamped to the last page once the catalogue has loa
   renderAt("/products?category=sofas&page=9");
   await waitForResults();
   await waitFor(() => expect(currentUrl()).toBe("/products?category=sofas"));
-  expect(resultsText()).toBe("Showing 4 products");
+  expect(resultsText()).toBe("Showing 4 pieces");
 });
 
 test("the view switch is a pair of pressed buttons; list rows carry the card's rules", async () => {
@@ -514,7 +514,7 @@ test("the view switch is a pair of pressed buttons; list rows carry the card's r
 
   fireEvent.click(within(row).getByRole("button", { name: `Add to cart, ${product.name}` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(product));
-  fireEvent.click(within(row).getByRole("button", { name: "Save to wishlist" }));
+  fireEvent.click(within(row).getByRole("button", { name: `Save ${product.name} to wishlist` }));
   expect(toggleWishlist).toHaveBeenCalledWith(product);
 });
 
@@ -527,13 +527,13 @@ test("the grid is the storefront ProductCard, wired to the cart and the wishlist
   const cards = screen.getAllByRole("article");
   expect(cards).toHaveLength(12);
   const first = cards[0];
-  expect(within(first).getByRole("button", { name: "Remove from wishlist" })).toHaveAttribute(
+  expect(within(first).getByRole("button", { name: `Remove ${PRODUCTS[0].name} from wishlist` })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
   fireEvent.click(within(first).getByRole("button", { name: `Add ${PRODUCTS[0].name} to cart` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[0]));
-  fireEvent.click(within(cards[1]).getByRole("button", { name: "Save to wishlist" }));
+  fireEvent.click(within(cards[1]).getByRole("button", { name: `Save ${PRODUCTS[1].name} to wishlist` }));
   expect(toggleWishlist).toHaveBeenCalledWith(PRODUCTS[1]);
   // No placeholder service URL is introduced by the page.
   expect(document.body.innerHTML).not.toMatch(/placehold\.co\/400x300/);
@@ -566,7 +566,7 @@ test("while loading: card skeletons for a page, a busy region and the live text"
     })
   );
   renderAt("/products?per_page=24");
-  expect(resultsText()).toBe("Loading products…");
+  expect(resultsText()).toBe("Loading pieces…");
   const body = liveRegion().closest("section").querySelector('[aria-busy="true"]');
   expect(body).not.toBeNull();
   expect(body.querySelectorAll("li")).toHaveLength(24);
@@ -584,20 +584,20 @@ test("a failed read shows the error panel, and Try again reloads", async () => {
   expect(
     await screen.findByRole("heading", { level: 2, name: "We couldn’t load the catalogue." })
   ).toBeInTheDocument();
-  expect(resultsText()).toBe("Couldn't load products");
+  expect(resultsText()).toBe("Couldn’t load the catalogue");
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
-  await waitFor(() => expect(resultsText()).toBe("Showing 4 products"));
+  await waitFor(() => expect(resultsText()).toBe("Showing 4 pieces"));
   expect(apiService.products.getAll).toHaveBeenCalledTimes(2);
   spy.mockRestore();
 });
 
 test("an empty search quotes the query and clears everything", async () => {
   renderAt("/products?search=zzzz&sort=newest");
-  expect(await screen.findByRole("heading", { level: 2, name: "Nothing here yet." })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 2, name: "No pieces to show." })).toBeInTheDocument();
   expect(screen.getByText(/We couldn.t find anything matching “zzzz”/)).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Clear all filters" }));
   await waitFor(() => expect(currentUrl()).toBe("/products"));
-  expect(resultsText()).toBe("Showing 1–12 of 84 products");
+  expect(resultsText()).toBe("Showing 1–12 of 84 pieces");
 });
 
 // ── The filter sheet ─────────────────────────────────────────────────────────

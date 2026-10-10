@@ -4,7 +4,7 @@ import apiService from "../../services/api";
 import {
   copyToClipboard,
   formatCurrency,
-  formatDate,
+  formatDateIN,
   normalizeOrderAddress,
   onImageError,
   PLACEHOLDER_IMG,
@@ -31,8 +31,8 @@ import styles from "./OrderConfirmation.module.css";
 // claims the order does not exist; no order), the derived figures and their
 // fallbacks (taxAmount ?? tax, shippingAmount ?? shipping, discountAmount ??
 // 0, amountPayable ?? the total less the store credit), the payment-status
-// switch's cases, and where the actions lead (Track order and Order history →
-// /orders, Go to home → /). "Continue shopping" opens /products (the brief's
+// switch's cases, and where the actions lead (Track order and My orders →
+// /orders, Back to home → /). "Continue shopping" opens /products (the brief's
 // design; it opened /).
 //
 // The delivery line no longer invents a date. An order does not record its
@@ -50,7 +50,7 @@ const PAYMENT_METHOD_LABELS = {
   upi: "UPI",
   net_banking: "Net banking",
   wallet: "Wallet",
-  cod: "Cash on delivery",
+  cod: "Cash on Delivery",
   store_credit: "Store credit",
 };
 
@@ -97,10 +97,10 @@ export const headlineFor = (
       return "This order was returned.";
     case "cancelled":
       return order.cancelledAt
-        ? `This order was cancelled on ${formatDate(order.cancelledAt)}.`
+        ? `This order was cancelled on ${formatDateIN(order.cancelledAt)}.`
         : "This order was cancelled.";
     case "failed":
-      return "The payment for this order didn't go through.";
+      return "The payment for this order didn’t go through.";
     case "refunded":
       return "The payment for this order was refunded.";
     case "delivered":
@@ -126,11 +126,11 @@ export const deliveryFor = (
 ) => {
   if (isDelivered) {
     const deliveredOn = order.deliveredAt || order.updatedAt;
-    return deliveredOn ? `Delivered on ${formatDate(deliveredOn)}.` : "Delivered.";
+    return deliveredOn ? `Delivered on ${formatDateIN(deliveredOn)}.` : "Delivered.";
   }
   if (order.shippingStatus === "shipped") return "Your order has shipped.";
   if (CLOSED_STAGES.includes(stage)) return "This order was not shipped.";
-  return "We'll email tracking details when your order ships.";
+  return "We’ll email tracking details when your order ships.";
 };
 
 // The last row of the price details when store credit was used, named for
@@ -199,7 +199,7 @@ const OrderConfirmation = () => {
   const [order, setOrder] = useState(null);
   const [loading, setLoading] = useState(true);
   const [fetchError, setFetchError] = useState(false);
-  // The copy button's note ("Copied" / "Couldn't copy"), over the button for
+  // The copy button's note ("Copied" / "Couldn’t copy"), over the button for
   // two seconds in a polite live region; a new key re-announces a repeat.
   const [copyNote, setCopyNote] = useState({ key: 0, text: "", copied: false });
   const [invoiceOpen, setInvoiceOpen] = useState(false);
@@ -266,7 +266,7 @@ const OrderConfirmation = () => {
     const text = order?.orderNumber || orderNumber;
     const copied = await copyToClipboard(String(text));
     clearTimeout(copyTimer.current);
-    setCopyNote((previous) => ({ key: previous.key + 1, text: copied ? "Copied" : "Couldn't copy", copied }));
+    setCopyNote((previous) => ({ key: previous.key + 1, text: copied ? "Copied" : "Couldn’t copy", copied }));
     copyTimer.current = setTimeout(() => setCopyNote((previous) => ({ ...previous, text: "", copied: false })), 2000);
   };
 
@@ -383,14 +383,14 @@ const OrderConfirmation = () => {
               We couldn&rsquo;t load your order.
             </h1>
             <p className={styles.stateText}>
-              Something went wrong while loading order {orderNumber}. Please check your connection and try again.
+              Check your connection and try again.
             </p>
             <div className={styles.stateActions}>
               <button ref={retryRef} type="button" className="sf-btn sf-btn--primary" onClick={handleRetry}>
                 Try again
               </button>
               <Link to="/orders" className="sf-btn sf-btn--ghost">
-                Order history
+                My orders
               </Link>
             </div>
           </div>
@@ -409,14 +409,14 @@ const OrderConfirmation = () => {
               We couldn&rsquo;t find this order.
             </h1>
             <p className={styles.stateText}>
-              Order {orderNumber} may have been placed in a different session.
+              Check that {orderNumber} is the right number, or find the order in My orders.
             </p>
             <div className={styles.stateActions}>
               <Link to="/" className="sf-btn sf-btn--primary">
-                Go to home
+                Back to home
               </Link>
               <Link to="/orders" className="sf-btn sf-btn--ghost">
-                Order history
+                My orders
               </Link>
             </div>
           </div>
@@ -518,7 +518,7 @@ const OrderConfirmation = () => {
 
           {order.createdAt && (
             <p className={styles.placed}>
-              Placed on <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+              Placed on <time dateTime={order.createdAt}>{formatDateIN(order.createdAt)}</time>
             </p>
           )}
         </Reveal>
@@ -606,7 +606,7 @@ const OrderConfirmation = () => {
                   {shippingAddr.phone && <p className={styles.phone}>Phone: {shippingAddr.phone}</p>}
                 </div>
               ) : (
-                <p className={styles.muted}>Shipping address not available</p>
+                <p className={styles.muted}>No delivery address recorded</p>
               )}
             </div>
 
@@ -624,7 +624,7 @@ const OrderConfirmation = () => {
                   </div>
                 )}
                 <div className={styles.row}>
-                  <dt>Shipping</dt>
+                  <dt>Delivery</dt>
                   <dd>{shippingAmount > 0 ? formatCurrency(shippingAmount) : "Free"}</dd>
                 </div>
                 <div className={styles.row}>

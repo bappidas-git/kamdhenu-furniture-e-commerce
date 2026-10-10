@@ -357,7 +357,7 @@ beforeEach(() => {
   confirmClear = false;
   Swal.fire.mockImplementation((options) =>
     Promise.resolve(
-      options?.title === "Clear wishlist?"
+      options?.title === "Clear your wishlist?"
         ? { isConfirmed: confirmClear, isDismissed: !confirmClear }
         : { isConfirmed: false, isDismissed: true }
     )
@@ -379,11 +379,11 @@ afterEach(() => {
 describe("the rules", () => {
   test("the sort options are the old ones, and a piece dims for 300ms before it leaves", () => {
     expect(SORT_OPTIONS).toEqual([
-      { value: "dateDesc", label: "Recently Added" },
-      { value: "dateAsc", label: "Oldest First" },
-      { value: "priceLow", label: "Price: Low to High" },
-      { value: "priceHigh", label: "Price: High to Low" },
-      { value: "ratingHigh", label: "Highest Rated" },
+      { value: "dateDesc", label: "Recently added" },
+      { value: "dateAsc", label: "Oldest first" },
+      { value: "priceLow", label: "Price: low to high" },
+      { value: "priceHigh", label: "Price: high to low" },
+      { value: "ratingHigh", label: "Highest rated" },
     ]);
     expect(REMOVE_DELAY_MS).toBe(300);
   });
@@ -410,15 +410,15 @@ describe("the rules", () => {
       const defaultVariant = getDefaultCartVariant(row);
       const value = defaultVariant ? defaultVariant.stock : row.stock;
       const known = !(value == null || value === "");
-      expect(label).toBe(known ? (inStock ? "In stock" : "Out of stock") : null);
+      expect(label).toBe(known ? (inStock ? "In stock" : "Sold out") : null);
     });
     const [rack, stackable, alna, unknownVariant, negative, textStock] = edgeRows();
-    expect(describeStock(rack)).toMatchObject({ inStock: false, label: "Out of stock" });
-    expect(describeStock(stackable)).toMatchObject({ inStock: false, label: "Out of stock" });
+    expect(describeStock(rack)).toMatchObject({ inStock: false, label: "Sold out" });
+    expect(describeStock(stackable)).toMatchObject({ inStock: false, label: "Sold out" });
     expect(describeStock(alna)).toMatchObject({ inStock: true, label: null });
     expect(describeStock(unknownVariant)).toMatchObject({ inStock: true, label: null });
     expect(toCardProduct(unknownVariant).stock).not.toBe(0);
-    expect(describeStock(negative)).toMatchObject({ inStock: false, label: "Out of stock" });
+    expect(describeStock(negative)).toMatchObject({ inStock: false, label: "Sold out" });
     expect(describeStock(textStock)).toMatchObject({ inStock: true, label: "In stock" });
   });
 
@@ -602,7 +602,7 @@ describe("signed in", () => {
     const clearAll = screen.getByRole("button", { name: "Clear all saved pieces" });
     expect(clearAll).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(clearAll);
-    expect(toasts("Clear wishlist?")).toHaveLength(0);
+    expect(toasts("Clear your wishlist?")).toHaveLength(0);
     expect(screen.getByText("Your wishlist")).toBeInTheDocument();
     await act(async () => {
       read.resolve(accountRows(SHOPPER.id));
@@ -646,8 +646,8 @@ describe("the pieces", () => {
     expect(within(card).getByText("Sale")).toBeInTheDocument();
     expect(within(card).getByRole("img", { name: BENTWOOD })).toBeInTheDocument();
     expect(within(card).getByRole("img", { name: "Rated 4.5 out of 5, 2 reviews" })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Save to wishlist" })).not.toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Remove from wishlist" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /^Save .+ to wishlist$/ })).not.toBeInTheDocument();
+    expect(within(card).queryByRole("button", { name: /^Remove .+ from wishlist$/ })).not.toBeInTheDocument();
     expect(within(item).getByText("In stock")).toBeInTheDocument();
     expect(within(item).getByRole("button", { name: `Add ${BENTWOOD} to cart` })).toBeEnabled();
     expect(within(item).getByRole("button", { name: `Move to cart, ${BENTWOOD}` })).toBeEnabled();
@@ -665,7 +665,7 @@ describe("the pieces", () => {
     expect(screen.getByTestId("cart")).toHaveTextContent("37-v1×1");
     expect(screen.getByRole("dialog", { name: "Cart" })).toBeInTheDocument();
     expect(screen.getByText("3 pieces")).toBeInTheDocument();
-    expect(toasts("Added to Cart")).toHaveLength(1);
+    expect(toasts("Added to cart")).toHaveLength(1);
   });
 
   test("Move to cart adds the same line as the quick add, then the piece leaves without a Removed toast", async () => {
@@ -679,7 +679,7 @@ describe("the pieces", () => {
     await screen.findByText("2 pieces", {}, SLOW);
     expect(apiService.wishlist.remove).toHaveBeenCalledWith(3);
     await settle();
-    expect(toasts("Removed")).toHaveLength(0);
+    expect(toasts("Removed from wishlist")).toHaveLength(0);
     await waitFor(() => expect(shownNames()).toEqual([ERGONOMIC, SOFA]), SLOW);
   });
 
@@ -705,7 +705,7 @@ describe("the pieces", () => {
     expect(screen.getByText("2 pieces")).toBeInTheDocument();
     expect(apiService.wishlist.remove).toHaveBeenCalledTimes(1);
     await settle();
-    expect(toasts("Removed")).toHaveLength(0);
+    expect(toasts("Removed from wishlist")).toHaveLength(0);
   });
 
   test("a second press while a piece dims does nothing (one line in the cart, one removal)", async () => {
@@ -722,8 +722,8 @@ describe("the pieces", () => {
     await settle();
     expect(screen.getByText("2 pieces")).toBeInTheDocument();
     expect(apiService.wishlist.remove).toHaveBeenCalledTimes(1);
-    expect(toasts("Added to Cart")).toHaveLength(1);
-    expect(toasts("Removed")).toHaveLength(0);
+    expect(toasts("Added to cart")).toHaveLength(1);
+    expect(toasts("Removed from wishlist")).toHaveLength(0);
   });
 
   test("Remove pressed twice on one piece: one removal and one Removed toast", async () => {
@@ -737,7 +737,7 @@ describe("the pieces", () => {
     });
     await settle();
     expect(apiService.wishlist.remove).toHaveBeenCalledTimes(1);
-    expect(toasts("Removed")).toHaveLength(1);
+    expect(toasts("Removed from wishlist")).toHaveLength(1);
   });
 
   test("Remove: the piece leaves after 300ms with the Removed toast, and focus moves to the next piece's Remove", async () => {
@@ -749,7 +749,7 @@ describe("the pieces", () => {
     await waitFor(() => expect(removeButton(ERGONOMIC)).toHaveFocus(), SLOW);
     expect(screen.getByText("2 pieces")).toBeInTheDocument();
     expect(apiService.wishlist.remove).toHaveBeenCalledWith(3);
-    await waitFor(() => expect(toasts("Removed")).toHaveLength(1), SLOW);
+    await waitFor(() => expect(toasts("Removed from wishlist")).toHaveLength(1), SLOW);
     await waitFor(() => expect(shownNames()).toEqual([ERGONOMIC, SOFA]), SLOW);
   });
 
@@ -888,7 +888,7 @@ describe("the pieces", () => {
     expect(sort).toHaveFocus();
   });
 
-  test("out of stock (the default variant sold out): Sold out on the card, Move to cart unavailable, Remove still there", async () => {
+  test("sold out (the default variant sold out): Sold out on the card, Move to cart unavailable, Remove still there", async () => {
     const [rack, , alna] = edgeRows();
     const seat = savedRow(product(26));
     renderPage({ deviceRows: [rack, alna, seat] });
@@ -899,7 +899,7 @@ describe("the pieces", () => {
     expect(within(rackItem).getByRole("button", { name: "Sold out" })).toBeDisabled();
     expect(within(rackItem).getByRole("button", { name: "Move to cart, Wide Plastic Shoe Rack" })).toBeDisabled();
     expect(within(rackItem).getByRole("button", { name: "Remove Wide Plastic Shoe Rack from wishlist" })).toBeEnabled();
-    expect(within(rackItem).getByText("Out of stock")).toBeInTheDocument();
+    expect(within(rackItem).getByText("Sold out", { selector: "p" })).toBeInTheDocument();
 
     // Unknown stock: as before, it can be added; nothing is claimed about it.
     const alnaItem = pieceItem("Iron Alna (Clothes Stand)");
@@ -953,8 +953,8 @@ describe("the toolbar", () => {
     expect(clearAll).toHaveTextContent("Clear all");
     expect(clearAll).toHaveAttribute("aria-haspopup", "dialog");
     fireEvent.click(clearAll);
-    await waitFor(() => expect(toasts("Clear wishlist?")).toHaveLength(1));
-    expect(toasts("Clear wishlist?")[0][0]).toMatchObject({ text: "All 3 saved items will be removed." });
+    await waitFor(() => expect(toasts("Clear your wishlist?")).toHaveLength(1));
+    expect(toasts("Clear your wishlist?")[0][0]).toMatchObject({ text: "3 saved pieces will be removed from your wishlist." });
     await settle();
     expect(screen.getByText("3 pieces")).toBeInTheDocument();
     expect(apiService.wishlist.remove).not.toHaveBeenCalled();
@@ -969,7 +969,7 @@ describe("the toolbar", () => {
     fireEvent.click(clearAll);
     const empty = await screen.findByRole("heading", { level: 2, name: "Nothing saved yet." });
     await waitFor(() => expect(empty).toHaveFocus(), SLOW);
-    await waitFor(() => expect(toasts("Wishlist Cleared")).toHaveLength(1));
+    await waitFor(() => expect(toasts("Wishlist cleared")).toHaveLength(1));
     expect(apiService.wishlist.remove.mock.calls.map(([id]) => id).sort()).toEqual([1, 2, 3]);
     expect(screen.queryByLabelText("Sort by")).not.toBeInTheDocument();
   });

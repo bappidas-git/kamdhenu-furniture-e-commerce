@@ -38,10 +38,10 @@ const TITLE_MAX = 80;
 const BODY_MAX = 1000;
 const STARS = [1, 2, 3, 4, 5];
 
-// The old messages, word for word.
+// The dialog's two messages.
 const MESSAGES = {
-  rating: "Please select a star rating.",
-  failed: "Something went wrong. Please try again.",
+  rating: "Choose a star rating",
+  failed: "We couldn’t send your review. Try again in a moment.",
 };
 
 const { duration, easeOut, easeInOut } = TOKENS.motion;

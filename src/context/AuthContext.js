@@ -59,8 +59,8 @@ export const AuthProvider = ({ children }) => {
 
         Swal.fire({
           icon: "success",
-          title: `Welcome ${userData.firstName || ""} ${userData.lastName || ""}`.trim() || "Welcome",
-          text: "You have successfully logged in",
+          title: "Signed in",
+          text: "Welcome back.",
           toast: true,
           position: "bottom-end",
           showConfirmButton: false,
@@ -72,8 +72,8 @@ export const AuthProvider = ({ children }) => {
       } else {
         Swal.fire({
           icon: "error",
-          title: "Login Failed",
-          text: "Invalid email or password",
+          title: "Couldn’t sign you in",
+          text: "Check your email address and password, then try again.",
           toast: true,
           position: "bottom-end",
           showConfirmButton: false,
@@ -89,7 +89,7 @@ export const AuthProvider = ({ children }) => {
 
       Swal.fire({
         icon: "error",
-        title: "Login Error",
+        title: "Couldn’t sign you in",
         text: errorMessage,
         toast: true,
         position: "bottom-end",
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }) => {
       Swal.fire({
         icon: "success",
         title: "Account created",
-        text: "Please log in with your new credentials",
+        text: "Sign in with your password to continue.",
         toast: true,
         position: "bottom-end",
         showConfirmButton: false,
@@ -124,7 +124,7 @@ export const AuthProvider = ({ children }) => {
 
       Swal.fire({
         icon: "error",
-        title: "Registration Failed",
+        title: "Couldn’t create your account",
         text: errorMessage,
         toast: true,
         position: "bottom-end",
@@ -145,8 +145,8 @@ export const AuthProvider = ({ children }) => {
 
     Swal.fire({
       icon: "info",
-      title: "Logged Out",
-      text: "You have been successfully logged out",
+      title: "Signed out",
+      text: "See you again soon.",
       toast: true,
       position: "bottom-end",
       showConfirmButton: false,

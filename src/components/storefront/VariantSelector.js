@@ -97,13 +97,13 @@ const VariantSelector = ({
       <div className={styles.selector}>
         <div className={styles.group}>
           <div className={styles.groupHead}>
-            <span className={styles.label}>Select Option</span>
+            <span className={styles.label}>Option</span>
             {value?.name && <span className={styles.chosen}>{value.name}</span>}
           </div>
           <div
             className={styles.options}
             role="radiogroup"
-            aria-label="Variant"
+            aria-label="Option"
             onKeyDown={onRadioGroupKeyDown}
           >
             {options.map(({ variant, selected, disabled: oos }, i) => (
@@ -124,7 +124,7 @@ const VariantSelector = ({
                     {formatCurrency(variant.price, currency)}
                   </span>
                 )}
-                {oos && <span className="sf-visually-hidden"> (out of stock)</span>}
+                {oos && <span className="sf-visually-hidden"> (sold out)</span>}
               </button>
             ))}
           </div>
@@ -203,7 +203,7 @@ const VariantSelector = ({
                 const hint = soldOut
                   ? " (sold out)"
                   : mutedInCombo
-                  ? " (unavailable with current selection — tap to switch)"
+                  ? " (not available with your other choices; choosing it changes them)"
                   : "";
 
                 if (colorRow) {
@@ -270,7 +270,7 @@ const VariantSelector = ({
           {(() => {
             const s = variantStock(value, productStock);
             if (typeof s !== "number") return null;
-            if (s <= 0) return <span className={styles.metaOos}>This option is out of stock</span>;
+            if (s <= 0) return <span className={styles.metaOos}>This option is sold out</span>;
             if (s <= (value.lowStockThreshold || 5))
               return <span className={styles.metaLow}>Only {s} left in this option</span>;
             return null;

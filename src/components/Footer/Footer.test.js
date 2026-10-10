@@ -127,13 +127,13 @@ test("keeps every link target, with a single Offers link while deals are on", as
   const targets = {
     "All furniture": "/products",
     "New arrivals": "/products?sort=newest",
-    "Best sellers": "/products?sort=popular",
+    "Most reviewed": "/products?sort=popular",
     Offers: "/special-offers",
     "My account": "/profile",
     "Track order": "/orders",
     "Help centre": "/help",
     "Returns & refunds": "/refund",
-    Contact: "/support",
+    "Contact us": "/support",
     "Our story": "/about",
     Terms: "/terms",
     Privacy: "/privacy",
@@ -197,7 +197,7 @@ test("adds COD and free delivery only once the store data confirms them", async 
 
   await act(async () => settings.resolve(SETTINGS));
   expect(promises()).toEqual(["Secure payment", "Cash on Delivery", "Easy returns, 7 days"]);
-  expect(marks()).toEqual(["Visa", "Mastercard", "UPI", "Cash on delivery"]);
+  expect(marks()).toEqual(["Visa", "Mastercard", "UPI", "Cash on Delivery"]);
 
   await act(async () => shipping.resolve(SHIPPING));
   expect(promises()).toEqual([

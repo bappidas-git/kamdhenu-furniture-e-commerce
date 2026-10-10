@@ -8,7 +8,7 @@ import apiService from "../../services/api";
 import {
   copyToClipboard,
   formatCurrency,
-  formatDate,
+  formatDateIN,
   normalizeOrderAddress,
   onImageError,
   PLACEHOLDER_IMG,
@@ -162,11 +162,11 @@ const closedNote = (order, label) => {
   if (label === "Returned") return "This order was returned.";
   if (order.fulfillmentStatus === "cancelled") {
     return order.cancelledAt
-      ? `This order was cancelled on ${formatDate(order.cancelledAt)}.`
+      ? `This order was cancelled on ${formatDateIN(order.cancelledAt)}.`
       : "This order was cancelled.";
   }
   if (order.paymentStatus === "failed" || order.status === "failed") {
-    return "The payment for this order didn't go through.";
+    return "The payment for this order didn’t go through.";
   }
   if (order.paymentStatus === "refunded" || order.status === "refunded") {
     return "The payment for this order was refunded.";
@@ -174,15 +174,15 @@ const closedNote = (order, label) => {
   return "This order was cancelled.";
 };
 
-// The tracking panel's refund line, as before. The timing ("typically 5–7
-// business days") is generic, pending the client's confirmation.
+// The tracking panel's refund line. It states no refund timing: none is
+// confirmed (the refund policy leaves it blank).
 const refundText = (order) =>
   order.refundStatus === "completed"
-    ? `Refunded${order.refundedAmount ? ` ${formatCurrency(order.refundedAmount)}` : ""} to your ${(order.refundMethod || "original payment").replace(/_/g, " ")}`
+    ? `Refunded${order.refundedAmount ? ` ${formatCurrency(order.refundedAmount)}` : ""} to your ${(order.refundMethod || "original payment method").replace(/_/g, " ")}`
     : order.refundStatus === "processing"
-    ? "Refund in progress — typically 5–7 business days"
+    ? "Refund in progress"
     : order.refundStatus === "failed"
-    ? "Refund delayed — our team is on it"
+    ? "Refund delayed. We’re looking into it."
     : order.refundStatus;
 
 // A carrier link opens only for a web address (never a javascript: URL).
@@ -195,7 +195,7 @@ const PAYMENT_METHOD_LABELS = {
   upi: "UPI",
   net_banking: "Net banking",
   wallet: "Wallet",
-  cod: "Cash on delivery",
+  cod: "Cash on Delivery",
   store_credit: "Store credit",
 };
 
@@ -238,16 +238,16 @@ const cancelRefundSentence = (order) => {
   const captured = ["paid", "partially_refunded"].includes(order.paymentStatus);
   const creditLine =
     credit > 0
-      ? ` The ${formatCurrency(credit)} of store credit you used will be returned to your account.`
+      ? ` The ${formatCurrency(credit)} of store credit you used will go back to your account.`
       : "";
   if (external > 0 && captured) {
     const amount = Math.max(0, external - alreadyRefunded);
-    return ` A ${alreadyRefunded > 0 ? "" : "full "}refund of ${formatCurrency(amount)} will be initiated to your ${isOnline ? "original payment method" : "bank / UPI"}.${creditLine}`;
+    return ` We’ll start a ${alreadyRefunded > 0 ? "" : "full "}refund of ${formatCurrency(amount)} to your ${isOnline ? "original payment method" : "bank account or UPI"}.${creditLine}`;
   }
   if (credit > 0) {
     return `${creditLine}${external > 0 ? " No other payment has been collected." : ""}`;
   }
-  return " No payment has been collected, so there's nothing to refund.";
+  return " No payment has been collected, so there’s nothing to refund.";
 };
 
 const escapeHtml = (value) =>
@@ -449,7 +449,7 @@ const OrderHistory = () => {
     clearTimeout(copyTimer.current);
     setCopiedId(copied ? text : null);
     if (copied) copyTimer.current = setTimeout(() => setCopiedId(null), 2000);
-    announce(copied ? `${what} copied.` : `Couldn't copy the ${what.toLowerCase()}.`);
+    announce(copied ? `${what} copied.` : `Couldn’t copy the ${what.toLowerCase()}.`);
   };
 
   useEffect(() => () => clearTimeout(copyTimer.current), []);
@@ -491,7 +491,7 @@ const OrderHistory = () => {
     Swal.fire({
       icon: "success",
       title: existing ? "Review updated" : "Review submitted",
-      text: "Thanks! Your review will appear on the product page once it's approved.",
+      text: "Thank you. Your review will appear on the product page once it’s approved.",
       toast: true,
       position: "bottom-end",
       showConfirmButton: false,
@@ -538,8 +538,8 @@ const OrderHistory = () => {
       console.error("Failed to cancel order:", err);
       Swal.fire({
         icon: "error",
-        title: "Couldn't cancel order",
-        text: "Something went wrong while cancelling. Please try again.",
+        title: "Couldn’t cancel the order",
+        text: "Your order hasn’t changed. Try again in a moment.",
       });
     } finally {
       setCancellingId(null);
@@ -765,7 +765,7 @@ const OrderHistory = () => {
                     </span>
                     {date && (
                       <time className={styles.stepDate} dateTime={date}>
-                        {formatDate(date, "short")}
+                        {formatDateIN(date, "short")}
                       </time>
                     )}
                   </span>
@@ -873,7 +873,7 @@ const OrderHistory = () => {
                         onClick={() => openReviewModal(order, item)}
                         aria-haspopup="dialog"
                       >
-                        {existing ? "Edit review" : "Rate & review"}
+                        {existing ? "Edit review" : "Write a review"}
                         <span className="sf-visually-hidden"> {item.name}</span>
                       </button>
                     </div>
@@ -897,7 +897,7 @@ const OrderHistory = () => {
                 {addr.phone && <p className={styles.phone}>Phone: {addr.phone}</p>}
               </div>
             ) : (
-              <p className={styles.muted}>Shipping address not available</p>
+              <p className={styles.muted}>No delivery address recorded</p>
             )}
           </div>
 
@@ -925,7 +925,7 @@ const OrderHistory = () => {
                 </div>
               )}
               <div className={styles.row}>
-                <dt>Shipping</dt>
+                <dt>Delivery</dt>
                 <dd>
                   {(order.shippingAmount ?? order.shipping ?? 0) > 0
                     ? formatCurrency(order.shippingAmount ?? order.shipping)
@@ -1001,7 +1001,7 @@ const OrderHistory = () => {
               </div>
               {order.createdAt && (
                 <p className={styles.placed}>
-                  Placed on <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+                  Placed on <time dateTime={order.createdAt}>{formatDateIN(order.createdAt)}</time>
                 </p>
               )}
             </div>
@@ -1155,8 +1155,8 @@ const OrderHistory = () => {
       // Never masquerade as "No orders yet."
       return (
         <div className={cx("sf-panel", styles.state)}>
-          <h3 className={cx("sf-display-sm", styles.stateTitle)}>We couldn't load your orders.</h3>
-          <p className={styles.stateText}>Please check your connection and try again.</p>
+          <h3 className={cx("sf-display-sm", styles.stateTitle)}>We couldn’t load your orders.</h3>
+          <p className={styles.stateText}>Check your connection and try again.</p>
           <button ref={retryRef} type="button" className={cx("sf-btn sf-btn--primary", styles.stateAction)} onClick={retry}>
             Try again
           </button>

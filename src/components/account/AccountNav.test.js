@@ -173,7 +173,7 @@ test("Sign out asks first, with its confirm in the error token (no hex colour)",
   const options = Swal.fire.mock.calls[0][0];
   expect(options).toEqual({
     title: "Sign out?",
-    text: "You'll need to sign in again to access your account.",
+    text: "You’ll need to sign in again to see your account.",
     icon: "question",
     showCancelButton: true,
     confirmButtonText: "Sign out",
@@ -217,7 +217,7 @@ describe("a sign-out that fails", () => {
     const onSignOutError = jest.fn();
     renderNav({ onSignOutError });
     fireEvent.click(within(nav()).getByRole("button", { name: "Sign out" }));
-    await waitFor(() => expect(onSignOutError).toHaveBeenCalledWith("Sign out failed. Please try again."));
+    await waitFor(() => expect(onSignOutError).toHaveBeenCalledWith("We couldn’t sign you out. Try again in a moment."));
     expect(location()).toBe("/profile");
     expect(Swal.fire).toHaveBeenCalledTimes(1);
   });
@@ -230,7 +230,7 @@ describe("a sign-out that fails", () => {
     await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(2));
     expect(Swal.fire.mock.calls[1][0]).toMatchObject({
       icon: "error",
-      title: "Sign out failed. Please try again.",
+      title: "We couldn’t sign you out. Try again in a moment.",
       toast: true,
     });
     expect(location()).toBe("/profile");

@@ -1,5 +1,5 @@
 import db from "../../db.json";
-import { parseSpecifications } from "./helpers";
+import { formatDate, formatDateIN, parseSpecifications } from "./helpers";
 
 describe("parseSpecifications", () => {
   test("splits a seeded description into its prose and its specification pairs", () => {
@@ -99,4 +99,25 @@ describe("parseSpecifications", () => {
       expect(parseSpecifications(description)).toEqual({ body: "", specs: [] });
     }
   );
+});
+
+describe("formatDateIN", () => {
+  // Noon UTC, so the day is the same in any time zone the tests run in.
+  const DATE = "2026-09-25T12:00:00.000Z";
+
+  test("writes the day before the month, as Indian dates read", () => {
+    expect(formatDateIN(DATE)).toBe("25 September 2026");
+    expect(formatDateIN(DATE, "medium")).toBe("25 September 2026");
+    expect(formatDateIN(DATE, "short")).toMatch(/^25 Sept? 2026$/);
+    expect(formatDateIN(DATE, "long")).toMatch(/^Friday,? 25 September,? 2026$/);
+  });
+
+  test("an unknown format falls back to the medium form, as formatDate's does", () => {
+    expect(formatDateIN(DATE, "nonsense")).toBe(formatDateIN(DATE, "medium"));
+  });
+
+  test("leaves formatDate (en-US, shared) as it was", () => {
+    expect(formatDate(DATE)).toBe("September 25, 2026");
+    expect(formatDate(DATE, "short")).toBe("Sep 25, 2026");
+  });
 });

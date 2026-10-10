@@ -83,7 +83,7 @@ test("the summary: the average to one place, out of 5, and how many ratings", ()
   expect(screen.getByText("Based on 3 ratings")).toBeInTheDocument();
   // The summary's stars repeat the figure, so they are hidden from assistive technology.
   expect(screen.queryByRole("img", { name: "Rated 4.7 out of 5" })).not.toBeInTheDocument();
-  expect(screen.queryByText("No reviews yet")).not.toBeInTheDocument();
+  expect(screen.queryByText("No reviews yet.")).not.toBeInTheDocument();
 });
 
 test("one rating reads in the singular", () => {
@@ -93,7 +93,7 @@ test("one rating reads in the singular", () => {
 
 test("no ratings: no average at all, an honest line instead", () => {
   renderSection({ reviews: [], totalRatingsCount: 0, displayAvg: 0 });
-  expect(screen.getByText("No reviews yet")).toBeInTheDocument();
+  expect(screen.getByText("No reviews yet.")).toBeInTheDocument();
   expect(
     screen.getByText("Reviews come from verified orders and are published after moderation.")
   ).toBeInTheDocument();
@@ -126,7 +126,7 @@ test("each review is an article: name, verified mark, date, stars, title, body",
   const [first, second, third] = articles.map((article) => within(article));
   expect(first.getByText("Rituparna B.")).toBeInTheDocument();
   expect(first.queryByText("Verified purchase")).not.toBeInTheDocument();
-  expect(first.getByText("Jun 28, 2026")).toHaveAttribute("datetime", "2026-06-28T12:00:00.000Z");
+  expect(first.getByText("28 Jun 2026")).toHaveAttribute("datetime", "2026-06-28T12:00:00.000Z");
   expect(first.getByRole("img", { name: "Rated 5.0 out of 5" })).toBeInTheDocument();
   expect(first.getByRole("heading", { level: 3, name: "Our living room finally feels finished" })).toBeInTheDocument();
   expect(first.getByText("The cushions are firm in a good way.")).toBeInTheDocument();
@@ -168,15 +168,15 @@ test("loading: skeleton reviews in a busy region, the known summary kept", () =>
 
 test("loading with no ratings yet claims nothing", () => {
   renderSection({ reviews: [], loading: true, totalRatingsCount: 0, displayAvg: 0 });
-  expect(screen.queryByText("No reviews yet")).not.toBeInTheDocument();
+  expect(screen.queryByText("No reviews yet.")).not.toBeInTheDocument();
   expect(screen.queryByText(/Based on/)).not.toBeInTheDocument();
 });
 
 test("a failed read says so, and Try again reads again with focus on the section", () => {
   const onRetry = jest.fn();
   renderSection({ reviews: [], error: true, onRetry });
-  expect(screen.getByText("Reviews could not be loaded just now.")).toBeInTheDocument();
-  expect(screen.queryByText("No reviews yet")).not.toBeInTheDocument();
+  expect(screen.getByText("We couldn’t load the reviews.")).toBeInTheDocument();
+  expect(screen.queryByText("No reviews yet.")).not.toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(onRetry).toHaveBeenCalledTimes(1);
   expect(section()).toHaveFocus();

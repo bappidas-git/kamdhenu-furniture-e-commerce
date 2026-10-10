@@ -99,12 +99,12 @@ test("adds and reads Added for 1.4s", () => {
   expect(barButton()).toHaveTextContent("Add to cart");
 });
 
-test("out of stock: disabled, says so, adds nothing", () => {
+test("sold out: disabled, says so, adds nothing", () => {
   const onAddToCart = jest.fn();
   render(<Page {...props} disabled onAddToCart={onAddToCart} />);
   setBuyBoxInView(false);
   expect(barButton()).toBeDisabled();
-  expect(barButton()).toHaveTextContent("Out of stock");
+  expect(barButton()).toHaveTextContent("Sold out");
   fireEvent.click(barButton());
   expect(onAddToCart).not.toHaveBeenCalled();
 });

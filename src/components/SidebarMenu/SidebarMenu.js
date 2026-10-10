@@ -250,7 +250,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
                 </div>
               ) : (
                 <div className={styles.guest}>
-                  <p className={styles.guestLine}>Sign in for faster checkout and order tracking.</p>
+                  <p className={styles.guestLine}>Sign in to track orders and save your wishlist across devices.</p>
                   <div className={styles.guestActions}>
                     <button
                       type="button"
@@ -296,7 +296,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
 
                   {departmentsFailed && (
                     <div className={styles.notice} role="status">
-                      <p>We couldn't load the departments just now.</p>
+                      <p>We couldn’t load the departments.</p>
                       <button
                         type="button"
                         className="sf-btn sf-btn--link"
@@ -328,7 +328,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
 
                   <p className={styles.viewAll}>
                     <Link to="/products" className={styles.textLink} onClick={onNavigate}>
-                      View all products
+                      Browse all furniture
                     </Link>
                   </p>
                 </div>
@@ -346,7 +346,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
                     </li>
                     <li>
                       <Link to="/products?sort=popular" className={styles.row} onClick={onNavigate}>
-                        Best sellers
+                        Most reviewed
                       </Link>
                     </li>
                     {showOffers && (
@@ -398,7 +398,7 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
                         aria-current={pathCurrent("/wishlist")}
                         aria-label={
                           wishlistCount > 0
-                            ? `My wishlist, ${wishlistCount} ${wishlistCount === 1 ? "item" : "items"}`
+                            ? `My wishlist, ${wishlistCount} ${wishlistCount === 1 ? "piece" : "pieces"}`
                             : undefined
                         }
                       >

@@ -273,10 +273,10 @@ export const CartProvider = ({ children }) => {
 
       cartToast({
         icon: "success",
-        title: wasUpdate ? "Cart Updated" : "Added to Cart",
+        title: wasUpdate ? "Cart updated" : "Added to cart",
         text: wasUpdate
-          ? `${incoming.name} quantity updated`
-          : `${incoming.name} has been added to your cart`,
+          ? `Quantity of ${incoming.name} updated.`
+          : `${incoming.name} is in your cart.`,
       });
 
       if (openDrawer) setIsCartOpen(true);
@@ -284,8 +284,8 @@ export const CartProvider = ({ children }) => {
       console.error("Error adding to cart:", error);
       cartToast({
         icon: "error",
-        title: "Error",
-        text: "Failed to add item to cart",
+        title: "Couldn’t add to cart",
+        text: "Try again in a moment.",
         timer: 2000,
       });
     }
@@ -295,8 +295,7 @@ export const CartProvider = ({ children }) => {
     setCartItems((prev) => prev.filter((item) => item.id !== itemId));
     cartToast({
       icon: "info",
-      title: "Removed",
-      text: "Item removed from cart",
+      title: "Removed from cart",
       timer: 1500,
     });
   }, []);
@@ -326,8 +325,7 @@ export const CartProvider = ({ children }) => {
     if (!options.silent) {
       cartToast({
         icon: "info",
-        title: "Cart Cleared",
-        text: "Your cart has been emptied",
+        title: "Cart cleared",
       });
     }
   }, []);

@@ -191,7 +191,7 @@ describe("resolvePromiseBody", () => {
 
   test("fills every step from the seeded data", () => {
     expect(resolvePromiseBody(step("payment"), data)).toBe(
-      "Check out securely online with cards, UPI or net banking. Or choose cash on delivery and pay when your furniture arrives."
+      "Check out securely online with cards, UPI or net banking. Or choose Cash on Delivery and pay when your furniture arrives."
     );
     expect(resolvePromiseBody(step("delivery"), data)).toBe(
       "Standard delivery brings your order to your door in 7–10 business days. Orders above ₹9,999 ship free."
@@ -255,7 +255,7 @@ describe("promiseBodyLayout", () => {
       expect(layout).not.toMatch(/9,999|7–10/);
       expect(layout.split(". ").length).toBe([].concat(s.body).length);
     });
-    expect(promiseBodyLayout(step("payment"))).toMatch(/cash on delivery/);
+    expect(promiseBodyLayout(step("payment"))).toMatch(/Cash on Delivery/);
     expect(promiseBodyLayout(null)).toBe("");
   });
 });

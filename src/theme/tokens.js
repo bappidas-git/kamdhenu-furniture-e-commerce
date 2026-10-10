@@ -81,12 +81,12 @@ export const TOKENS = {
 // `dynamic` badges (e.g. free-shipping threshold) have their value filled from
 // live settings/shipping data at render time, so the number is never stale.
 export const TRUST_BADGE_CATALOG = {
-  genuine: { icon: "shield", label: "100% Genuine" },
-  securePayment: { icon: "lock", label: "Secure Payment" },
-  easyReturns: { icon: "rotate", label: "Easy Returns", dynamic: "returns" },
-  freeShipping: { icon: "truck", label: "Free Shipping", dynamic: "freeShipping" },
-  support: { icon: "headset", label: "24/7 Support" },
-  warranty: { icon: "badge", label: "Brand Warranty" },
+  genuine: { icon: "shield", label: "Genuine products" },
+  securePayment: { icon: "lock", label: "Secure payment" },
+  easyReturns: { icon: "rotate", label: "Easy returns", dynamic: "returns" },
+  freeShipping: { icon: "truck", label: "Free delivery", dynamic: "freeShipping" },
+  support: { icon: "headset", label: "Customer support" },
+  warranty: { icon: "badge", label: "Brand warranty" },
   cod: { icon: "cash", label: "Cash on Delivery", dynamic: "cod" },
 };
 

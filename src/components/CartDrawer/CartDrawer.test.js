@@ -155,7 +155,7 @@ describe("dialog behaviour", () => {
     const { dialog } = await openDrawer();
     expect(dialog).toHaveAttribute("aria-modal", "true");
     expect(within(dialog).getByRole("heading", { level: 2, name: "Your cart" })).toBeInTheDocument();
-    expect(dialog).toHaveAccessibleDescription("3 items");
+    expect(dialog).toHaveAccessibleDescription("3 pieces");
     expect(within(dialog).getByRole("button", { name: "Close cart" })).toHaveFocus();
     expect(document.body.style.overflow).toBe("hidden");
     // Rendered in a portal on <body>, outside the app's root.
@@ -264,7 +264,7 @@ describe("free delivery", () => {
     const group = within(dialog).getByRole("group", { name: "Quantity, Cushioned Plastic Armchair, Marble Beige" });
     fireEvent.click(within(group).getByRole("button", { name: "Increase quantity" }));
     // 4 × 2,499 + 1,249 = 11,245.
-    expect(live).toHaveTextContent("Free delivery unlocked");
+    expect(live).toHaveTextContent("Free delivery on this order");
     expect(live).toHaveAttribute("aria-live", "polite");
     expect(deliveryValue(dialog)).toHaveTextContent(/^Free$/);
 
@@ -276,7 +276,7 @@ describe("free delivery", () => {
     renderDrawer({ lines: [line({ id: "1-x", productId: 1, variantName: null, price: 9999, comparePrice: 0 })] });
     const { dialog } = await openDrawer();
     await waitForStore(dialog);
-    expect(within(dialog).getByText("Free delivery unlocked")).toBeInTheDocument();
+    expect(within(dialog).getByText("Free delivery on this order")).toBeInTheDocument();
     expect(deliveryValue(dialog)).toHaveTextContent(/^Free$/);
   });
 
@@ -458,7 +458,7 @@ describe("lines", () => {
     fireEvent.click(increase);
     expect(value).toHaveTextContent("2");
     expect(decrease).not.toHaveAttribute("aria-disabled");
-    expect(dialog).toHaveAccessibleDescription("2 items");
+    expect(dialog).toHaveAccessibleDescription("2 pieces");
     expect(subtotalValue(dialog)).toHaveTextContent("₹4,998.00");
   });
 
@@ -486,20 +486,20 @@ describe("lines", () => {
     renderDrawer({ lines: [ARMCHAIR, RACK, CHAIR] });
     const { dialog } = await openDrawer();
     await waitForStore(dialog);
-    const remove = within(dialog).getByRole("button", { name: "Remove Cushioned Plastic Armchair, Marble Beige" });
+    const remove = within(dialog).getByRole("button", { name: "Remove Cushioned Plastic Armchair, Marble Beige from cart" });
     expect(remove).toHaveTextContent(/^Remove/);
     // A real click focuses the button it lands on.
     remove.focus();
     fireEvent.click(remove);
-    expect(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves" })).toHaveFocus();
+    expect(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves from cart" })).toHaveFocus();
     await waitFor(() => expect(lineItems(dialog)).toHaveLength(2));
     expect(JSON.parse(localStorage.getItem("cart")).map((item) => item.id)).toEqual(["9-v1", "4-v1"]);
 
     // The last line hands focus back to the one before it.
-    const removeLast = within(dialog).getByRole("button", { name: "Remove Classic Plastic Chair, White" });
+    const removeLast = within(dialog).getByRole("button", { name: "Remove Classic Plastic Chair, White from cart" });
     removeLast.focus();
     fireEvent.click(removeLast);
-    expect(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves" })).toHaveFocus();
+    expect(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves from cart" })).toHaveFocus();
   });
 
   test("a removed line leaves the tab order while it folds away", async () => {
@@ -508,7 +508,7 @@ describe("lines", () => {
     await waitForStore(dialog);
     const armchairLine = lineItems(dialog)[0];
     expect(armchairLine.firstElementChild).not.toHaveAttribute("inert");
-    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Cushioned Plastic Armchair, Marble Beige" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Cushioned Plastic Armchair, Marble Beige from cart" }));
     expect(armchairLine).toBeInTheDocument();
     expect(armchairLine.firstElementChild).toHaveAttribute("inert", "");
     await waitFor(() => expect(armchairLine).not.toBeInTheDocument());
@@ -518,7 +518,7 @@ describe("lines", () => {
     renderDrawer({ lines: [RACK] });
     const { dialog } = await openDrawer();
     await waitForStore(dialog);
-    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves" }));
+    fireEvent.click(within(dialog).getByRole("button", { name: "Remove Slim Plastic Shoe Rack, 2 shelves from cart" }));
     const message = await within(dialog).findByText("Your cart is empty.");
     await waitFor(() => expect(message).toHaveFocus());
     expect(within(dialog).queryByRole("link", { name: "Checkout" })).not.toBeInTheDocument();
@@ -588,10 +588,10 @@ describe("footer and navigation", () => {
     expect(currentLocation()).toBe("/products");
   });
 
-  test("one piece reads “1 item”", async () => {
+  test("one piece reads “1 piece”", async () => {
     renderDrawer({ lines: [RACK] });
     const { dialog } = await openDrawer();
-    expect(dialog).toHaveAccessibleDescription("1 item");
+    expect(dialog).toHaveAccessibleDescription("1 piece");
     await waitForStore(dialog);
   });
 });

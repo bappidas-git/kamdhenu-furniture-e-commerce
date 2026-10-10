@@ -138,12 +138,12 @@ test("a signed-in shopper's Account is their profile", () => {
 test("the wishlist count shows on the glyph and in the name", () => {
   wishlistCount = 3;
   const { unmount } = renderNav();
-  const wishlist = screen.getByRole("link", { name: "Wishlist, 3 items" });
+  const wishlist = screen.getByRole("link", { name: "Wishlist, 3 pieces" });
   expect(within(wishlist).getByText("3")).toHaveAttribute("aria-hidden", "true");
   unmount();
   wishlistCount = 120;
   renderNav();
-  expect(within(screen.getByRole("link", { name: "Wishlist, 120 items" })).getByText("99+")).toBeInTheDocument();
+  expect(within(screen.getByRole("link", { name: "Wishlist, 120 pieces" })).getByText("99+")).toBeInTheDocument();
 });
 
 test("Search opens the overlay; the bar is inert under it; focus comes back to Search", async () => {

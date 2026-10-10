@@ -42,11 +42,11 @@ import styles from "./Products.module.css";
 // ---------------------------------------------------------------------------
 const SORT_OPTIONS = [
   { value: "relevance", label: "Relevance" },
-  { value: "price-low", label: "Price: Low to High" },
-  { value: "price-high", label: "Price: High to Low" },
-  { value: "newest", label: "Newest First" },
-  { value: "rating", label: "Avg. Customer Rating" },
-  { value: "popularity", label: "Popularity" },
+  { value: "price-low", label: "Price: low to high" },
+  { value: "price-high", label: "Price: high to low" },
+  { value: "newest", label: "Newest first" },
+  { value: "rating", label: "Highest rated" },
+  { value: "popularity", label: "Most reviewed" },
 ];
 
 // Accept common sort aliases from deep links (e.g. ?sort=price_asc) and map them
@@ -975,7 +975,7 @@ const Products = () => {
           {count}
         </span>
         <span className="sf-visually-hidden">
-          , {count} {count === 1 ? "product" : "products"}
+          , {count} {count === 1 ? "piece" : "pieces"}
         </span>
       </label>
     );
@@ -1202,7 +1202,7 @@ const Products = () => {
       return (
         <div className={`sf-panel ${styles.state} ${styles.statePanel}`}>
           <h2 className={styles.stateTitle}>We couldn&rsquo;t load the catalogue.</h2>
-          <p className={styles.stateText}>Please check your connection and try again.</p>
+          <p className={styles.stateText}>Check your connection and try again.</p>
           <button type="button" className="sf-btn sf-btn--primary" onClick={fetchCatalog}>
             Try again
           </button>
@@ -1213,7 +1213,7 @@ const Products = () => {
     if (paginatedProducts.length === 0) {
       return (
         <div className={styles.state}>
-          <h2 className={styles.stateTitle}>Nothing here yet.</h2>
+          <h2 className={styles.stateTitle}>No pieces to show.</h2>
           <p className={styles.stateText}>
             {urlSearch ? (
               <>
@@ -1221,9 +1221,9 @@ const Products = () => {
                 another word, or clear the filters.
               </>
             ) : hasActiveFilters ? (
-              "No pieces match these filters. Try removing one or two."
+              "None of our pieces match these filters. Try removing one or two."
             ) : (
-              "There are no pieces in the catalogue just now."
+              "The catalogue is empty just now."
             )}
           </p>
           {hasAnyConstraint && (
@@ -1370,11 +1370,11 @@ const Products = () => {
 
           <p className={styles.count} aria-live="polite" aria-atomic="true">
             {loading ? (
-              "Loading products…"
+              "Loading pieces…"
             ) : fetchError ? (
-              "Couldn't load products"
+              "Couldn’t load the catalogue"
             ) : filteredProducts.length === 0 ? (
-              "No products found"
+              "No pieces to show"
             ) : filteredProducts.length > perPage ? (
               <>
                 Showing{" "}
@@ -1382,12 +1382,12 @@ const Products = () => {
                   {(safePage - 1) * perPage + 1}&ndash;
                   {Math.min(safePage * perPage, filteredProducts.length)}
                 </strong>{" "}
-                of <strong>{filteredProducts.length}</strong> products
+                of <strong>{filteredProducts.length}</strong> pieces
               </>
             ) : (
               <>
                 Showing <strong>{filteredProducts.length}</strong>{" "}
-                {filteredProducts.length === 1 ? "product" : "products"}
+                {filteredProducts.length === 1 ? "piece" : "pieces"}
               </>
             )}
           </p>

@@ -2,7 +2,7 @@ import React, { forwardRef, useEffect, useId, useState } from "react";
 import apiService from "../../services/api";
 import { BrandLogo } from "../../components/ui";
 import { APP_NAME, SUPPORT_ADDRESS, SUPPORT_EMAIL, SUPPORT_PHONE } from "../../utils/constants";
-import { formatCurrency, formatDate, normalizeOrderAddress } from "../../utils/helpers";
+import { formatCurrency, formatDateIN, normalizeOrderAddress } from "../../utils/helpers";
 import styles from "./Invoice.module.css";
 
 // =============================================================================
@@ -116,7 +116,7 @@ const Invoice = forwardRef(function Invoice(
                 <div className={styles.fact}>
                   <dt>Order date</dt>
                   <dd>
-                    <time dateTime={order.createdAt}>{formatDate(order.createdAt)}</time>
+                    <time dateTime={order.createdAt}>{formatDateIN(order.createdAt)}</time>
                   </dd>
                 </div>
               )}
@@ -130,7 +130,7 @@ const Invoice = forwardRef(function Invoice(
             <AddressLines address={billingAddress} />
           </div>
           <div>
-            <h3 className={styles.label}>Ship to</h3>
+            <h3 className={styles.label}>Deliver to</h3>
             <AddressLines address={shippingAddress} />
           </div>
         </div>
@@ -189,7 +189,7 @@ const Invoice = forwardRef(function Invoice(
             </div>
           )}
           <div className={styles.row}>
-            <dt>Shipping</dt>
+            <dt>Delivery</dt>
             <dd>{shippingAmount > 0 ? formatCurrency(shippingAmount) : "Free"}</dd>
           </div>
           <div className={styles.row}>

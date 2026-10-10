@@ -37,7 +37,7 @@ export const ACCOUNT_NAV_ITEMS = [
   { key: "password", label: "Change password", to: "/profile?tab=password" },
 ];
 
-const SIGN_OUT_FAILED = "Sign out failed. Please try again.";
+const SIGN_OUT_FAILED = "We couldn’t sign you out. Try again in a moment.";
 
 const cx = (...names) => names.filter(Boolean).join(" ");
 const pathOf = (to) => to.split("?")[0];
@@ -75,7 +75,7 @@ const AccountNav = ({ active, className, onSignOutError }) => {
     // Confirm first so signing out is never a one-click accident.
     const result = await Swal.fire({
       title: "Sign out?",
-      text: "You'll need to sign in again to access your account.",
+      text: "You’ll need to sign in again to see your account.",
       icon: "question",
       showCancelButton: true,
       confirmButtonText: "Sign out",

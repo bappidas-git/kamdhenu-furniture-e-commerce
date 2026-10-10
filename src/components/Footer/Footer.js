@@ -40,7 +40,7 @@ import styles from "./Footer.module.css";
 const SHOP_LINKS = [
   { label: "All furniture", to: "/products" },
   { label: "New arrivals", to: "/products?sort=newest" },
-  { label: "Best sellers", to: "/products?sort=popular" },
+  { label: "Most reviewed", to: "/products?sort=popular" },
 ];
 
 const HELP_LINKS = [
@@ -48,7 +48,7 @@ const HELP_LINKS = [
   { label: "Track order", to: "/orders" },
   { label: "Help centre", to: "/help" },
   { label: "Returns & refunds", to: "/refund" },
-  { label: "Contact", to: "/support" },
+  { label: "Contact us", to: "/support" },
   { label: "Our story", to: "/about" },
 ];
 
@@ -163,7 +163,7 @@ const PAYMENT_MARKS = [
   },
   {
     id: "cod",
-    label: "Cash on delivery",
+    label: "Cash on Delivery",
     cod: true,
     art: (
       <text x="24" y="20" textAnchor="middle" fontSize="10.5" className={styles.markText}>

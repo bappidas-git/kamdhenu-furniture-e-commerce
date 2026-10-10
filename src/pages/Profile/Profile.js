@@ -7,7 +7,7 @@ import apiService from "../../services/api";
 import AccountLayout from "../../components/account/AccountLayout";
 import { Reveal } from "../../components/ui";
 import { TOKENS } from "../../theme/tokens";
-import { formatDate, formatCurrency, generateId, isValidPhone } from "../../utils/helpers";
+import { formatDateIN, formatCurrency, generateId, isValidPhone } from "../../utils/helpers";
 import styles from "./Profile.module.css";
 
 // =============================================================================
@@ -21,7 +21,7 @@ import styles from "./Profile.module.css";
 //   The section comes from the URL: /profile?tab=addresses | wallet |
 //   password; no value (or any other value) shows the Profile section. It is
 //   read on every location change, so AccountNav's links (from any page), the
-//   header's "My profile", back and forward all land on the right section.
+//   header's "My account", back and forward all land on the right section.
 //   AccountNav switches tabs here with replace, so tabs add no history. After
 //   a switch, focus moves to the new section (a region named after it).
 //
@@ -43,7 +43,7 @@ import styles from "./Profile.module.css";
 //   opened it, and to the nearest card when a card's own button goes away.
 //
 // STORE CREDIT (§33)
-//   A navy balance card (the balance in the display serif, "Shop now"), a
+//   A navy balance card (the balance in the display serif, "Browse furniture"), a
 //   hairline "How it works" line and the ledger: a hairline table from 601px,
 //   a list of label / value rows up to 600px, 50 entries at a time. The two
 //   reads are the ones the tab always made, getBalance and getTransactions,
@@ -105,7 +105,7 @@ const ADDRESS_FIELDS = [
   { name: "city", id: "address-city", label: "City", autoComplete: "address-level2", autoCapitalize: "words", required: true },
   { name: "state", id: "address-state", label: "State", autoComplete: "address-level1", autoCapitalize: "words", required: true },
   { name: "postalCode", id: "address-postal-code", label: "Postal code", inputMode: "numeric", autoComplete: "postal-code", hint: "6-digit PIN", required: true },
-  { name: "country", id: "address-country", label: "Country", autoComplete: "country-name", hint: "Currently shipping within India only", readOnly: true },
+  { name: "country", id: "address-country", label: "Country", autoComplete: "country-name", hint: "We deliver within India only", readOnly: true },
 ];
 
 // A card's buttons carry its name ("Edit Home address at 123 Main Street"),
@@ -181,7 +181,7 @@ const Missing = ({ label }) => (
 const LedgerDate = ({ entry }) => {
   const time = entry.createdAt ? new Date(entry.createdAt).getTime() : NaN;
   if (Number.isNaN(time)) return <Missing label="Date not recorded" />;
-  return <time dateTime={new Date(time).toISOString()}>{formatDate(entry.createdAt, "short")}</time>;
+  return <time dateTime={new Date(time).toISOString()}>{formatDateIN(entry.createdAt, "short")}</time>;
 };
 
 // The reason, with the order number in it as the link to Orders ("Applied to
@@ -452,7 +452,7 @@ const Profile = () => {
     confirm: false,
   });
   // Inline messages under the password fields, from the last submit. The
-  // confirmation also says "Passwords do not match" on its own as soon as it
+  // confirmation also says "Passwords don’t match" on its own as soon as it
   // cannot match (the old form said it from the first keystroke; see
   // renderPasswordSection), until the two match.
   const [passwordErrors, setPasswordErrors] = useState({});
@@ -683,10 +683,10 @@ const Profile = () => {
     // with it, and focus moves to the first one that needs attention; the
     // toast still carries the first rule's message.
     const errors = {};
-    if (!profileForm.firstName.trim()) errors.firstName = "First name is required";
-    if (!profileForm.lastName.trim()) errors.lastName = "Last name is required";
+    if (!profileForm.firstName.trim()) errors.firstName = "Enter your first name";
+    if (!profileForm.lastName.trim()) errors.lastName = "Enter your last name";
     if (profileForm.phone && !isValidPhone(profileForm.phone)) {
-      errors.phone = "Enter a valid 10-digit mobile number";
+      errors.phone = "Enter a 10-digit mobile number";
     }
     setProfileErrors(errors);
     const firstInvalid = [
@@ -705,11 +705,11 @@ const Profile = () => {
     }
 
     if (errors.firstName || errors.lastName) {
-      showFeedback("error", "First name and last name are required.");
+      showFeedback("error", "Add your first and last name to save your details.");
       return;
     }
     if (errors.phone) {
-      showFeedback("error", "Please enter a valid 10-digit Indian mobile number.");
+      showFeedback("error", "Enter a 10-digit mobile number to save your details.");
       return;
     }
 
@@ -720,9 +720,9 @@ const Profile = () => {
         lastName: profileForm.lastName.trim(),
         phone: profileForm.phone.trim(),
       });
-      showFeedback("success", "Profile updated successfully.");
+      showFeedback("success", "Details saved.");
     } catch (err) {
-      showFeedback("error", "Failed to update profile. Please try again.");
+      showFeedback("error", "We couldn’t save your details. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -775,10 +775,10 @@ const Profile = () => {
     const errors = {};
     if (!currentPassword) errors.currentPassword = "Enter your current password";
     if (newPassword.length < 8) {
-      errors.newPassword = newPassword ? "New password must be at least 8 characters" : "Enter a new password";
+      errors.newPassword = newPassword ? "Use at least 8 characters" : "Enter a new password";
     }
     if (newPassword !== confirmPassword) {
-      errors.confirmPassword = confirmPassword ? "Passwords do not match" : "Confirm your new password";
+      errors.confirmPassword = confirmPassword ? "Passwords don’t match" : "Enter the new password again";
     }
     setPasswordErrors(errors);
     const firstInvalid = ["current", "new", "confirm"].find((key) => errors[PASSWORD_FIELDS[key].name]);
@@ -788,15 +788,15 @@ const Profile = () => {
     }
 
     if (!passwordForm.currentPassword) {
-      showFeedback("error", "Please enter your current password.");
+      showFeedback("error", "Enter your current password to continue.");
       return;
     }
     if (passwordForm.newPassword.length < 8) {
-      showFeedback("error", "New password must be at least 8 characters.");
+      showFeedback("error", "Your new password needs at least 8 characters.");
       return;
     }
     if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      showFeedback("error", "New password and confirm password do not match.");
+      showFeedback("error", "The new passwords don’t match.");
       return;
     }
 
@@ -809,9 +809,9 @@ const Profile = () => {
       });
       setPasswordForm({ currentPassword: "", newPassword: "", confirmPassword: "" });
       setShowPasswords({ current: false, new: false, confirm: false });
-      showFeedback("success", "Password updated successfully.");
+      showFeedback("success", "Password updated.");
     } catch (err) {
-      showFeedback("error", "Failed to change password. Please check your current password.");
+      showFeedback("error", "We couldn’t update your password. Check your current password and try again.");
     } finally {
       setLoading(false);
     }
@@ -898,15 +898,15 @@ const Profile = () => {
     // first one that needs attention (form order); the toast still carries
     // the first rule's message.
     const errors = {};
-    if (!addressForm.firstName.trim()) errors.firstName = "First name is required";
-    if (!addressForm.lastName.trim()) errors.lastName = "Last name is required";
+    if (!addressForm.firstName.trim()) errors.firstName = "Enter a first name";
+    if (!addressForm.lastName.trim()) errors.lastName = "Enter a last name";
     if (!isValidPhone(addressForm.phone)) {
-      errors.phone = addressForm.phone.trim() ? "Enter a valid 10-digit mobile number" : "Phone number is required";
+      errors.phone = addressForm.phone.trim() ? "Enter a 10-digit mobile number" : "Enter a phone number";
     }
-    if (!addressForm.addressLine1.trim()) errors.addressLine1 = "Address line 1 is required";
-    if (!addressForm.city.trim()) errors.city = "City is required";
-    if (!addressForm.state.trim()) errors.state = "State is required";
-    if (!addressForm.postalCode.trim()) errors.postalCode = "Postal code is required";
+    if (!addressForm.addressLine1.trim()) errors.addressLine1 = "Enter the house or flat number and street";
+    if (!addressForm.city.trim()) errors.city = "Enter a city";
+    if (!addressForm.state.trim()) errors.state = "Enter a state";
+    if (!addressForm.postalCode.trim()) errors.postalCode = "Enter a 6-digit PIN";
     setAddressErrors(errors);
     const firstInvalid = ADDRESS_FIELDS.find(({ name }) => errors[name]);
     if (firstInvalid) {
@@ -922,11 +922,11 @@ const Profile = () => {
       !addressForm.state.trim() ||
       !addressForm.postalCode.trim()
     ) {
-      showFeedback("error", "Please fill in all required address fields.");
+      showFeedback("error", "Fill in the marked fields to save the address.");
       return;
     }
     if (!isValidPhone(addressForm.phone)) {
-      showFeedback("error", "Please enter a valid 10-digit Indian mobile number.");
+      showFeedback("error", "Enter a 10-digit mobile number to save the address.");
       return;
     }
 
@@ -969,10 +969,10 @@ const Profile = () => {
       focusAddressOpener(editingAddressIndex);
       showFeedback(
         "success",
-        editingAddressIndex !== null ? "Address updated successfully." : "Address added successfully."
+        editingAddressIndex !== null ? "Address updated." : "Address saved."
       );
     } catch (err) {
-      showFeedback("error", "Failed to save address. Please try again.");
+      showFeedback("error", "We couldn’t save the address. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -1018,12 +1018,12 @@ const Profile = () => {
       icon: "warning",
       showCancelButton: true,
       confirmButtonText: "Delete",
-      cancelButtonText: "Keep",
+      cancelButtonText: "Keep address",
       customClass: { confirmButton: "sf-btn sf-btn--danger" },
       returnFocus: false,
     });
     if (!result.isConfirmed) {
-      // Nothing deleted ("Keep", Escape): back to this card's Delete.
+      // Nothing deleted ("Keep address", Escape): back to this card's Delete.
       requestFocus(() => deleteButtonRefs.current[index]);
       return;
     }
@@ -1054,11 +1054,11 @@ const Profile = () => {
           emptyTitleRef.current ||
           addressFormTitleRef.current
       );
-      showFeedback("success", "Address deleted successfully.");
+      showFeedback("success", "Address deleted.");
     } catch (err) {
       // Nothing deleted: back to this card's Delete.
       requestFocus(() => deleteButtonRefs.current[index]);
-      showFeedback("error", "Failed to delete address. Please try again.");
+      showFeedback("error", "We couldn’t delete the address. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -1079,7 +1079,7 @@ const Profile = () => {
       requestFocus(() => cardHeadingRefs.current[index]);
       showFeedback("success", "Default address updated.");
     } catch (err) {
-      showFeedback("error", "Failed to update default address.");
+      showFeedback("error", "We couldn’t change your default address. Try again in a moment.");
     } finally {
       setLoading(false);
     }
@@ -1098,7 +1098,7 @@ const Profile = () => {
     <Reveal className={cx("sf-card sf-card--hairline", styles.panel)}>
       <h2 className={cx("sf-display-sm", styles.panelTitle)}>Personal information</h2>
       {user.createdAt && (
-        <p className={styles.memberSince}>Member since {formatDate(user.createdAt, "medium")}</p>
+        <p className={styles.memberSince}>Member since {formatDateIN(user.createdAt, "medium")}</p>
       )}
 
       <form className={styles.form} onSubmit={handleProfileSave} noValidate>
@@ -1168,7 +1168,7 @@ const Profile = () => {
               aria-describedby="profile-email-hint"
             />
             <p className="sf-field__hint" id="profile-email-hint">
-              Email cannot be changed
+              Email address can’t be changed
             </p>
           </div>
 
@@ -1526,7 +1526,7 @@ const Profile = () => {
     const { newPassword, confirmPassword } = passwordForm;
     const confirmError =
       newPassword !== confirmPassword
-        ? passwordErrors.confirmPassword || (newPassword.startsWith(confirmPassword) ? "" : "Passwords do not match")
+        ? passwordErrors.confirmPassword || (newPassword.startsWith(confirmPassword) ? "" : "Passwords don’t match")
         : "";
     const errorLine = (message, id) =>
       message && (
@@ -1668,7 +1668,7 @@ const Profile = () => {
       return (
         <div className={cx("sf-panel", styles.walletError)}>
           <h2 className={cx("sf-display-sm", styles.walletErrorTitle)}>We couldn’t load your store credit.</h2>
-          <p className={styles.walletErrorText}>Please check your connection and try again.</p>
+          <p className={styles.walletErrorText}>Check your connection and try again.</p>
           <button
             ref={walletRetryRef}
             type="button"
@@ -1704,10 +1704,10 @@ const Profile = () => {
                 <span className={cx("sf-skeleton", styles.balanceSkeleton)} aria-hidden="true" />
               )}
             </div>
-            <p className={styles.walletHint}>Apply your store credit at checkout toward any order.</p>
+            <p className={styles.walletHint}>Apply your store credit at checkout towards any order.</p>
           </div>
           <Link to="/products" className={cx("sf-btn sf-btn--paper-ghost", styles.shopNow)}>
-            Shop now
+            Browse furniture
           </Link>
         </Reveal>
 

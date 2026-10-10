@@ -324,8 +324,8 @@ test("a card's quick add sends the built cart item, quantity 1; the heart toggle
   fireEvent.click(within(first).getByRole("button", { name: `Add ${FEATURED[0].name} to cart` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(FEATURED[0]), 1);
 
-  expect(within(second).getByRole("button", { name: "Remove from wishlist" })).toBeInTheDocument();
-  fireEvent.click(within(first).getByRole("button", { name: "Save to wishlist" }));
+  expect(within(second).getByRole("button", { name: `Remove ${FEATURED[1].name} from wishlist` })).toBeInTheDocument();
+  fireEvent.click(within(first).getByRole("button", { name: `Save ${FEATURED[0].name} to wishlist` }));
   expect(toggleWishlist).toHaveBeenCalledWith(FEATURED[0]);
 });
 
@@ -587,7 +587,7 @@ test("the promise steps quote live delivery, payment and returns data", async ()
     expect(within(step).getByRole("img")).toHaveAttribute("loading", "lazy");
     expect(step).toHaveTextContent(`0${index + 1}`);
   });
-  expect(promise).toHaveTextContent("Or choose cash on delivery and pay when your furniture arrives.");
+  expect(promise).toHaveTextContent("Or choose Cash on Delivery and pay when your furniture arrives.");
   expect(promise).toHaveTextContent("in 7–10 business days. Orders above ₹9,999 ship free.");
   expect(promise).toHaveTextContent("returned within 7 days of delivery");
 });

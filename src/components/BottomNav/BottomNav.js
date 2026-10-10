@@ -132,7 +132,7 @@ const BottomNav = () => {
   const wishlistCount = getWishlistCount ? getWishlistCount() : 0;
   const wishlistLabel =
     wishlistCount > 0
-      ? `Wishlist, ${wishlistCount} ${wishlistCount === 1 ? "item" : "items"}`
+      ? `Wishlist, ${wishlistCount} ${wishlistCount === 1 ? "piece" : "pieces"}`
       : undefined;
 
   const item = (Icon, label, extra = null) => (

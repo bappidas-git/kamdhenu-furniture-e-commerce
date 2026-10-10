@@ -260,7 +260,7 @@ test("a tab from the nav: replace, the new section, focus on it, the last messag
   renderProfile();
   changeField("First name", "");
   fireEvent.click(saveButton());
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
 
   fireEvent.click(navLink("Addresses"));
   expect(location()).toBe("/profile?tab=addresses");
@@ -422,7 +422,7 @@ test("labelled fields with the right autocomplete, the read-only email and the h
   expect(email).toHaveAttribute("readonly");
   expect(email).toHaveAttribute("type", "email");
   expect(email).toHaveAttribute("autocomplete", "email");
-  expect(email).toHaveAccessibleDescription("Email cannot be changed");
+  expect(email).toHaveAccessibleDescription("Email address can’t be changed");
   const phone = field("Phone number (optional)");
   expect(phone).toHaveValue("+91 9876543210");
   expect(phone).toHaveAttribute("type", "tel");
@@ -435,7 +435,7 @@ test("labelled fields with the right autocomplete, the read-only email and the h
 
 test("'Member since' under the heading when the account has a date, nothing without", () => {
   const { unmount } = renderProfile();
-  expect(screen.getByText("Member since January 15, 2025")).toBeInTheDocument();
+  expect(screen.getByText("Member since 15 January 2025")).toBeInTheDocument();
   unmount();
   sessionStorage.clear();
   const { createdAt, ...noDate } = USER;
@@ -451,11 +451,11 @@ test("empty names: a message on each, focus on the first, the toast, and no save
   const first = field("First name");
   const last = field("Last name");
   expect(first).toHaveAttribute("aria-invalid", "true");
-  expect(first).toHaveAccessibleDescription("First name is required");
+  expect(first).toHaveAccessibleDescription("Enter your first name");
   expect(last).toHaveAttribute("aria-invalid", "true");
-  expect(last).toHaveAccessibleDescription("Last name is required");
+  expect(last).toHaveAccessibleDescription("Enter your last name");
   expect(first).toHaveFocus();
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
   expect(toastTone()).toBe("error");
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
   // The values stay as typed.
@@ -517,7 +517,7 @@ test("one blank name: only that field is marked; the toast is the same rule's", 
   expect(field("First name")).not.toHaveAttribute("aria-invalid");
   expect(field("Last name")).toHaveAttribute("aria-invalid", "true");
   expect(field("Last name")).toHaveFocus();
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
 });
 
 test("an invalid phone: its message after the hint, focus on it, the toast, and no save", async () => {
@@ -526,9 +526,9 @@ test("an invalid phone: its message after the hint, focus on it, the toast, and 
   await save();
   const phone = field("Phone number (optional)");
   expect(phone).toHaveAttribute("aria-invalid", "true");
-  expect(phone).toHaveAccessibleDescription("10-digit mobile number Enter a valid 10-digit mobile number");
+  expect(phone).toHaveAccessibleDescription("10-digit mobile number Enter a 10-digit mobile number");
   expect(phone).toHaveFocus();
-  expect(status()).toHaveTextContent("Please enter a valid 10-digit Indian mobile number.");
+  expect(status()).toHaveTextContent("Enter a 10-digit mobile number to save your details.");
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
 });
 
@@ -540,7 +540,7 @@ test("several at once: every field says what is wrong; the toast keeps the first
   expect(field("First name")).toHaveAttribute("aria-invalid", "true");
   expect(field("Phone number (optional)")).toHaveAttribute("aria-invalid", "true");
   expect(field("First name")).toHaveFocus();
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
 });
 
 test("typing in a field clears its own message, and only its own", async () => {
@@ -551,7 +551,7 @@ test("typing in a field clears its own message, and only its own", async () => {
   changeField("First name", "J");
   expect(field("First name")).not.toHaveAttribute("aria-invalid");
   expect(field("First name")).not.toHaveAccessibleDescription();
-  expect(screen.queryByText("First name is required")).not.toBeInTheDocument();
+  expect(screen.queryByText("Enter your first name")).not.toBeInTheDocument();
   expect(field("Last name")).toHaveAttribute("aria-invalid", "true");
 });
 
@@ -567,7 +567,7 @@ test("a valid save sends the trimmed names and phone, and nothing else, through 
     lastName: "Doe",
     phone: "98765 43210",
   });
-  expect(status()).toHaveTextContent("Profile updated successfully.");
+  expect(status()).toHaveTextContent("Details saved.");
   expect(toastTone()).toBe("success");
   // The greeting and the rail follow at once, with no reload; so does the
   // stored session (a reload keeps it).
@@ -593,7 +593,7 @@ test("the phone is optional: an empty one saves as empty", async () => {
 test("Enter in a field submits the form", async () => {
   renderProfile();
   fireEvent.submit(field("Last name").form);
-  await waitFor(() => expect(status()).toHaveTextContent("Profile updated successfully."));
+  await waitFor(() => expect(status()).toHaveTextContent("Details saved."));
   expect(apiService.auth.updateUser).toHaveBeenCalledTimes(1);
 });
 
@@ -627,7 +627,7 @@ test("a failed save says so and keeps what was typed", async () => {
   renderProfile();
   changeField("First name", "Johnny");
   await save();
-  expect(status()).toHaveTextContent("Failed to update profile. Please try again.");
+  expect(status()).toHaveTextContent("We couldn’t save your details. Try again in a moment.");
   expect(field("First name")).toHaveValue("Johnny");
   expect(h1()).toHaveAccessibleName(greeting("John"));
 });
@@ -640,11 +640,11 @@ test("the status line is always in the page; a message clears itself after 4 sec
   expect(status().textContent).toBe("");
   changeField("First name", "");
   fireEvent.click(saveButton());
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
   act(() => {
     jest.advanceTimersByTime(3999);
   });
-  expect(status()).toHaveTextContent("First name and last name are required.");
+  expect(status()).toHaveTextContent("Add your first and last name to save your details.");
   act(() => {
     jest.advanceTimersByTime(1);
   });
@@ -680,7 +680,7 @@ test("a sign-out that fails is reported in the page's toast", async () => {
   apiService.auth.logout.mockReturnValue(undefined);
   renderProfile();
   fireEvent.click(within(nav()).getByRole("button", { name: "Sign out" }));
-  await waitFor(() => expect(status()).toHaveTextContent("Sign out failed. Please try again."));
+  await waitFor(() => expect(status()).toHaveTextContent("We couldn’t sign you out. Try again in a moment."));
   expect(location()).toBe("/profile");
   expect(nav()).toBeInTheDocument();
 });

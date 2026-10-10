@@ -114,8 +114,8 @@ const expectCards = (container, names) => {
 // The codes on the tickets, in order, read from their copy buttons' names.
 const ticketCodes = () =>
   within(region("Codes to use at checkout."))
-    .getAllByRole("button", { name: /^Copy coupon code / })
-    .map((button) => button.getAttribute("aria-label").replace("Copy coupon code ", ""));
+    .getAllByRole("button", { name: /^Copy code / })
+    .map((button) => button.getAttribute("aria-label").replace("Copy code ", ""));
 // The skeletons are hidden from assistive technology: count their list items.
 const skeletonCounts = () =>
   screen
@@ -161,16 +161,16 @@ test("the hero renders the admin's tag, title and subtitle as given, with one h1
 test("an empty title falls back to the default; an empty tag and subtitle are left out", async () => {
   withConfig({ hero: { tag: "", title: "", subtitle: "" } });
   renderPage();
-  expect(await screen.findByRole("heading", { level: 1, name: "Special Offers & Deals" })).toBeInTheDocument();
+  expect(await screen.findByRole("heading", { level: 1, name: "Special offers" })).toBeInTheDocument();
   // Rendered on its own here, the hero's <header> is a banner: only the title.
-  expect(screen.getByRole("banner")).toHaveTextContent(/^Special Offers & Deals$/);
+  expect(screen.getByRole("banner")).toHaveTextContent(/^Special offers$/);
 });
 
 test("switched off in the admin: the unavailable state, and nothing more is read", async () => {
   withConfig({ enabled: false });
   renderPage();
   expect(await screen.findByRole("heading", { level: 1, name: "No offers at the moment." })).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Browse all furniture" })).toHaveAttribute("href", "/products");
+  expect(screen.getByRole("link", { name: "Browse furniture" })).toHaveAttribute("href", "/products");
   expect(screen.queryByRole("timer")).not.toBeInTheDocument();
   expect(screen.queryByRole("region")).not.toBeInTheDocument();
   // Only the read that started alongside the config (dropped once it said
@@ -189,7 +189,7 @@ test("featured coupons follow the admin's order and show their terms", async () 
   const [welcome, flat] = within(region("Codes to use at checkout.")).getAllByRole("listitem");
   expect(welcome).toHaveTextContent("₹500 off");
   expect(welcome).toHaveTextContent("₹500 off your first order above ₹5,000");
-  expect(welcome).toHaveTextContent("Min order ₹5,000");
+  expect(welcome).toHaveTextContent("Minimum order ₹5,000");
   expect(welcome).not.toHaveTextContent("Up to");
   expect(within(welcome).getByText(/Expires/)).toHaveTextContent(/^Expires \d{1,2} [A-Z][a-z]{2} 2027$/);
   expect(within(welcome).getByText(/^\d{1,2} [A-Z][a-z]{2} 2027$/)).toHaveAttribute(
@@ -198,8 +198,8 @@ test("featured coupons follow the admin's order and show their terms", async () 
   );
 
   expect(flat).toHaveTextContent("10% off");
-  expect(flat).toHaveTextContent(/Min order ₹2,000\s?·\s?, Up to ₹2,000 off/);
-  expect(within(flat).getByRole("button", { name: "Copy coupon code FLAT10" })).toHaveTextContent("Copy code");
+  expect(flat).toHaveTextContent(/Minimum order ₹2,000\s?·\s?, Up to ₹2,000 off/);
+  expect(within(flat).getByRole("button", { name: "Copy code FLAT10" })).toHaveTextContent("Copy code");
 });
 
 test("with no selection every valid coupon shows; invalid picks are dropped in order", async () => {
@@ -241,7 +241,7 @@ test("no codes: the honest empty line", async () => {
 
 test("copying a code: the clipboard, 'Copied' for two seconds and a status line", async () => {
   renderPage();
-  const button = await screen.findByRole("button", { name: "Copy coupon code WELCOME500" });
+  const button = await screen.findByRole("button", { name: "Copy code WELCOME500" });
   const status = within(region("Codes to use at checkout.")).getByRole("status");
   expect(status).toHaveTextContent("");
 
@@ -251,10 +251,10 @@ test("copying a code: the clipboard, 'Copied' for two seconds and a status line"
   });
   expect(writeText).toHaveBeenCalledWith("WELCOME500");
   expect(button).toHaveTextContent("Copied");
-  expect(button).toHaveAccessibleName("Copy coupon code WELCOME500");
+  expect(button).toHaveAccessibleName("Copy code WELCOME500");
   expect(status).toHaveTextContent("Code WELCOME500 copied.");
   // The other ticket is untouched.
-  expect(screen.getByRole("button", { name: "Copy coupon code FLAT10" })).toHaveTextContent("Copy code");
+  expect(screen.getByRole("button", { name: "Copy code FLAT10" })).toHaveTextContent("Copy code");
 
   act(() => jest.advanceTimersByTime(1999));
   expect(button).toHaveTextContent("Copied");
@@ -265,8 +265,8 @@ test("copying a code: the clipboard, 'Copied' for two seconds and a status line"
 
 test("a second copy restarts the two seconds rather than ending early", async () => {
   renderPage();
-  const welcome = await screen.findByRole("button", { name: "Copy coupon code WELCOME500" });
-  const flat = screen.getByRole("button", { name: "Copy coupon code FLAT10" });
+  const welcome = await screen.findByRole("button", { name: "Copy code WELCOME500" });
+  const flat = screen.getByRole("button", { name: "Copy code FLAT10" });
   jest.useFakeTimers();
   await act(async () => {
     fireEvent.click(welcome);
@@ -287,7 +287,7 @@ test("when the clipboard is unavailable the code is selected and the failure is 
   writeText.mockRejectedValue(new Error("Not allowed"));
   const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
   renderPage();
-  const button = await screen.findByRole("button", { name: "Copy coupon code FLAT10" });
+  const button = await screen.findByRole("button", { name: "Copy code FLAT10" });
   await act(async () => {
     fireEvent.click(button);
   });
@@ -349,10 +349,10 @@ test("cards add to the cart exactly as before and toggle the wishlist", async ()
   expect(addToCart).toHaveBeenLastCalledWith(buildCartItem(product(19)), 1);
 
   const sofaCard = within(today).getByRole("article", { name: "Wooden Sofa Set" });
-  fireEvent.click(within(sofaCard).getByRole("button", { name: "Save to wishlist" }));
+  fireEvent.click(within(sofaCard).getByRole("button", { name: "Save Wooden Sofa Set to wishlist" }));
   expect(toggleWishlist).toHaveBeenCalledWith(product(47));
   const chairCard = within(today).getByRole("article", { name: "Mesh High-Back Office Chair" });
-  expect(within(chairCard).getByRole("button", { name: "Remove from wishlist" })).toHaveAttribute(
+  expect(within(chairCard).getByRole("button", { name: "Remove Mesh High-Back Office Chair from wishlist" })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
@@ -513,7 +513,7 @@ test("nothing on offer: the serif line and a way to browse, mentioning codes onl
   const { unmount } = renderPage();
   expect(await screen.findByRole("heading", { name: "Nothing on offer right now." })).toBeInTheDocument();
   expect(screen.getByText(/the codes above still apply at checkout/)).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "Browse all furniture" })).toHaveAttribute("href", "/products");
+  expect(screen.getByRole("link", { name: "Browse furniture" })).toHaveAttribute("href", "/products");
   expect(screen.queryByRole("region", { name: titled("Deal of the day.") })).not.toBeInTheDocument();
   unmount();
 

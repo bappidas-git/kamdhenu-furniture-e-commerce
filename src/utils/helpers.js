@@ -283,6 +283,30 @@ export const formatDate = (date, format = "medium") => {
   );
 };
 
+// The storefront's dates, in Indian day-month-year order ("25 Sept 2026",
+// "25 September 2026"), with formatDate's format names. formatDate itself stays
+// en-US and unchanged; the storefront calls this one.
+export const formatDateIN = (date, format = "medium") => {
+  const options = {
+    short: { day: "numeric", month: "short", year: "numeric" },
+    medium: { day: "numeric", month: "long", year: "numeric" },
+    long: { weekday: "long", day: "numeric", month: "long", year: "numeric" },
+    time: { hour: "2-digit", minute: "2-digit" },
+    datetime: {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    },
+  };
+
+  return new Date(date).toLocaleDateString(
+    "en-IN",
+    options[format] || options.medium
+  );
+};
+
 export const formatRelativeTime = (date) => {
   const now = new Date();
   const then = new Date(date);

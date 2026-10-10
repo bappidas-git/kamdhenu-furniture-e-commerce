@@ -179,7 +179,7 @@ test("hands each card the built cart item and its wishlist state", () => {
   fireEvent.click(within(items[0]).getByRole("button", { name: "Add Piece 1 to cart" }));
   expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[0]));
 
-  expect(within(items[1]).getByRole("button", { name: "Remove from wishlist" })).toBeInTheDocument();
-  fireEvent.click(within(items[0]).getByRole("button", { name: "Save to wishlist" }));
+  expect(within(items[1]).getByRole("button", { name: "Remove Piece 2 from wishlist" })).toBeInTheDocument();
+  fireEvent.click(within(items[0]).getByRole("button", { name: "Save Piece 1 to wishlist" }));
   expect(onToggleWishlist).toHaveBeenCalledWith(PRODUCTS[0]);
 });

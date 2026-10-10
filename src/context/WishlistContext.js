@@ -215,8 +215,8 @@ export const WishlistProvider = ({ children }) => {
       if (wishlistItemsRef.current.some((item) => item.productId === product.id)) {
         wishlistToast({
           icon: "info",
-          title: "Already in Wishlist",
-          text: `${product.name} is already in your wishlist`,
+          title: "Already saved",
+          text: `${product.name} is already in your wishlist.`,
         });
         return;
       }
@@ -262,8 +262,8 @@ export const WishlistProvider = ({ children }) => {
           );
           wishlistToast({
             icon: "error",
-            title: "Couldn't Save",
-            text: `Failed to add ${product.name} to your wishlist. Please try again.`,
+            title: "Couldn’t save",
+            text: `${product.name} wasn’t added to your wishlist. Try again in a moment.`,
             timer: 2500,
           });
           return;
@@ -272,8 +272,8 @@ export const WishlistProvider = ({ children }) => {
 
       wishlistToast({
         icon: "success",
-        title: "Added to Wishlist",
-        text: `${product.name} has been added to your wishlist`,
+        title: "Saved to wishlist",
+        text: `${product.name} is in your wishlist.`,
       });
     },
     [user]
@@ -305,8 +305,8 @@ export const WishlistProvider = ({ children }) => {
           );
           wishlistToast({
             icon: "error",
-            title: "Couldn't Remove",
-            text: `Failed to remove ${item.name} from your wishlist. Please try again.`,
+            title: "Couldn’t remove",
+            text: `${item.name} is still in your wishlist. Try again in a moment.`,
             timer: 2500,
           });
           return;
@@ -316,8 +316,7 @@ export const WishlistProvider = ({ children }) => {
       if (!silent) {
         wishlistToast({
           icon: "info",
-          title: "Removed",
-          text: "Item removed from wishlist",
+          title: "Removed from wishlist",
           timer: 1500,
         });
       }
@@ -344,13 +343,13 @@ export const WishlistProvider = ({ children }) => {
     if (items.length === 0) return;
 
     const result = await Swal.fire({
-      title: "Clear wishlist?",
-      text: `All ${items.length} saved item${items.length === 1 ? "" : "s"} will be removed.`,
+      title: "Clear your wishlist?",
+      text: `${items.length} saved piece${items.length === 1 ? "" : "s"} will be removed from your wishlist.`,
       icon: "warning",
       showCancelButton: true,
       confirmButtonColor: "#d32f2f",
-      confirmButtonText: "Clear All",
-      cancelButtonText: "Keep Items",
+      confirmButtonText: "Clear all",
+      cancelButtonText: "Keep wishlist",
     });
     if (!result.isConfirmed) return;
 
@@ -374,8 +373,8 @@ export const WishlistProvider = ({ children }) => {
         }
         wishlistToast({
           icon: "error",
-          title: "Couldn't Clear Wishlist",
-          text: "Some items could not be removed. Please try again.",
+          title: "Couldn’t clear your wishlist",
+          text: "Some pieces are still saved. Try again in a moment.",
           timer: 2500,
         });
         return;
@@ -384,8 +383,7 @@ export const WishlistProvider = ({ children }) => {
 
     wishlistToast({
       icon: "info",
-      title: "Wishlist Cleared",
-      text: "Your wishlist has been emptied",
+      title: "Wishlist cleared",
     });
   }, [user]);
 

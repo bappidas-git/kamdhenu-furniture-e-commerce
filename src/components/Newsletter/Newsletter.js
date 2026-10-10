@@ -27,10 +27,10 @@ import styles from "./Newsletter.module.css";
 const SUCCESS_RESET_MS = 6000;
 
 const MESSAGES = {
-  empty: "Enter your email address.",
-  invalid: "Enter a valid email address, like name@example.com.",
-  failed: "We couldn't add you just now. Please try again.",
-  success: "You're on the list.",
+  empty: "Enter your email address",
+  invalid: "Enter a valid email address, like name@example.com",
+  failed: "We couldn’t add you to the list. Check your connection and try again.",
+  success: "You’re on the list.",
 };
 
 const CheckIcon = () => (

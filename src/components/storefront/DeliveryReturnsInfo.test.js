@@ -21,7 +21,7 @@ test("a serif heading over the facts: methods, COD, returns and tax", () => {
     "Standard Delivery, 7–10 business days, ₹499.00, Free above ₹9,999.00",
     "Express Delivery, 3–5 business days, ₹999.00",
     "Cash on Delivery available on orders up to ₹50,000.00",
-    "Easy 7-day returns",
+    "7-day returns on eligible pieces",
     "Taxes calculated at checkout (18% GST)",
   ]);
 });

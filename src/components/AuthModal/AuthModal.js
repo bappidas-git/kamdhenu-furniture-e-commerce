@@ -491,7 +491,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
   // nothing, and point at the support page (the manual path that exists).
   const handleForgotPassword = () => {
     setErrors({});
-    setInfoMessage("Password reset isn't available yet. Our support team can help you regain access.");
+    setInfoMessage("Password reset isn’t available online yet. Our support team can help you sign in again.");
   };
 
   /* ---- Handlers: Login ---- */
@@ -505,12 +505,12 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
   const validateLogin = () => {
     const errs = {};
     if (!loginData.email.trim()) {
-      errs.email = "Email is required";
+      errs.email = "Enter your email address";
     } else if (!isEmailValid(loginData.email)) {
       errs.email = "Enter a valid email address";
     }
     if (!loginData.password) {
-      errs.password = "Password is required";
+      errs.password = "Enter your password";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -537,7 +537,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         remember: rememberMe,
       });
       if (!result.success) {
-        setErrors({ general: result.error || "Login failed. Please try again." });
+        setErrors({ general: result.error || "We couldn’t sign you in. Try again in a moment." });
         return;
       }
       setSuccessMessage("Welcome back. Signing you in…");
@@ -547,7 +547,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         setLoginData({ email: "", password: "" });
       }, CLOSE_AFTER_SIGN_IN_MS);
     } catch (err) {
-      setErrors({ general: err.message || "Login failed. Please try again." });
+      setErrors({ general: err.message || "We couldn’t sign you in. Try again in a moment." });
     } finally {
       setIsSubmitting(false);
     }
@@ -563,28 +563,28 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
 
   const validateSignup = () => {
     const errs = {};
-    if (!signupData.firstName.trim()) errs.firstName = "First name is required";
-    if (!signupData.lastName.trim()) errs.lastName = "Last name is required";
+    if (!signupData.firstName.trim()) errs.firstName = "Enter your first name";
+    if (!signupData.lastName.trim()) errs.lastName = "Enter your last name";
     if (!signupData.email.trim()) {
-      errs.email = "Email is required";
+      errs.email = "Enter your email address";
     } else if (!isEmailValid(signupData.email)) {
       errs.email = "Enter a valid email address";
     }
     if (signupData.phone && !/^\d{10}$/.test(signupData.phone.replace(/\s/g, ""))) {
-      errs.phone = "Enter a valid 10-digit phone number";
+      errs.phone = "Enter a 10-digit mobile number";
     }
     if (!signupData.password) {
-      errs.password = "Password is required";
+      errs.password = "Create a password";
     } else if (signupData.password.length < 6) {
-      errs.password = "Password must be at least 6 characters";
+      errs.password = "Use at least 6 characters";
     }
     if (!signupData.confirmPassword) {
-      errs.confirmPassword = "Please confirm your password";
+      errs.confirmPassword = "Enter your password again";
     } else if (signupData.password !== signupData.confirmPassword) {
-      errs.confirmPassword = "Passwords do not match";
+      errs.confirmPassword = "Passwords don’t match";
     }
     if (!agreeTerms) {
-      errs.terms = "You must accept the terms and conditions";
+      errs.terms = "Agree to the terms of service and privacy policy to continue";
     }
     setErrors(errs);
     return Object.keys(errs).length === 0;
@@ -612,7 +612,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         confirmPassword: signupData.confirmPassword,
       });
       if (!result.success) {
-        setErrors({ general: result.error || "Registration failed. Please try again." });
+        setErrors({ general: result.error || "We couldn’t create your account. Try again in a moment." });
         return;
       }
       setSuccessMessage("Account created. Taking you to sign in…");
@@ -627,7 +627,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
         setAgreeTerms(false);
       }, SWITCH_AFTER_SIGN_UP_MS);
     } catch (err) {
-      setErrors({ general: err.message || "Registration failed. Please try again." });
+      setErrors({ general: err.message || "We couldn’t create your account. Try again in a moment." });
     } finally {
       setIsSubmitting(false);
     }
@@ -962,7 +962,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
               onClick={(e) => e.stopPropagation()}
               aria-describedby={newTabNoteId}
             >
-              Terms &amp; Conditions
+              terms of service
             </Link>{" "}
             and{" "}
             <Link
@@ -973,7 +973,7 @@ const AuthModal = ({ open, onClose, defaultTab = "login" }) => {
               onClick={(e) => e.stopPropagation()}
               aria-describedby={newTabNoteId}
             >
-              Privacy Policy
+              privacy policy
             </Link>
           </span>
         </label>

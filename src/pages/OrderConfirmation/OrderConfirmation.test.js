@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 import apiService from "../../services/api";
 import db from "../../../db.json";
 import { APP_NAME, LOGO_URLS, SUPPORT_ADDRESS, SUPPORT_EMAIL, SUPPORT_PHONE } from "../../utils/constants";
-import { formatCurrency, formatDate, PLACEHOLDER_IMG } from "../../utils/helpers";
+import { formatCurrency, formatDateIN, PLACEHOLDER_IMG } from "../../utils/helpers";
 import OrderConfirmation, {
   deliveryFor,
   headlineFor,
@@ -206,9 +206,9 @@ describe("the read", () => {
     renderAt("ORD-NOPE-0000");
     const heading = await screen.findByRole("heading", { level: 1, name: /We couldn.t find this order\./ });
     expect(heading).toHaveFocus();
-    expect(screen.getByText("Order ORD-NOPE-0000 may have been placed in a different session.")).toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Go to home" })).toHaveAttribute("href", "/");
-    expect(screen.getByRole("link", { name: "Order history" })).toHaveAttribute("href", "/orders");
+    expect(screen.getByText("Check that ORD-NOPE-0000 is the right number, or find the order in My orders.")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Back to home" })).toHaveAttribute("href", "/");
+    expect(screen.getByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   });
 
@@ -218,9 +218,9 @@ describe("the read", () => {
     renderAt(DELIVERED);
     const heading = await screen.findByRole("heading", { level: 1, name: /We couldn.t load your order\./ });
     expect(heading).toHaveFocus();
-    expect(screen.getByText(/Something went wrong while loading order ORD-MQB0JHUB-9KL6\./)).toBeInTheDocument();
+    expect(screen.getByText("Check your connection and try again.")).toBeInTheDocument();
     expect(screen.queryByText(/couldn.t find/)).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Order history" })).toHaveAttribute("href", "/orders");
+    expect(screen.getByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
     expect(error).toHaveBeenCalledWith("Failed to fetch order:", expect.any(Error));
     error.mockRestore();
   });
@@ -302,7 +302,7 @@ describe("the thank-you", () => {
     [SHIPPED_COD, "Order confirmed", "Your order is on its way. Pay when it arrives.", true],
     [SHIPPED_TRACKED, "Order confirmed", "Your order is on its way.", true],
     [DELIVERED, "Order confirmed", "Your order was delivered.", true],
-    [CANCELLED, "Order cancelled", `This order was cancelled on ${formatDate("2026-06-12T01:46:10.397Z")}.`, false],
+    [CANCELLED, "Order cancelled", `This order was cancelled on ${formatDateIN("2026-06-12T01:46:10.397Z")}.`, false],
     [REFUNDED_DELIVERED, "Order refunded", "The payment for this order was refunded.", false],
     [REFUNDED_UNSHIPPED, "Order refunded", "The payment for this order was refunded.", false],
   ])("%s: '%s', then '%s' (the mark: %s)", async (number, eyebrow, line, mark) => {
@@ -338,7 +338,7 @@ describe("the thank-you", () => {
     expect(line({ shippingStatus: "delivered" })).toBe("Your order was delivered.");
     expect(line({ fulfillmentStatus: "cancelled" })).toBe("This order was cancelled.");
     expect(line({ fulfillmentStatus: "returned", shippingStatus: "delivered" })).toBe("This order was returned.");
-    expect(line({ paymentStatus: "failed" })).toBe("The payment for this order didn't go through.");
+    expect(line({ paymentStatus: "failed" })).toBe("The payment for this order didn’t go through.");
     expect(line({ paymentStatus: "refunded", shippingStatus: "delivered" })).toBe("The payment for this order was refunded.");
     // Never "being prepared" once the order has moved on or closed.
     ["shipped", "delivered"].forEach((shippingStatus) => expect(line({ shippingStatus })).not.toMatch(/prepared/));
@@ -354,7 +354,7 @@ describe("the thank-you", () => {
     const hero = screen.getByRole("banner");
     expect(within(hero).getByText("Order number")).toBeInTheDocument();
     expect(within(hero).getByText(DELIVERED)).toBeInTheDocument();
-    const placed = within(hero).getByText(formatDate("2026-06-12T14:19:48.371Z"), { selector: "time" });
+    const placed = within(hero).getByText(formatDateIN("2026-06-12T14:19:48.371Z"), { selector: "time" });
     expect(placed).toHaveAttribute("dateTime", "2026-06-12T14:19:48.371Z");
   });
 });
@@ -383,7 +383,7 @@ describe("copying the order number", () => {
     await thankYou();
     const button = screen.getByRole("button", { name: `Copy order number ${DELIVERED}` });
     fireEvent.click(button);
-    expect(await screen.findByText("Couldn't copy")).toBeInTheDocument();
+    expect(await screen.findByText("Couldn’t copy")).toBeInTheDocument();
     expect(screen.queryByText("Copied")).not.toBeInTheDocument();
     expect(button).not.toHaveAttribute("data-copied");
     error.mockRestore();
@@ -418,16 +418,16 @@ describe("the facts", () => {
   test("a delivered order shows the day it arrived (deliveredAt, else updatedAt)", async () => {
     renderAt(DELIVERED);
     await thankYou();
-    expect(screen.getByText(`Delivered on ${formatDate("2026-06-12T14:49:04.053Z")}.`)).toBeInTheDocument();
+    expect(screen.getByText(`Delivered on ${formatDateIN("2026-06-12T14:49:04.053Z")}.`)).toBeInTheDocument();
     const order = { shippingStatus: "delivered", updatedAt: "2026-07-01T10:00:00.000Z" };
-    expect(deliveryFor(order)).toBe(`Delivered on ${formatDate("2026-07-01T10:00:00.000Z")}.`);
+    expect(deliveryFor(order)).toBe(`Delivered on ${formatDateIN("2026-07-01T10:00:00.000Z")}.`);
     expect(deliveryFor({ shippingStatus: "delivered" })).toBe("Delivered.");
   });
 
   test("an order being prepared gets the honest line, and no invented date", async () => {
     renderAt(JUST_PLACED_COD.orderNumber);
     await thankYou();
-    expect(screen.getByText("We'll email tracking details when your order ships.")).toBeInTheDocument();
+    expect(screen.getByText("We’ll email tracking details when your order ships.")).toBeInTheDocument();
     expect(screen.queryByText(/estimated/i)).not.toBeInTheDocument();
     // The old page printed "placed + 5 days" (en-IN, with the weekday).
     const fiveDaysOn = new Date(JUST_PLACED_COD.createdAt);
@@ -439,7 +439,7 @@ describe("the facts", () => {
       day: "numeric",
     });
     expect(screen.queryByText(oldEstimate, { exact: false })).not.toBeInTheDocument();
-    expect(screen.queryByText(formatDate(fiveDaysOn), { exact: false })).not.toBeInTheDocument();
+    expect(screen.queryByText(formatDateIN(fiveDaysOn), { exact: false })).not.toBeInTheDocument();
   });
 
   test("a shipped order says so, with its tracking number when it has one", async () => {
@@ -453,12 +453,12 @@ describe("the facts", () => {
     renderAt(CANCELLED);
     await thankYou();
     expect(screen.getByText("This order was not shipped.")).toBeInTheDocument();
-    expect(screen.queryByText(/We'll email tracking details/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/We’ll email tracking details/)).not.toBeInTheDocument();
     expect(deliveryFor(seeded(REFUNDED_UNSHIPPED))).toBe("This order was not shipped.");
   });
 
   test.each([
-    ["cod", "Cash on delivery"],
+    ["cod", "Cash on Delivery"],
     ["card", "Credit or debit card"],
     ["upi", "UPI"],
     ["net_banking", "Net banking"],
@@ -544,7 +544,7 @@ describe("the summary", () => {
     expect(rowsOf(summary())).toEqual({
       Subtotal: formatCurrency(8998),
       "Discount (WELCOME500)": `−${formatCurrency(500)}`,
-      Shipping: formatCurrency(499),
+      Delivery: formatCurrency(499),
       Tax: formatCurrency(1530),
       Total: formatCurrency(10527),
     });
@@ -553,7 +553,7 @@ describe("the summary", () => {
   test("free delivery reads 'Free'; no discount, no discount row", async () => {
     const { unmount } = renderAt(FREE_SHIPPING);
     await thankYou();
-    expect(rowsOf(summary()).Shipping).toBe("Free");
+    expect(rowsOf(summary()).Delivery).toBe("Free");
     unmount();
     renderAt(PROCESSING);
     await thankYou();
@@ -567,7 +567,7 @@ describe("the summary", () => {
     await thankYou();
     const rows = rowsOf(summary());
     expect(rows.Tax).toBe(formatCurrency(99));
-    expect(rows.Shipping).toBe(formatCurrency(50));
+    expect(rows.Delivery).toBe(formatCurrency(50));
   });
 
   test("store credit: the credit, then 'Amount paid' (amountPayable)", async () => {
@@ -615,7 +615,7 @@ describe("the summary", () => {
     orders.push({ ...seeded(DELIVERED), orderNumber: "ORD-NOADDRESS-0001", shippingAddress: null });
     renderAt("ORD-NOADDRESS-0001");
     await thankYou();
-    expect(within(summary()).getByText("Shipping address not available")).toBeInTheDocument();
+    expect(within(summary()).getByText("No delivery address recorded")).toBeInTheDocument();
   });
 });
 
@@ -735,7 +735,7 @@ describe("the invoice", () => {
     expect(within(invoice).getByRole("heading", { level: 2, name: "Invoice" })).toBeInTheDocument();
     const rows = rowsOf(invoice);
     expect(rows["Order number"]).toBe(DELIVERED);
-    expect(rows["Order date"]).toBe(formatDate("2026-06-12T14:19:48.371Z"));
+    expect(rows["Order date"]).toBe(formatDateIN("2026-06-12T14:19:48.371Z"));
   });
 
   test("bill to and ship to come from the order (billing falls back to delivery)", async () => {
@@ -743,7 +743,7 @@ describe("the invoice", () => {
     await thankYou();
     const invoice = await openInvoice();
     expect(within(invoice).getByRole("heading", { name: "Bill to" })).toBeInTheDocument();
-    expect(within(invoice).getByRole("heading", { name: "Ship to" })).toBeInTheDocument();
+    expect(within(invoice).getByRole("heading", { name: "Deliver to" })).toBeInTheDocument();
     expect(within(invoice).getAllByText("Bappi Das")).toHaveLength(2);
     expect(within(invoice).getAllByText("Howly, Assam - 781316")).toHaveLength(2);
     unmount();
@@ -860,7 +860,7 @@ describe("the invoice", () => {
     await thankYou();
     const invoice = await openInvoice();
     const rows = rowsOf(invoice);
-    expect(rows["Payment method"]).toBe("Cash on delivery");
+    expect(rows["Payment method"]).toBe("Cash on Delivery");
     expect(rows["Payment status"]).toBe("Pay on delivery");
     expect(within(invoice).getByText("This is a system-generated invoice.")).toBeInTheDocument();
     expect(within(invoice).queryByText(/GSTIN|registration|tax invoice/i)).not.toBeInTheDocument();
@@ -879,7 +879,7 @@ describe("every seeded order", () => {
     const rows = rowsOf(summary());
     expect(rows.Subtotal).toBe(formatCurrency(order.subtotal));
     expect(rows.Tax).toBe(formatCurrency(taxAmount));
-    expect(rows.Shipping).toBe(shippingAmount > 0 ? formatCurrency(shippingAmount) : "Free");
+    expect(rows.Delivery).toBe(shippingAmount > 0 ? formatCurrency(shippingAmount) : "Free");
     expect(rows.Total).toBe(formatCurrency(order.total));
     const discountRow = Object.keys(rows).find((term) => term.startsWith("Discount"));
     expect(discountRow ? rows[discountRow] : undefined).toBe(discountAmount > 0 ? `−${formatCurrency(discountAmount)}` : undefined);

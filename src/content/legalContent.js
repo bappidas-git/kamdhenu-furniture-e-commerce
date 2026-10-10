@@ -307,7 +307,7 @@ export const TERMS_OF_SERVICE = {
         {
           // CONFIRM: the payment methods the store will take, and the gateway.
           type: "p",
-          text: "We accept the payment methods offered at checkout. These currently include credit and debit cards, UPI, net banking, wallets and cash on delivery. Cash on delivery is available for orders up to the limit shown at checkout. You can also apply store credit to any order.",
+          text: "We accept the payment methods offered at checkout. These currently include credit and debit cards, UPI, net banking, wallets and Cash on Delivery. Cash on Delivery is available for orders up to the limit shown at checkout. You can also apply store credit to any order.",
         },
       ],
     },
@@ -617,7 +617,7 @@ export const REFUND_POLICY = {
         },
         {
           type: "p",
-          text: "When you cancel, what you paid online is refunded to your original payment method, and any store credit you used goes back to your account. An order you were going to pay for in cash on delivery has nothing to refund.",
+          text: "When you cancel, what you paid online is refunded to your original payment method, and any store credit you used goes back to your account. An order you were going to pay for by Cash on Delivery has nothing to refund.",
         },
       ],
     },
@@ -637,7 +637,7 @@ export const REFUND_POLICY = {
           columns: ["You paid by", "Refunded to", "Time to arrive"],
           rows: [
             ["Card, UPI, net banking or wallet", "The same card or account", [TBC]],
-            ["Cash on delivery", "Your bank account or UPI", [TBC]],
+            ["Cash on Delivery", "Your bank account or UPI", [TBC]],
             ["Store credit", "Your store credit", "As soon as the refund is issued"],
           ],
         },
