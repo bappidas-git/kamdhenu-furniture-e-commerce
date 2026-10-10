@@ -378,6 +378,8 @@ Use `<Reveal>` (section 16.4), which is this recipe; stagger a group with `delay
 
 It also renders outside `ThemeContextProvider` (it falls back to the `body.dark` class), so an error fallback can use it. The admin never imports it (Prompt 33 handles the admin's logos).
 
+**Forced colours (Prompt 31).** A Windows contrast theme repaints the page but not an image, so a transparent PNG could vanish on the system canvas (the white logo on a white canvas). `BrandLogo` marks its artwork (`data-logo-variant="light"` / `"white"`), and under `forced-colors: active` the image keeps its own ground: brand paper behind the light logo, brand navy behind the white one (`forced-color-adjust: none`).
+
 ---
 
 ## 11. Image placeholder tones
@@ -553,7 +555,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | | `--ghost` | transparent, 1px ink border; hover ink 6% tint (`--sf-color-primary-soft`) |
 | | `--danger` | destructive actions: the error token with primary-contrast text; hover mixes 15% of the text tone in (`color-mix`, where supported). Also a SweetAlert confirm: `customClass: { confirmButton: "sf-btn sf-btn--danger" }` (Prompt 21, §31.8) |
 | | `--paper`, `--paper-ghost` | for navy bands, the footer and photo scrims: brand paper with ink text (hover caramel) / paper border and text (hover paper 16%); on-dark caramel focus ring |
-| | `--link` | inline text link: stone underline at rest, accent on hover; no padding; a 44px invisible hit area |
+| | `--link` | inline text link: stone underline at rest, accent on hover; no padding; a 44px invisible hit area (`::after`: 14px above and below, 6px either side, and never less than 44px across, so a short label like "Edit" is a full 44 × 44 target; Prompt 31) |
 | | `--sm` (36px; 44px on touch screens), `--lg` (52px, 16px text), `--block` (full width), `--icon` (square, needs `aria-label`), `.sf-btn__icon` (1.25em icon slot; MUI icons fit) | |
 | Fields | `.sf-field` | grid: label, control, hint, error (8px gap) |
 | | `.sf-field__label` (or a bare `<label>` child), `.sf-field__hint`, `.sf-field__error` | 13px 500 ink label; 13px muted hint; 13px error text with a circled "!" (never colour alone) |
@@ -561,7 +563,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | | `.sf-select` chevron | two 1.5px strokes in `currentColor` (see 16.8) |
 | | `.sf-check`, `.sf-radio`, `.sf-switch` | on the `<label>`: 44px row, 12px gap; the native `<input>` inside becomes a 20px box / circle (accent when checked, check mark in accent-contrast fading in over `--sf-duration-fast`, `:indeterminate` dash) or a 36 × 20 pill (ink when on) |
 | Badges | `.sf-badge` (+ `--ink`, `--paper`, `--sand`, `--accent`, `--success`, `--warning`, `--error`, `--info`) | 11px uppercase tracked label, radius sm; default = sand; `--accent` = discount tint; semantic = soft tint + matching text; `--paper` is fixed (photos, dark surfaces) |
-| Chips | `.sf-chip` (+ `--selected`) | 32px hairline pill, 14px; hover ink border (colours over `--sf-duration-fast`); `--selected`, `[aria-pressed="true"]` and `[aria-checked="true"]` = ink fill with paper text |
+| Chips | `.sf-chip` (+ `--selected`) | 32px hairline pill, 14px; hover ink border (colours over `--sf-duration-fast`); `--selected`, `[aria-pressed="true"]` and `[aria-checked="true"]` = ink fill with paper text. A `<a>`, `<button>` or `<label>` chip carries a 44px-tall invisible hit area (`::after`, centred on the padding box; Prompt 31): rows of chips that wrap keep 12px between lines, scrolling rows 8px of padding above and below, so the areas never overlap. A consumer that needs `::after` for something else (the variant chip's sold-out strike) overrides it |
 | Counts | `.sf-count` | 18px ink disc, 10px paper digits, tabular. Render it with `<CountDisc>` (section 40.5), which fades a changed number in |
 | Surfaces | `.sf-card` (+ `--hairline`), `.sf-panel` (+ `--hairline`) | surface / sand, radius sm, no shadow, fluid 16–24px padding (`--sf-card-padding`, e.g. `0` for media cards) |
 | | `.sf-hairline` | a 1px `--sf-hairline` rule (on `<hr>` or any block) |
@@ -569,7 +571,7 @@ Written by Prompt 06. The shared building blocks every later prompt composes fro
 | Tabs | `.sf-tabs`, `.sf-tab`, `.sf-tabpanel` | hairline strip (scrolls sideways without a scrollbar), 44px eyebrow-style tabs, `[aria-selected="true"]` = ink text + 1px ink underline (the colour eases over `--sf-duration-fast`, the underline arrives at once), 24px panel spacing; roving focus and arrow keys are the consumer's job |
 | Skeletons | `.sf-skeleton` (+ `--text`, `--image`, `--circle`) | sand block with a slow (1.6s) surface shimmer, static under reduced motion; `--text` 0.75em lines (the last of several at 60%), `--image` uses `aspect-ratio: var(--ratio, 4 / 5)`, `--circle` uses `--size` (40px). Mark skeletons `aria-hidden="true"`; set `aria-busy="true"` on the loading region |
 | Motion | `.sf-fade-in` | micro-feedback: an element that mounts in answer to an action ("Added" and its check, "Copied") fades in over `--sf-duration-fast` (`--sf-ease-out`), never scales; static under reduced motion. Put it on the element that mounts with the new state |
-| A11y | `.sf-visually-hidden`, `.sf-skip-link`, `.sf-focus` | screen-reader-only text; the "Skip to content" link (off-screen until focused, then an ink tab top-left above everything; Prompt 31 adds it to `App.js`); the focus ring for custom focusable elements |
+| A11y | `.sf-visually-hidden`, `.sf-skip-link`, `.sf-focus` | screen-reader-only text; the "Skip to content" link (off-screen until it has keyboard focus, `:focus-visible`, then an ink tab top-left above everything; rendered by `SkipLink`, the first child of `.App`, section 41.1); the focus ring for custom focusable elements. `main[tabindex="-1"]` (the skip link's target) shows no ring when it takes focus |
 
 ### 16.3 Markup patterns
 
@@ -742,6 +744,7 @@ Written by Prompt 07. Files: `src/components/Header/Header.js` (shell), `MegaMen
 - Data: `groupCategoryTree(categories)` (exported from `Header/groupCategoryTree.js` and re-exported by `MegaMenu.js`) turns the `categories.getAll()` list into departments (`getMainMenuCategories`) → groups (direct children) → links (descendants, depth-first, in `orderCategoriesHierarchically` order). Every link is `/products?category=${categoryParam(category)}`.
 - Panel: one instance under the department row, in the DOM only while open; a column per group (eyebrow link + its children), four to a row; a flat department gets a serif introduction (name, description, "Shop all"); the feature column shows the department's admin-managed `image` at 4:5 (`object-fit: cover`, lazy, `onImageError`) with the eyebrow/line/"Shop all <Department>" copy (`navigationContent.js` overrides by slug); every panel ends with "View all departments" (`/products`).
 - Motion: opacity 0 → 1 and `y` −8px (`--sf-rise-distance`) → 0 over `--sf-duration` with `--sf-ease-out`; out over `--sf-duration-exit` with `--sf-ease-in-out` (`overlayPanelMotion("menu")`, section 40.3); under reduced motion it only fades. The feature image scales to 1.03 on hover (pointer devices, not under reduced motion).
+- Leaving, the panel is `inert` (`useIsPresent`): during its exit a fast Tab can no longer land in it and lose focus when it unmounts (Prompt 31).
 - Interaction model (keyboard and pointer) is documented at the top of `MegaMenu.js` and in `BUILD_LOG.md` (Prompt 07).
 
 ---
@@ -826,6 +829,7 @@ Every drawer, sheet and modal on the storefront should behave the same way. The 
 |---|---|
 | Semantics | `role="dialog"`, `aria-modal="true"` and a name (`aria-label`, or `aria-labelledby` pointing at a visible title) |
 | Focus | `useFocusTrap(ref, { active, onEscape, initialFocusRef, returnFocusRef, returnFocus })`: on open, focus moves to `initialFocusRef`, else the first focusable element, else the container (give it `tabIndex={-1}`). Tab and Shift+Tab cycle inside. On close, focus returns to the element that opened the layer, unless another layer has taken focus in the meantime. Only the most recently opened trap handles keys, so nested layers work. Focus is not forcibly pulled back into the layer: `aria-modal` hides the page from assistive technology, and portalled popovers and SweetAlert dialogs opened from inside the layer keep their own focus. |
+| The rest of the page | `inert` while the layer is open (`inertOutside` in `useFocusTrap`, Prompt 31): the siblings of the layer and of each of its ancestors up to `<body>`, so the page is out of reach of the pointer, the keyboard and a screen reader's virtual cursor. Not made inert: decorative (`aria-hidden`) siblings such as the layer's own backdrop, which must still take the closing click, and SweetAlert's containers, whose toasts must still be announced. Lifted before focus returns to the opener |
 | Escape | `onEscape` (usually `onClose`), handled by the topmost trap only |
 | Page scroll | `useBodyScrollLock(active)` sets an inline `overflow: hidden` on `<body>` and restores the previous value. Every overlay sets it through this hook (search since Prompt 15, the cart drawer since Prompt 18, the auth modal since Prompt 20), and BottomNav listens to it through `useBodyScrollLocked()`. |
 | Stacking | Backdrops and panels at `--sf-z-overlay` (1000); modals at `--sf-z-modal` (1100); the full-screen search at `--sf-z-search` (1400, section 25.1); BottomNav (58) is always beneath them |
@@ -1112,10 +1116,10 @@ useEffect(() => { if (near) startTheRead(); }, [near]);
 | `verifiedLabel`, `emptyLabel`, `errorLabel` | "Verified purchase", "No customer reviews yet.", "Reviews could not be loaded just now." | the empty and error lines are muted eyebrows |
 | `skeletonCount`, `className` | 3, — | |
 
-- **Slide** (a sand panel, radius sm, 24–32px padding): the review text as a serif quote (Playfair 22px, `--sf-leading-tight`, typographic quotes) of at most 240 characters (`clampQuote`: cut at a word, ellipsis); then, above a hairline, the stars (`StarRating` 14px), the reviewer's name as stored, "Verified purchase" (success tone, check mark) only when `isVerifiedPurchase === true`, and the product's name (ink link with an accent underline) beside the short date (`formatDate(…, "short")` in a `<time>`). No avatar, title, place or invented date; a missing name, product or date is left out. The quote fills the slide, so every caption sits on the same line.
+- **Slide** (a sand panel, radius sm, 24–32px padding): the review text as a serif quote (Playfair 22px, `--sf-leading-tight`, typographic quotes) of at most 240 characters (`clampQuote`: cut at a word, ellipsis); then, above a hairline, the stars (`StarRating` 14px), the reviewer's name as stored, "Verified purchase" (success tone, check mark) only when `isVerifiedPurchase === true`, and the product's name (ink link with an accent underline, a 44px target through `::after`, Prompt 31) beside the short date (`formatDate(…, "short")` in a `<time>`). No avatar, title, place or invented date; a missing name, product or date is left out. The quote fills the slide, so every caption sits on the same line.
 - **Stars on sand are ink** (§4): each slide sets `--sf-color-star: var(--sf-color-text)`, which `StarRating` reads; the empty stars keep `--sf-color-border-strong` (3.19 : 1 on sand).
 - **Per view:** 1 below 768px, 2 at 768–1023px, 3 from 1024px; snap scrolling, no bleed.
-- **Controls** (only when the track overflows): one dot per review (a 24px-wide, 44px-tall target around a 6px mark: hollow border-strong, filled ink for the slides in view; WCAG 2.5.8 asks for 24 × 24) on the left, the hairline previous/next squares on the right (the rail's). A dot scrolls its slide into view (as far as the track goes); the buttons scroll one page of whole slides; smooth, instant under reduced motion. While loading, an empty row of the controls' height holds their place.
+- **Controls** (only when the track overflows): one dot per review (a 24px-wide, 44px-tall target around a 6px mark: hollow border-strong, filled ink for the slides in view; WCAG 2.5.8 asks for 24 × 24; on touch screens, `(pointer: coarse)`, the dots are position marks only, too close together for a 44px target each: swiping and the 44px buttons move the carousel there, and the dots stay buttons for a keyboard and a screen reader; Prompt 31) on the left, the hairline previous/next squares on the right (the rail's). A dot scrolls its slide into view (as far as the track goes); the buttons scroll one page of whole slides; smooth, instant under reduced motion. While loading, an empty row of the controls' height holds their place.
 - **Accessibility:** a group with `aria-roledescription="carousel"`; slides are `role="group"` + `aria-roledescription="slide"` + "Review N of M"; dots and buttons carry `aria-controls`; the dots of the slides in view carry `aria-current="true"` (a window, not a single item, when several are in view); the buttons use `aria-disabled` at either end, so focus is never dropped. Every slide stays in the reading order. Forced colours keep the dot states.
 - **Data rule (home):** `loadFeaturedReviews(featured)` → `selectReviews`: approved reviews only (the endpoint's filter, and any other `status` is dropped again), at least 40 characters of text, newest first, at most 10, from at most 8 reads in parallel (a failed read counts as none). With none left the home page hides the whole section; the component's own empty state stays available for other pages.
 
@@ -1204,14 +1208,14 @@ The props are the pre-Prompt 13 props, unchanged. The card makes no API calls. I
 |---|---|
 | Root | `<article aria-labelledby>` (named by the product name); no border, shadow or fill; `isolation: isolate` keeps the overlay's z-index inside it |
 | Link | one router `Link` to `productPath(product)` around the image frame, the brand and the name. It is named by the name (`aria-labelledby`) and described by the brand (`aria-describedby`); focus is `--sf-shadow-focus` around the image and titles. No control is nested in it: the chips and buttons sit in a sibling layer laid over the frame (same width, 4:5), which lets clicks through to the image |
-| Image frame | 4:5 (`aspect-ratio`), sand while loading, radius sm, `object-fit: cover`. The `img` has alt = name, `width="1200" height="1500"`, `loading="lazy"`, `decoding="async"` and `onImageError` (the placeholder) |
+| Image frame | 4:5 (`aspect-ratio`), sand while loading, radius sm, `object-fit: cover`. The `img` is decorative (`alt=""`, `aria-hidden`; the link is named by the product's name, so an alt would repeat it; Prompt 31), with `width="1200" height="1500"`, `loading="lazy"`, `decoding="async"` and `onImageError` (the placeholder) |
 | Keyline | a 1px inset line in `--sf-color-bg` over the image edge, always on. It cannot be seen on the page, but where a card sits on another tone (the home page's sand band) it keeps a sand photograph, or the sand placeholder, from dissolving into the background |
-| Titles | 12px below the frame. Brand eyebrow: sans 11px, 500, 0.16em, uppercase, muted; one line with an ellipsis; omitted when empty. Name: Playfair 18px / 1.25, ink, `-webkit-line-clamp: 2` (only a name over 100 characters is also cut in the markup, with `truncateText`) |
+| Titles | 12px below the frame. Brand eyebrow: sans 11px, 500, 0.16em, uppercase, muted; one line with an ellipsis; omitted when empty. Name: Playfair 18px / 1.25, ink, `-webkit-line-clamp: 2` from 768px; on phones the brand and the name show in full (a 116px rail card needs up to four lines for the catalogue's longest names, five with WCAG 1.4.12's text spacing; Prompt 31). Only a name over 100 characters is also cut in the markup, with `truncateText` |
 | Rating row | only when `totalReviews > 0`: 12px stars in ink and "(12)" in muted 12px; one accessible image, "Rated 4.5 out of 5, 12 reviews" (the visible count is `aria-hidden`) |
 | Price | `PriceBlock size="sm" showSavings={false}` (23.3) |
 | Chips | stacked at the image's top-left: "Sold out" (`stock === 0`), "Sale" (a real compare-at price: `getProductMinPrice(product).discount > 0`), "New" (`hot`), in that priority, two at most. `.sf-badge` at 10px, brand paper on brand ink in both modes (16.25 : 1) |
-| Wishlist | a 36px hairline disc at the top-right (a 44px target through `::after`): the page tone at 93% behind an ink outline heart, filled with the accent when saved (the fill fades in over `--sf-duration-fast` through `fill-opacity`; no scale); `aria-pressed`, "Save to wishlist" / "Remove from wishlist"; on hover the outline turns caramel |
-| Quick add, touch (the base layout) | a persistent 44px "+" disc at the image's bottom-right (the heart's disc), `aria-label="Add <name> to cart"`; a check for 1.2s after a tap (fading in: `.sf-fade-in`) |
+| Wishlist | a 36px hairline disc at the top-right (a 44px target through `::after`): the page tone at 93% behind an ink outline heart, filled with the accent when saved (the fill fades in over `--sf-duration-fast` through `fill-opacity`; no scale); `aria-pressed` with one name, "Save <name> to wishlist" (a toggle keeps its name; the state is `aria-pressed`, Prompt 31); on hover the outline turns caramel |
+| Quick add, touch (the base layout) | a persistent 44px "+" disc at the image's bottom-right (the heart's disc), `aria-label="Add to cart, <name>"` (the visible label first, WCAG 2.5.3; "Sold out, <name>" when disabled; Prompt 31); a check for 1.2s after a tap (fading in: `.sf-fade-in`) |
 | Quick add, `(hover: hover)` | a 44px bar along the image's bottom edge: the page tone at 93%, "Add to cart" in ink (sans 14px, 500). It slides up (`--sf-duration`, `--sf-ease-out`) on card hover and on keyboard focus inside the card (`--qa`); focus left behind by a click does not keep it up once the pointer leaves (`:has(:focus-visible)`). Hover inverts it to `--sf-color-primary` with `--sf-color-primary-contrast` text; it reads "Added" for 1.2s after a click (the word and its check fade in: `.sf-fade-in`) |
 | Sold out | the image at 60%; the quick add disabled and labelled "Sold out" (bar text muted, the disc at 50%) |
 | Hover, `(hover: hover)` | the image scales to 1.03 over `--sf-duration-slow` (`--sf-ease-out`); the second photograph (`images[1]`) fades in over it once loaded (mounted on the first mouse or pen hover, never on touch: lazy, `aria-hidden`, empty alt); the stone hairline appears around the image (opacity, `--sf-duration-fast`); the name's underline turns caramel while the link is hovered |
@@ -1294,7 +1298,7 @@ import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 
 - **Markup:** `<nav aria-label="Breadcrumb"><ol>…</ol></nav>`. Items before the last are router `Link`s when they have a `link` (text otherwise). The last item is the current page: text with `aria-current="page"`, even when it has a `link`.
 - **Separators:** a "›" drawn by CSS before every item after the first, with `content: "\203A" / ""`, so screen readers skip it.
-- **Look:** sans 13px / `--sf-leading-normal`; links `--sf-color-text-muted`, ink with a 1px `--sf-color-accent` underline on hover; the current page ink at 500. It wraps on narrow screens (row gap 4px). Each link has a 44px-tall hit area (`::after`, inset −12px −4px) that does not move the row; focus is a 2px `--sf-color-focus` outline.
+- **Look:** sans 13px / `--sf-leading-normal`; links `--sf-color-text-muted`, ink with a 1px `--sf-color-accent` underline on hover; the current page ink at 500. It wraps on narrow screens (row gap 4px; on phones and touch screens, `(max-width: 767.98px), (pointer: coarse)`, 24.5px, so wrapped lines sit 44px apart and the hit areas of links on two lines never overlap: most trails wrap below 400px; Prompt 31). Each link has a 44px hit area (`::after`: 12.25px above and below, 4px either side, and 44px across for a short crumb) that does not move the row; the listing and the product page reserve the phone trail's room as one line plus 44px; focus is a 2px `--sf-color-focus` outline.
 - **Adoption:** Prompt 16 (product page: the category's full trail, then the product; section 26.2) and Prompt 28 (content pages).
 
 ### 24.2 Page header
@@ -1500,7 +1504,7 @@ In order, with the gap above each:
 ### 26.6 The sticky bar
 
 - **When:** up to 768px, whenever the buy box's actions are out of view (the unchanged `IntersectionObserver`, `rootMargin: "0px 0px -10% 0px"`): below the fold on load, and again once they have scrolled past. Hidden, it is `aria-hidden` and its button leaves the tab order.
-- **Look:** paper (`--sf-color-bg`) with a top hairline, 64px plus the home-indicator inset, `--sf-gutter` sides: a 40px thumbnail (hairline edge), the name in Playfair 15px on one line, the price (sans 14px 500) with the chosen option after a dot (13px muted), and a compact 44px `.sf-btn--primary` (at least 7.75rem wide, so "Added" or "Out of stock" never moves the text). It slides up over `--sf-duration` (`--sf-ease-out`) and away over `--sf-duration-exit` (`--sf-ease-in-out`). No shadow.
+- **Look:** paper (`--sf-color-bg`) with a top hairline, 64px plus the home-indicator inset, `--sf-gutter` sides: a 40px thumbnail (hairline edge; not drawn below 400px, where its room goes to the text so the chosen option is not cut to "2…"; Prompt 31), the name in Playfair 15px on one line, the price (sans 14px 500) with the chosen option after a dot (13px muted), and a compact 44px `.sf-btn--primary` (at least 7.75rem wide, so "Added" or "Out of stock" never moves the text). It slides up over `--sf-duration` (`--sf-ease-out`) and away over `--sf-duration-exit` (`--sf-ease-in-out`). No shadow.
 - **Stacking:** `--sf-z-stickybar` (60), replacing the old `z-index: 1300`: above the bottom nav (`--sf-z-bottomnav`, 58), which it covers while shown, and below every drawer, sheet and modal (≥ 1000) and the search overlay (1400). Verified with `elementFromPoint` at 360px: the bar over the nav; the opened cart drawer over the bar.
 - **Keyboard:** while the bar is shown, `html` gets `scroll-padding-bottom: calc(64px + inset + 16px)` (an `html:has(.visible)` rule), so focused or scrolled-to content stops above the bar instead of under it. If keyboard focus (`:focus-visible`) lands on something the bar covers where it rests (the fixed bottom nav), the bar steps aside until focus moves on.
 
@@ -1642,7 +1646,9 @@ Written by Prompt 18. Files: `src/components/CartDrawer/CartDrawer.js` + `.modul
 ### 28.4 Keyboard, focus and announcements
 
 - `role="dialog"`, `aria-modal="true"`, `aria-labelledby` the title, `aria-describedby` the count. `useFocusTrap` (section 19.1): focus starts on "Close cart"; Tab and Shift+Tab stay inside; Escape closes; focus returns to whatever opened the drawer (the header's cart button, a card's quick add, the product page's Add to cart). `useBodyScrollLock` locks the page, and BottomNav goes `inert` beneath.
-- Tab order: close → for each line, the name, Remove, −, + → Checkout → Continue shopping.
+- Tab order: close → for each line, the name, Remove, −, + → Checkout → Continue shopping. The name link is a 44px target (`::after`; the two-line clamp moved to a span inside it, whose overflow would clip the area; Prompt 31).
+- **Toasts while the cart is open (Prompt 31):** the open cart is its own confirmation, so a success toast ("Added to cart") is clipped out of sight (`clip-path: inset(50%)` from a `body:has(.panel)` rule) instead of sitting over Checkout for its two seconds; it stays in the page and is still announced (`role="alert"`). Error toasts show as before.
+- **Short windows (Prompt 31):** at 500px tall or less (a phone on its side) the panel scrolls as a whole instead of leaving the lines a 17px strip between the fixed header and footer.
 - After "Remove", focus moves to the next line's Remove (the previous line's for the last one); when the cart is empty, to the empty message (`tabIndex -1`), which is read out. A line that is folding away is `inert`.
 - A plain click on a link closes the drawer as it navigates; a modified click (new tab) leaves it open; any route change underneath (back, forward) closes it.
 - Live regions: the free-delivery line (`aria-live="polite"`, `aria-atomic`) and each stepper's figure.
@@ -1688,6 +1694,7 @@ Inside `.sf-container--wide`, on paper:
 
 - **Rules (unchanged):** `useDealsCountdown(config.timer)`, with `showCountdown` / `timerEnded` computed as before. The hook runs in a small `OfferCountdown` component, so the once-a-second tick re-renders only that row, not the page's cards.
 - **Row:** hairlines above and below, 20px of padding (24px from 768px). "Offers end in" (sans 14px 500, secondary) beside the clock, which wraps under it on phones; they share the figures' baseline. Figures: Playfair 28px, `lining-nums tabular-nums`, ink; the colons muted; unit labels as eyebrows (Hours, Minutes, Seconds). Hours keep counting past 24 (a fixed end three days out reads 77 : 07 : 30), as the rule always did.
+- **Hide seconds (Prompt 31, WCAG 2.2.2):** a quiet `.sf-btn--link` after the clock (14px, secondary; on its own line under the clock on phones) takes the ticking seconds away, so the clock changes once a minute; it then reads "Show seconds". Its name follows its text (no `aria-pressed`). The skeleton reserves its line on phones.
 - **Ended** (`onExpiry: "hide"` and the end has passed): the same row with "This round of offers has ended. Prices shown are current." (16px, muted). **Timer off:** no row at all. The page never shows a countdown the config did not ask for.
 - **Accessibility:** the row is `role="timer"`, named by `timeLeftLabel(parts)`: "Offers end in 5 hours and 12 minutes", "Offers end in 12 minutes", "Offers end in less than a minute". It uses hours and minutes only, so the name changes at most once a minute (React writes the attribute only when the string changes), while the label and the ticking figures inside are `aria-hidden`. A timer is `aria-live="off"` by role, so nothing is announced on its own; a screen reader reads the summary when it reaches the row.
 
@@ -2935,3 +2942,61 @@ Verified (Prompt 30): after scrolling through eleven storefront pages with reduc
 - [ ] No springs, no scaling panels, no lifts, no pops; framer `layout` as `"position"`.
 - [ ] Opacity and transform only, no new `will-change`; record the interaction in DevTools Performance and look for layout on every frame.
 - [ ] Reduced motion: transforms off, custom `@keyframes` off, JS scrolls `"instant"`; focus never lost while anything animates.
+
+---
+
+## 41. Responsive and accessibility pass
+
+Written by Prompt 31. The audit itself (every route at 320–1920px and 667 × 375, both modes, WCAG 2.2 AA) and its findings are in `prompts/QA_RESPONSIVE_A11Y.md`. This section keeps the rules the pass added, for later prompts to follow.
+
+### 41.1 Skip link and the page area
+
+- `SkipLink` (`src/components/SkipLink/SkipLink.js`) renders `<a class="sf-skip-link" href="#main-content">Skip to content</a>` as the first child of the storefront's `.App` (the admin routes never mount it). It is off-screen until it has keyboard focus (`:focus-visible`), then an ink tab top-left above everything.
+- Its target is `<main id="main-content" tabIndex={-1}>` (`MAIN_CONTENT_ID`, on `PageTransition` in `App.js`). Activating the link focuses `<main>` without writing `#main-content` into the URL (React Router would treat the hash as a navigation). `main[tabindex="-1"]` shows no ring; the next Tab goes on inside the page.
+- **Route changes.** On a new path (a link, Back or Forward; not a `REPLACE` that only corrects the URL, and not the first page of a visit), focus that is not inside `<main>` moves to the skip link, as on a full page load: the next Tab starts at the top, Enter skips to the new content, and a screen reader hears "Skip to content". Keyboard users see the tab; after a click or a tap it stays off-screen. A link followed from a drawer or dialog waits (at most 1.5s) for the layer to close and hand focus back first.
+- A page that moves focus to its own heading on arrival (the order confirmation) treats the skip link as "nowhere": `isFocusUnplaced()` is true for no element, `<body>` and the skip link.
+
+### 41.2 Focus is never hidden under a sticky layer
+
+- `useFocusNotObscured` (`src/components/ui`, installed once by `SkipLink`): after a keyboard focus move (the last input was a key), once the window has stopped scrolling, it finds the band the fixed and sticky layers leave free (below the header and anything stacked under it, above the bottom bar and the sticky add-to-cart bar) and, if a layer covers the focused element or the browser left it partly outside the window, scrolls just enough to bring it 16px inside that band (instantly). A second look, once the header has finished compacting or expanding and any scroll reveal around the element has finished rising, corrects what moved since.
+- Never for focus inside a fixed layer or a dialog. Focus inside a sticky layer (the header, the product page's section nav, the sticky rails) counts that layer as its own: a rail pushed under the header at the end of its run is scrolled back out; a rail resting against the header is left alone.
+- Not `scroll-padding` on the root (WCAG technique C43): Chromium then also "reveals" controls inside the sticky header, jumping the page up by the padding whenever focus enters the header. The anchors' `scroll-margin`s (§17.2) are unchanged.
+- New sticky or fixed UI needs nothing extra: the guard reads layers from the page. Do not add `scroll-padding-top` to `html`.
+
+### 41.3 Overlays
+
+- While a layer from `useFocusTrap` is open, the rest of the page is `inert` (§19.1): out of reach of the pointer, the keyboard and a screen reader's virtual cursor. Backdrops (`aria-hidden`) and SweetAlert's containers are left alone.
+- A panel that animates out is `inert` while it leaves (the cart's folding line, the mega-menu panel): `useIsPresent()` from framer-motion, `inert={isPresent ? undefined : ""}`.
+
+### 41.4 Touch targets
+
+The rule: every control is at least 44 × 44px on a touch screen, with at least 8px between visible controls, inline links in running text excepted. Where the drawn control is smaller, an invisible `::after` (or `::before`) carries the target, centred on the control, without moving the layout: `inset: min(0px, (100% - var(--sf-tap-target)) / 2) …`. Its parent must not clip it (`overflow`), and two areas must not overlap.
+
+| Where | How |
+|---|---|
+| `.sf-chip` (`a`, `button`, `label`) | the primitive's `::after`: 44px tall; wrapped rows 12px apart, scroll rows 8px of padding |
+| `.sf-btn--link` | `::after`: ≥ 44 × 44 |
+| Header and footer logos | `::after`: 44px tall (the ring still hugs the logo) |
+| Footer links on phones and touch, the sidebar's legal links | `::after`: 44px across for a short label ("Terms") |
+| Breadcrumb links | `::after`: 44 × 44; wrapped lines 44px apart on phones and touch |
+| The cart line's name, a review's product link | `::after`: 44px tall |
+| The orders card's copy button | `position: relative`, so the line after it no longer takes its lower edge |
+| Review carousel dots on touch | position marks only (`pointer-events: none` under `pointer: coarse`); swipe and the 44px buttons move it |
+
+### 41.5 Names, lists and text
+
+- **Card controls:** the photograph is decorative (`alt=""`); the quick add is "Add to cart, <name>" ("Sold out, <name>"), its visible label first (WCAG 2.5.3); every wishlist heart (card, list row, product page) is a toggle with one name ("Save <name> to wishlist", "Save to wishlist") and its state in `aria-pressed`.
+- **Lists:** Safari drops the list semantics of a `list-style: none` list. The content lists whose count matters (product grids and rails, the cart, checkout and order lines, orders, the wishlist, addresses, the store-credit ledger, reviews, help topics, search results, offers) carry `role="list"`, with an `eslint-disable-next-line jsx-a11y/no-redundant-roles` that says why. Lists inside a `<nav>` keep their semantics without it.
+- **Text in full:** on phones the card's brand and name are not clamped (§23.1); the store-credit ledger's order number breaks rather than pushing the page sideways at 320px; the sticky bar drops its thumbnail below 400px (§26.6). The sticky bar's name stays one line: it repeats the page's `h1`.
+- **Moving content:** the offers countdown has "Hide seconds" (§29.2, WCAG 2.2.2).
+- **Destructive confirms** start on the harmless choice (`focusCancel: true`): cancel order, delete address, clear wishlist; the confirm button is `sf-btn sf-btn--danger`, never a hex colour.
+
+### 41.6 Checklist for later prompts
+
+- [ ] A new route renders inside `<main id="main-content">`; a page that focuses its heading on arrival checks `isFocusUnplaced()` first.
+- [ ] New overlays use `useFocusTrap` (the page goes inert by itself); a panel that animates out is `inert` while it leaves.
+- [ ] Every control is 44 × 44 on touch (an `::after` when the drawn control is smaller), 8px apart, never clipped by an `overflow`, never overlapping another.
+- [ ] Toggles keep one name and use `aria-pressed`; a control with visible text has a name that starts with that text; images inside a link named by its text are `alt=""`.
+- [ ] Content lists styled `list-style: none` get `role="list"` (with the lint note).
+- [ ] No text clipped at 320px or under WCAG 1.4.12 text spacing; nothing scrolls sideways at 320px.
+- [ ] Run axe on the route in both modes (zero serious or critical) and Tab through it at 390 and 1440px, forwards and backwards: focus always visible, never under the header or a bar.
