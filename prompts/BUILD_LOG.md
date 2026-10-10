@@ -4133,7 +4133,7 @@ No event handler runs longer than 140ms at 4× CPU (the brief's bar: 200ms). The
 
 Home, cold load: **8 API calls** (was 12): categories, settings, shipping methods, featured, trending, the deals config, the curated piece and the product list (the reviews are read later, when their section nears the viewport). Before, the categories were read three times (header, footer, home) and the settings and shipping methods twice (footer, assurance strip). `src/services/sharedReads.js` gives reads made in the same moment one request; nothing is cached, and the next read asks the API again, as before. The listing went from 7 to 5 calls, the product page from 14 to 11, Help from 5 to 4.
 
-Duplicates left, all outside what this prompt may change: the product page reads the whole catalogue twice (`api.js`'s related and frequently-bought-together reads in JSON Server mode); signed-in pages read the cart twice (`CartContext`); My orders reads the orders twice (`OrderContext`'s own read, which nothing uses, and the page's); checkout and the offers page read the settings, shipping methods or categories again when their chunk arrives, after the shell's reads (a lazy page renders after the shell, so the two reads are no longer in the same moment).
+Duplicates left by this change: the product page read the whole catalogue twice (`api.js`'s related and frequently-bought-together reads); signed-in pages read the cart twice and rewrote it (`CartContext`); My orders read the orders twice (`OrderContext`'s own read, which nothing used, and the page's). The follow-up "Duplicate reads", at the end of this entry, removes all three. Still read twice: checkout and the offers page read the settings, shipping methods or categories again when their chunk arrives, after the shell's reads (a lazy page renders after the shell, so the two reads are no longer in the same moment).
 
 ### SEO and sharing
 
@@ -4259,7 +4259,7 @@ Walked on every storefront surface with the production build (decision points at
 2. **Checkout's Performance fell 3 points** (55 → 52) while its LCP improved by 0.6s: the code split the brief asks for adds a second render step on a cold load. The way there during a visit warms the chunk ahead of the click.
 3. **Files beyond the brief's list:** `src/services/sharedReads.js` and the read call sites in `Header.js`, `Footer.js`, `AssuranceStrip.js`, `Home.js`, `Products.js` and `ProductDetails.js` (the brief's "consolidate duplicate fetches": the same `apiService` calls and answers, only merged when simultaneous); `src/index.js`'s loader hand-off (a blank-page gap that Suspense made longer); the checkout warm-up in `CartDrawer.js` and `ProductDetails.js`; `startTransition` in `Home.js`.
 4. **The product page's failed read** now shows its own state instead of "not found": the read is unchanged, only what the page shows for a non-404 failure.
-5. **Left as found, outside presentation:** the duplicate reads listed under "Network"; the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
+5. **Left as found, outside presentation:** the second reads of checkout and the offers page listed under "Network" (the cart, orders and catalogue duplicates are removed in the follow-up); the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
 6. **Google's Rich Results Test** cannot reach a local build; the schema.org validator was used, and the test is listed for Prompt 34.
 7. **`settings.seo` in `db.json` is not read:** the admin cannot edit it, and reading it would add a request to every page; the defaults live in `constants.js` and `index.html`.
 
@@ -4322,4 +4322,38 @@ Walked on every storefront surface with the production build (decision points at
   - wishlist: the error, never the empty state, then the account's three pieces;
   - the admin's Special Offers page loads as before.
 - **Layout:** the new states at 390 and 1,440px: no page scrolls sideways.
+
+### Follow-up: duplicate reads
+
+**Asked in the same session, on the same branch:** remove the duplicate cart, orders and catalogue reads found above. Counted with Playwright on JSON Server-mode production builds of the branch before and after (a fresh copy of `db.json` each time). Each load is a full page load that waits 2s after the network goes idle, so the cart's debounced sync has run. The signed-in customer's device holds two cart lines, and the account's cart starts empty: the first visit merges them up, and every later load has nothing to change.
+
+| Load | Requests before | Requests after | Duplicates left |
+|---|---|---|---|
+| guest `/` | 8 (0 cart writes) | 8 (0 cart writes) | — |
+| guest `/products` | 5 (0 cart writes) | 5 (0 cart writes) | — |
+| guest `/products/ribbed-back-plastic-armchair` | 11 (0 cart writes) | 10 (0 cart writes) | — |
+| guest `/special-offers` | 7 (0 cart writes) | 7 (0 cart writes) | GET /categories ×2 |
+| signed in, first visit (the merge), `/profile` | 10 (2 cart writes) | 9 (2 cart writes) | none: the load's read and the replace's own read, then one add per line |
+| signed in `/` | 16 (4 cart writes) | 10 (0 cart writes) | — |
+| signed in `/products` | 13 (4 cart writes) | 7 (0 cart writes) | — |
+| signed in `/products/ribbed-back-plastic-armchair` | 19 (4 cart writes) | 12 (0 cart writes) | — |
+| signed in `/checkout` | 15 (4 cart writes) | 9 (0 cart writes) | GET /settings ×2, GET /shipping_methods?isActive=true ×2 |
+| signed in `/orders` | 14 (4 cart writes) | 8 (0 cart writes) | — |
+| signed in `/profile` | 12 (4 cart writes) | 6 (0 cart writes) | — |
+| signed in `/wishlist` | 12 (4 cart writes) | 6 (0 cart writes) | — |
+| signed in `/special-offers` | 15 (4 cart writes) | 9 (0 cart writes) | GET /categories ×2 |
+
+| What | Why it happened | Change |
+|---|---|---|
+| The cart, signed in | After every page load the cart's mirror to the account ran even when nothing had changed: `replaceApiCart` read the account's rows again, deleted each one and added each line back (2 lines: 1 read, 2 deletes, 2 adds per load). | `CartContext` keeps a key of what the server holds (`syncKey`: the fields the sync writes, one entry per line, sorted), set by the load and by every sync queued. A cart equal to it is not written. A real change is written as before, and a server holding the same line twice still differs, so the next sync tidies it. The first visit's merge is unchanged: it adds the device's lines, after the replace's own read of the rows it rewrites. |
+| The orders | `OrderContext` read every order on every signed-in page load, for a list nothing used (Checkout uses only `createOrder`). My orders reads its own, so `/orders` read them twice. | The mount read is gone; `loadUserOrders` stays for a caller that needs the list, and signing out still clears it. |
+| The catalogue, product page | `getRelated` and `getFrequentlyBoughtTogether` each read the whole catalogue (in both API modes). | They share one request through `shareRead`, now its own module (`src/services/shareRead.js`, used by `sharedReads.js` and `api.js`). Nothing is cached: a later read asks again. |
+
+**Verification**
+
+- `CI=true npm test -- --passWithNoTests` exits 0: **83 suites, 1,397 tests**, no console warnings. New suites: `CartContext.test.js` (5 tests) and `OrderContext.test.js` (3); two more tests in `api.reads.test.js`.
+- **Mutation checks:** writing an unchanged cart, reading orders on mount again, and reading the catalogue per call each fail a new test.
+- `CI=true npm run build` compiles with no warnings; ESLint reports nothing in the 8 changed files.
+- **Browser:** after the visits, the account's cart is the same on both builds (`2-v1×2, 4-v1×1`). A signed-in Add to cart and a "+" in the cart drawer still reach the account, and after a reload the device and the account agree. Admin dashboard, orders, products and special offers load with no error, and read no cart or customer orders.
+- Still read twice, and not part of this follow-up: checkout's settings and shipping methods, and the offers page's categories (see "Network" above).
 

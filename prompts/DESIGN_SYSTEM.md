@@ -3052,7 +3052,8 @@ Written by Prompt 32. The measurements (Lighthouse before and after, bundle size
 
 - `src/services/sharedReads.js`: `readCategories()`, `readSettings()`, `readShippingMethods()`. Components that read these on mount (the header, the footer, the assurance strip, home, the listing, the product page) use them: reads started in the same moment (one commit's effects) share one request. On a home page load this took the API calls from 12 to 8.
 - **Nothing is cached:** the next read (a refocus refetch, a drawer opening, the next page) asks the API again. The shared answer must not be changed in place: filter and sort copies.
-- A new component that reads one of these on mount uses the helper; another read several components make at once gets a helper of its own (`shareRead(key, read)`).
+- A new component that reads one of these on mount uses the helper; another read several components make at once gets a helper of its own (`shareRead(key, read)`, in `src/services/shareRead.js`, which imports nothing so `api.js` can use it: the product page's two recommendation reads share one catalogue request through it).
+- **No read nobody shows, no write that changes nothing:** a context does not read on every page load what no screen uses (`OrderContext` reads orders only when asked; My orders reads its own), and the cart's mirror to the account writes only a cart that differs from what the server holds (`syncKey` in `CartContext`).
 
 ### 42.5 Images
 
