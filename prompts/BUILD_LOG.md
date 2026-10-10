@@ -4107,7 +4107,7 @@ What moved before: the wishlist's three loading cards collapsed into "Nothing sa
 | Search: close (Escape) | 176ms | 152ms | 130 / 114ms |
 | Header: open the menu | 288ms | 280ms | 6 / 5ms |
 
-No event handler runs longer than 140ms at 4× CPU (the brief's bar: 200ms). The longer interactions at 4× are the frames that draw what opens (the cart drawer, the search overlay, the menu): rendering, the same on both builds within run-to-run noise (±50ms). At 1× CPU every interaction is under 200ms on both builds (the drawer opening, the slowest: 112ms median over 7 runs on both). Search scores the catalogue once typing pauses for 300ms (`DEBOUNCE_MS`), so a keystroke's handler takes 3–5ms. Warming checkout's chunk when the drawer opens costs nothing measurable (536ms with the chunk blocked, 536ms without).
+No event handler runs longer than 140ms at 4× CPU (the brief's bar: 200ms). The longer interactions at 4× are the frames that draw what opens (the cart drawer, the search overlay, the menu): rendering, the same on both builds within run-to-run noise (±50ms). At 1× CPU every interaction is under 200ms on both builds (the drawer opening, the slowest: 112ms median over 7 runs on both). Search scores the catalogue once typing pauses for 300ms (`DEBOUNCE_MS`), so a keystroke's handler takes 3–5ms. Warming checkout's chunk when the drawer opens costs nothing measurable (536ms with the chunk blocked, 536ms without). The drawer's opening is cut to 252ms in the follow-up below ("The cart drawer's opening").
 
 ### Bundle (`npm run build`, JSON Server mode)
 
@@ -4259,7 +4259,7 @@ Walked on every storefront surface with the production build (decision points at
 2. **Checkout's Performance fell 3 points** (55 → 52) while its LCP improved by 0.6s: the code split the brief asks for adds a second render step on a cold load. The way there during a visit warms the chunk ahead of the click.
 3. **Files beyond the brief's list:** `src/services/sharedReads.js` and the read call sites in `Header.js`, `Footer.js`, `AssuranceStrip.js`, `Home.js`, `Products.js` and `ProductDetails.js` (the brief's "consolidate duplicate fetches": the same `apiService` calls and answers, only merged when simultaneous); `src/index.js`'s loader hand-off (a blank-page gap that Suspense made longer); the checkout warm-up in `CartDrawer.js` and `ProductDetails.js`; `startTransition` in `Home.js`.
 4. **The product page's failed read** now shows its own state instead of "not found": the read is unchanged, only what the page shows for a non-404 failure.
-5. **Left as found, outside presentation:** the second reads of checkout and the offers page listed under "Network" (the cart, orders and catalogue duplicates are removed in the follow-up); the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
+5. **Left as found, outside presentation:** the second reads of checkout and the offers page listed under "Network" (the cart, orders and catalogue duplicates are removed in the follow-up); the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms; cut to 252ms in the follow-up below, which explains what is left).
 6. **Google's Rich Results Test** cannot reach a local build; the schema.org validator was used, and the test is listed for Prompt 34.
 7. **`settings.seo` in `db.json` is not read:** the admin cannot edit it, and reading it would add a request to every page; the defaults live in `constants.js` and `index.html`.
 
@@ -4279,7 +4279,7 @@ Walked on every storefront surface with the production build (decision points at
 ### Notes for later prompts
 
 - **33:** a new storefront page calls `usePageMeta` once (DESIGN_SYSTEM §42.1) and, off the purchase path, goes in `lazyPages.js` (§42.3); measure Lighthouse against `HEAD` with the same harness (JSON Server mode, interleaved runs, medians).
-- **34 (final QA):** Google's Rich Results Test on a public product URL; DESIGN_SYSTEM §42.9; the cart drawer's opening cost at 4× CPU (a `CartContext` render question, not presentation).
+- **34 (final QA):** Google's Rich Results Test on a public product URL; DESIGN_SYSTEM §42.9; the cart drawer's opening at 4× CPU (252ms after the follow-up below, ~85ms of it the page made inert).
 
 ### Needs client confirmation
 
@@ -4356,4 +4356,65 @@ Walked on every storefront surface with the production build (decision points at
 - `CI=true npm run build` compiles with no warnings; ESLint reports nothing in the 8 changed files.
 - **Browser:** after the visits, the account's cart is the same on both builds (`2-v1×2, 4-v1×1`). A signed-in Add to cart and a "+" in the cart drawer still reach the account, and after a reload the device and the account agree. Admin dashboard, orders, products and special offers load with no error, and read no cart or customer orders.
 - Still read twice, and not part of this follow-up: checkout's settings and shipping methods, and the offers page's categories (see "Network" above).
+
+### Follow-up: the cart drawer's opening
+
+**Asked in the same session, on the same branch:** cut the render cost of the product page's Add to cart, which opens the cart drawer: the slowest interaction above (about 540ms at 4× CPU, handlers 12ms). Profiled first: the React Profiler on a `--profile` build, Chrome traces with style-invalidation tracking, and V8's samples inside the trace mapped through the build's source maps.
+
+**What the frame was doing** (the product page at 412px, 4× CPU, one add):
+
+| Work | Cost | Why |
+|---|---|---|
+| Three restyles of the whole page | ~65–95ms each | `html` was restyled three times, and a restyle of `html` restyles every element (~1,000 here): App.css's universal `::-webkit-scrollbar` rule gives `html` the page's scrollbar, a pseudo-element of its own. SweetAlert's toast put `swal2-toast-shown`, then `swal2-shown` on `html`, and `AddToCartBar`'s `html:has(.visible)` rule made every element added anywhere (the drawer, the toast's container) restyle `html`. |
+| One restyle of the page behind the drawer | ~65ms | `inert` on `#root` (the overlay contract, DESIGN_SYSTEM §19.1): its whole subtree, 845 elements. |
+| SweetAlert | ~60–90ms of script | building the toast and reading styles back (four forced style recalculations). |
+| React | 50–70ms of render | `CartContext`'s value was a new object each render, so every `useCart()` consumer re-rendered: the whole product page (which also held the "Added" state), the header with its menus and dialogs, the sticky bar. |
+| The drawer itself | — | its render, style and layout, framer-motion's entrance and layout measurement, the body scroll lock, paint; checkout's chunk starting to load (~10ms); `formatCurrency` building an `Intl.NumberFormat` per call. |
+
+**What changed** (the cart's behaviour, the API and the motion are unchanged):
+
+| File | Change |
+|---|---|
+| `src/context/CartContext.js`, `src/hooks/useCart.js` | Two memoised contexts, state and actions. `useCart()` returns both, as before; the new `useCartActions()` returns the actions alone, which never change. An add that opens the drawer holds its toast until the drawer has painted and slid in (`showToastOnceOpen`: a `requestAnimationFrame`, then `--sf-duration`); any cart toast fired meanwhile replaces it, as it replaced a shown one. Buy now's add (`openDrawer: false`) and the error toast show at once. |
+| `src/pages/ProductDetails/ProductDetails.js` | `useCartActions`. The buy box's Add to cart is `AddToCartButton`, holding its own "Added" moment (1.4s); `confirm()` on its ref starts it, from its own add and from the sticky bar's. An add no longer re-renders the page. |
+| `src/pages/Products/Products.js`, `Home/Home.js`, `SpecialOffers/SpecialOffers.js` | `useCartActions`: they only add to the cart. |
+| `src/components/Header/Header.js` | The header reads nothing of the cart: `CartAction` (the button and its count) and `HeaderCartDrawer` do, so a cart change re-renders them, not the menus and dialogs. Same markup, same place. |
+| `src/components/storefront/AddToCartBar.js`, `.module.css` | `data-sf-sticky-bar` on `html` while the bar is shown, read by the phone rule that sets the scroll padding, in place of `html:has(.visible)`. |
+| `src/components/StorefrontRoot/StorefrontRoot.js` (new), `src/App.js`, `src/index.css` | `data-sf-storefront` on `html` while the storefront's routes are mounted; the reduced-motion scroll rule reads it in place of `html:has(> body:not(.admin-area))`, which under reduced motion restyled the whole page on every element added. The admin's routes do not mount it: its `html` and its scrolling are as before. |
+| `src/components/CartDrawer/CartDrawer.js` | Checkout's chunk starts loading once the drawer has slid in, not in its first frame or during the slide (the chunk's stylesheet restyles the page when it arrives); a drawer closed before then loads nothing. |
+| `src/utils/helpers.js` | `formatCurrency` keeps one `Intl.NumberFormat` per currency (the same output). |
+| Tests | `CartContext` (6: the held toast, Cart updated, Buy now's toast at once, a toast replacing a held one, actions that never change and a consumer of them that does not re-render, both hooks outside the provider), `AddToCartBar` (the `html` attribute), `ProductDetails` (an add re-renders the button, not the page; the bar's add sets the buy box's "Added"), `CartDrawer` (the chunk after the entrance, and not at all when closed first), `helpers` (`formatCurrency`), new `StorefrontRoot.test.js`; the four page tests mock `useCartActions`, and two wishlist tests wait for the held toast. |
+
+**Decisions**
+
+- **The toast is held, not dropped.** While the cart is open it is clipped out of sight (Prompt 31) and is there to be announced, which it still is, about 320ms later. Replacing it with a live region in the drawer would change how the add is announced.
+- **Attributes on `html`, not classes:** SweetAlert's `[class^=swal2]` rule reads `html`'s class, so any class change there restyles it, while an attribute is read only by the rules that name it. On wider screens, where the bar's rule does not apply, showing or hiding the bar restyles nothing.
+- **App.css's scrollbar rules are untouched** (DESIGN_SYSTEM §13). They are why any restyle of `html` reaches every element. See "Needs client confirmation" below.
+
+**Measured** (the harness of "Core Web Vitals" above: Playwright at 412px, Event Timing; JSON Server-mode production builds of the branch before, `1caffbb`, and after; medians):
+
+| Interaction | Before | After |
+|---|---|---|
+| Product: Add to cart (the drawer opens), 4× CPU, 14 runs | 532ms | **252ms** |
+| The same at 1× CPU, 7 runs | 112ms | 56ms |
+| The same under reduced motion, 4× CPU, 7 runs | 584ms | 224ms |
+| Listing: a card's quick add (the drawer opens), 4× CPU, 7 runs | 432ms | 224ms |
+| Product: close the cart (its close button), 4× CPU, 7 runs | 160ms | 144ms |
+
+Traced after: the add restyles `html` no more; one restyle of the drawer (63 elements) and one of the page made inert (845); React renders the drawer, the header's cart button and the buy box's button, 22–41ms of render at 4× CPU in a profiling build (was 50–70ms); handlers 7–11ms. Two things the harness brings into some runs, on both builds: Playwright scrolls the button into view just before it clicks, so the header's compacting and the sticky bar hiding can land in the same frame (a header render, and a restyle of the whole page for the bar's scroll padding). Bundle: JS +0.55 kB gzip (399.68 kB), CSS +0.01 kB.
+
+**Under 200ms at 4× CPU: not met (252ms).** With `inert` patched out of the same build, the same add measures 168ms (14 runs): about 85ms of the 252 is the restyle and repaint of the page behind the drawer when it becomes inert in the drawer's first frame. That is the overlay contract (DESIGN_SYSTEM §19.1), kept. The remaining ~170ms is the drawer itself: its render and commit, its first style and layout, framer-motion starting the entrance and measuring the layout animations, and paint, with ~10ms of Playwright's own checks during the click. The harness is desktop Chromium at a phone's size, with classic scrollbars: the scroll lock removes the page's 8px scrollbar and reflows the page (~25ms), which phones, with overlay scrollbars, do not; it is the same for both builds and was left as it is.
+
+**Unchanged, checked in the browser** (both builds side by side, 412 and 1,280px): the open drawer is pixel-identical; the entrance follows the same curve (backdrop opacity 0.42, 0.78, 0.93, 0.98, 1.0 at 50ms steps), sliding in, or only fading under reduced motion; focus goes to "Close cart" and `#root` is inert in the drawer's first frame; the toast's text and `role="alert"`, clipped while the cart is open and showing after Escape; Escape returns focus to Add to cart and lifts `inert`; the header reads "Cart, 1 piece" and the buy box "Added"; the sticky bar's scroll padding is 80px while it shows and none while it hides; under reduced motion the storefront scrolls at once and the admin smoothly, as before; the admin's `html` has no new attribute. No console errors.
+
+**Verification**
+
+- `CI=true npm test -- --passWithNoTests` exits 0: **84 suites, 1,408 tests**.
+- **Mutation checks:** showing the toast with the click, actions that change with the cart, a page re-render on add, no `html` attribute from the bar, and loading checkout's chunk at once each fail a new test.
+- `CI=true npm run build` compiles with no warnings. ESLint reports nothing new in the 22 changed and new JavaScript files (the test files keep the findings they had at `HEAD`).
+
+**Needs client confirmation**
+
+- **Make the page inert once the drawer has slid in?** About 170ms instead of 252ms at 4× CPU, the drawer unchanged. For those first 320ms the backdrop takes the pointer, the focus trap holds Tab and `aria-modal` marks the dialog, but the page is not yet inert: a change to Prompt 31's overlay contract, so not made.
+- **App.css's universal `::-webkit-scrollbar` rule.** Scoped away from `html` (for example `body ::-webkit-scrollbar`), a restyle of `html` would cost one element instead of every one: the sticky bar showing or hiding, every SweetAlert toast and Back and Forward's scroll hold would stop restyling the whole page. The page's own scrollbar would then be the browser's default on desktop, and the design system forbids editing those rules, so it is a design decision.
 
