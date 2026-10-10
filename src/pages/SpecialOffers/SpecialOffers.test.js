@@ -175,31 +175,74 @@ test("the document is titled Special offers, described by the hero's line (Promp
   expect(description()).toBe("Pieces on offer now, and codes to use at checkout.");
 });
 
-// api.js answers a failed read with { enabled: true } (it never rethrows);
-// the context keeps its default config if a read throws.
-test.each([
-  ["api.js's answer to a failed read", () => apiService.deals.getConfig.mockResolvedValue({ enabled: true })],
-  ["a read that throws", () => apiService.deals.getConfig.mockRejectedValue(new Error("Network Error"))],
-])(
-  "a config that cannot be read (%s): the plain title, no countdown and no built-in hero copy (Prompt 32)",
-  async (_, failRead) => {
-    const error = jest.spyOn(console, "error").mockImplementation(() => {});
-    failRead();
-    renderPage();
-    expect(await screen.findByRole("heading", { level: 1, name: "Special offers" })).toBeInTheDocument();
-    await findRegion("Codes to use at checkout.");
-    expect(screen.queryByRole("timer")).not.toBeInTheDocument();
-    expect(screen.queryByText(/Limited time/i)).not.toBeInTheDocument();
-    expect(screen.queryByText(/unbeatable|don.t miss out/i)).not.toBeInTheDocument();
-    expect(document.title).toBe("Special offers | A & S Urbanseat");
-    // eslint-disable-next-line testing-library/no-node-access -- the page writes <head>, which has no roles to query
-    expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute(
-      "content",
-      "Pieces on offer now, and codes to use at checkout."
-    );
-    error.mockRestore();
-  }
-);
+// api.js answers a deals config that does not exist yet (404) with
+// { enabled: true }: the page runs on its defaults, plainly.
+test("a deals config that does not exist yet: the plain title, no countdown and no built-in hero copy (Prompt 32)", async () => {
+  apiService.deals.getConfig.mockResolvedValue({ enabled: true });
+  renderPage();
+  expect(await screen.findByRole("heading", { level: 1, name: "Special offers" })).toBeInTheDocument();
+  await findRegion("Codes to use at checkout.");
+  expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Limited time/i)).not.toBeInTheDocument();
+  expect(screen.queryByText(/unbeatable|don.t miss out/i)).not.toBeInTheDocument();
+  expect(document.title).toBe("Special offers | A & S Urbanseat");
+  // eslint-disable-next-line testing-library/no-node-access -- the page writes <head>, which has no roles to query
+  expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Pieces on offer now, and codes to use at checkout."
+  );
+});
+
+// Any other failure is rethrown (read errors, Prompt 32): without the admin's
+// config the page cannot know whether it is on or what it features.
+test("a deals config that cannot be read: the error panel, no offers and no countdown; Try again reads it and the offers again", async () => {
+  const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+  const failed = deferred();
+  const retried = deferred();
+  apiService.deals.getConfig.mockReturnValueOnce(failed.promise).mockReturnValueOnce(retried.promise);
+  renderPage();
+  await act(async () => failed.reject(new Error("Network Error")));
+  expect(screen.getByRole("heading", { name: "We couldn’t load the offers." })).toBeInTheDocument();
+  expect(screen.getByRole("heading", { level: 1, name: "Special offers" })).toBeInTheDocument();
+  expect(screen.queryByRole("region", { name: titled("Codes to use at checkout.") })).not.toBeInTheDocument();
+  expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+  expect(screen.queryByText(/Limited time/i)).not.toBeInTheDocument();
+
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await act(async () => retried.resolve(BASE_CONFIG));
+  expect(await screen.findByRole("heading", { level: 1, name: CONFIG.hero.title })).toBeInTheDocument();
+  await waitFor(() => expect(region("Codes to use at checkout.")).toHaveFocus());
+  expect(apiService.deals.getConfig).toHaveBeenCalledTimes(2);
+  expect(apiService.products.getAll).toHaveBeenCalledTimes(2);
+  consoleError.mockRestore();
+});
+
+test("a config read again when the window regains focus that fails keeps the config already read", async () => {
+  const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+  renderPage();
+  expect(await screen.findByRole("heading", { level: 1, name: CONFIG.hero.title })).toBeInTheDocument();
+  await findRegion("Codes to use at checkout.");
+  apiService.deals.getConfig.mockRejectedValueOnce(new Error("Network Error"));
+  await act(async () => {
+    window.dispatchEvent(new Event("focus"));
+  });
+  expect(apiService.deals.getConfig).toHaveBeenCalledTimes(2);
+  expect(screen.getByRole("heading", { level: 1, name: CONFIG.hero.title })).toBeInTheDocument();
+  expect(region("Codes to use at checkout.")).toBeInTheDocument();
+  expect(screen.queryByRole("heading", { name: "We couldn’t load the offers." })).not.toBeInTheDocument();
+  consoleError.mockRestore();
+});
+
+test("a coupon read that fails is a failed read, never “No codes right now.” (read errors, Prompt 32)", async () => {
+  const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+  apiService.coupons.getActive.mockRejectedValueOnce(new Error("Network Error"));
+  renderPage();
+  expect(await screen.findByRole("heading", { name: "We couldn’t load the offers." })).toBeInTheDocument();
+  expect(screen.queryByText("No codes right now.")).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  await waitFor(() => expect(ticketCodes()).toEqual(["WELCOME500", "FLAT10"]));
+  consoleError.mockRestore();
+});
 
 test("a config the admin saved is shown as saved, even with the built-in hero copy (Prompt 32)", async () => {
   // A saved config carries updatedAt (api.js stamps every admin save).

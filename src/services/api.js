@@ -76,6 +76,14 @@ export const extractMeta = (response) => {
   return response.data?.meta || null;
 };
 
+/**
+ * The API answered 404: there is nothing there (no saved deals config, no
+ * wallet, no coupon list). The storefront reads below treat that as the empty
+ * answer and rethrow every other failure, so a page can tell "none" from
+ * "could not load".
+ */
+const isNotFound = (error) => error?.response?.status === 404;
+
 /** Extract human-readable error message */
 export const getErrorMessage = (error) => {
   if (error.response?.data) {
@@ -382,17 +390,23 @@ const isFullReturnOfOrder = (order, ret) => {
 // checkout can read a balance cheaply. Mock-only — the Laravel branch owns the
 // wallet server-side and exposes the same endpoints, so callers are identical.
 
-// Sum a user's ledger → the authoritative available balance.
-const computeWalletBalance = async (userId) => {
+// Sum a user's ledger → the authoritative available balance. A failed read
+// throws (wallet.getBalance reports it to the storefront).
+const readWalletBalance = async (userId) => {
   if (userId == null) return 0;
+  const res = await api.get("/walletTransactions", { params: { userId } });
+  const rows = Array.isArray(res.data) ? res.data : [];
+  const bal = rows.reduce(
+    (sum, t) => sum + (t.type === "credit" ? Number(t.amount) || 0 : -(Number(t.amount) || 0)),
+    0
+  );
+  return Math.max(0, Math.round(bal));
+};
+
+// The same, reading a failure as 0: the ledger writes below rely on it.
+const computeWalletBalance = async (userId) => {
   try {
-    const res = await api.get("/walletTransactions", { params: { userId } });
-    const rows = Array.isArray(res.data) ? res.data : [];
-    const bal = rows.reduce(
-      (sum, t) => sum + (t.type === "credit" ? Number(t.amount) || 0 : -(Number(t.amount) || 0)),
-      0
-    );
-    return Math.max(0, Math.round(bal));
+    return await readWalletBalance(userId);
   } catch (e) {
     console.error("Compute wallet balance error:", e);
     return 0;
@@ -1247,16 +1261,23 @@ const apiService = {
   wallet: {
     // Available balance — summed from the ledger (the source of truth), so it
     // can never drift from the recorded credits/debits.
+    // A failed read throws, so My Account and checkout can say so instead of
+    // showing ₹0; no wallet yet (404) is a balance of 0.
     getBalance: async (userId) => {
       try {
-        if (IS_MOCK_API) return await computeWalletBalance(userId);
+        if (IS_MOCK_API) return await readWalletBalance(userId);
         const response = await api.get("/wallet/balance");
         const data = extractData(response);
         return Number(data?.balance ?? data) || 0;
-      } catch (error) { console.error("Get wallet balance error:", error); return 0; }
+      } catch (error) {
+        console.error("Get wallet balance error:", error);
+        if (isNotFound(error)) return 0;
+        throw error;
+      }
     },
 
     // Full transaction history (newest first) for the My Account wallet view.
+    // A failed read throws; no wallet yet (404) is an empty history.
     getTransactions: async (userId) => {
       try {
         if (IS_MOCK_API) {
@@ -1267,7 +1288,11 @@ const apiService = {
         }
         const response = await api.get("/wallet/transactions");
         return extractData(response);
-      } catch (error) { console.error("Get wallet transactions error:", error); return []; }
+      } catch (error) {
+        console.error("Get wallet transactions error:", error);
+        if (isNotFound(error)) return [];
+        throw error;
+      }
     },
   },
 
@@ -1356,7 +1381,8 @@ const apiService = {
     // Public list of active coupons for storefront display (e.g. the Special
     // Offers page). Sourced from the same `coupons` store the Admin manages and
     // the checkout validates against, so every advertised code redeems. Callers
-    // should still drop expired / exhausted ones (mirroring validate()).
+    // should still drop expired / exhausted ones (mirroring validate()). A
+    // failed read throws, so the page can tell it from "no codes"; 404 is none.
     getActive: async (params = {}) => {
       try {
         if (IS_MOCK_API) {
@@ -1367,7 +1393,8 @@ const apiService = {
         return extractData(response);
       } catch (error) {
         console.error("Get active coupons error:", error);
-        return [];
+        if (isNotFound(error)) return [];
+        throw error;
       }
     },
 
@@ -1468,8 +1495,10 @@ const apiService = {
   // Public read of the admin-managed config that drives the Special Offers page
   // (master toggle, hero copy, countdown window, featured coupon/product ids).
   // The storefront nav also reads `enabled` from here to show/hide the "Today's
-  // Deals" entry. Falls back to a sensible default if the record is missing so
-  // the page/nav degrade gracefully rather than breaking.
+  // Deals" entry. A record that does not exist yet (404) falls back to a
+  // sensible default, so the page and nav degrade gracefully; any other
+  // failure throws (DealsConfigContext keeps the last config it read, and the
+  // Special Offers page says it could not load the offers).
   deals: {
     getConfig: async () => {
       try {
@@ -1482,7 +1511,8 @@ const apiService = {
       } catch (error) {
         console.error("Get deals config error:", error);
         // Default to "enabled" so a missing config never hides deals silently.
-        return { enabled: true };
+        if (isNotFound(error)) return { enabled: true };
+        throw error;
       }
     },
   },

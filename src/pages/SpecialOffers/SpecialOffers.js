@@ -462,7 +462,12 @@ const SpecialOffers = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   // The whole page is admin-managed via this config (master toggle, hero,
   // timer, featured coupon/product selections).
-  const { config, loading: configLoading } = useDealsConfig();
+  const {
+    config,
+    loading: configLoading,
+    error: configError,
+    refresh: refreshConfig,
+  } = useDealsConfig();
   const enabled = config.enabled !== false;
   const reduceMotion = useReducedMotion();
   const adminConfig = !configLoading && isAdminConfig(config);
@@ -477,6 +482,7 @@ const SpecialOffers = () => {
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   // A failed read shows the "Try again" panel; `attempt` re-runs the read.
+  // A coupon read that fails is a failed read too, never "no codes".
   const [fetchError, setFetchError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [activeTab, setActiveTab] = useState("all");
@@ -530,11 +536,16 @@ const SpecialOffers = () => {
     };
   }, [enabled, attempt]);
 
+  // The page's reads failed, or the admin's config could not be read (the
+  // context's `error`): without it the page cannot know whether it is on or
+  // what it features, so it shows the same panel.
+  const failed = fetchError || configError;
+
   useEffect(() => {
     if (loading || !focusAfterRetry.current) return;
     focusAfterRetry.current = false;
-    (fetchError ? retryRef.current : codesRef.current)?.focus();
-  }, [loading, fetchError]);
+    (failed ? retryRef.current : codesRef.current)?.focus();
+  }, [loading, failed]);
 
   // Coupons to advertise: the admin's ordered selection (kept to valid ones), or
   // — when nothing is selected — every valid active coupon (automatic).
@@ -617,8 +628,14 @@ const SpecialOffers = () => {
     [toggleWishlist]
   );
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     focusAfterRetry.current = true;
+    // The config first, when it is what failed: it decides whether the page
+    // is on and what the next read shows. Skeletons meanwhile.
+    if (configError) {
+      setLoading(true);
+      await refreshConfig();
+    }
     setAttempt((n) => n + 1);
   };
 
@@ -670,7 +687,7 @@ const SpecialOffers = () => {
         </div>
       </header>
 
-      {fetchError ? (
+      {failed && !loading ? (
         <div className={styles.content}>
           <section className={styles.section} aria-labelledby="offers-error-title">
             <div className="sf-container sf-container--wide">

@@ -377,6 +377,12 @@ const Checkout = () => {
 
   // Store-credit wallet
   const [walletBalance, setWalletBalance] = useState(0);
+  // The balance could not be read: the payment step says so, with Try again,
+  // instead of hiding the credit a customer may have (read errors, Prompt 32).
+  const [walletError, setWalletError] = useState(false);
+  const [walletAttempt, setWalletAttempt] = useState(0);
+  const walletRetried = useRef(false);
+  const creditSwitchRef = useRef(null);
   const [applyStoreCredit, setApplyStoreCredit] = useState(false);
   const [creditAmount, setCreditAmount] = useState(0); // amount the customer chose to apply
 
@@ -430,18 +436,37 @@ const Checkout = () => {
     loadSettings().finally(() => setSettingsLoaded(true));
   }, []);
 
-  // Load the signed-in customer's store-credit balance so it can be applied here.
+  // Load the signed-in customer's store-credit balance so it can be applied
+  // here; Try again (walletAttempt) reads it again.
   useEffect(() => {
-    if (!user?.id) { setWalletBalance(0); return; }
+    if (!user?.id) { setWalletBalance(0); setWalletError(false); return; }
     let active = true;
     (async () => {
       try {
         const balance = await apiService.wallet.getBalance(user.id);
-        if (active) setWalletBalance(Number(balance) || 0);
-      } catch (e) { console.error("Load wallet balance error:", e); }
+        if (active) {
+          setWalletBalance(Number(balance) || 0);
+          setWalletError(false);
+        }
+      } catch (e) {
+        console.error("Load wallet balance error:", e);
+        if (active) setWalletError(true);
+      }
     })();
     return () => { active = false; };
-  }, [user]);
+  }, [user, walletAttempt]);
+
+  // A Try again that worked takes the note (and its button) away: focus moves
+  // to the store credit's switch, or to the step's heading when there is no
+  // credit, unless it has gone somewhere else meanwhile.
+  useEffect(() => {
+    if (!walletRetried.current || walletError) return;
+    walletRetried.current = false;
+    const active = document.activeElement;
+    if (active && active !== document.body && active.isConnected) return;
+    const target = creditSwitchRef.current || stepHeadingNodeRef.current;
+    if (target) target.focus({ preventScroll: true });
+  }, [walletError, walletBalance]);
 
   useEffect(() => {
     if (user) {
@@ -1278,6 +1303,26 @@ const Checkout = () => {
   );
 
   // ── Step 3: payment ──────────────────────────────────────────────────────
+  const retryWalletBalance = () => {
+    walletRetried.current = true;
+    setWalletAttempt((n) => n + 1);
+  };
+
+  // In the store credit's place when its balance could not be read.
+  const renderStoreCreditError = () => (
+    <div className={cx("sf-panel sf-panel--hairline", styles.creditError)}>
+      <div className={styles.creditErrorText}>
+        <h3 className={cx("sf-eyebrow", styles.creditEyebrow)}>Store credit</h3>
+        <p className={styles.creditErrorLine}>
+          We couldn’t load your store credit. Check your connection and try again.
+        </p>
+      </div>
+      <button type="button" className="sf-btn sf-btn--ghost" onClick={retryWalletBalance}>
+        Try again
+      </button>
+    </div>
+  );
+
   const renderStoreCredit = () => (
     <div className={cx("sf-panel", styles.credit)}>
       <div className={styles.creditHead}>
@@ -1291,6 +1336,7 @@ const Checkout = () => {
         </div>
         <label className={cx("sf-switch", styles.creditSwitch)}>
           <input
+            ref={creditSwitchRef}
             type="checkbox"
             role="switch"
             checked={applyStoreCredit}
@@ -1491,6 +1537,7 @@ const Checkout = () => {
       </StepHeading>
 
       {walletBalance > 0 && renderStoreCredit()}
+      {walletError && renderStoreCreditError()}
 
       <div role="status">
         {fullyCovered && (

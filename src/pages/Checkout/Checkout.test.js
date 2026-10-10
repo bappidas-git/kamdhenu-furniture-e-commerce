@@ -924,6 +924,26 @@ describe("step 3: payment", () => {
     await renderCheckout();
     await goToPayment();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(screen.queryByText(/couldn’t load your store credit/)).not.toBeInTheDocument();
+  });
+
+  test("a balance that cannot be read says so; Try again reads it and focus moves to the switch (read errors, Prompt 32)", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.wallet.getBalance.mockRejectedValueOnce(new Error("Network Error"));
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    await goToPayment();
+    expect(screen.getByRole("heading", { level: 3, name: "Store credit" })).toBeInTheDocument();
+    expect(screen.getByText("We couldn’t load your store credit. Check your connection and try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+
+    const retry = screen.getByRole("button", { name: "Try again" });
+    retry.focus();
+    fireEvent.click(retry);
+    const toggle = await screen.findByRole("switch", { name: "Apply to this order" });
+    await waitFor(() => expect(toggle).toHaveFocus());
+    expect(screen.queryByText(/couldn’t load your store credit/)).not.toBeInTheDocument();
+    expect(apiService.wallet.getBalance).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
   });
 });
 

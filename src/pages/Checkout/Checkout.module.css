@@ -997,6 +997,31 @@
   font-weight: var(--sf-font-medium);
 }
 
+/* The balance could not be read (read errors, Prompt 32): the panel's
+   place, a line and Try again, laid out as the guest panel. */
+.creditError {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--sf-space-4) var(--sf-space-6);
+  margin-top: clamp(var(--sf-space-6), 3vw, var(--sf-space-8));
+  padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+}
+
+.creditErrorText {
+  flex: 1 1 18rem;
+  min-width: 0;
+}
+
+.creditErrorLine {
+  max-width: 46ch;
+  margin: var(--sf-space-2) 0 0;
+  font-size: var(--sf-text-sm);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}
+
 .creditApply {
   margin-top: var(--sf-space-5);
   padding-top: var(--sf-space-5);
