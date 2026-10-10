@@ -1659,7 +1659,7 @@ Written by Prompt 18. Files: `src/components/CartDrawer/CartDrawer.js` + `.modul
 | A line added while open | fades in over `--sf-duration` | same |
 | The empty state | fades in over `--sf-duration` | same |
 
-Lines clip their content; each reaches 8px into the gutters, where the focus rings and hit areas at its edges fit. Measured (Prompt 30, mock-mode production build): the removed line is gone 255ms after the click and the glide has settled by 571ms; no line changes height or scales on any frame, and the drawer lays out only at mount and when its delivery data arrives.
+Lines clip their content; each reaches 8px into the gutters, where the focus rings and hit areas at its edges fit. Measured (Prompt 30, mock-mode production build): the removed line is gone 257ms after the click and the glide has settled by 573ms; no line changes height or scales on any frame, and the drawer lays out only at mount and when its delivery data arrives.
 
 ### 28.6 Contrast
 
