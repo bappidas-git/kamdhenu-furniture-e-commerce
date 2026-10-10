@@ -34,6 +34,25 @@ import styles from "./AddToCartBar.module.css";
 
 const cx = (...names) => names.filter(Boolean).join(" ");
 
+// The bottom nav slides back over --sf-duration (320ms) when it takes focus.
+const YIELD_RECHECK_MS = 400;
+
+// How far a sliding fixed ancestor (the bottom nav on its way back up) is
+// still translated: the element rests that much higher once it settles.
+const slideOffset = (element) => {
+  for (let node = element; node && node !== document.body; node = node.parentElement) {
+    const style = window.getComputedStyle(node);
+    if (style.position !== "fixed") continue;
+    if (!style.transform || style.transform === "none" || typeof DOMMatrixReadOnly === "undefined") return 0;
+    try {
+      return new DOMMatrixReadOnly(style.transform).m42;
+    } catch (e) {
+      return 0;
+    }
+  }
+  return 0;
+};
+
 // Keyboard focus only: a tap or click also focuses, but never needs this.
 const isKeyboardFocus = (el) => {
   try {
@@ -82,6 +101,7 @@ const AddToCartBar = ({
       return undefined;
     }
     let frame = 0;
+    let recheck = 0;
     const covered = (target) => {
       const bar = barRef.current;
       if (!bar || !target || target === document.body || bar.contains(target)) return false;
@@ -90,13 +110,21 @@ const AddToCartBar = ({
       if (!height) return false; // not displayed (wider screens)
       const top = window.innerHeight - height;
       const rect = target.getBoundingClientRect();
-      return rect.bottom > top && rect.top < window.innerHeight;
+      // Where it will rest: a bottom nav sliding back in is not there yet.
+      const offset = slideOffset(target);
+      return rect.bottom - offset > top && rect.top - offset < window.innerHeight;
     };
     const onFocusIn = (e) => {
       const target = e.target;
       cancelAnimationFrame(frame);
+      clearTimeout(recheck);
       // After the browser has scrolled the newly focused element into view.
       frame = requestAnimationFrame(() => setYielding(covered(target)));
+      // Once more after the bottom nav has slid back into place: taking focus
+      // brings it back from below the screen, where it was not covered yet.
+      recheck = setTimeout(() => {
+        if (document.activeElement === target) setYielding(covered(target));
+      }, YIELD_RECHECK_MS);
     };
     const onFocusOut = (e) => {
       if (!e.relatedTarget) setYielding(false);
@@ -105,6 +133,7 @@ const AddToCartBar = ({
     document.addEventListener("focusout", onFocusOut);
     return () => {
       cancelAnimationFrame(frame);
+      clearTimeout(recheck);
       document.removeEventListener("focusin", onFocusIn);
       document.removeEventListener("focusout", onFocusOut);
     };

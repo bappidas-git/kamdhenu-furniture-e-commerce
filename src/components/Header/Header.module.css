@@ -232,10 +232,19 @@
 
 /* ---- Logo ------------------------------------------------------------------ */
 .logoLink {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--sf-radius-sm);
+}
+
+/* The 28px logo on phones keeps a 44px-tall target (Prompt 31); the ring
+   still hugs the logo. */
+.logoLink::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - var(--sf-tap-target)) / 2) 0;
 }
 
 .logoLink:focus-visible {

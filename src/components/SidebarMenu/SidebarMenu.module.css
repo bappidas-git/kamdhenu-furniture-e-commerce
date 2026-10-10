@@ -484,11 +484,19 @@
 }
 
 .legalLinks a {
+  position: relative;
   display: inline-flex;
   align-items: center;
   min-height: var(--sf-tap-target);
   color: var(--sf-color-text-muted);
   font-size: 0.8125rem;
+}
+
+/* A short label ("Terms") is still 44px across (Prompt 31). */
+.legalLinks a::after {
+  content: "";
+  position: absolute;
+  inset: 0 min(0px, (100% - var(--sf-tap-target)) / 2);
 }
 
 .copyright {

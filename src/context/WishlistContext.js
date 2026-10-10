@@ -347,9 +347,13 @@ export const WishlistProvider = ({ children }) => {
       text: `${items.length} saved piece${items.length === 1 ? "" : "s"} will be removed from your wishlist.`,
       icon: "warning",
       showCancelButton: true,
-      confirmButtonColor: "#d32f2f",
       confirmButtonText: "Clear all",
       cancelButtonText: "Keep wishlist",
+      // Enter or Space on arrival keeps the list: focus starts on the harmless
+      // choice. The danger button is the storefront's token-styled one
+      // (as Delete address and Cancel order), not a hex colour (Prompt 31).
+      focusCancel: true,
+      customClass: { confirmButton: "sf-btn sf-btn--danger" },
     });
     if (!result.isConfirmed) return;
 

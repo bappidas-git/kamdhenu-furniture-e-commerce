@@ -30,10 +30,11 @@
 
 /* Phones: the trail keeps two lines' room (a leaf's trail wraps there), so
    the title sits at the same height on every listing and nothing moves when a
-   deep-linked category's trail arrives. */
+   deep-linked category's trail arrives. Wrapped lines are 44px apart there
+   (Breadcrumb.module.css): one line, then 44px. */
 @media (max-width: 767.98px) {
   .crumbs {
-    min-height: calc(2 * 0.8125rem * var(--sf-leading-normal) + var(--sf-space-1));
+    min-height: calc(0.8125rem * var(--sf-leading-normal) + var(--sf-tap-target));
   }
 }
 
@@ -379,26 +380,15 @@
   justify-self: start;
 }
 
+/* 12px between lines: the chips' 44px hit areas (the primitive's ::after
+   around the 32px pill) meet without overlapping. */
 .ranges {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sf-space-2);
+  gap: var(--sf-space-3) var(--sf-space-2);
   margin: var(--sf-space-4) 0 0;
   padding: 0;
   list-style: none;
-}
-
-/* The 32px chip keeps a 44px-tall target without moving the row. */
-.rangeChip,
-.chip {
-  position: relative;
-}
-
-.rangeChip::after,
-.chip::after {
-  content: "";
-  position: absolute;
-  inset: -6px 0;
 }
 
 /* Rating: the stars in ink, as on the cards. */
@@ -603,7 +593,7 @@
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sf-space-2);
+  gap: var(--sf-space-3) var(--sf-space-2); /* as .ranges */
   margin: 0;
   padding: 0;
   list-style: none;

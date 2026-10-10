@@ -234,13 +234,11 @@
   gap: var(--sf-space-4);
 }
 
+/* The link holds a 44px target (::after, over the line's padding); the
+   two-line clamp is on the text inside, whose overflow would clip it. */
 .name {
-  display: -webkit-box;
-  -webkit-box-orient: vertical;
-  -webkit-line-clamp: 2;
+  position: relative;
   min-width: 0;
-  overflow: hidden;
-  overflow-wrap: anywhere;
   font-family: var(--sf-font-display);
   font-size: 0.9375rem; /* 15px */
   font-weight: var(--sf-font-normal);
@@ -263,6 +261,20 @@
   outline: 2px solid var(--sf-color-focus);
   outline-offset: 2px;
   border-radius: 1px;
+}
+
+.name::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - var(--sf-tap-target)) / 2) 0;
+}
+
+.nameText {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
 }
 
 /* A quiet text button (the .sf-btn--link primitive gives it a 44px target). */
@@ -518,6 +530,31 @@
     --cart-gutter: var(--sf-space-5);
     width: 100%;
     border-left: 0;
+  }
+}
+
+/* ---- Toasts while the cart is open ---------------------------------------------
+   The open cart is its own confirmation: a success toast ("Added to cart")
+   would sit over the footer's Checkout for its two seconds, at every width.
+   It is clipped out of sight (and out of the way of a tap) but stays in the
+   page, so a screen reader still announces it (role="alert"). Error toasts
+   still show (Prompt 31). */
+:global(body):has(.panel) :global(.swal2-toast.swal2-icon-success) {
+  clip-path: inset(50%);
+}
+
+/* ---- Short windows (a phone on its side): the panel scrolls as a whole ------
+   The header, the free-delivery line and the footer would otherwise leave
+   the lines a 17px sliver at 375px tall (Prompt 31). */
+@media (max-height: 500px) {
+  .panel {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .body {
+    flex: none;
+    overflow-y: visible;
   }
 }
 

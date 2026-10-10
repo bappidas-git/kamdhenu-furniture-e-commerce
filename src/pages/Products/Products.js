@@ -1103,7 +1103,7 @@ const Products = () => {
               <li key={range.label}>
                 <button
                   type="button"
-                  className={`sf-chip ${styles.rangeChip}`}
+                  className="sf-chip"
                   aria-pressed={isRangeActive(range)}
                   onClick={() => handleQuickRange(range)}
                 >
@@ -1236,7 +1236,8 @@ const Products = () => {
     }
 
     return (
-      <ul key={viewMode} className={viewMode === "list" ? styles.rows : styles.grid}>
+      // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+      <ul role="list" key={viewMode} className={viewMode === "list" ? styles.rows : styles.grid}>
         {paginatedProducts.map((product, index) => {
           const lowStock = lowStockCount(product);
           const content =

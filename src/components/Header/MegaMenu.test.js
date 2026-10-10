@@ -100,6 +100,9 @@ test("a click opens the department's panel with canonical links, a second click 
   expect(image).toHaveAttribute("loading", "lazy");
 
   fireEvent.click(department("Plastic Furniture"), { detail: 1 });
+  // On its way out the panel is inert: a fast Tab cannot land in it and lose
+  // focus when it unmounts (Prompt 31).
+  expect(panel("Plastic Furniture")).toHaveAttribute("inert");
   await waitFor(() => expect(panel("Plastic Furniture")).not.toBeInTheDocument());
   expect(department("Plastic Furniture")).toHaveAttribute("aria-expanded", "false");
 });

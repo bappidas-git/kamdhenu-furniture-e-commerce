@@ -52,13 +52,6 @@
 
 /* ---- Up to 900px: the chip row --------------------------------------------- */
 @media (max-width: 900.98px) {
-  /* A 44px hit area around the 32px chip. */
-  .link::after {
-    content: "";
-    position: absolute;
-    inset: -6px 0;
-  }
-
   .link[aria-current="page"] {
     border-color: var(--sf-color-primary);
     background-color: var(--sf-color-primary);

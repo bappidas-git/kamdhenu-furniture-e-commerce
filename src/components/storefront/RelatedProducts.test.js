@@ -63,11 +63,11 @@ test("the cards add through the page's handler and toggle the wishlist", () => {
   const onToggleWishlist = jest.fn();
   renderRelated({ onAddToCart, onToggleWishlist, isInWishlist: (id) => id === 2 });
 
-  fireEvent.click(screen.getByRole("button", { name: "Add Piece 1 to cart" }));
+  fireEvent.click(screen.getByRole("button", { name: "Add to cart, Piece 1" }));
   expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[0]));
 
   const saved = within(screen.getByRole("article", { name: "Piece 2" })).getByRole("button", {
-    name: "Remove Piece 2 from wishlist",
+    name: "Save Piece 2 to wishlist",
   });
   expect(saved).toHaveAttribute("aria-pressed", "true");
   fireEvent.click(within(screen.getByRole("article", { name: "Piece 1" })).getByRole("button", { name: "Save Piece 1 to wishlist" }));

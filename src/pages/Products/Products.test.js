@@ -527,11 +527,11 @@ test("the grid is the storefront ProductCard, wired to the cart and the wishlist
   const cards = screen.getAllByRole("article");
   expect(cards).toHaveLength(12);
   const first = cards[0];
-  expect(within(first).getByRole("button", { name: `Remove ${PRODUCTS[0].name} from wishlist` })).toHaveAttribute(
+  expect(within(first).getByRole("button", { name: `Save ${PRODUCTS[0].name} to wishlist` })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
-  fireEvent.click(within(first).getByRole("button", { name: `Add ${PRODUCTS[0].name} to cart` }));
+  fireEvent.click(within(first).getByRole("button", { name: `Add to cart, ${PRODUCTS[0].name}` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[0]));
   fireEvent.click(within(cards[1]).getByRole("button", { name: `Save ${PRODUCTS[1].name} to wishlist` }));
   expect(toggleWishlist).toHaveBeenCalledWith(PRODUCTS[1]);
@@ -550,7 +550,7 @@ test("“Only N left” follows each product's own low-stock threshold", async (
   await waitForResults();
   expect(screen.getAllByText(/^Only \d+ left$/).map((n) => n.textContent)).toEqual(["Only 6 left"]);
   const soldOut = screen.getAllByRole("article")[2];
-  expect(within(soldOut).getByRole("button", { name: "Sold out" })).toBeDisabled();
+  expect(within(soldOut).getByRole("button", { name: `Sold out, ${c.name}` })).toBeDisabled();
 
   fireEvent.click(screen.getByRole("button", { name: "List view" }));
   expect(screen.getAllByText(/^Only \d+ left$/).map((n) => n.textContent)).toEqual(["Only 6 left"]);

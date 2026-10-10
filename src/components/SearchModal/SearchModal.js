@@ -510,7 +510,8 @@ const SearchModal = ({ open, onClose }) => {
 
                 {view === "results" && (
                   <>
-                    <ul
+                    {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+                    <ul role="list"
                       ref={resultsRef}
                       className={styles.grid}
                       aria-labelledby={countId}

@@ -97,7 +97,8 @@ const FrequentlyBoughtTogether = ({
         </div>
 
         <div className={styles.body}>
-          <ul className={styles.pieces}>
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+          <ul role="list" className={styles.pieces}>
             {pieces.map((product, index) => {
               const isAnchor = index === 0;
               const soldOut = isSoldOut(product);

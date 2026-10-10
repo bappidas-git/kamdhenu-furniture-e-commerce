@@ -341,18 +341,18 @@ test("cards add to the cart exactly as before and toggle the wishlist", async ()
   wishlisted.add(21);
   renderPage();
   const today = await findRegion("Deal of the day.");
-  fireEvent.click(within(today).getByRole("button", { name: "Add Wooden Sofa Set to cart" }));
+  fireEvent.click(within(today).getByRole("button", { name: "Add to cart, Wooden Sofa Set" }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(product(47)), 1);
 
   const all = region("8 pieces on offer.");
-  fireEvent.click(within(all).getByRole("button", { name: "Add Lobby Set to cart" }));
+  fireEvent.click(within(all).getByRole("button", { name: "Add to cart, Lobby Set" }));
   expect(addToCart).toHaveBeenLastCalledWith(buildCartItem(product(19)), 1);
 
   const sofaCard = within(today).getByRole("article", { name: "Wooden Sofa Set" });
   fireEvent.click(within(sofaCard).getByRole("button", { name: "Save Wooden Sofa Set to wishlist" }));
   expect(toggleWishlist).toHaveBeenCalledWith(product(47));
   const chairCard = within(today).getByRole("article", { name: "Mesh High-Back Office Chair" });
-  expect(within(chairCard).getByRole("button", { name: "Remove Mesh High-Back Office Chair from wishlist" })).toHaveAttribute(
+  expect(within(chairCard).getByRole("button", { name: "Save Mesh High-Back Office Chair to wishlist" })).toHaveAttribute(
     "aria-pressed",
     "true"
   );
@@ -561,6 +561,30 @@ describe("the countdown", () => {
     expect(changes(seconds)).toBe(125);
     expect(changes(names)).toBe(2);
     expect(names[names.length - 1]).toBe("Offers end in 3 hours and 51 minutes");
+  });
+
+  test("Hide seconds stops the ticking figure (WCAG 2.2.2); Show seconds brings it back", async () => {
+    withConfig({ timer: CONFIG.timer });
+    renderPage();
+    const timer = await screen.findByRole("timer");
+    const toggle = screen.getByRole("button", { name: "Hide seconds" });
+    expect(toggle).not.toHaveAttribute("aria-pressed");
+    fireEvent.click(toggle);
+    // Hours and minutes only: the clock changes once a minute.
+    expect(figures(timer)).toEqual(["03", "53"]);
+    expect(within(timer).queryByText("Seconds")).not.toBeInTheDocument();
+    const shown = [figures(timer).join(":")];
+    for (let i = 0; i < 29; i += 1) {
+      act(() => jest.advanceTimersByTime(1000));
+      shown.push(figures(timer).join(":"));
+    }
+    expect(new Set(shown)).toEqual(new Set(["03:53"]));
+    // The timer keeps its name; the button says what it will do next.
+    expect(timer).toHaveAccessibleName("Offers end in 3 hours and 53 minutes");
+    expect(toggle).toHaveTextContent("Show seconds");
+    fireEvent.click(toggle);
+    expect(figures(timer)).toHaveLength(3);
+    expect(toggle).toHaveAccessibleName("Hide seconds");
   });
 
   test("a future end date counts down to it", async () => {

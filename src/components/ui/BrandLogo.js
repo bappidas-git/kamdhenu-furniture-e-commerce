@@ -60,6 +60,8 @@ const BrandLogo = ({
       // React 18.2 does not know the camelCase prop; the lowercase attribute
       // passes straight through to the DOM.
       fetchpriority={priority ? "high" : undefined}
+      // The forced-colours backplate (BrandLogo.module.css) follows the artwork.
+      data-logo-variant={isWhite ? "white" : "light"}
       className={className ? `${styles.logo} ${className}` : styles.logo}
     />
   );

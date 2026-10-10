@@ -293,7 +293,8 @@ const LedgerTable = ({ entries, labelledBy, rowRef }) => (
 );
 
 const LedgerList = ({ entries, labelledBy, rowRef }) => (
-  <ul className={styles.ledgerList} aria-labelledby={labelledBy}>
+  // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+  <ul role="list" className={styles.ledgerList} aria-labelledby={labelledBy}>
     {entries.map((entry, index) => (
       <li
         key={entryKey(entry, index)}
@@ -1019,6 +1020,8 @@ const Profile = () => {
       showCancelButton: true,
       confirmButtonText: "Delete",
       cancelButtonText: "Keep address",
+      // Enter or Space on arrival keeps the address (Prompt 31).
+      focusCancel: true,
       customClass: { confirmButton: "sf-btn sf-btn--danger" },
       returnFocus: false,
     });
@@ -1458,7 +1461,8 @@ const Profile = () => {
       {showAddressForm && renderAddressForm()}
 
       {addresses.length > 0 ? (
-        <ul className={styles.addressGrid}>{addresses.map(renderAddressCard)}</ul>
+        // eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31)
+        <ul role="list" className={styles.addressGrid}>{addresses.map(renderAddressCard)}</ul>
       ) : (
         !showAddressForm && (
           <div className={cx("sf-panel", styles.addressesEmpty)}>

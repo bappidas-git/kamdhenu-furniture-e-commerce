@@ -307,7 +307,8 @@ const Header = () => {
                 aria-expanded={isAuthenticated ? userMenuOpen : undefined}
                 aria-controls={userMenuOpen ? "sf-account-menu" : undefined}
               >
-                <span className={styles.actionIcon}>
+                {/* Decorative: the initial would otherwise join the name ("BAccount"). */}
+                <span className={styles.actionIcon} aria-hidden="true">
                   {isAuthenticated && user ? (
                     <Avatar sx={{ width: 32, height: 32, fontSize: "0.9375rem" }}>
                       {initialOf(user)}

@@ -148,13 +148,21 @@
   color: var(--sf-color-text-muted);
 }
 
-/* The product link: ink with an accent underline (DESIGN_SYSTEM §13). */
+/* The product link: ink with an accent underline (DESIGN_SYSTEM §13), and a
+   44px target around the 12px line (::after; the slide's padding holds it). */
 .product {
+  position: relative;
   color: var(--sf-color-text);
   text-decoration-line: underline;
   text-decoration-color: var(--sf-color-accent);
   text-decoration-thickness: 1px;
   text-underline-offset: 0.2em;
+}
+
+.product::after {
+  content: "";
+  position: absolute;
+  inset: min(0px, (100% - var(--sf-tap-target)) / 2) min(0px, (100% - var(--sf-tap-target)) / 2);
 }
 
 /* The underline thickens on hover, at once (as in .sf-prose). */
@@ -226,7 +234,7 @@
 
 /* Each dot is a 24px-wide, 44px-tall target (WCAG 2.5.8 asks for 24 × 24)
    around a 6px mark: hollow (border-strong) or, for the slides in view,
-   filled ink. */
+   filled ink. On touch screens they are position marks only (below). */
 .dot {
   display: inline-flex;
   align-items: center;
@@ -240,6 +248,16 @@
   color: var(--sf-color-text);
   cursor: pointer;
   -webkit-tap-highlight-color: transparent;
+}
+
+/* Touch screens: the dots are too close together for a 44px target each, so
+   they only mark the position there; swiping and the 44px previous and next
+   buttons move the carousel. They stay buttons for a keyboard and a screen
+   reader, which can also simply read on through the slides (Prompt 31). */
+@media (pointer: coarse) {
+  .dot {
+    pointer-events: none;
+  }
 }
 
 .dotMark {

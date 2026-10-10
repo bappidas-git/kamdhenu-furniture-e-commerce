@@ -321,10 +321,10 @@ test("a card's quick add sends the built cart item, quantity 1; the heart toggle
   await renderHome();
   const rail = screen.getByRole("group", { name: HOME_SECTIONS.featured.railLabel });
   const [first, second] = within(rail).getAllByRole("listitem");
-  fireEvent.click(within(first).getByRole("button", { name: `Add ${FEATURED[0].name} to cart` }));
+  fireEvent.click(within(first).getByRole("button", { name: `Add to cart, ${FEATURED[0].name}` }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(FEATURED[0]), 1);
 
-  expect(within(second).getByRole("button", { name: `Remove ${FEATURED[1].name} from wishlist` })).toBeInTheDocument();
+  expect(within(second).getByRole("button", { name: `Save ${FEATURED[1].name} to wishlist` })).toBeInTheDocument();
   fireEvent.click(within(first).getByRole("button", { name: `Save ${FEATURED[0].name} to wishlist` }));
   expect(toggleWishlist).toHaveBeenCalledWith(FEATURED[0]);
 });

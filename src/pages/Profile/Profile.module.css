@@ -257,23 +257,17 @@
 }
 
 /* "Address type": the chips of a radio group. Unchosen chips take the
-   surface tone, so they read as controls on the sand; each keeps a 44px hit
-   area around its 32px pill. The chosen one is the primitive's ink chip. */
+   surface tone, so they read as controls on the sand; each keeps the
+   primitive's 44px hit area around its 32px pill (12px between lines, should
+   they wrap). The chosen one is the primitive's ink chip. */
 .chips {
   display: flex;
   flex-wrap: wrap;
-  gap: var(--sf-space-2);
+  gap: var(--sf-space-3) var(--sf-space-2);
 }
 
 .chip {
-  position: relative;
   background-color: var(--sf-color-surface);
-}
-
-.chip::after {
-  content: "";
-  position: absolute;
-  inset: -6px 0;
 }
 
 .addressFields {
@@ -822,6 +816,10 @@
   font-weight: inherit;
   line-height: inherit;
   letter-spacing: inherit;
+  /* The button primitive keeps to one line; an order number in a 320px
+     column breaks instead of pushing the page sideways (Prompt 31). */
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 /* A credit in the success tone after "+", a debit in ink after "−"; the

@@ -10,6 +10,7 @@ import {
   PLACEHOLDER_IMG,
 } from "../../utils/helpers";
 import { Reveal, staggerDelay } from "../../components/ui";
+import { isFocusUnplaced } from "../../components/SkipLink/SkipLink";
 import Invoice from "./Invoice";
 import styles from "./OrderConfirmation.module.css";
 
@@ -246,7 +247,8 @@ const OrderConfirmation = () => {
   // runs, then the result (the new "Try again" if it failed again). On
   // arrival: the page's h1 once the read has settled, so a screen reader
   // hears the outcome of the order, but only when focus is nowhere yet (it is
-  // never taken from where the shopper has put it).
+  // never taken from where the shopper has put it). The skip link, where a
+  // route change leaves focus that had nowhere to go, counts as nowhere.
   useEffect(() => {
     if (loading) {
       if (retrying.current) titleRef.current?.focus({ preventScroll: true });
@@ -254,8 +256,7 @@ const OrderConfirmation = () => {
     }
     const afterRetry = retrying.current;
     retrying.current = false;
-    const active = document.activeElement;
-    if (active && active !== document.body) return;
+    if (!isFocusUnplaced()) return;
     const target = afterRetry && fetchError ? retryRef.current : titleRef.current;
     target?.focus({ preventScroll: true });
   }, [loading, fetchError]);
@@ -567,7 +568,8 @@ const OrderConfirmation = () => {
             </p>
           </div>
 
-          <ul className={styles.items}>
+          {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+          <ul role="list" className={styles.items}>
             {orderItems.map((item, index) => (
               <li key={index} className={styles.item}>
                 <span className={styles.thumb}>

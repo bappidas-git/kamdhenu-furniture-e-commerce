@@ -165,7 +165,8 @@ const ProductRail = ({
       aria-busy={loading || undefined}
       className={rootClass}
     >
-      <ul id={trackId} ref={trackRef} className={styles.track}>
+      {/* eslint-disable-next-line jsx-a11y/no-redundant-roles -- Safari drops a list-style: none list's semantics without it (Prompt 31) */}
+      <ul role="list" id={trackId} ref={trackRef} className={styles.track}>
         {loading
           ? Array.from({ length: count }, (_, index) => (
               <li key={index} className={styles.item} aria-hidden="true">

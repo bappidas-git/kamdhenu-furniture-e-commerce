@@ -24,7 +24,7 @@ import styles from "./ProductListRow.module.css";
 //   • "Only N left" when the page passes `lowStock` (its low-stock rule);
 //   • the card's quick add (buildCartItem; "Added" for 1.2s; disabled and
 //     "Sold out" at zero stock) and wishlist toggle (aria-pressed, the same
-//     labels).
+//     constant label: "Save {name} to wishlist").
 //
 // Props: product, onAddToCart(cartItem), onToggleWishlist(product),
 // isWishlisted, lowStock (a number, or null). Also exports
@@ -187,7 +187,7 @@ const ProductListRow = ({
               type="button"
               className={`${styles.wishlist} ${isWishlisted ? styles.wishlisted : ""}`}
               aria-pressed={Boolean(isWishlisted)}
-              aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
+              aria-label={`Save ${name} to wishlist`}
               onClick={() => onToggleWishlist(product)}
             >
               <HeartIcon />

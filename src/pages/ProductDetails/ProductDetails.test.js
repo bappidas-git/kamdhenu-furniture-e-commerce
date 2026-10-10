@@ -494,7 +494,8 @@ test("the wishlist heart is a pressed toggle", async () => {
   wishlisted.add(11);
   renderAt("/products/covered-plastic-shoe-rack");
   await loaded();
-  expect(screen.getByRole("button", { name: "Remove from wishlist" })).toHaveAttribute("aria-pressed", "true");
+  // One name; the state is aria-pressed.
+  expect(screen.getByRole("button", { name: "Save to wishlist" })).toHaveAttribute("aria-pressed", "true");
 });
 
 // ── Social proof, trust and delivery ───────────────────────────────────────
@@ -848,7 +849,7 @@ test("no curated companions, no set; related pieces come from getRelated", async
   const rail = screen.getByRole("group", { name: "Related pieces" });
   expect(within(rail).getAllByRole("article")).toHaveLength(2);
   expect(screen.getByRole("region", { name: accentName("You may also like.") })).toBeInTheDocument();
-  fireEvent.click(within(rail).getByRole("button", { name: "Add Wide Plastic Shoe Rack to cart" }));
+  fireEvent.click(within(rail).getByRole("button", { name: "Add to cart, Wide Plastic Shoe Rack" }));
   expect(addToCart).toHaveBeenCalledWith(buildCartItem(related[0]));
 });
 
