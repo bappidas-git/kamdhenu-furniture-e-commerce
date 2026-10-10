@@ -1,6 +1,6 @@
 # A & S Urbanseat — Design System
 
-The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy"; Prompt 30: "Motion and micro-interactions") and update a value here whenever they change it in the CSS.
+The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy"; Prompt 30: "Motion and micro-interactions"; Prompt 32: "Performance, SEO and conversion") and update a value here whenever they change it in the CSS.
 
 - **Source of truth:** `src/theme/storefront-tokens.css`. If this document and the CSS disagree, the CSS wins; fix the document.
 - **Mirrors:** `src/theme/colors.js` (storefront MUI palette) and `src/theme/tokens.js` (`TOKENS`, the JS mirror for framer-motion and inline styles).
@@ -184,7 +184,7 @@ Rules:
 
 | Role | Family | Token | Why |
 |---|---|---|---|
-| Display | **Playfair Display** | `--sf-font-display`: `"Playfair Display", Georgia, "Times New Roman", serif` | The logo's "A&S" is a high-contrast transitional serif with ball terminals; Playfair Display shares that DNA, so headlines sit naturally beside the logo. It has a true italic with cursive forms for accent words, and ships as a variable font (one file per style). |
+| Display | **Playfair Display** | `--sf-font-display`: `"Playfair Display", "Playfair Display Fallback", Georgia, "Times New Roman", serif` (the fallback faces: §42.6) | The logo's "A&S" is a high-contrast transitional serif with ball terminals; Playfair Display shares that DNA, so headlines sit naturally beside the logo. It has a true italic with cursive forms for accent words, and ships as a variable font (one file per style). |
 | UI and body | **Inter** | `--sf-font-sans`: `"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif` | Highly legible at UI sizes, has tabular figures for prices, and was already loaded. The admin hardcodes Inter, and `<CssBaseline />` couples the admin's `<body>` to the storefront theme, so Inter is the only UI sans with zero admin risk. The storefront looks different through the serif display scale, palette, hairlines and layout, not through a different UI sans. |
 
 ### 5.2 Files loaded
@@ -958,7 +958,7 @@ Written by Prompt 10. Files: `src/components/HeroSection/HeroSection.js` + `.mod
 
 ### 20.4 Font wait: no layout shift from the hero
 
-The copy is bottom-aligned, so when `font-display: swap` replaces a fallback face and a line box changes, every line above it would move (measured 0.001–0.018 CLS before this rule). The copy and its scrim are therefore laid out but `visibility: hidden` until the faces they use (Playfair Display 400 and italic, Inter 400 and 500) report loaded through `document.fonts`, for at most 1s; then the copy enters and the scrim fades in (`--sf-duration-slow`). Fonts already loaded (any later visit) mean no wait. The media never waits, so LCP is unaffected. Fonts slower than 1s still swap in view (0.002–0.018 measured with fonts delayed 3s); size-adjusted fallback faces would remove that (Prompt 32).
+The copy is bottom-aligned, so when `font-display: swap` replaces a fallback face and a line box changes, every line above it would move (measured 0.001–0.018 CLS before this rule). The copy and its scrim are therefore laid out but `visibility: hidden` until the faces they use (Playfair Display 400 and italic, Inter 400 and 500) report loaded through `document.fonts`, for at most 1s; then the copy enters and the scrim fades in (`--sf-duration-slow`). Fonts already loaded (any later visit) mean no wait. The media never waits, so LCP is unaffected. Fonts slower than 1s still swap in view (0.002–0.018 measured with fonts delayed 3s); Prompt 32's size-adjusted fallback faces (§42.6) make the swap close to invisible where Times New Roman is installed.
 
 ### 20.5 Assurance strip
 
@@ -3000,3 +3000,99 @@ The rule: every control is at least 44 × 44px on a touch screen, with at least 
 - [ ] Content lists styled `list-style: none` get `role="list"` (with the lint note).
 - [ ] No text clipped at 320px or under WCAG 1.4.12 text spacing; nothing scrolls sideways at 320px.
 - [ ] Run axe on the route in both modes (zero serious or critical) and Tab through it at 390 and 1440px, forwards and backwards: focus always visible, never under the header or a bar.
+
+---
+
+## 42. Performance, SEO and conversion
+
+Written by Prompt 32. The measurements (Lighthouse before and after, bundle sizes, layout shift per route, the conversion checklist) are in `prompts/BUILD_LOG.md`, Prompt 32. This section keeps the rules the audit added, for later prompts to follow.
+
+### 42.1 Document title and description: `usePageMeta`
+
+`usePageMeta({ title, description, noindex })` (`src/hooks/usePageMeta.js`), called once per storefront page, from the page component:
+
+- **`document.title`** is `"<title> | A & S Urbanseat"`. A title that already ends with the store's name (the catalogue's `metaTitle`) is used as it is; no title keeps the default.
+- **Meta description** is `description`, else the default, cut to 160 characters at the end of a sentence (or at a word, with "…").
+- **Sharing tags:** `og:title` and `twitter:title` are the title without the store's name (`og:site_name` carries it); `og:description` and `twitter:description` follow the description; `og:url` and `twitter:url` are the page's address from `window.location` (origin, path and query, no hash), updated on every route change.
+- **On unmount** everything returns to `DEFAULT_PAGE_TITLE`, `DEFAULT_PAGE_DESCRIPTION` and `SITE_URL_PLACEHOLDER` (`src/utils/constants.js`), which equal `public/index.html`'s static tags word for word (`usePageMeta.test.js` compares them). Change both together.
+- **Never in the admin.** The admin calls nothing, so its title stays index.html's.
+- **`noindex`** only on soft 404s (the app answers 200 for every URL) and search results. A real page must never carry it: Lighthouse's SEO score falls to 66 ("Page is blocked from indexing").
+- **Link previews** (WhatsApp, Facebook, X) do not run JavaScript and only ever see index.html's static tags. Per-page previews would need prerendering, which Create React App does not do.
+- `settings.seo` in `db.json` is not read: the admin cannot edit it, and reading it would add a request to every page.
+
+| Page | `title` | `description` | `noindex` |
+|---|---|---|---|
+| Home | the tagline in sentence case: "Trusted comfort for every home" | default | no |
+| Listing | its `h1`: "All furniture", the category, the categories as a list, "Results for “…”" (nothing while the heading is still pending) | the category's introduction, else default | search results |
+| Product | `metaTitle`, else the name; "Piece not found"; "Piece unavailable" | `metaDescription`, else `shortDescription` | not found |
+| Checkout | "Checkout" | default | no |
+| Order confirmation | the eyebrow ("Order confirmed", "Payment failed", …); "Order not found"; "Order unavailable" | default | not found |
+| Account (`AccountLayout`) | `PAGE_TITLES`: "My account", "Addresses", "My orders", "Store credit", "My wishlist", "Change password" | default | no |
+| Special offers | "Special offers" | the hero line of a saved admin config (§42.8), else "Pieces on offer now, and codes to use at checkout." | no |
+| Help, Support, About, policies (`ContentPage`) | `pageTitle`, else the crumb, else the eyebrow: "Help centre", "Contact us", "Our story", "Privacy policy", … | `description`, else the intro when it is text | no |
+| 404 | "Page not found" | its intro | yes |
+
+### 42.2 Structured data: `useStructuredData`
+
+- `useStructuredData(data, name)` (`src/hooks/useStructuredData.js`) adds one `<script type="application/ld+json" data-structured-data="<name>">` to `<head>` while the page is mounted and removes it on unmount. `<` is written `\u003c`, so a value cannot close the script element. The same content in a new object leaves the block alone; `null` adds nothing.
+- **The product page** passes `buildProductStructuredData` (`src/pages/ProductDetails/productStructuredData.js`): a schema.org `Product` with `name`, `url`, `image` (absolute URLs, never a `data:` placeholder), `description` (the description's text, else the short description), `sku` and the `offers` of **what the page shows**: the chosen option's price in INR, its SKU, `InStock` or `OutOfStock` from its stock (left out when the stock is unknown). `brand` only when the catalogue names one.
+- **No fabricated trust signals:** `aggregateRating` only when the ratings row counts at least one real rating (the same average and count the page prints); never a `review` entry; no `priceValidUntil`, award or count the store has not stated.
+
+### 42.3 Pages loaded on demand
+
+- **In the main bundle:** home, the listing and the product page (most visits start there), and the whole admin (eager, unchanged).
+- **On demand** (`src/pages/lazyPages.js`, `React.lazy`): checkout, order confirmation, orders, profile, wishlist, special offers, help, support, about, the four policies (one chunk: they share `PolicyPage` and `legalContent.js`) and the 404. Each is `static/js/page-<name>.chunk.js` with its CSS.
+- **Where they wait:** `<LazyPageBoundary>` (`src/components/LazyPage`) wraps the storefront's `<Routes>` inside `<main id="main-content">`, so the header, footer and bottom bar stay mounted, and the skip link and route-change focus (§41.1) keep their target. The fallback, `PageFallback`, is a quiet page-shaped skeleton (a trail, an eyebrow, a title, three lines) with `aria-busy="true"`, a visually hidden "Loading the page" status and a screen of height, so the footer does not rise into view and drop back. A page already fetched never shows it.
+- **A chunk that fails to load** (offline, or a deploy replaced it) shows "We couldn’t load this page." with **Try again** (a reload) inside the shell. Every other error goes on to the app's `ErrorBoundary`, as before; going to another page clears it.
+- **A visit that starts on a lazy page** (a reload, a bookmark, an emailed order link) asks for its chunk as soon as `lazyPages.js` is evaluated: `src/index.js` imports it before the app.
+- **Checkout is warmed on intent:** the cart drawer, when it opens with pieces in it, and **Buy now**, when a pointer reaches it or it takes focus, call `preloadPageFor("/checkout")`, so the way to checkout never shows the skeleton. Nothing is prefetched on page load: it would compete with the entry page's own requests.
+- **Adding a page:** off the purchase path, it goes in `lazyPages.js`, with a path that matches its `<Route>` in `App.js` and a `webpackChunkName` of `page-<name>`. Never lazy-load the admin or the three entry pages.
+
+### 42.4 Shared reads
+
+- `src/services/sharedReads.js`: `readCategories()`, `readSettings()`, `readShippingMethods()`. Components that read these on mount (the header, the footer, the assurance strip, home, the listing, the product page) use them: reads started in the same moment (one commit's effects) share one request. On a home page load this took the API calls from 12 to 8.
+- **Nothing is cached:** the next read (a refocus refetch, a drawer opening, the next page) asks the API again. The shared answer must not be changed in place: filter and sort copies.
+- A new component that reads one of these on mount uses the helper; another read several components make at once gets a helper of its own (`shareRead(key, read)`).
+
+### 42.5 Images
+
+- **Priority.** The image a page's LCP is likely to be loads eagerly with `fetchpriority="high"`: the hero, the gallery's first photograph, the listing's first card. The rest of the listing's first row (cards 2–3) is eager without the priority; everything below is `loading="lazy"`. `ProductCard` and `ProductListRow` take `imagePriority` (`"high"`, `"eager"`, `"lazy"` by default).
+- **Every `<img>`** has `width` and `height` (or sits in a box with an `aspect-ratio`) and `decoding="async"`. An image whose URL comes from data has an `onError`: `onImageError` (the local `PLACEHOLDER_IMG`), or text in its place for a logo (the press strip) and the initial for an avatar (the sidebar). No remote placeholder URL in code; `placehold.co` appears only in `db.json`'s seed data.
+- **The logo** (`BrandLogo`): `srcSet` with Cloudinary's resized copies (`f_auto,q_auto,w_640` and `w_960`), `sizes` set to the rendered width, `src` the original PNG (for browsers without `srcset`, and for a copy that fails: `onError` removes the `srcset`). The loading screen in `index.html` uses the same 640px file, so a visit downloads the logo once: about 13 KB instead of 141 KB.
+- **No hero preload in `index.html` yet:** the hero photograph (`HERO_IMAGE` in `src/content/homeContent.js`) is a placeholder waiting for the client's photography, and `index.html` is the shell of every route, so a preload there would download the 2400px hero on the checkout, the account pages and the admin too, and keep fetching the placeholder if the constant changed without it. The hero `<img>` is already eager with `fetchpriority="high"`. Once the real photograph's URL is final, a preload (with `imagesrcset` and `imagesizes` matching the hero's `srcSet`) is worth measuring.
+
+### 42.6 Fonts
+
+- Four files on a cold load: Inter latin and latin-ext (the ₹ sign), Playfair Display roman and italic latin; `display=swap`, `preconnect` to both Google hosts. The admin still gets Inter from the same stylesheet.
+- **Fallback faces** (`storefront-tokens.css`): `"Playfair Display Fallback"` is a local Times New Roman (or Liberation Serif / Tinos) scaled to Playfair's width and vertical metrics: roman `size-adjust: 109.5%`, `ascent-override: 98.6%`, `descent-override: 22.8%`; italic `104.8%`, `103.1%`, `23.9%`; `line-gap-override: 0%`. While Playfair loads, a heading wraps and takes the height it will have, so the swap no longer moves the page. A device without these fonts (Android) skips the faces and falls back to Georgia or the default serif, as before.
+- A new web font gets a fallback face measured the same way; a change to Playfair's weights means measuring again.
+
+### 42.7 Layout stability
+
+Anything that arrives after the first paint holds the size it will have. Prompt 32's cases:
+
+| Where | How |
+|---|---|
+| Lazy pages | `PageFallback` holds a screen's height |
+| Wishlist, loading with nothing saved on the device | the empty state's shape in sand (title, line, button), not three cards collapsing into "Nothing saved yet." |
+| Header department row, 1024–1279px | `.rowPending` holds the two lines the departments take while they load |
+| Special offers | the countdown and the hero's tag and line only from a saved admin config (§42.8) |
+| Display headings | the fallback faces (§42.6) |
+
+Every storefront route measures under 0.05 at 360, 768, 1024 and 1440px (`BUILD_LOG`, Prompt 32).
+
+### 42.8 Conversion: presentation rules
+
+- **Savings beside the buy action:** "You save ₹X on these pieces" in the cart drawer (under the subtotal) and in checkout's review (under Amount payable), from `getCartSavings` (`src/utils/helpers.js`): the lines' own compare-at savings × quantity, to the paisa. Display only, no total uses it; hidden at ₹0.
+- **A failed product read is not a missing piece:** a 404 shows "We couldn’t find that piece." with **Browse furniture** (not found, `noindex`); any other failure shows "We couldn’t load this piece." with **Try again**, which reads it again.
+- **Urgency only when real:** the offers countdown and the hero's tag and line come only from a deals config the admin has saved: one that carries `updatedAt` (api.js stamps every admin save) or a hero of its own. When the read fails (api.js then answers `{ enabled: true }`, which `normalizeDealsConfig` fills with the built-in defaults), the page shows its plain title and no countdown, never `dealsConfig.js`'s "Limited Time" copy or its timer to midnight.
+
+### 42.9 Checklist for later prompts
+
+- [ ] A new storefront page calls `usePageMeta` once, with a title no other page uses; `noindex` only for a soft 404 or search results; never in the admin.
+- [ ] A new page off the purchase path is added to `lazyPages.js` (its path as in `App.js`); the admin and the three entry pages stay in the main bundle.
+- [ ] A read several components make on mount goes through `sharedReads.js`.
+- [ ] Images: `width` and `height`, `decoding="async"`, lazy below the fold, eager above it with `fetchpriority="high"` on the likely LCP; `onError` on images from data; no remote placeholder URLs.
+- [ ] Anything that loads after the first paint reserves its size: layout shift under 0.05 at 360–1440px.
+- [ ] Structured data states only what the page shows; no rating without real ratings, no `review` entries.
+- [ ] Measure in JSON Server mode against `HEAD`, with the same Lighthouse version and the same runs, before claiming a change.
