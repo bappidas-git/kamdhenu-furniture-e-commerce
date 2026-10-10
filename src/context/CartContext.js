@@ -57,6 +57,29 @@ const normalizeCartItem = (raw = {}) => {
 };
 
 // Clamp a desired quantity to [1, stock] when stock is known, else [1, ∞).
+// The cart as the API sync writes it (replaceApiCart's fields, one entry per
+// line, in a stable order): two carts with the same key need no write between
+// them. The server's rows are normalised the same way, so a duplicate row
+// there makes the keys differ, and the next sync tidies it.
+const syncKey = (items) =>
+  JSON.stringify(
+    (items || [])
+      .map((item) => [
+        item.id,
+        item.productId,
+        item.variantId ?? null,
+        item.variantName ?? null,
+        item.name,
+        item.image,
+        item.price,
+        item.comparePrice,
+        item.currency,
+        item.quantity,
+        item.stock ?? null,
+      ])
+      .sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0))
+  );
+
 const clampQty = (qty, stock) => {
   const q = Math.max(1, qty);
   return typeof stock === "number" && stock > 0 ? Math.min(q, stock) : q;
@@ -114,6 +137,11 @@ export const CartProvider = ({ children }) => {
   // True once the logged-in user's server cart has been loaded+merged; gates the
   // API sync so a half-loaded cart can't be pushed back over the server cart.
   const cartLoadedRef = useRef(false);
+  // What the server cart holds (syncKey), from the load and from every sync
+  // queued since; null when unknown. A cart equal to it is not written again:
+  // before, every signed-in page load re-read the server cart and rewrote it
+  // line by line (a delete and an add each) though nothing had changed.
+  const serverKeyRef = useRef(null);
   // Mirror of the latest committed cart, so callbacks with stable identities can
   // read current lines without re-subscribing (used for the add/update toast).
   const cartItemsRef = useRef(cartItems);
@@ -195,6 +223,7 @@ export const CartProvider = ({ children }) => {
       // initial null render or a browsing guest, which would wipe a guest cart.
       if (prevUser) {
         cartLoadedRef.current = false;
+        serverKeyRef.current = null;
         setCartItems([]);
         setIsCartOpen(false);
         localStorage.removeItem("cart");
@@ -206,6 +235,7 @@ export const CartProvider = ({ children }) => {
     // Login (or already-logged-in on reload): load the server cart and merge it
     // with whatever is in the local/guest cart. Block the API sync until done.
     cartLoadedRef.current = false;
+    serverKeyRef.current = null;
     let cancelled = false;
     (async () => {
       try {
@@ -213,6 +243,7 @@ export const CartProvider = ({ children }) => {
         const apiCart = await apiService.cart.getCart(user.id);
         const apiItems = (apiCart || []).map(normalizeCartItem);
         if (cancelled) return;
+        serverKeyRef.current = syncKey(apiItems);
         setCartItems((local) => mergeCarts(local, apiItems));
       } catch (error) {
         console.error("Error loading cart:", error);
@@ -230,10 +261,18 @@ export const CartProvider = ({ children }) => {
   }, [user]);
 
   // ── Debounced mirror of local cart → server (logged-in users only) ───────
+  // A cart the server already holds (a reload with this device's copy, a
+  // merge that added nothing, a change undone within the debounce) is not
+  // written.
   useEffect(() => {
     if (!user || !cartLoadedRef.current) return;
     const items = cartItems;
-    const t = setTimeout(() => queueApiSync(user.id, items), 600);
+    const key = syncKey(items);
+    if (key === serverKeyRef.current) return;
+    const t = setTimeout(() => {
+      serverKeyRef.current = key;
+      queueApiSync(user.id, items);
+    }, 600);
     return () => clearTimeout(t);
   }, [cartItems, user, queueApiSync]);
 

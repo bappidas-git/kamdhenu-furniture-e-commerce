@@ -1,6 +1,7 @@
 import axios from "axios";
 import BASE_URL, { IS_MOCK_API } from "./baseURL";
 import authStorage from "../utils/authStorage";
+import { shareRead } from "./shareRead";
 
 // =============================================================================
 // API Service
@@ -83,6 +84,12 @@ export const extractMeta = (response) => {
  * "could not load".
  */
 const isNotFound = (error) => error?.response?.status === 404;
+
+// The whole catalogue, for the recommendations computed from it
+// (products.getRelated, products.getFrequentlyBoughtTogether). The product
+// page starts both at once: they share one request (shareRead), where each
+// used to read the catalogue itself.
+const readCatalogue = () => shareRead("products:catalogue", () => apiService.products.getAll());
 
 /** Extract human-readable error message */
 export const getErrorMessage = (error) => {
@@ -971,7 +978,7 @@ const apiService = {
     getRelated: async (product, limit = 10) => {
       if (!product) return [];
       try {
-        const all = await apiService.products.getAll();
+        const all = await readCatalogue();
         const list = Array.isArray(all) ? all : [];
         const selfId = String(product.id);
         const active = (p) => p && p.isActive !== false && String(p.id) !== selfId;
@@ -1019,7 +1026,7 @@ const apiService = {
       const ids = product?.frequentlyBoughtTogetherIds;
       if (!Array.isArray(ids) || ids.length === 0) return [];
       try {
-        const all = await apiService.products.getAll();
+        const all = await readCatalogue();
         const list = Array.isArray(all) ? all : [];
         const out = [];
         ids.forEach((id) => {

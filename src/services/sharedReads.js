@@ -1,4 +1,5 @@
 import apiService from "./api";
+import { shareRead } from "./shareRead";
 
 // =============================================================================
 // sharedReads — one request where several parts of a page read the same thing
@@ -19,17 +20,7 @@ import apiService from "./api";
 // they must not change it in place (none does: they filter and sort copies).
 // =============================================================================
 
-const started = new Map();
-
-export const shareRead = (key, read) => {
-  if (started.has(key)) return started.get(key);
-  const request = new Promise((resolve) => resolve(read()));
-  started.set(key, request);
-  // The moment ends once the code running now has finished (one commit's
-  // effects, all run in one go).
-  Promise.resolve().then(() => started.delete(key));
-  return request;
-};
+export { shareRead };
 
 export const readCategories = () =>
   shareRead("categories", () => apiService.categories.getAll());
