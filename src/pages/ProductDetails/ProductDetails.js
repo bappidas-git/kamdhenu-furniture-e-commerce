@@ -152,12 +152,12 @@ const Skeleton = () => (
 const NotFound = () => (
   <div className={`sf-container sf-container--wide ${styles.notFound}`}>
     <p className="sf-eyebrow">Not found</p>
-    <h1 className={`sf-display-md ${styles.notFoundTitle}`}>We couldn't find that piece.</h1>
+    <h1 className={`sf-display-md ${styles.notFoundTitle}`}>We couldn’t find that piece.</h1>
     <p className={styles.notFoundText}>
       It may have been renamed, or it is no longer in our catalogue.
     </p>
     <Link to="/products" className="sf-btn sf-btn--primary sf-btn--lg">
-      Browse all furniture
+      Browse furniture
     </Link>
   </div>
 );
@@ -506,7 +506,7 @@ const ProductDetails = () => {
 
   // Stock status, from the derived values only.
   const stockStatus = isOutOfStock
-    ? { text: "Out of stock", tone: styles.stockOut }
+    ? { text: "Sold out", tone: styles.stockOut }
     : isLowStock
     ? { text: `Only ${currentStock} left`, tone: styles.stockLow }
     : hasStockInfo
@@ -539,7 +539,7 @@ const ProductDetails = () => {
   // the page never states a tax treatment the store has not confirmed.
   const taxNote = settings
     ? settings?.store?.taxIncluded === false
-      ? "Exclusive of taxes — calculated at checkout"
+      ? "GST added at checkout"
       : "Inclusive of all taxes"
     : "\u00a0";
 
@@ -658,7 +658,7 @@ const ProductDetails = () => {
                 disabled={isOutOfStock}
               >
                 {isOutOfStock ? (
-                  "Out of stock"
+                  "Sold out"
                 ) : added ? (
                   <>
                     Added

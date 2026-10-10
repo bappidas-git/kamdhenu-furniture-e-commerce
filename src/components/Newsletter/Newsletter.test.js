@@ -51,7 +51,7 @@ test("an empty submit asks for an address and never calls the API", () => {
   render(<Newsletter />);
   fireEvent.submit(form());
   const alert = screen.getByRole("alert");
-  expect(alert).toHaveTextContent("Enter your email address.");
+  expect(alert).toHaveTextContent(/^Enter your email address$/);
   expect(field()).toHaveAttribute("aria-invalid", "true");
   expect(field()).toHaveAttribute("aria-describedby", alert.id);
   expect(subscribe).not.toHaveBeenCalled();
@@ -61,7 +61,7 @@ test("a malformed address is kept and explained, and typing clears the error", (
   render(<Newsletter />);
   type("not-an-email");
   fireEvent.submit(form());
-  expect(screen.getByRole("alert")).toHaveTextContent("Enter a valid email address, like name@example.com.");
+  expect(screen.getByRole("alert")).toHaveTextContent(/^Enter a valid email address, like name@example\.com$/);
   expect(field()).toHaveValue("not-an-email");
   expect(field()).toHaveAttribute("aria-invalid", "true");
   expect(subscribe).not.toHaveBeenCalled();
@@ -91,7 +91,7 @@ test("a valid address is trimmed and sent once; success is announced, then reset
   await act(async () => {
     request.resolve({ id: 9 });
   });
-  expect(screen.getByRole("status")).toHaveTextContent("You're on the list.");
+  expect(screen.getByRole("status")).toHaveTextContent("You’re on the list.");
   expect(field()).toHaveValue("");
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
   expect(screen.getByRole("button", { name: "Subscribe" })).not.toHaveAttribute("aria-disabled");
@@ -109,7 +109,7 @@ test("a failed request keeps the address and says so, without marking the field 
   await act(async () => {
     fireEvent.submit(form());
   });
-  expect(screen.getByRole("alert")).toHaveTextContent("We couldn't add you just now. Please try again.");
+  expect(screen.getByRole("alert")).toHaveTextContent("We couldn’t add you to the list. Check your connection and try again.");
   expect(field()).toHaveValue("shopper@example.com");
   expect(field()).not.toHaveAttribute("aria-invalid");
   expect(screen.getByRole("status")).toBeEmptyDOMElement();
@@ -124,7 +124,7 @@ test("clears its reset timer on unmount and ignores a request that settles after
   await act(async () => {
     fireEvent.submit(form());
   });
-  expect(screen.getByRole("status")).toHaveTextContent("You're on the list.");
+  expect(screen.getByRole("status")).toHaveTextContent("You’re on the list.");
   expect(jest.getTimerCount()).toBe(1);
   unmount();
   expect(jest.getTimerCount()).toBe(0);

@@ -98,7 +98,7 @@ test("a slide quotes the text and shows the stars, name, product link and short 
   expect(slide.getByRole("link", { name: "Piece 1" })).toHaveAttribute("href", "/products/piece-1");
   const time = slides()[0].querySelector("time");
   expect(time).toHaveAttribute("dateTime", REVIEWS[0].createdAt);
-  expect(time).toHaveTextContent("Sep 25, 2026");
+  expect(time).toHaveTextContent("25 Sept 2026");
   // No avatar, no title, no invented place.
   expect(slide.getAllByRole("img")).toHaveLength(1);
   expect(slides()[0]).not.toHaveTextContent("Title 1");
@@ -162,7 +162,7 @@ test("has an honest empty state and an error state", () => {
   unmount();
 
   renderCarousel({ reviews: [], error: true });
-  expect(screen.getByText("Reviews could not be loaded just now.")).toBeInTheDocument();
+  expect(screen.getByText("We couldn’t load the reviews.")).toBeInTheDocument();
 });
 
 test("has no controls while every slide fits", () => {

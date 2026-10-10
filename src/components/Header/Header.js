@@ -56,7 +56,7 @@ const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, "")}`;
 const initialOf = (user) => (user?.firstName || user?.name || "U").charAt(0).toUpperCase();
 const countText = (count) => (count > 99 ? "99+" : String(count));
 const countLabel = (label, count) =>
-  count > 0 ? `${label}, ${count} ${count === 1 ? "item" : "items"}` : `${label}, empty`;
+  count > 0 ? `${label}, ${count} ${count === 1 ? "piece" : "pieces"}` : `${label}, empty`;
 
 // The signed-in summary at the top of the account menu: plain text, not a
 // menu item, so MUI's MenuList skips it when it picks the item to focus.
@@ -202,7 +202,7 @@ const Header = () => {
   const themeLabel = isDarkMode ? "Switch to light mode" : "Switch to dark mode";
   const ThemeIcon = isDarkMode ? LightModeOutlined : DarkModeOutlined;
   const freeDeliveryLine = FREE_SHIPPING_THRESHOLD
-    ? `Free delivery on orders over ${formatCurrency(FREE_SHIPPING_THRESHOLD)}`
+    ? `Free delivery on orders above ${formatCurrency(FREE_SHIPPING_THRESHOLD)}`
     : "";
 
   return (
@@ -378,7 +378,7 @@ const Header = () => {
               <AccountSummary key="summary" user={user} />,
               <Divider key="div1" component="li" />,
               <MenuItem key="profile" onClick={() => handleMenuNavigate("/profile")}>
-                My profile
+                My account
               </MenuItem>,
               <MenuItem key="orders" onClick={() => handleMenuNavigate("/orders")}>
                 My orders

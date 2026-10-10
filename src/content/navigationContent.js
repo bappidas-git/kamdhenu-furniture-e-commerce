@@ -17,7 +17,7 @@
 // Prompt 07).
 
 export const DEPARTMENT_FEATURES = {
-  "plastic-furniture": { eyebrow: "Light and weather-ready" },
+  "plastic-furniture": { eyebrow: "Light and easy to care for" },
   "office-chairs": { eyebrow: "For the workday" },
   "cafe-restaurant-chairs": { eyebrow: "For cafés and dining rooms" },
   "outdoor-furniture": { eyebrow: "For verandas and lawns" },

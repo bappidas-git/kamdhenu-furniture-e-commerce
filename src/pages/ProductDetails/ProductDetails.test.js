@@ -153,7 +153,7 @@ const title = () => screen.findByRole("heading", { level: 1 });
 const info = () => within(screen.getByRole("heading", { level: 1 }).parentElement);
 const eyebrow = () => screen.getByRole("heading", { level: 1 }).parentElement.querySelector(".eyebrow");
 const currentPath = () => screen.getByTestId("location").textContent;
-const buyBox = () => screen.getByRole("button", { name: /^(Add to cart|Added|Out of stock)$/ }).parentElement;
+const buyBox = () => screen.getByRole("button", { name: /^(Add to cart|Added|Sold out)$/ }).parentElement;
 const statusRegion = () =>
   Array.from(document.querySelectorAll('[role="status"]')).find((el) =>
     el.classList.contains("sf-visually-hidden")
@@ -336,9 +336,9 @@ test.each([
 
 test("an unknown slug shows the not-found state with a way back to the shop", async () => {
   renderAt("/products/no-such-piece");
-  expect(await title()).toHaveTextContent("We couldn't find that piece.");
+  expect(await title()).toHaveTextContent("We couldn’t find that piece.");
   await flush();
-  expect(screen.getByRole("link", { name: "Browse all furniture" })).toHaveAttribute("href", "/products");
+  expect(screen.getByRole("link", { name: "Browse furniture" })).toHaveAttribute("href", "/products");
   expect(currentPath()).toBe("/products/no-such-piece");
 });
 
@@ -410,14 +410,14 @@ test("the quantity clamps to the chosen variant's stock", async () => {
   expect(screen.getByRole("button", { name: "Increase quantity" })).toBeDisabled();
 });
 
-test("an out-of-stock selection disables the purchase and says so", async () => {
+test("a sold-out selection disables the purchase and says so", async () => {
   const soldOut = { ...product("iron-alna-clothes-stand"), stock: 0 };
   apiService.products.getBySlug.mockResolvedValue(soldOut);
   renderAt("/products/iron-alna-clothes-stand");
   await loaded();
   expect(screen.queryByRole("radiogroup")).not.toBeInTheDocument();
-  expect(screen.getAllByText("Out of stock").length).toBeGreaterThan(0);
-  expect(within(buyBox()).getByRole("button", { name: "Out of stock" })).toBeDisabled();
+  expect(screen.getAllByText("Sold out").length).toBeGreaterThan(0);
+  expect(within(buyBox()).getByRole("button", { name: "Sold out" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Buy now" })).toBeDisabled();
   expect(screen.getByRole("button", { name: "Increase quantity" })).toBeDisabled();
 });
@@ -532,18 +532,18 @@ test("promises and the tax line wait for the store data; COD only while enabled"
   // Pending: the dynamic promises are skeletons, no tax treatment is stated.
   expect(screen.getByRole("list", { name: "Our promises" })).toHaveAttribute("aria-busy", "true");
   expect(screen.queryByText("Cash on Delivery")).not.toBeInTheDocument();
-  expect(screen.queryByText(/calculated at checkout|Inclusive of all taxes/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/added at checkout|calculated at checkout|Inclusive of all taxes/)).not.toBeInTheDocument();
 
   await act(async () => {
     resolveSettings({ ...db.settings, payment: { ...db.settings.payment, codEnabled: false } });
   });
   await waitForStoreData();
   const promises = within(screen.getByRole("list", { name: "Our promises" }));
-  expect(promises.getByText("Secure Payment")).toBeInTheDocument();
-  expect(promises.getByText("Easy Returns")).toBeInTheDocument();
+  expect(promises.getByText("Secure payment")).toBeInTheDocument();
+  expect(promises.getByText("Easy returns")).toBeInTheDocument();
   expect(promises.queryByText("Cash on Delivery")).not.toBeInTheDocument();
   expect(screen.queryByText(/^Cash on Delivery available/)).not.toBeInTheDocument();
-  expect(screen.getByText("Exclusive of taxes — calculated at checkout")).toBeInTheDocument();
+  expect(screen.getByText("GST added at checkout")).toBeInTheDocument();
   await flush();
 });
 
@@ -782,7 +782,7 @@ test("reviews: an unreviewed piece says so honestly", async () => {
   renderAt("/products/l-shaped-sofa");
   await loaded();
   const region = within(reviewsRegion());
-  await waitFor(() => expect(region.getByText("No reviews yet")).toBeInTheDocument());
+  await waitFor(() => expect(region.getByText("No reviews yet.")).toBeInTheDocument());
   expect(
     region.getByText("Reviews come from verified orders and are published after moderation.")
   ).toBeInTheDocument();
@@ -796,7 +796,7 @@ test("reviews: a failed read says so, and Try again reads them again", async () 
   renderAt("/products/wooden-sofa-set");
   await loaded();
   const region = within(reviewsRegion());
-  await waitFor(() => expect(region.getByText("Reviews could not be loaded just now.")).toBeInTheDocument());
+  await waitFor(() => expect(region.getByText("We couldn’t load the reviews.")).toBeInTheDocument());
   // The store's aggregate still stands.
   expect(region.getByText("Based on 3 ratings")).toBeInTheDocument();
   expect(consoleError).toHaveBeenCalledWith("Error fetching reviews:", expect.any(Error));

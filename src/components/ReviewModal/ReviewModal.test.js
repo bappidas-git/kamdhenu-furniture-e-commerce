@@ -215,17 +215,17 @@ test("submitting without a rating says so under the stars and sends nothing", ()
   submitButton(dialog).focus();
   fireEvent.click(submitButton(dialog));
 
-  const message = within(dialog).getByText("Please select a star rating.");
+  const message = within(dialog).getByText("Choose a star rating");
   const group = within(dialog).getByRole("radiogroup", { name: "Your rating" });
   expect(group).toHaveAttribute("aria-invalid", "true");
-  expect(group).toHaveAccessibleDescription("Please select a star rating.");
+  expect(group).toHaveAccessibleDescription("Choose a star rating");
   expect(message).toBeInTheDocument();
   expect(star(dialog, 1)).toHaveFocus();
   expect(submit).not.toHaveBeenCalled();
 
   // Choosing a star clears the message.
   fireEvent.click(star(dialog, 4));
-  expect(within(dialog).queryByText("Please select a star rating.")).not.toBeInTheDocument();
+  expect(within(dialog).queryByText("Choose a star rating")).not.toBeInTheDocument();
   expect(group).not.toHaveAttribute("aria-invalid");
 });
 
@@ -316,7 +316,7 @@ test("a failed request says so in an alert and keeps what was typed", async () =
   fireEvent.click(submitButton(dialog));
 
   await waitFor(() =>
-    expect(within(dialog).getByRole("alert")).toHaveTextContent("Something went wrong. Please try again.")
+    expect(within(dialog).getByRole("alert")).toHaveTextContent("We couldn’t send your review. Try again in a moment.")
   );
   expect(screen.getByRole("dialog")).toBeInTheDocument();
   expect(within(dialog).getByLabelText("Title (optional)")).toHaveValue("Good");

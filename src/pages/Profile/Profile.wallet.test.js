@@ -342,7 +342,7 @@ test("while the reads run: busy, the skeletons, the headings, no figure, no empt
 
 // ── The balance card ───────────────────────────────────────────────────────────
 
-test("the card: the eyebrow heading, the API's balance, the hint and Shop now", async () => {
+test("the card: the eyebrow heading, the API's balance, the hint and Browse furniture", async () => {
   const reads = holdReads();
   renderWallet();
   await reads.settle();
@@ -353,15 +353,15 @@ test("the card: the eyebrow heading, the API's balance, the hint and Shop now", 
   expect(balance).toHaveClass("sf-display-md");
   expect(balance).toHaveTextContent(/^Available balance ₹2,302\.00$/);
   expect(within(balance).getByText("Available balance")).toHaveClass("sf-visually-hidden");
-  expect(within(box).getByText("Apply your store credit at checkout toward any order.")).toBeInTheDocument();
-  const shop = within(box).getByRole("link", { name: "Shop now" });
+  expect(within(box).getByText("Apply your store credit at checkout towards any order.")).toBeInTheDocument();
+  const shop = within(box).getByRole("link", { name: "Browse furniture" });
   expect(shop).toHaveAttribute("href", "/products");
   expect(shop).toHaveClass("sf-btn", "sf-btn--paper-ghost");
 });
 
-test("Shop now goes to the catalogue", async () => {
+test("Browse furniture goes to the catalogue", async () => {
   renderWallet();
-  fireEvent.click(await within(region()).findByRole("link", { name: "Shop now" }));
+  fireEvent.click(await within(region()).findByRole("link", { name: "Browse furniture" }));
   expect(location()).toBe("/products");
 });
 
@@ -409,18 +409,18 @@ test("the table: named by its heading, four column headers (scope col), one row 
   const headers = within(table()).getAllByRole("columnheader");
   expect(headers.map((header) => header.textContent)).toEqual(["Date", "Description", "Amount", "Balance"]);
   headers.forEach((header) => expect(header).toHaveAttribute("scope", "col"));
-  expect(bodyRows().map((row) => cells(row)[0].textContent)).toEqual(["Jun 14, 2026", "Jun 13, 2026", "Jun 13, 2026"]);
+  expect(bodyRows().map((row) => cells(row)[0].textContent)).toEqual(["14 Jun 2026", "13 Jun 2026", "13 Jun 2026"]);
   expect(within(region()).getByRole("heading", { level: 2, name: "Transactions" })).toHaveClass("sf-display-sm");
 });
 
-test("dates: formatDate's short form in a <time> with the instant", async () => {
+test("dates: formatDateIN's short form in a <time> with the instant", async () => {
   const reads = holdReads();
   renderWallet();
   await reads.settle();
   // eslint-disable-next-line testing-library/no-node-access
   const time = cells(bodyRows()[0])[0].querySelector("time");
   expect(time).toHaveAttribute("dateTime", "2026-06-14T14:22:33.343Z");
-  expect(time).toHaveTextContent("Jun 14, 2026");
+  expect(time).toHaveTextContent("14 Jun 2026");
 });
 
 test("credits read '+' in the success tone, debits '−' in ink; both as words for screen readers", async () => {
@@ -559,7 +559,7 @@ test("the list carries the same entries, each as label / value rows", async () =
     "Balance",
   ]);
   const values = within(newest).getAllByRole("definition");
-  expect(values[0]).toHaveTextContent("Jun 14, 2026");
+  expect(values[0]).toHaveTextContent("14 Jun 2026");
   expect(values[1]).toHaveTextContent(/^Applied to order ORD-MQDVIQCV-30A9$/);
   expect(within(values[1]).getByRole("link", { name: "ORD-MQDVIQCV-30A9" })).toHaveAttribute("href", "/orders");
   expect(within(values[2]).getByText("Debit of ₹1,000.00")).toBeInTheDocument();
@@ -600,12 +600,12 @@ test("a failed read: the panel and Try again, in place of the card and the ledge
   await reads.fail();
   const content = region();
   expect(within(content).getByRole("heading", { level: 2, name: "We couldn’t load your store credit." })).toBeInTheDocument();
-  expect(within(content).getByText("Please check your connection and try again.")).toBeInTheDocument();
+  expect(within(content).getByText("Check your connection and try again.")).toBeInTheDocument();
   expect(within(content).getByRole("button", { name: "Try again" })).toHaveClass("sf-btn", "sf-btn--primary");
   // eslint-disable-next-line testing-library/no-node-access
   expect(content.firstElementChild).toHaveClass("sf-panel");
   expect(within(content).queryByRole("heading", { name: "Store credit" })).not.toBeInTheDocument();
-  expect(within(content).queryByRole("link", { name: "Shop now" })).not.toBeInTheDocument();
+  expect(within(content).queryByRole("link", { name: "Browse furniture" })).not.toBeInTheDocument();
   expect(within(content).queryByText(/₹/)).not.toBeInTheDocument();
   expect(consoleError).toHaveBeenCalledWith("Load wallet error:", expect.any(Error));
 });

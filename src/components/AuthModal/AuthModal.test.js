@@ -319,7 +319,7 @@ test("switching tabs clears the messages", async () => {
   renderModal();
   const { dialog } = await openSignIn();
   fireEvent.click(submitButton(dialog, "Sign in"));
-  expect(within(dialog).getByLabelText("Email address")).toHaveAccessibleDescription("Email is required");
+  expect(within(dialog).getByLabelText("Email address")).toHaveAccessibleDescription("Enter your email address");
   fireEvent.click(within(dialog).getByRole("tab", { name: "Create account" }));
   await within(dialog).findByLabelText("First name");
   fireEvent.click(within(dialog).getByRole("tab", { name: "Sign in" }));
@@ -398,9 +398,9 @@ test("an empty sign-in shows the messages under the fields, marks them and focus
   const email = within(dialog).getByLabelText("Email address");
   const password = within(dialog).getByLabelText("Password");
   expect(email).toHaveAttribute("aria-invalid", "true");
-  expect(email).toHaveAccessibleDescription("Email is required");
+  expect(email).toHaveAccessibleDescription("Enter your email address");
   expect(password).toHaveAttribute("aria-invalid", "true");
-  expect(password).toHaveAccessibleDescription("Password is required");
+  expect(password).toHaveAccessibleDescription("Enter your password");
   await waitFor(() => expect(email).toHaveFocus());
   expect(apiService.auth.login).not.toHaveBeenCalled();
 });
@@ -550,9 +550,9 @@ test("Forgot password? says reset isn't available yet and links to support", asy
   fireEvent.click(within(dialog).getByRole("button", { name: "Forgot password?" }));
   const status = within(dialog)
     .getAllByRole("status")
-    .find((s) => s.textContent.includes("Password reset isn't available yet."));
+    .find((s) => s.textContent.includes("Password reset isn’t available online yet."));
   expect(status).toHaveTextContent(
-    "Password reset isn't available yet. Our support team can help you regain access. Contact support"
+    "Password reset isn’t available online yet. Our support team can help you sign in again. Contact support"
   );
   const link = within(status).getByRole("link", { name: "Contact support" });
   expect(link).toHaveAttribute("href", "/support");
@@ -600,11 +600,11 @@ test("an empty sign-up gives every message, verbatim, and focuses First name", a
   const { dialog } = await openCreateAccount();
   fireEvent.click(submitButton(dialog, "Create account"));
   [
-    ["First name", "First name is required"],
-    ["Last name", "Last name is required"],
-    ["Email address", "Email is required"],
-    ["Password", "Password is required"],
-    ["Confirm password", "Please confirm your password"],
+    ["First name", "Enter your first name"],
+    ["Last name", "Enter your last name"],
+    ["Email address", "Enter your email address"],
+    ["Password", "Create a password"],
+    ["Confirm password", "Enter your password again"],
   ].forEach(([label, message]) => {
     const field = within(dialog).getByLabelText(label);
     expect(field).toHaveAttribute("aria-invalid", "true");
@@ -612,7 +612,7 @@ test("an empty sign-up gives every message, verbatim, and focuses First name", a
   });
   const terms = within(dialog).getByRole("checkbox", { name: /I agree to the/ });
   expect(terms).toHaveAttribute("aria-invalid", "true");
-  expect(terms).toHaveAccessibleDescription("You must accept the terms and conditions");
+  expect(terms).toHaveAccessibleDescription("Agree to the terms of service and privacy policy to continue");
   // The phone is optional: no message when empty.
   expect(within(dialog).getByLabelText("Mobile number (optional)")).not.toHaveAttribute("aria-invalid");
   await waitFor(() => expect(within(dialog).getByLabelText("First name")).toHaveFocus());
@@ -625,12 +625,12 @@ test("the sign-up rules: phone, password length and the confirmation", async () 
   fillSignUp(dialog, { "Mobile number (optional)": "98765", Password: "abc12", "Confirm password": "abc13" });
   fireEvent.click(submitButton(dialog, "Create account"));
   expect(within(dialog).getByLabelText("Mobile number (optional)")).toHaveAccessibleDescription(
-    "10 digits, without +91 or 0. Enter a valid 10-digit phone number"
+    "10 digits, without +91 or 0. Enter a 10-digit mobile number"
   );
   expect(within(dialog).getByLabelText("Password")).toHaveAccessibleDescription(
-    expect.stringContaining("Password must be at least 6 characters")
+    expect.stringContaining("Use at least 6 characters")
   );
-  expect(within(dialog).getByLabelText("Confirm password")).toHaveAccessibleDescription("Passwords do not match");
+  expect(within(dialog).getByLabelText("Confirm password")).toHaveAccessibleDescription("Passwords don’t match");
   await waitFor(() => expect(within(dialog).getByLabelText("Mobile number (optional)")).toHaveFocus());
   expect(apiService.auth.register).not.toHaveBeenCalled();
 });
@@ -638,8 +638,8 @@ test("the sign-up rules: phone, password length and the confirmation", async () 
 test("the terms links open in a new tab and say so", async () => {
   renderModal();
   const { dialog } = await openCreateAccount();
-  const terms = within(dialog).getByRole("link", { name: "Terms & Conditions" });
-  const privacy = within(dialog).getByRole("link", { name: "Privacy Policy" });
+  const terms = within(dialog).getByRole("link", { name: "terms of service" });
+  const privacy = within(dialog).getByRole("link", { name: "privacy policy" });
   expect(terms).toHaveAttribute("href", "/terms");
   expect(privacy).toHaveAttribute("href", "/privacy");
   [terms, privacy].forEach((link) => {
@@ -647,7 +647,7 @@ test("the terms links open in a new tab and say so", async () => {
     expect(link).toHaveAccessibleDescription("Opens in a new tab");
   });
   // The checkbox's name stays the sentence.
-  expect(within(dialog).getByRole("checkbox", { name: "I agree to the Terms & Conditions and Privacy Policy" })).toBeInTheDocument();
+  expect(within(dialog).getByRole("checkbox", { name: "I agree to the terms of service and privacy policy" })).toBeInTheDocument();
 });
 
 test("the strength meter keeps the old thresholds", async () => {

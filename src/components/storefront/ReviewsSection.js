@@ -1,7 +1,7 @@
 import React, { forwardRef, useCallback, useId, useRef } from "react";
 import { Reveal, SectionHeading } from "../ui";
 import StarRating from "./StarRating";
-import { formatDate, onImageError } from "../../utils/helpers";
+import { formatDateIN, onImageError } from "../../utils/helpers";
 import styles from "./ReviewsSection.module.css";
 
 // =============================================================================
@@ -117,7 +117,7 @@ const Review = ({ review }) => {
         </p>
         {date && (
           <time className={styles.date} dateTime={date}>
-            {formatDate(date, "short")}
+            {formatDateIN(date, "short")}
           </time>
         )}
       </header>
@@ -234,7 +234,7 @@ const ReviewsSection = forwardRef(function ReviewsSection(
           ) : (
             settled && (
               <div className={styles.empty}>
-                <p className={styles.emptyTitle}>No reviews yet</p>
+                <p className={styles.emptyTitle}>No reviews yet.</p>
                 <p className={styles.note}>
                   Reviews come from verified orders and are published after moderation.
                 </p>
@@ -254,7 +254,7 @@ const ReviewsSection = forwardRef(function ReviewsSection(
             </div>
           ) : error ? (
             <div className={styles.state}>
-              <p className={styles.stateText}>Reviews could not be loaded just now.</p>
+              <p className={styles.stateText}>We couldn’t load the reviews.</p>
               {onRetry && (
                 <button type="button" className="sf-btn sf-btn--ghost" onClick={retry}>
                   Try again

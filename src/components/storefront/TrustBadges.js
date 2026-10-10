@@ -18,8 +18,8 @@ import styles from "./TrustBadges.module.css";
 // Where a badge depends on a number or a setting (free-shipping threshold,
 // returns window, COD), its value is resolved from LIVE settings/shipping data
 // through resolveTrustBadgeDetail, and the badge is shown ONLY when the data
-// backs it: no "Cash on Delivery" while COD is switched off, no "Easy Returns"
-// at 0 days, no "Free Shipping" without a threshold. These are the rules the
+// backs it: no "Cash on Delivery" while COD is switched off, no "Easy returns"
+// at 0 days, no "Free delivery" without a threshold. These are the rules the
 // footer's trust bar and the home assurance strip already follow. While the
 // data is still loading (`loading`), a dynamic badge is a skeleton, so nothing
 // is claimed before the data says so; every badge keeps two lines' room, so

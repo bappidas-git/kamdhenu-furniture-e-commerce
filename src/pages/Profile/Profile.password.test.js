@@ -262,7 +262,7 @@ test("an empty submit: a message on the two fields that fail, focus on the first
   // Both empty still match: the confirmation passes its rule.
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
   expect(current()).toHaveFocus();
-  expect(status()).toHaveTextContent("Please enter your current password.");
+  expect(status()).toHaveTextContent("Enter your current password to continue.");
   expect(apiService.auth.changePassword).not.toHaveBeenCalled();
 });
 
@@ -273,23 +273,23 @@ test("a short new password: its message, focus on it, the length toast", async (
   type(confirmation(), "abc");
   await press(submitButton());
   expect(current()).not.toHaveAttribute("aria-invalid");
-  expect(next()).toHaveAccessibleDescription("Password strength: Weak New password must be at least 8 characters");
+  expect(next()).toHaveAccessibleDescription("Password strength: Weak Use at least 8 characters");
   expect(next()).toHaveFocus();
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
-  expect(status()).toHaveTextContent("New password must be at least 8 characters.");
+  expect(status()).toHaveTextContent("Your new password needs at least 8 characters.");
   expect(apiService.auth.changePassword).not.toHaveBeenCalled();
 });
 
-test("a mismatch: 'Passwords do not match' on the confirmation, focus there, the old toast", async () => {
+test("a mismatch: 'Passwords don’t match' on the confirmation, focus there, the old toast", async () => {
   renderPassword();
   type(current(), "password123");
   type(next(), "Furniture#2026");
   type(confirmation(), "Furniture#2025");
   await press(submitButton());
   expect(confirmation()).toHaveAttribute("aria-invalid", "true");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords don’t match");
   expect(confirmation()).toHaveFocus();
-  expect(status()).toHaveTextContent("New password and confirm password do not match.");
+  expect(status()).toHaveTextContent("The new passwords don’t match.");
   expect(apiService.auth.changePassword).not.toHaveBeenCalled();
   // The values stay as typed.
   expect(next()).toHaveValue("Furniture#2026");
@@ -303,8 +303,8 @@ test("the length rule's edge: seven characters is too short, eight is enough", a
   type(confirmation(), "Abcde1!");
   await press(submitButton());
   expect(next()).toHaveAttribute("aria-invalid", "true");
-  expect(next()).toHaveAccessibleDescription(/New password must be at least 8 characters$/);
-  expect(status()).toHaveTextContent("New password must be at least 8 characters.");
+  expect(next()).toHaveAccessibleDescription(/Use at least 8 characters$/);
+  expect(status()).toHaveTextContent("Your new password needs at least 8 characters.");
   expect(apiService.auth.changePassword).not.toHaveBeenCalled();
   type(next(), "Abcdef1!");
   type(confirmation(), "Abcdef1!");
@@ -318,8 +318,8 @@ test("an empty confirmation under a good new password asks for it", async () => 
   type(current(), "password123");
   type(next(), "Furniture#2026");
   await press(submitButton());
-  expect(confirmation()).toHaveAccessibleDescription("Confirm your new password");
-  expect(status()).toHaveTextContent("New password and confirm password do not match.");
+  expect(confirmation()).toHaveAccessibleDescription("Enter the new password again");
+  expect(status()).toHaveTextContent("The new passwords don’t match.");
 });
 
 test("several at once: focus on the first; the toast is the first rule's", async () => {
@@ -330,7 +330,7 @@ test("several at once: focus on the first; the toast is the first rule's", async
   expect(current()).toHaveAttribute("aria-invalid", "true");
   expect(confirmation()).toHaveAttribute("aria-invalid", "true");
   expect(current()).toHaveFocus();
-  expect(status()).toHaveTextContent("Please enter your current password.");
+  expect(status()).toHaveTextContent("Enter your current password to continue.");
 });
 
 test("typing in a field clears its own message, and only its own", async () => {
@@ -351,7 +351,7 @@ test("the mismatch message goes as soon as the two match, from either field", as
   expect(confirmation()).toHaveAttribute("aria-invalid", "true");
   type(next(), "Furniture#2025");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
-  expect(within(region()).queryByText("Passwords do not match")).not.toBeInTheDocument();
+  expect(within(region()).queryByText("Passwords don’t match")).not.toBeInTheDocument();
 });
 
 test("a confirmation on its way to the new password says nothing, nor on leaving it", () => {
@@ -363,7 +363,7 @@ test("a confirmation on its way to the new password says nothing, nor on leaving
   // move the button under a pointer that is pressing it.
   fireEvent.blur(confirmation());
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
-  expect(within(region()).queryByText("Passwords do not match")).not.toBeInTheDocument();
+  expect(within(region()).queryByText("Passwords don’t match")).not.toBeInTheDocument();
 });
 
 test("the confirmation says so as soon as typing on cannot make it match, until they match", () => {
@@ -371,20 +371,20 @@ test("the confirmation says so as soon as typing on cannot make it match, until 
   type(next(), "Furniture#2026");
   type(confirmation(), "Furx");
   expect(confirmation()).toHaveAttribute("aria-invalid", "true");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords don’t match");
   // The first letter missed: the rest is in the new password, but not at its start.
   type(confirmation(), "urniture");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords don’t match");
   type(confirmation(), "Furniture#2026");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
   // Longer than the new password.
   type(confirmation(), "Furniture#20266");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords don’t match");
   // The new password's changes count too.
   type(next(), "Furniture#20266");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
   type(next(), "Furniture");
-  expect(confirmation()).toHaveAccessibleDescription("Passwords do not match");
+  expect(confirmation()).toHaveAccessibleDescription("Passwords don’t match");
   // Emptied: nothing to say until a submit.
   type(confirmation(), "");
   expect(confirmation()).not.toHaveAttribute("aria-invalid");
@@ -426,7 +426,7 @@ test("a valid change: changePassword with the same object as ever, the toast, a 
     newPassword: "Furniture#2026",
     confirmPassword: "Furniture#2026",
   });
-  expect(status()).toHaveTextContent("Password updated successfully.");
+  expect(status()).toHaveTextContent("Password updated.");
   [current(), next(), confirmation()].forEach((input) => {
     expect(input).toHaveValue("");
     expect(input).toHaveAttribute("type", "password");
@@ -482,7 +482,7 @@ test("a refused change says so and keeps what was typed", async () => {
   renderPassword();
   fillValid();
   await press(submitButton());
-  expect(status()).toHaveTextContent("Failed to change password. Please check your current password.");
+  expect(status()).toHaveTextContent("We couldn’t update your password. Check your current password and try again.");
   expect(current()).toHaveValue("password123");
   expect(next()).toHaveValue("Furniture#2026");
 });

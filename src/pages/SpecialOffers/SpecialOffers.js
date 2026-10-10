@@ -246,7 +246,7 @@ const CouponTicket = ({ coupon, feedback, onCopy }) => {
       <div className={styles.details}>
         <p className={styles.description}>{coupon.description || `${couponHeadline(coupon)} off`}</p>
         <p className={styles.terms}>
-          {coupon.minOrderAmount > 0 ? `Min order ${rupees(coupon.minOrderAmount)}` : "No minimum order"}
+          {coupon.minOrderAmount > 0 ? `Minimum order ${rupees(coupon.minOrderAmount)}` : "No minimum order"}
           {coupon.type === "percentage" && coupon.maxDiscount ? (
             <>
               <span aria-hidden="true"> · </span>
@@ -272,7 +272,7 @@ const CouponTicket = ({ coupon, feedback, onCopy }) => {
             type="button"
             className={`sf-btn sf-btn--ghost ${styles.copy} ${copied ? styles.copied : ""}`}
             onClick={() => onCopy(coupon.code, codeRef.current)}
-            aria-label={`Copy coupon code ${coupon.code}`}
+            aria-label={`Copy code ${coupon.code}`}
           >
             {copied ? (
               <>
@@ -592,7 +592,7 @@ const SpecialOffers = () => {
         <h1 className={`sf-display-md ${styles.unavailableTitle}`}>No offers at the moment.</h1>
         <p className={styles.unavailableText}>The full collection is open as usual.</p>
         <Link to="/products" className="sf-btn sf-btn--primary sf-btn--lg">
-          Browse all furniture
+          Browse furniture
         </Link>
       </div>
     );
@@ -620,7 +620,7 @@ const SpecialOffers = () => {
         <div className="sf-container sf-container--wide">
           {hero.tag && <p className={`sf-eyebrow sf-eyebrow--rule ${styles.heroTag}`}>{hero.tag}</p>}
           <h1 className={`sf-display-xl ${styles.heroTitle}`}>
-            {hero.title || "Special Offers & Deals"}
+            {hero.title || "Special offers"}
           </h1>
           {hero.subtitle && <p className={styles.heroSubtitle}>{hero.subtitle}</p>}
           <OfferCountdown timer={config.timer} />
@@ -635,7 +635,7 @@ const SpecialOffers = () => {
                 <h2 id="offers-error-title" className={styles.stateTitle}>
                   We couldn’t load the offers.
                 </h2>
-                <p className={styles.stateText}>Please check your connection and try again.</p>
+                <p className={styles.stateText}>Check your connection and try again.</p>
                 <button
                   ref={retryRef}
                   type="button"
@@ -838,7 +838,7 @@ const SpecialOffers = () => {
                       : "No pieces are reduced just now."}
                   </p>
                   <Link to="/products" className="sf-btn sf-btn--ghost">
-                    Browse all furniture
+                    Browse furniture
                   </Link>
                 </div>
               </div>

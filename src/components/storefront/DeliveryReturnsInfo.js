@@ -101,7 +101,7 @@ const DeliveryReturnsInfo = ({
     });
   }
   if (returnsWindowDays > 0) {
-    facts.push({ key: "returns", text: `Easy ${returnsWindowDays}-day returns` });
+    facts.push({ key: "returns", text: `${returnsWindowDays}-day returns on eligible pieces` });
   }
   if (taxKnown) {
     facts.push({

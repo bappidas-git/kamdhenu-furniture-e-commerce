@@ -30,7 +30,8 @@ import styles from "./Checkout.module.css";
 // the credit clamp, the coupon's auto-removal), applyCoupon (one approved
 // change, below), removeCoupon, handleNext, placeOrder (the payload,
 // clearCart({ silent: true }) and the confirmation route) and
-// handleAddressChange.
+// handleAddressChange. STEPS' labels are copy, not logic: Prompt 29 renamed
+// the second step from "Shipping" to "Delivery".
 //
 // Three additions, each documented in prompts/BUILD_LOG.md (Prompt 26):
 //   • the two store reads note when they have settled (.finally), so the page
@@ -49,7 +50,7 @@ import styles from "./Checkout.module.css";
 //     network error read as before.
 // =============================================================================
 
-const STEPS = ["Cart", "Shipping", "Payment", "Review"];
+const STEPS = ["Cart", "Delivery", "Payment", "Review"];
 
 // The ids are what orders store (`paymentMethod`); the labels are the names
 // Order History prints for them (its PAYMENT_METHOD_LABELS).
@@ -58,7 +59,7 @@ const PAYMENT_OPTIONS = [
   { id: "upi", label: "UPI", desc: "Google Pay, PhonePe, Paytm" },
   { id: "net_banking", label: "Net banking", desc: "Pay from your bank account" },
   { id: "wallet", label: "Wallet", desc: "Paytm, PhonePe, Amazon Pay" },
-  { id: "cod", label: "Cash on delivery", desc: "Pay when your order arrives" },
+  { id: "cod", label: "Cash on Delivery", desc: "Pay when your order arrives" },
 ];
 
 // Discount for an applied coupon at the current subtotal. Derived (never
@@ -95,15 +96,15 @@ const BANKS = [
 // forms read alike. `required` is the message shown for validateAddress's
 // "Required".
 const ADDRESS_FIELDS = [
-  { name: "firstName", id: "checkout-first-name", label: "First name", autoComplete: "given-name", autoCapitalize: "words", required: "First name is required" },
-  { name: "lastName", id: "checkout-last-name", label: "Last name", autoComplete: "family-name", autoCapitalize: "words", required: "Last name is required" },
-  { name: "phone", id: "checkout-phone", label: "Phone number", type: "tel", inputMode: "tel", autoComplete: "tel", hint: "10-digit mobile number", required: "Phone number is required", wide: true },
-  { name: "addressLine1", id: "checkout-address-line-1", label: "Address line 1", autoComplete: "address-line1", hint: "House or flat number, building and street", required: "Address line 1 is required", wide: true },
+  { name: "firstName", id: "checkout-first-name", label: "First name", autoComplete: "given-name", autoCapitalize: "words", required: "Enter a first name" },
+  { name: "lastName", id: "checkout-last-name", label: "Last name", autoComplete: "family-name", autoCapitalize: "words", required: "Enter a last name" },
+  { name: "phone", id: "checkout-phone", label: "Phone number", type: "tel", inputMode: "tel", autoComplete: "tel", hint: "10-digit mobile number", required: "Enter a phone number", wide: true },
+  { name: "addressLine1", id: "checkout-address-line-1", label: "Address line 1", autoComplete: "address-line1", hint: "House or flat number, building and street", required: "Enter the house or flat number and street", wide: true },
   { name: "addressLine2", id: "checkout-address-line-2", label: "Address line 2", optional: true, autoComplete: "address-line2", hint: "Landmark or area", wide: true },
-  { name: "city", id: "checkout-city", label: "City", autoComplete: "address-level2", autoCapitalize: "words", required: "City is required" },
-  { name: "state", id: "checkout-state", label: "State", autoComplete: "address-level1", autoCapitalize: "words", required: "State is required" },
-  { name: "postalCode", id: "checkout-postal-code", label: "Postal code", inputMode: "numeric", autoComplete: "postal-code", hint: "6-digit PIN", required: "Postal code is required" },
-  { name: "country", id: "checkout-country", label: "Country", autoComplete: "country-name", hint: "Currently shipping within India only", readOnly: true },
+  { name: "city", id: "checkout-city", label: "City", autoComplete: "address-level2", autoCapitalize: "words", required: "Enter a city" },
+  { name: "state", id: "checkout-state", label: "State", autoComplete: "address-level1", autoCapitalize: "words", required: "Enter a state" },
+  { name: "postalCode", id: "checkout-postal-code", label: "Postal code", inputMode: "numeric", autoComplete: "postal-code", hint: "6-digit PIN", required: "Enter a 6-digit PIN" },
+  { name: "country", id: "checkout-country", label: "Country", autoComplete: "country-name", hint: "We deliver within India only", readOnly: true },
 ];
 
 // What a saved address lacks, for the line under the saved addresses (their
@@ -112,13 +113,13 @@ const SAVED_ADDRESS_NEEDS = {
   firstName: "a first name",
   lastName: "a last name",
   phone: "a phone number",
-  addressLine1: "an address line",
+  addressLine1: "a street address",
   city: "a city",
   state: "a state",
   postalCode: "a postal code",
 };
 const SAVED_ADDRESS_INVALID = {
-  phone: "a valid 10-digit mobile number",
+  phone: "a 10-digit mobile number",
   postalCode: "a 6-digit PIN",
 };
 
@@ -332,7 +333,7 @@ const StepPanel = ({ reduceMotion, children }) => {
 };
 
 // The step's heading takes focus on every step change ("Step 2 of 4:
-// Shipping details"), so progress is announced where the reader now is.
+// Delivery details"), so progress is announced where the reader now is.
 const StepHeading = ({ index, headingRef, children }) => (
   <h2
     id="checkout-step-title"
@@ -507,7 +508,7 @@ const Checkout = () => {
       setCouponApplied(null);
       setCouponCode("");
       setCouponError(
-        `${couponApplied.code} was removed — it needs a minimum order of ${formatCurrency(couponApplied.minOrderAmount)}.`
+        `${couponApplied.code} was removed. It needs a minimum order of ${formatCurrency(couponApplied.minOrderAmount)}.`
       );
     }
   }, [subtotal, couponApplied]);
@@ -521,7 +522,7 @@ const Checkout = () => {
     } catch (e) {
       // The Laravel API refuses with an HTTP error whose body carries the
       // reason (getErrorMessage reads it); a mock-mode refusal is a plain Error.
-      setCouponError(e.response ? getErrorMessage(e) : e.message || "Invalid coupon");
+      setCouponError(e.response ? getErrorMessage(e) : e.message || "We couldn’t apply this code");
       setCouponApplied(null);
     }
   };
@@ -544,8 +545,8 @@ const Checkout = () => {
     if (!addr.postalCode?.trim()) errs.postalCode = "Required";
     // Prompt 26 (tightening only): a filled-in phone must pass isValidPhone and
     // a filled-in PIN must be six digits; an empty field keeps "Required".
-    if (!errs.phone && !isValidPhone(addr.phone)) errs.phone = "Enter a valid 10-digit mobile number";
-    if (!errs.postalCode && !/^\d{6}$/.test(String(addr.postalCode).replace(/\s/g, ""))) errs.postalCode = "Enter a valid 6-digit PIN";
+    if (!errs.phone && !isValidPhone(addr.phone)) errs.phone = "Enter a 10-digit mobile number";
+    if (!errs.postalCode && !/^\d{6}$/.test(String(addr.postalCode).replace(/\s/g, ""))) errs.postalCode = "Enter a 6-digit PIN";
     setAddressErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -557,7 +558,7 @@ const Checkout = () => {
       setStep(1);
     } else if (step === 1) {
       if (!validateAddress()) return;
-      if (!selectedShipping) { setShippingError("Please select a shipping method."); return; }
+      if (!selectedShipping) { setShippingError("Choose a delivery method"); return; }
       setShippingError("");
       setStep(2);
     } else if (step === 2) {
@@ -761,7 +762,7 @@ const Checkout = () => {
           <h2 className={cx("sf-display-sm", styles.emptyTitle)} tabIndex={-1} ref={emptyTitleRef}>
             Your cart is empty.
           </h2>
-          <p className={styles.emptyText}>Pieces you add to your cart will be here, ready to check out.</p>
+          <p className={styles.emptyText}>Pieces you add will wait here until you are ready to check out.</p>
           <Link to="/products" className={cx("sf-btn sf-btn--primary", styles.emptyAction)}>
             Browse furniture
           </Link>
@@ -1018,7 +1019,7 @@ const Checkout = () => {
           aria-haspopup="dialog"
           onClick={() => openAuthModal("signup")}
         >
-          Create an account
+          Create account
         </button>
       </div>
     </div>
@@ -1030,7 +1031,7 @@ const Checkout = () => {
         Your cart
       </StepHeading>
       <p className={styles.stepIntro}>
-        {itemCount} {itemCount === 1 ? "item" : "items"}
+        {itemCount} {itemCount === 1 ? "piece" : "pieces"}
       </p>
       <ul className={styles.lines} aria-label="Items in your cart">
         {cartItems.map(renderCartLine)}
@@ -1185,7 +1186,7 @@ const Checkout = () => {
       );
     }
     if (shippingMethods.length === 0) {
-      return <p className={styles.methodsEmpty}>No delivery methods are available right now. Please try again later.</p>;
+      return <p className={styles.methodsEmpty}>No delivery methods are available right now. Try again later.</p>;
     }
     return (
       <div className={styles.methods}>
@@ -1233,7 +1234,7 @@ const Checkout = () => {
   const renderShippingStep = () => (
     <>
       <StepHeading index={1} headingRef={stepHeadingRef}>
-        Shipping details
+        Delivery details
       </StepHeading>
       {savedAddresses.length > 0 && renderSavedAddresses()}
       {!useExistingAddress && (
@@ -1481,7 +1482,7 @@ const Checkout = () => {
             <span className={styles.coveredIcon}>
               <CheckGlyph size={18} strokeWidth={1.75} />
             </span>
-            Your store credit covers this order in full — no further payment needed.
+            Your store credit covers this order in full. There’s nothing more to pay.
           </p>
         )}
       </div>
@@ -1554,7 +1555,7 @@ const Checkout = () => {
     const paymentCue = fullyCovered
       ? { icon: <CheckGlyph size={16} />, text: "Paid in full with store credit" }
       : paymentMethod === "cod"
-      ? { icon: <TrustIcon name="cash" />, text: "Pay in cash on delivery" }
+      ? { icon: <TrustIcon name="cash" />, text: "Pay by Cash on Delivery" }
       : { icon: <TrustIcon name="lock" />, text: "Secure payment" };
     return (
       <div className={styles.facts}>
@@ -1576,7 +1577,7 @@ const Checkout = () => {
               <span className={styles.factIcon}>
                 <TrustIcon name="rotate" />
               </span>
-              Easy returns within {returnsDays} {returnsDays === 1 ? "day" : "days"} of delivery
+              Returns within {returnsDays} {returnsDays === 1 ? "day" : "days"} of delivery, on eligible pieces
             </li>
           )}
           <li className={styles.fact}>
@@ -1674,7 +1675,7 @@ const Checkout = () => {
               <p className={styles.reviewStrong}>{selectedPaymentOption?.label}</p>
               {storeCreditApplied > 0 && <p>Store credit applied: −{formatCurrency(storeCreditApplied)}</p>}
               {paymentMethod === "cod" ? (
-                <p>Pay {formatCurrency(amountPayable)} in cash on delivery.</p>
+                <p>Pay {formatCurrency(amountPayable)} by Cash on Delivery.</p>
               ) : (
                 <p>You will be charged {formatCurrency(amountPayable)}.</p>
               )}
@@ -1691,7 +1692,7 @@ const Checkout = () => {
             <span className={styles.orderAlertIcon}>
               <AlertGlyph size={18} />
             </span>
-            We couldn't place your order. Nothing has been charged. Please try again.
+            We couldn’t place your order. Nothing has been charged. Try again in a moment.
           </p>
         )}
       </div>
@@ -1820,7 +1821,7 @@ const Checkout = () => {
               </div>
             )}
             <div className={styles.totalsRow}>
-              <dt>Shipping</dt>
+              <dt>Delivery</dt>
               <dd className={cx(!shippingPending && selectedShipping && shippingCost === 0 && styles.free)}>
                 {shippingPending ? (
                   <Pending />

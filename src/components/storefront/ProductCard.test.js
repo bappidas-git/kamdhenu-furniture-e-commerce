@@ -162,7 +162,7 @@ test("the wishlist toggle is a pressed button with Save / Remove labels", () => 
       <ProductCard product={item} onToggleWishlist={onToggleWishlist} />
     </MemoryRouter>
   );
-  const save = screen.getByRole("button", { name: "Save to wishlist" });
+  const save = screen.getByRole("button", { name: `Save ${item.name} to wishlist` });
   expect(save).toHaveAttribute("aria-pressed", "false");
   fireEvent.click(save);
   expect(onToggleWishlist).toHaveBeenCalledWith(item);
@@ -172,7 +172,7 @@ test("the wishlist toggle is a pressed button with Save / Remove labels", () => 
       <ProductCard product={item} onToggleWishlist={onToggleWishlist} isWishlisted />
     </MemoryRouter>
   );
-  expect(screen.getByRole("button", { name: "Remove from wishlist" })).toHaveAttribute("aria-pressed", "true");
+  expect(screen.getByRole("button", { name: `Remove ${item.name} from wishlist` })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("hides the heart and the quick add when their handlers are omitted", () => {

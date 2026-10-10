@@ -67,10 +67,10 @@ test("the cards add through the page's handler and toggle the wishlist", () => {
   expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[0]));
 
   const saved = within(screen.getByRole("article", { name: "Piece 2" })).getByRole("button", {
-    name: "Remove from wishlist",
+    name: "Remove Piece 2 from wishlist",
   });
   expect(saved).toHaveAttribute("aria-pressed", "true");
-  fireEvent.click(within(screen.getByRole("article", { name: "Piece 1" })).getByRole("button", { name: "Save to wishlist" }));
+  fireEvent.click(within(screen.getByRole("article", { name: "Piece 1" })).getByRole("button", { name: "Save Piece 1 to wishlist" }));
   expect(onToggleWishlist).toHaveBeenCalledWith(PRODUCTS[0]);
 });
 

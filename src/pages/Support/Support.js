@@ -72,7 +72,7 @@ export const validateContact = (form) => {
   if (!form.name.trim()) errors.name = "Enter your name";
   if (!form.email.trim()) errors.email = "Enter your email address";
   else if (!isEmailValid(form.email)) errors.email = "Enter a valid email address, like name@example.com";
-  if (form.phone.trim() && !isValidPhone(form.phone)) errors.phone = "Enter a valid 10-digit mobile number";
+  if (form.phone.trim() && !isValidPhone(form.phone)) errors.phone = "Enter a 10-digit mobile number";
   if (!form.subject.trim()) errors.subject = "Enter a subject";
   if (!form.message.trim()) errors.message = "Write your message";
   else if (form.message.trim().length < MESSAGE_MIN_LENGTH) {
@@ -81,7 +81,7 @@ export const validateContact = (form) => {
   return errors;
 };
 
-const SEND_FAILED = `We couldn’t send your message. Please try again, or email us at ${SUPPORT_EMAIL}.`;
+const SEND_FAILED = `We couldn’t send your message. Try again in a moment, or email us at ${SUPPORT_EMAIL}.`;
 
 // The sticky header's visible height (§17.2), and a scroll that brings a
 // field to 16px under it ("instant" under reduced motion: the root's

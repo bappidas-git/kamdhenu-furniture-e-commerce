@@ -22,7 +22,7 @@ import styles from "./CartDrawer.module.css";
 //   • "Your cart" and the number of pieces, with a close button;
 //   • the free-delivery line and its progress hairline, from the live shipping
 //     methods (cartDelivery.js): "Add ₹X more for free delivery", or "Free
-//     delivery unlocked". Nothing is drawn until the methods have been read,
+//     delivery on this order". Nothing is drawn until the methods have been read,
 //     and nothing at all when no method has a free-delivery threshold;
 //   • the lines: thumbnail, name, option, unit price, a quantity stepper, the
 //     line total and "Remove";
@@ -78,7 +78,7 @@ const isPlainClick = (event) =>
   !event.ctrlKey &&
   !event.shiftKey;
 
-const itemsLabel = (count) => `${count} ${count === 1 ? "item" : "items"}`;
+const itemsLabel = (count) => `${count} ${count === 1 ? "piece" : "pieces"}`;
 const daysLabel = (days) => `${days} ${days === 1 ? "day" : "days"}`;
 const lineLabel = (line) => (line.variantName ? `${line.name}, ${line.variantName}` : line.name);
 
@@ -227,7 +227,7 @@ const CartLine = ({ line, reduceMotion, onNavigate, onDecrease, onIncrease, onRe
               className={`sf-btn sf-btn--link ${styles.remove}`}
               onClick={() => onRemove(line.id)}
             >
-              Remove<span className="sf-visually-hidden"> {label}</span>
+              Remove<span className="sf-visually-hidden"> {label} from cart</span>
             </button>
           </div>
           {line.variantName && <p className={styles.variant}>{line.variantName}</p>}
@@ -470,7 +470,7 @@ const CartDrawer = ({ open, onClose }) => {
                           >
                             <polyline points="20 6 9 17 4 12" />
                           </svg>
-                          Free delivery unlocked
+                          Free delivery on this order
                         </>
                       ) : (
                         <>

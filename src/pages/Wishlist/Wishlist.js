@@ -36,11 +36,11 @@ import styles from "./Wishlist.module.css";
 // =============================================================================
 
 const SORT_OPTIONS = [
-  { value: "dateDesc", label: "Recently Added" },
-  { value: "dateAsc", label: "Oldest First" },
-  { value: "priceLow", label: "Price: Low to High" },
-  { value: "priceHigh", label: "Price: High to Low" },
-  { value: "ratingHigh", label: "Highest Rated" },
+  { value: "dateDesc", label: "Recently added" },
+  { value: "dateAsc", label: "Oldest first" },
+  { value: "priceLow", label: "Price: low to high" },
+  { value: "priceHigh", label: "Price: high to low" },
+  { value: "ratingHigh", label: "Highest rated" },
 ];
 
 // How long a piece dims before it leaves (Remove, Move to cart).
@@ -72,7 +72,7 @@ export const describeStock = (item) => {
   return {
     stockValue,
     inStock,
-    label: known ? (inStock ? "In stock" : "Out of stock") : null,
+    label: known ? (inStock ? "In stock" : "Sold out") : null,
   };
 };
 
@@ -287,8 +287,8 @@ const Wishlist = () => {
     markLeaving(item.productId, true);
     setTimeout(() => {
       focusNeighbour(item.productId, "move");
-      // Silent: keeps the "Added to Cart" toast on screen instead of
-      // replacing it with a "Removed" toast mid-move.
+      // Silent: keeps the "Added to cart" toast on screen instead of
+      // replacing it with a "Removed from wishlist" toast mid-move.
       removeFromWishlist(item.productId, { silent: true });
       markLeaving(item.productId, false);
     }, REMOVE_DELAY_MS);
@@ -508,7 +508,7 @@ const Wishlist = () => {
         <h2 ref={emptyRef} tabIndex={-1} className={cx("sf-display-md", styles.emptyTitle)}>
           Nothing saved yet.
         </h2>
-        <p className={styles.emptyText}>Use the heart on any piece to save it for later.</p>
+        <p className={styles.emptyText}>Pieces you save will wait here.</p>
         <Link to="/products" className={cx("sf-btn sf-btn--primary", styles.emptyAction)}>
           Browse furniture
         </Link>

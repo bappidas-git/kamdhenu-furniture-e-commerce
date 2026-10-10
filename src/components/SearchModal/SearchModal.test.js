@@ -392,7 +392,7 @@ test("catalogue unavailable: the serif line and Try again, which reads it again"
   apiService.products.getAll.mockRejectedValueOnce(new Error("offline"));
   renderHarness();
   await openSearch({ settle: false });
-  const heading = await screen.findByRole("heading", { name: "Search is unavailable right now." });
+  const heading = await screen.findByRole("heading", { name: "We couldn’t load the catalogue." });
   expect(status()).toContainElement(heading);
   expect(progressActive()).toBeNull();
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
@@ -407,7 +407,7 @@ test("a failed read is tried again on the next open", async () => {
   apiService.products.getAll.mockRejectedValueOnce(new Error("offline"));
   renderHarness();
   await openSearch({ settle: false });
-  await screen.findByRole("heading", { name: "Search is unavailable right now." });
+  await screen.findByRole("heading", { name: "We couldn’t load the catalogue." });
   fireEvent.keyDown(field(), { key: "Escape" });
   await waitForClosed();
   await openSearch();

@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState
 import { Link } from "react-router-dom";
 import { useReducedMotion } from "framer-motion";
 import StarRating from "./StarRating";
-import { formatDate, productPath } from "../../utils/helpers";
+import { formatDateIN, productPath } from "../../utils/helpers";
 import styles from "./ReviewCarousel.module.css";
 
 // =============================================================================
@@ -63,7 +63,7 @@ export const clampQuote = (text, max = QUOTE_MAX_LENGTH) => {
 const fillLabel = (template, values) =>
   String(template).replace(/\{(\w+)\}/g, (match, key) => (key in values ? String(values[key]) : match));
 
-const shortDate = (value) => (Number.isFinite(Date.parse(value)) ? formatDate(value, "short") : null);
+const shortDate = (value) => (Number.isFinite(Date.parse(value)) ? formatDateIN(value, "short") : null);
 
 const Chevron = ({ back }) => (
   <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" focusable="false">
@@ -157,7 +157,7 @@ const ReviewCarousel = ({
   slideLabel = "Review {index} of {count}",
   verifiedLabel = "Verified purchase",
   emptyLabel = "No customer reviews yet.",
-  errorLabel = "Reviews could not be loaded just now.",
+  errorLabel = "We couldn’t load the reviews.",
   skeletonCount = 3,
   className,
 }) => {

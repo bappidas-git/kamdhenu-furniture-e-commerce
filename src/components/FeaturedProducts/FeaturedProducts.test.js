@@ -107,7 +107,7 @@ test("renders the storefront ProductCard wired to the page's handlers", () => {
     .forEach((link) => expect(link).toHaveAttribute("href", "/products/featured-1"));
   fireEvent.click(within(items[1]).getByRole("button", { name: "Add Featured 2 to cart" }));
   expect(onAddToCart).toHaveBeenCalledWith(buildCartItem(PRODUCTS[1]));
-  fireEvent.click(within(items[0]).getByRole("button", { name: "Save to wishlist" }));
+  fireEvent.click(within(items[0]).getByRole("button", { name: "Save Featured 1 to wishlist" }));
   expect(onToggleWishlist).toHaveBeenCalledWith(PRODUCTS[0]);
-  expect(within(items[2]).getByRole("button", { name: "Remove from wishlist" })).toBeInTheDocument();
+  expect(within(items[2]).getByRole("button", { name: "Remove Featured 3 from wishlist" })).toBeInTheDocument();
 });

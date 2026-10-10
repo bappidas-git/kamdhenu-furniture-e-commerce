@@ -185,7 +185,7 @@ const ProductListRow = ({
               type="button"
               className={`${styles.wishlist} ${isWishlisted ? styles.wishlisted : ""}`}
               aria-pressed={Boolean(isWishlisted)}
-              aria-label={isWishlisted ? "Remove from wishlist" : "Save to wishlist"}
+              aria-label={isWishlisted ? `Remove ${name} from wishlist` : `Save ${name} to wishlist`}
               onClick={() => onToggleWishlist(product)}
             >
               <HeartIcon filled={Boolean(isWishlisted)} />

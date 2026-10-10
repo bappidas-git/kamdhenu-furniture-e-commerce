@@ -94,12 +94,12 @@ export const RETURN_STATUS = {
 
 // Return reasons
 export const RETURN_REASONS = [
-  { value: "defective", label: "Defective / Damaged" },
-  { value: "wrong_item", label: "Wrong Item Received" },
-  { value: "not_as_described", label: "Not As Described" },
-  { value: "changed_mind", label: "Changed Mind" },
-  { value: "size_fit", label: "Size / Fit Issue" },
-  { value: "quality", label: "Quality Not Satisfactory" },
+  { value: "defective", label: "Damaged or faulty" },
+  { value: "wrong_item", label: "Wrong piece received" },
+  { value: "not_as_described", label: "Not as described" },
+  { value: "changed_mind", label: "Changed my mind" },
+  { value: "size_fit", label: "Size or fit" },
+  { value: "quality", label: "Quality not as expected" },
   { value: "other", label: "Other" },
 ];
 
@@ -141,7 +141,7 @@ export const SUPPORT_HOURS = "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sund
 
 // Date the legal/policy pages were last reviewed. Single source so the Privacy,
 // Terms, Cookie and Refund pages never show contradictory "last updated" dates.
-export const POLICY_LAST_UPDATED = "October 7, 2026";
+export const POLICY_LAST_UPDATED = "7 October 2026";
 
 // FAQs: the Help centre's questions (src/components/FAQ). Answers state only
 // what the store does today. Delivery times, charges and payment limits come
@@ -196,13 +196,13 @@ export const FAQ_ITEMS = [
     id: 7,
     question: "How can I pay?",
     answer:
-      "Checkout offers cards, UPI, net banking and wallets and, where available, cash on delivery up to the limit shown at checkout. You can also use store credit.",
+      "Checkout offers cards, UPI, net banking and wallets and, where available, Cash on Delivery up to the limit shown at checkout. You can also use store credit.",
   },
   {
     id: 8,
     question: "Do prices include GST?",
     answer:
-      "No. Prices on the website don't include GST. The tax for your order is added at checkout and shown before you pay.",
+      "No. Prices on the website don’t include GST. The tax for your order is added at checkout and shown before you pay.",
   },
   {
     id: 9,

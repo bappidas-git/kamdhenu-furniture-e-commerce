@@ -303,7 +303,7 @@ test("labelled fields with autocomplete, inputmode, hints and the read-only coun
   expect(country).toHaveValue("India");
   expect(country).toHaveAttribute("readonly");
   expect(country).toHaveAttribute("autocomplete", "country-name");
-  expect(country).toHaveAccessibleDescription("Currently shipping within India only");
+  expect(country).toHaveAccessibleDescription("We deliver within India only");
   // No placeholders: labels and hints say it all.
   within(form()).getAllByRole("textbox").forEach((input) => expect(input).not.toHaveAttribute("placeholder"));
 });
@@ -376,13 +376,13 @@ test("a submit with nothing filled: a message on each required field, focus on t
   fill("Address line 2 (optional)", "Kept as typed");
   await press(saveButton());
   const messages = {
-    "First name": "First name is required",
-    "Last name": "Last name is required",
-    "Phone number": "10-digit mobile number Phone number is required",
-    "Address line 1": "House or flat number, building and street Address line 1 is required",
-    City: "City is required",
-    State: "State is required",
-    "Postal code": "6-digit PIN Postal code is required",
+    "First name": "Enter a first name",
+    "Last name": "Enter a last name",
+    "Phone number": "10-digit mobile number Enter a phone number",
+    "Address line 1": "House or flat number, building and street Enter the house or flat number and street",
+    City: "Enter a city",
+    State: "Enter a state",
+    "Postal code": "6-digit PIN Enter a 6-digit PIN",
   };
   Object.entries(messages).forEach(([label, description]) => {
     expect(field(label)).toHaveAttribute("aria-invalid", "true");
@@ -391,7 +391,7 @@ test("a submit with nothing filled: a message on each required field, focus on t
   expect(field("Address line 2 (optional)")).not.toHaveAttribute("aria-invalid");
   expect(field("Address line 2 (optional)")).toHaveValue("Kept as typed");
   expect(field("First name")).toHaveFocus();
-  expect(status()).toHaveTextContent("Please fill in all required address fields.");
+  expect(status()).toHaveTextContent("Fill in the marked fields to save the address.");
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
   expect(form()).toBeInTheDocument();
 });
@@ -402,9 +402,9 @@ test("an invalid phone, everything else filled: its message after the hint, focu
   fillNewAddress({ "Phone number": "12345" });
   await press(saveButton());
   expect(field("Phone number")).toHaveAttribute("aria-invalid", "true");
-  expect(field("Phone number")).toHaveAccessibleDescription("10-digit mobile number Enter a valid 10-digit mobile number");
+  expect(field("Phone number")).toHaveAccessibleDescription("10-digit mobile number Enter a 10-digit mobile number");
   expect(field("Phone number")).toHaveFocus();
-  expect(status()).toHaveTextContent("Please enter a valid 10-digit Indian mobile number.");
+  expect(status()).toHaveTextContent("Enter a 10-digit mobile number to save the address.");
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
   // The values stay as typed.
   expect(field("Phone number")).toHaveValue("12345");
@@ -416,8 +416,8 @@ test("an empty phone is a required field like the rest (the phone rule, the phon
   await press(within(region()).getByRole("button", { name: "Add address" }));
   fillNewAddress({ "Phone number": "   " });
   await press(saveButton());
-  expect(field("Phone number")).toHaveAccessibleDescription("10-digit mobile number Phone number is required");
-  expect(status()).toHaveTextContent("Please enter a valid 10-digit Indian mobile number.");
+  expect(field("Phone number")).toHaveAccessibleDescription("10-digit mobile number Enter a phone number");
+  expect(status()).toHaveTextContent("Enter a 10-digit mobile number to save the address.");
   expect(apiService.auth.updateUser).not.toHaveBeenCalled();
 });
 
@@ -430,7 +430,7 @@ test("several at once: focus goes to the first in form order; the toast is the f
   expect(field("City")).toHaveAttribute("aria-invalid", "true");
   expect(field("First name")).not.toHaveAttribute("aria-invalid");
   expect(field("Phone number")).toHaveFocus();
-  expect(status()).toHaveTextContent("Please fill in all required address fields.");
+  expect(status()).toHaveTextContent("Fill in the marked fields to save the address.");
 });
 
 test("typing in a field clears its own message, and only its own", async () => {
@@ -439,7 +439,7 @@ test("typing in a field clears its own message, and only its own", async () => {
   await press(saveButton());
   fill("City", "S");
   expect(field("City")).not.toHaveAttribute("aria-invalid");
-  expect(within(form()).queryByText("City is required")).not.toBeInTheDocument();
+  expect(within(form()).queryByText("Enter a city")).not.toBeInTheDocument();
   expect(field("State")).toHaveAttribute("aria-invalid", "true");
 });
 
@@ -490,7 +490,7 @@ test("a new address: the whole array through updateUser, a canonical row, the fo
     country: "India",
     isDefault: false,
   });
-  expect(status()).toHaveTextContent("Address added successfully.");
+  expect(status()).toHaveTextContent("Address saved.");
   expect(queryForm()).not.toBeInTheDocument();
   expect(cards()).toHaveLength(2);
   expect(within(cards()[1]).getByText("4 Hill View, Opposite the park")).toBeInTheDocument();
@@ -522,7 +522,7 @@ test("the first address: the box shows it will be the default (locked, with a hi
   await press(saveButton());
   expect(sent()).toHaveLength(1);
   expect(sent()[0].isDefault).toBe(true);
-  expect(status()).toHaveTextContent("Address added successfully.");
+  expect(status()).toHaveTextContent("Address saved.");
   // The empty state's button is gone with it: focus goes to "Add address".
   await waitFor(() => expect(within(region()).getByRole("button", { name: "Add address" })).toHaveFocus());
 });
@@ -548,7 +548,7 @@ test("Edit: the form filled in, focus on 'Edit address', the row replaced in pla
   fill("City", "Pune City");
   await press(saveButton());
   expect(sent()).toEqual([HOME, { ...WORK, city: "Pune City" }]);
-  expect(status()).toHaveTextContent("Address updated successfully.");
+  expect(status()).toHaveTextContent("Address updated.");
   expect(queryForm()).not.toBeInTheDocument();
   await waitFor(() => expect(cardButton(cardWith("12 Park Avenue"), "Edit")).toHaveFocus());
 });
@@ -613,13 +613,13 @@ test("messages go when the form closes or opens for another address", async () =
   await press(saveButton());
   expect(field("City")).toHaveAttribute("aria-invalid", "true");
   await press(cardButton(cardWith("12 Park Avenue"), "Edit"));
-  expect(within(form()).queryAllByText(/is required$/)).toHaveLength(0);
+  expect(within(form()).queryAllByText(/^Enter /)).toHaveLength(0);
   fill("City", "");
   await press(saveButton());
   expect(field("City")).toHaveAttribute("aria-invalid", "true");
   await press(within(form()).getByRole("button", { name: "Cancel" }));
   await press(within(region()).getByRole("button", { name: "Add address" }));
-  expect(within(form()).queryAllByText(/is required$/)).toHaveLength(0);
+  expect(within(form()).queryAllByText(/^Enter /)).toHaveLength(0);
   expect(field("City")).not.toHaveAttribute("aria-invalid");
 });
 
@@ -671,7 +671,7 @@ test("a failed save says so and keeps the form as typed", async () => {
   await press(within(region()).getByRole("button", { name: "Add address" }));
   fillNewAddress();
   await press(saveButton());
-  expect(status()).toHaveTextContent("Failed to save address. Please try again.");
+  expect(status()).toHaveTextContent("We couldn’t save the address. Try again in a moment.");
   expect(field("City")).toHaveValue("Shillong");
   expect(saveButton()).toHaveTextContent("Save address");
   expect(cards()).toHaveLength(1);
@@ -690,7 +690,7 @@ test("Delete asks first, with the danger primitive (no hex colour)", async () =>
     icon: "warning",
     showCancelButton: true,
     confirmButtonText: "Delete",
-    cancelButtonText: "Keep",
+    cancelButtonText: "Keep address",
     customClass: { confirmButton: "sf-btn sf-btn--danger" },
     // The page returns focus itself: SweetAlert's late return would land on
     // the Delete button React reuses for the next card.
@@ -703,7 +703,7 @@ test("confirmed: the rest saved, the toast, focus on the card that took its plac
   renderAddresses(withAddresses(HOME, WORK, OTHER));
   await press(cardButton(cardWith("12 Park Avenue"), "Delete"));
   expect(sent()).toEqual([HOME, OTHER]);
-  expect(status()).toHaveTextContent("Address deleted successfully.");
+  expect(status()).toHaveTextContent("Address deleted.");
   expect(cards()).toHaveLength(2);
   expect(cardWith("12 Park Avenue")).toBeUndefined();
   await waitFor(() =>
@@ -770,7 +770,7 @@ test("a failed delete says so, keeps the card, and gives focus back to its Delet
   apiService.auth.updateUser.mockRejectedValue(new Error("Network Error"));
   renderAddresses(withAddresses(HOME, WORK));
   await press(cardButton(cardWith("12 Park Avenue"), "Delete"));
-  expect(status()).toHaveTextContent("Failed to delete address. Please try again.");
+  expect(status()).toHaveTextContent("We couldn’t delete the address. Try again in a moment.");
   expect(cards()).toHaveLength(2);
   await waitFor(() => expect(cardButton(cardWith("12 Park Avenue"), "Delete")).toHaveFocus());
 });
@@ -797,7 +797,7 @@ test("a failed 'Set as default' says so and changes nothing", async () => {
   apiService.auth.updateUser.mockRejectedValue(new Error("Network Error"));
   renderAddresses(withAddresses(HOME, WORK));
   await press(cardButton(cardWith("12 Park Avenue"), "Set as default"));
-  expect(status()).toHaveTextContent("Failed to update default address.");
+  expect(status()).toHaveTextContent("We couldn’t change your default address. Try again in a moment.");
   expect(cardWith("123 Main Street, Apt 4B")).toHaveClass("addressCardDefault");
   expect(cardWith("12 Park Avenue")).not.toHaveClass("addressCardDefault");
 });

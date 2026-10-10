@@ -17,7 +17,7 @@ export { groupCategoryTree } from "./groupCategoryTree";
 //
 // One department row, one panel instance. The row lists the admin-curated
 // departments (`departments` comes from groupCategoryTree), a divider dot,
-// then "Offers" (only while the deals page is enabled) and "Our Story". The
+// then "Offers" (only while the deals page is enabled) and "Our story". The
 // panel opens for one department at a time and is only in the DOM while open.
 //
 // How a panel opens:
@@ -247,7 +247,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
     },
   });
 
-  // "Offers" and "Our Story": no panel of their own, so they close one.
+  // "Offers" and "Our story": no panel of their own, so they close one.
   const itemHandlers = {
     onPointerEnter: (event) => {
       if (event.pointerType !== "mouse") return;
@@ -355,7 +355,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
             })}
           {ready && departments.length > 0 && <li className={styles.divider} aria-hidden="true" />}
           {ready && dealsEnabled && secondaryLink("/special-offers", "Offers")}
-          {ready && secondaryLink("/about", "Our Story")}
+          {ready && secondaryLink("/about", "Our story")}
         </ul>
 
         <AnimatePresence>
@@ -393,7 +393,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
 // The panel's content: a column per group (its name as an eyebrow link, then
 // its own children), or a short introduction for a flat department; the
 // editorial feature (the department's image, copy and "Shop all" link); and
-// "View all departments".
+// "Browse all furniture".
 function MegaMenuPanel({ department, onNavigate }) {
   const { category, groups } = department;
   const feature = getDepartmentFeature(category);
@@ -454,7 +454,7 @@ function MegaMenuPanel({ department, onNavigate }) {
         )}
         <p className={styles.footer}>
           <Link to="/products" className="sf-btn sf-btn--link" onClick={onNavigate}>
-            View all departments
+            Browse all furniture
           </Link>
         </p>
       </div>

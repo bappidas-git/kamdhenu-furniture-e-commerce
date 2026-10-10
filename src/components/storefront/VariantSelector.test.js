@@ -92,13 +92,13 @@ test("colour rows are swatches with the data's colours; sold out is disabled", (
   expect(tabStops()).toEqual(["-1", "-1", "0"]);
 });
 
-test("the chosen variant's stock note: only N left, or out of stock", () => {
+test("the chosen variant's stock note: only N left, or sold out", () => {
   const { rerender } = render(<VariantSelector variants={SHELVES} value={SHELVES[2]} />);
   expect(screen.getByText("Only 4 left in this option")).toBeInTheDocument();
   rerender(<VariantSelector variants={SHELVES} value={SHELVES[3]} />);
-  expect(screen.getByText("This option is out of stock")).toBeInTheDocument();
+  expect(screen.getByText("This option is sold out")).toBeInTheDocument();
   rerender(<VariantSelector variants={SHELVES} value={SHELVES[1]} />);
-  expect(screen.queryByText(/left in this option|out of stock/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/left in this option|sold out/)).not.toBeInTheDocument();
 });
 
 test("a choice unavailable with the other attribute stays clickable and snaps to a real variant", () => {
@@ -109,7 +109,7 @@ test("a choice unavailable with the other attribute stays clickable and snaps to
   ];
   const onChange = jest.fn();
   render(<Harness variants={matrix} onChange={onChange} />);
-  const large = screen.getByRole("radio", { name: /^L \(unavailable with current selection/ });
+  const large = screen.getByRole("radio", { name: /^L \(not available with your other choices/ });
   expect(large).toBeEnabled();
   expect(large).toHaveClass("chipMuted");
   fireEvent.click(large);
@@ -124,11 +124,11 @@ test("flat variants: one group of chips carrying their price", () => {
   ];
   const onChange = jest.fn();
   render(<VariantSelector variants={flat} value={flat[0]} onChange={onChange} />);
-  const group = screen.getByRole("radiogroup", { name: "Variant" });
+  const group = screen.getByRole("radiogroup", { name: "Option" });
   const [small, large] = within(group).getAllByRole("radio");
   expect(small).toHaveAccessibleName("Small , ₹999.00");
   expect(large).toBeDisabled();
-  expect(large).toHaveAccessibleName("Large , ₹1,499.00 (out of stock)");
+  expect(large).toHaveAccessibleName("Large , ₹1,499.00 (sold out)");
   fireEvent.click(small);
   expect(onChange).toHaveBeenCalledWith(flat[0]);
 });

@@ -391,7 +391,7 @@ const SearchModal = ({ open, onClose }) => {
     );
   } else if (view === "error") {
     statusContent = (
-      <h2 className={`sf-display-sm ${styles.stateTitle}`}>Search is unavailable right now.</h2>
+      <h2 className={`sf-display-sm ${styles.stateTitle}`}>We couldn’t load the catalogue.</h2>
     );
   }
 
@@ -557,7 +557,7 @@ const SearchModal = ({ open, onClose }) => {
 
                 {view === "error" && (
                   <div className={styles.state}>
-                    <p className={styles.stateLine}>Please check your connection and try again.</p>
+                    <p className={styles.stateLine}>Check your connection and try again.</p>
                     <button
                       type="button"
                       className={`sf-btn sf-btn--primary ${styles.stateAction}`}

@@ -228,7 +228,7 @@ class ErrorBoundary extends React.Component {
               Reload
             </button>
             <button type="button" data-variant="ghost" onClick={this.handleGoHome} style={s.ghost}>
-              Go home
+              Back to home
             </button>
           </div>
 

@@ -50,23 +50,23 @@ test("renders its children while nothing throws", () => {
   expect(screen.queryByRole("alert")).not.toBeInTheDocument();
 });
 
-test("a crash: role=alert, the serif h1, one line, Reload and Go home, the details", () => {
+test("a crash: role=alert, the serif h1, one line, Reload and Back to home, the details", () => {
   crash();
   const alert = screen.getByRole("alert");
   expect(within(alert).getByRole("heading", { level: 1, name: "Something went wrong." })).toBeInTheDocument();
   expect(within(alert).getByText(/^This page stopped working\./)).toBeInTheDocument();
   expect(within(alert).getByRole("button", { name: "Reload" })).toHaveAttribute("type", "button");
-  expect(within(alert).getByRole("button", { name: "Go home" })).toHaveAttribute("type", "button");
+  expect(within(alert).getByRole("button", { name: "Back to home" })).toHaveAttribute("type", "button");
   expect(within(alert).getByText("Error details").tagName).toBe("SUMMARY");
   expect(within(alert).getByText("Error: Broken widget").tagName).toBe("PRE");
   expect(consoleError).toHaveBeenCalledWith("=== CAUGHT ERROR ===", expect.any(Error));
 });
 
-test("Reload reloads; Go home navigates to / with a full page load", () => {
+test("Reload reloads; Back to home navigates to / with a full page load", () => {
   crash();
   fireEvent.click(screen.getByRole("button", { name: "Reload" }));
   expect(window.location.reload).toHaveBeenCalledTimes(1);
-  fireEvent.click(screen.getByRole("button", { name: "Go home" }));
+  fireEvent.click(screen.getByRole("button", { name: "Back to home" }));
   expect(window.location.assign).toHaveBeenCalledWith("/");
 });
 

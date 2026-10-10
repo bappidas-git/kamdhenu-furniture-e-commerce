@@ -180,7 +180,7 @@ test("a flat department links straight to its listing", async () => {
   const cafe = within(dialog).getByRole("link", { name: "Café & Restaurant Chairs" });
   expect(cafe).toHaveAttribute("href", "/products?category=cafe-restaurant-chairs");
   expect(cafe).not.toHaveAttribute("aria-expanded");
-  expect(within(dialog).getByRole("link", { name: "View all products" })).toHaveAttribute(
+  expect(within(dialog).getByRole("link", { name: "Browse all furniture" })).toHaveAttribute(
     "href",
     "/products"
   );
@@ -243,8 +243,8 @@ test("a failed first read offers a retry", async () => {
   apiService.categories.getAll.mockRejectedValueOnce(new Error("offline"));
   renderMenu();
   fireEvent.click(screen.getByRole("button", { name: "Open menu" }));
-  expect(await screen.findByText("We couldn't load the departments just now.")).toBeInTheDocument();
-  expect(screen.getByRole("link", { name: "View all products" })).toBeInTheDocument();
+  expect(await screen.findByText("We couldn’t load the departments.")).toBeInTheDocument();
+  expect(screen.getByRole("link", { name: "Browse all furniture" })).toBeInTheDocument();
   fireEvent.click(screen.getByRole("button", { name: "Try again" }));
   expect(await screen.findByRole("button", { name: "Plastic Furniture" })).toBeInTheDocument();
 });
@@ -277,7 +277,7 @@ test("Discover has only valid links; Offers follows the deals page", async () =>
     "href",
     "/products?sort=newest"
   );
-  expect(within(dialog).getByRole("link", { name: "Best sellers" })).toHaveAttribute(
+  expect(within(dialog).getByRole("link", { name: "Most reviewed" })).toHaveAttribute(
     "href",
     "/products?sort=popular"
   );
@@ -299,7 +299,7 @@ test("a guest can sign in or create an account from the menu", async () => {
   renderMenu({ onOpenAuth });
   let { dialog } = await openMenu();
   expect(
-    within(dialog).getByText("Sign in for faster checkout and order tracking.")
+    within(dialog).getByText("Sign in to track orders and save your wishlist across devices.")
   ).toBeInTheDocument();
   expect(within(dialog).getByRole("link", { name: "Track order" })).toHaveAttribute("href", "/orders");
   expect(within(dialog).queryByRole("button", { name: "Sign out" })).not.toBeInTheDocument();
@@ -324,7 +324,7 @@ test("a signed-in shopper sees their account and can sign out", async () => {
   expect(within(dialog).getByText("A")).toHaveAttribute("aria-hidden", "true");
   expect(within(dialog).getByRole("link", { name: "My account" })).toHaveAttribute("href", "/profile");
   expect(within(dialog).getByRole("link", { name: "My orders" })).toHaveAttribute("href", "/orders");
-  const wishlist = within(dialog).getByRole("link", { name: "My wishlist, 3 items" });
+  const wishlist = within(dialog).getByRole("link", { name: "My wishlist, 3 pieces" });
   expect(wishlist).toHaveAttribute("href", "/wishlist");
   expect(wishlist).toHaveAttribute("aria-current", "page");
 

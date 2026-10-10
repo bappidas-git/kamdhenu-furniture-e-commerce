@@ -299,7 +299,7 @@ describe("validation", () => {
     type(messageField(), "x".repeat(19));
     fireEvent.click(sendButton());
     expect(screen.getByText("Enter a valid email address, like name@example.com")).toBeInTheDocument();
-    expect(screen.getByText("Enter a valid 10-digit mobile number")).toBeInTheDocument();
+    expect(screen.getByText("Enter a 10-digit mobile number")).toBeInTheDocument();
     expect(screen.getByText("Write at least 20 characters")).toBeInTheDocument();
     expect(emailField()).toHaveFocus();
     expect(createContact).not.toHaveBeenCalled();
@@ -437,7 +437,7 @@ describe("sending", () => {
       request.reject(new Error("Network Error"));
       await request.promise.catch(() => {});
     });
-    expect(alert).toHaveTextContent(`We couldn’t send your message. Please try again, or email us at ${SUPPORT_EMAIL}.`);
+    expect(alert).toHaveTextContent(`We couldn’t send your message. Try again in a moment, or email us at ${SUPPORT_EMAIL}.`);
     expect(nameField()).toHaveValue("Asha Bora");
     expect(messageField()).toHaveValue("When will my sofa set be delivered to Guwahati?");
     expect(sendButton()).toHaveTextContent("Send message");

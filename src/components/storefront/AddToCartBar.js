@@ -160,7 +160,7 @@ const AddToCartBar = ({
         tabIndex={visible ? 0 : -1}
       >
         {disabled ? (
-          "Out of stock"
+          "Sold out"
         ) : added ? (
           <>
             Added

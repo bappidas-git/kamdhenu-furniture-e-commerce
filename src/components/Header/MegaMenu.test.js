@@ -51,7 +51,7 @@ const renderMenu = (props = {}) =>
 const department = (name) => screen.getByRole("link", { name });
 const panel = (name) => screen.queryByRole("region", { name: `${name} menu` });
 
-test("lists the departments as expandable links, then Offers and Our Story", () => {
+test("lists the departments as expandable links, then Offers and Our story", () => {
   renderMenu();
   const nav = screen.getByRole("navigation", { name: "Primary" });
   const plastic = within(nav).getByRole("link", { name: "Plastic Furniture" });
@@ -60,7 +60,7 @@ test("lists the departments as expandable links, then Offers and Our Story", () 
   expect(plastic).toHaveAttribute("aria-expanded", "false");
   expect(plastic).toHaveAttribute("aria-controls", "sf-megamenu-plastic-furniture");
   expect(within(nav).getByRole("link", { name: "Offers" })).toHaveAttribute("href", "/special-offers");
-  expect(within(nav).getByRole("link", { name: "Our Story" })).toHaveAttribute("href", "/about");
+  expect(within(nav).getByRole("link", { name: "Our story" })).toHaveAttribute("href", "/about");
   expect(screen.queryByRole("region")).not.toBeInTheDocument();
 });
 
@@ -93,7 +93,7 @@ test("a click opens the department's panel with canonical links, a second click 
     "href",
     "/products?category=plastic-furniture"
   );
-  expect(links.getByRole("link", { name: "View all departments" })).toHaveAttribute("href", "/products");
+  expect(links.getByRole("link", { name: "Browse all furniture" })).toHaveAttribute("href", "/products");
   const image = region.querySelector("img");
   expect(image).toHaveAttribute("alt", "Plastic Furniture");
   expect(image).toHaveAttribute("src", "https://example.test/plastic-furniture.png");

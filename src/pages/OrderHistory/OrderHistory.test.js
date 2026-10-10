@@ -362,7 +362,7 @@ describe("the order card", () => {
     const order = within(await findCard(PROCESSING));
     expect(order.getByRole("heading", { level: 3 })).toHaveTextContent(`Order ${PROCESSING}`);
     expect(order.getByRole("button", { name: `Copy order number ${PROCESSING}` })).toBeInTheDocument();
-    expect(order.getByText(/Placed on/)).toHaveTextContent("Placed on June 14, 2026");
+    expect(order.getByText(/Placed on/)).toHaveTextContent("Placed on 14 June 2026");
     expect(order.getByText("Processing")).toHaveClass("sf-badge", "sf-badge--ink");
     const thumbs = order.getByRole("list", { name: "Items in this order" });
     expect(within(thumbs).getByRole("img", { name: "Queen Size Bed - Walnut" })).toBeInTheDocument();
@@ -462,7 +462,7 @@ describe("copying a number", () => {
     const order = within(await findCard(PROCESSING));
     const copy = order.getByRole("button", { name: `Copy order number ${PROCESSING}` });
     fireEvent.click(copy);
-    await waitFor(() => expect(statusLine()).toHaveTextContent("Couldn't copy the order number."));
+    await waitFor(() => expect(statusLine()).toHaveTextContent("Couldn’t copy the order number."));
     expect(copy).not.toHaveAttribute("data-copied");
     error.mockRestore();
   });
@@ -497,7 +497,7 @@ describe("the tracking panel", () => {
     const order = within(card(PROCESSING));
     const steps = within(order.getByRole("list", { name: "Delivery progress" })).getAllByRole("listitem");
     expect(steps.map((step) => step.textContent)).toEqual([
-      "Placed, doneJun 14, 2026",
+      "Placed, done14 Jun 2026",
       "Processing",
       "Shipped, not yet",
       "Delivered, not yet",
@@ -536,7 +536,7 @@ describe("the tracking panel", () => {
     const order = within(card(DELIVERED_CREDIT));
     const steps = within(order.getByRole("list", { name: "Delivery progress" })).getAllByRole("listitem");
     expect(steps.map((step) => step.getAttribute("data-state"))).toEqual(["done", "done", "done", "current"]);
-    expect(steps[3]).toHaveTextContent("DeliveredJun 20, 2026");
+    expect(steps[3]).toHaveTextContent("Delivered20 Jun 2026");
   });
 
   test("cancelled: one sentence instead of the line; refunded: what the refund did", async () => {
@@ -547,7 +547,7 @@ describe("the tracking panel", () => {
     let order = within(card(CANCELLED));
     expect(order.queryByRole("list", { name: "Delivery progress" })).not.toBeInTheDocument();
     // The seeded order records when it was cancelled.
-    expect(order.getByText("This order was cancelled on June 12, 2026.")).toBeInTheDocument();
+    expect(order.getByText("This order was cancelled on 12 June 2026.")).toBeInTheDocument();
     expect(order.getByText("Not available")).toBeInTheDocument();
 
     openTracking(REFUNDED);
@@ -569,13 +569,13 @@ describe("the tracking panel", () => {
     renderPage();
     await findCard("ORD-R-1");
     openTracking("ORD-R-1");
-    expect(within(card("ORD-R-1")).getByText("Refund in progress — typically 5–7 business days")).toBeInTheDocument();
+    expect(within(card("ORD-R-1")).getByText("Refund in progress")).toBeInTheDocument();
     openTracking("ORD-R-2");
-    expect(within(card("ORD-R-2")).getByText("Refund delayed — our team is on it")).toBeInTheDocument();
+    expect(within(card("ORD-R-2")).getByText("Refund delayed. We’re looking into it.")).toBeInTheDocument();
     openTracking("ORD-R-3");
     const third = within(card("ORD-R-3"));
-    expect(third.getByText("Refunded to your original payment")).toBeInTheDocument();
-    expect(third.getByText("This order was cancelled on March 5, 2026.")).toBeInTheDocument();
+    expect(third.getByText("Refunded to your original payment method")).toBeInTheDocument();
+    expect(third.getByText("This order was cancelled on 5 March 2026.")).toBeInTheDocument();
   });
 
   test("no carrier link for an address that is not a web URL", async () => {
@@ -611,7 +611,7 @@ describe("the details panel", () => {
     expect(panel.getByText("UPI")).toBeInTheDocument();
     expect(panel.getByText("Status: Paid")).toBeInTheDocument();
     // No review control on an order that has not been delivered.
-    expect(order.queryByRole("button", { name: /Rate & review|Edit review/ })).not.toBeInTheDocument();
+    expect(order.queryByRole("button", { name: /Write a review|Edit review/ })).not.toBeInTheDocument();
     // No store credit on this order: no store-credit rows.
     expect(panel.queryByText("Store credit")).not.toBeInTheDocument();
   });
@@ -623,7 +623,7 @@ describe("the details panel", () => {
     const order = within(card(DELIVERED_CREDIT));
     const terms = order.getAllByRole("term").map((dt) => dt.textContent);
     const values = order.getAllByRole("definition").map((dd) => dd.textContent);
-    expect(terms).toEqual(["Subtotal", "Shipping", "Tax", "Total", "Store credit", "Amount paid"]);
+    expect(terms).toEqual(["Subtotal", "Delivery", "Tax", "Total", "Store credit", "Amount paid"]);
     expect(values).toEqual(["₹7,898.00", "₹499.00", "₹1,422.00", "₹9,819.00", "−₹1,000.00", "₹8,819.00"]);
 
     // Free delivery reads "Free"; no discount, no discount row.
@@ -646,7 +646,7 @@ describe("the details panel", () => {
     const due = within(card("ORD-COD-1"));
     expect(due.getByText("Amount due")).toBeInTheDocument();
     expect(due.queryByText("Amount paid")).not.toBeInTheDocument();
-    expect(due.getByText("Cash on delivery")).toBeInTheDocument();
+    expect(due.getByText("Cash on Delivery")).toBeInTheDocument();
     openDetails("ORD-COD-2");
     const voided = within(card("ORD-COD-2"));
     expect(voided.getByText("Store credit")).toBeInTheDocument();
@@ -658,7 +658,7 @@ describe("the details panel", () => {
     await loaded();
     openDetails(DELIVERED_CREDIT);
     const order = within(card(DELIVERED_CREDIT));
-    expect(order.getByRole("button", { name: "Rate & review 4-Seater Plastic Dining Set - Marble Beige" })).toHaveAttribute("aria-haspopup", "dialog");
+    expect(order.getByRole("button", { name: "Write a review 4-Seater Plastic Dining Set - Marble Beige" })).toHaveAttribute("aria-haspopup", "dialog");
     expect(order.getByText("Review pending approval")).toHaveClass("sf-badge--info");
     expect(order.getByRole("button", { name: "Edit review Slim Plastic Shoe Rack - 4 shelves" })).toBeInTheDocument();
 
@@ -677,7 +677,7 @@ describe("reviewing a piece", () => {
     await loaded();
     openDetails(DELIVERED_CREDIT);
     const order = within(card(DELIVERED_CREDIT));
-    const rate = order.getByRole("button", { name: "Rate & review 4-Seater Plastic Dining Set - Marble Beige" });
+    const rate = order.getByRole("button", { name: "Write a review 4-Seater Plastic Dining Set - Marble Beige" });
     rate.focus();
     fireEvent.click(rate);
 
@@ -709,7 +709,7 @@ describe("reviewing a piece", () => {
       expect.objectContaining({
         icon: "success",
         title: "Review submitted",
-        text: "Thanks! Your review will appear on the product page once it's approved.",
+        text: "Thank you. Your review will appear on the product page once it’s approved.",
         toast: true,
       })
     );
@@ -762,7 +762,7 @@ describe("cancelling an order", () => {
     });
     expect(options).not.toHaveProperty("confirmButtonColor");
     expect(options.html).toBe(
-      `Order <strong>${PROCESSING}</strong> will be cancelled. A full refund of ₹56,638.00 will be initiated to your original payment method.`
+      `Order <strong>${PROCESSING}</strong> will be cancelled. We’ll start a full refund of ₹56,638.00 to your original payment method.`
     );
     expect(apiService.orders.cancel).not.toHaveBeenCalled();
     expect(cancel).toHaveFocus();
@@ -774,11 +774,11 @@ describe("cancelling an order", () => {
     fireEvent.click(within(card(PROCESSING_CREDIT)).getByRole("button", { name: `Cancel order ${PROCESSING_CREDIT}` }));
     await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
     expect(confirmOptions().html).toBe(
-      `Order <strong>${PROCESSING_CREDIT}</strong> will be cancelled. A full refund of ₹37,939.00 will be initiated to your original payment method. The ₹1,000.00 of store credit you used will be returned to your account.`
+      `Order <strong>${PROCESSING_CREDIT}</strong> will be cancelled. We’ll start a full refund of ₹37,939.00 to your original payment method. The ₹1,000.00 of store credit you used will go back to your account.`
     );
   });
 
-  test("nothing collected: nothing to refund (cash on delivery)", async () => {
+  test("nothing collected: nothing to refund (Cash on Delivery)", async () => {
     apiService.orders.getByUserId.mockImplementationOnce(() =>
       Promise.resolve([{ ...seeded(PROCESSING), paymentMethod: "cod", paymentStatus: "pending" }])
     );
@@ -787,7 +787,7 @@ describe("cancelling an order", () => {
     fireEvent.click(within(card(PROCESSING)).getByRole("button", { name: `Cancel order ${PROCESSING}` }));
     await waitFor(() => expect(Swal.fire).toHaveBeenCalledTimes(1));
     expect(confirmOptions().html).toBe(
-      `Order <strong>${PROCESSING}</strong> will be cancelled. No payment has been collected, so there's nothing to refund.`
+      `Order <strong>${PROCESSING}</strong> will be cancelled. No payment has been collected, so there’s nothing to refund.`
     );
   });
 
@@ -855,8 +855,8 @@ describe("cancelling an order", () => {
     await waitFor(() =>
       expect(Swal.fire).toHaveBeenLastCalledWith({
         icon: "error",
-        title: "Couldn't cancel order",
-        text: "Something went wrong while cancelling. Please try again.",
+        title: "Couldn’t cancel the order",
+        text: "Your order hasn’t changed. Try again in a moment.",
       })
     );
     const cancel = within(card(PROCESSING)).getByRole("button", { name: `Cancel order ${PROCESSING}` });
@@ -985,7 +985,7 @@ describe("error and empty states", () => {
     const error = jest.spyOn(console, "error").mockImplementation(() => {});
     apiService.orders.getByUserId.mockImplementationOnce(() => Promise.reject(new Error("Network Error")));
     renderPage();
-    expect(await screen.findByRole("heading", { level: 3, name: "We couldn't load your orders." })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { level: 3, name: "We couldn’t load your orders." })).toBeInTheDocument();
     expect(screen.queryByText("No orders yet.")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Search by order number")).not.toBeInTheDocument();
 
@@ -1023,6 +1023,6 @@ describe("error and empty states", () => {
     openDetails(DELIVERED_CREDIT);
     const order = within(card(DELIVERED_CREDIT));
     expect(order.queryByText("Review pending approval")).not.toBeInTheDocument();
-    expect(order.getByRole("button", { name: "Rate & review Slim Plastic Shoe Rack - 4 shelves" })).toBeInTheDocument();
+    expect(order.getByRole("button", { name: "Write a review Slim Plastic Shoe Rack - 4 shelves" })).toBeInTheDocument();
   });
 });

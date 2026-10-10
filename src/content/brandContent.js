@@ -26,7 +26,7 @@ export const HERO_HEADLINES = [
 // Hero support-line candidates (each 14 words or fewer).
 export const HERO_SUPPORT_LINES = [
   "Chairs, sofas and tables for homes, offices, cafés and the open air.",
-  "Made in our own workshop, alongside brands we trust, and built for everyday use.",
+  "Some made in our own workshop, the rest from makers we trust.",
   "Considered furniture for every room you live, work and gather in.",
 ];
 
@@ -140,7 +140,7 @@ export const ASSURANCE_ITEMS = [
   },
   {
     id: "cod",
-    label: "Cash on delivery",
+    label: "Cash on Delivery",
     detail: "Pay when your furniture arrives",
   },
 ];

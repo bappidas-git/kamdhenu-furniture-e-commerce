@@ -253,7 +253,7 @@ describe("the page frame", () => {
 
     const stepper = screen.getByRole("list", { name: "Checkout progress" });
     const steps = within(stepper).getAllByRole("listitem");
-    expect(steps.map((step) => step.textContent)).toEqual(["1Cart", "2Shipping", "3Payment", "4Review"]);
+    expect(steps.map((step) => step.textContent)).toEqual(["1Cart", "2Delivery", "3Payment", "4Review"]);
     expect(steps[0]).toHaveAttribute("aria-current", "step");
     expect(steps.filter((step) => step.hasAttribute("aria-current"))).toHaveLength(1);
     expect(screen.getByText(/^Step 1 of 4/, { selector: "p" })).toHaveAttribute("aria-hidden", "true");
@@ -266,13 +266,13 @@ describe("the page frame", () => {
     expect(steps[0]).toHaveTextContent("Cart, done");
     expect(steps[0]).not.toHaveAttribute("aria-current");
     expect(steps[1]).toHaveAttribute("aria-current", "step");
-    expect(screen.getByText(/^Step 2 of 4/, { selector: "p" })).toHaveTextContent("Step 2 of 4·Shipping");
+    expect(screen.getByText(/^Step 2 of 4/, { selector: "p" })).toHaveTextContent("Step 2 of 4·Delivery");
   });
 
   test("a step change moves focus to the new step's heading, which says where the reader is", async () => {
     await renderCheckout();
     const heading = await goToShipping();
-    expect(heading).toHaveAccessibleName("Step 2 of 4: Shipping details");
+    expect(heading).toHaveAccessibleName("Step 2 of 4: Delivery details");
     await waitFor(() => expect(heading).toHaveFocus());
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     const back = await stepHeading(1);
@@ -319,7 +319,7 @@ describe("an empty cart", () => {
 describe("step 1: the cart", () => {
   test("lists each line with its option, unit price, quantity and line total", async () => {
     await renderCheckout({ cart: [BEDSIDE(2), CHAIR()] });
-    expect(screen.getByText("3 items")).toBeInTheDocument();
+    expect(screen.getByText("3 pieces")).toBeInTheDocument();
     const lines = within(screen.getByRole("list", { name: "Items in your cart" })).getAllByRole("listitem");
     expect(lines).toHaveLength(2);
     expect(lines[0]).toHaveTextContent("Wooden Bedside Table");
@@ -448,12 +448,12 @@ describe("the coupon", () => {
     expect(await screen.findByText("Network Error")).toBeInTheDocument();
   });
 
-  test("a refusal with no message at all still says “Invalid coupon” (as before)", async () => {
+  test("a refusal with no message at all still says “We couldn’t apply this code”", async () => {
     apiService.coupons.validate.mockRejectedValueOnce(new Error(""));
     await renderCheckout({ cart: [BEDSIDE(1)] });
     fireEvent.change(field(), { target: { value: "WELCOME500" } });
     apply();
-    expect(await screen.findByText("Invalid coupon")).toBeInTheDocument();
+    expect(await screen.findByText("We couldn’t apply this code")).toBeInTheDocument();
   });
 
   test("Enter applies; the applied line shows the saving, the summary the discount, and focus follows", async () => {
@@ -468,7 +468,7 @@ describe("the coupon", () => {
     // Prompt 05's recorded figures for 6 × Wooden Bedside Table with WELCOME500.
     expect(totalsText("Subtotal")).toBe("₹26,994.00");
     expect(totalsText("Discount (WELCOME500)")).toBe("−minus ₹500.00");
-    expect(totalsText("Shipping")).toBe("Free");
+    expect(totalsText("Delivery")).toBe("Free");
     expect(totalsText("Tax (18% GST)")).toBe("₹4,769.00");
     expect(totalsText("Total")).toBe("₹31,263.00");
   });
@@ -513,7 +513,7 @@ describe("the coupon", () => {
     const group = screen.getByRole("group", { name: "Quantity, Wooden Bedside Table, Walnut" });
     fireEvent.click(within(group).getByRole("button", { name: "Decrease quantity" })); // ₹4,499
     expect(
-      await screen.findByText("WELCOME500 was removed — it needs a minimum order of ₹5,000.00.")
+      await screen.findByText("WELCOME500 was removed. It needs a minimum order of ₹5,000.00.")
     ).toBeInTheDocument();
     expect(field()).toHaveValue("");
     expect(field()).not.toHaveAttribute("aria-invalid");
@@ -537,7 +537,7 @@ describe("a guest", () => {
     fireEvent.click(screen.getByRole("button", { name: "Sign in" }));
     expect(screen.getByTestId("auth-modal")).toHaveTextContent("login");
     act(() => auth.closeAuthModal());
-    fireEvent.click(screen.getByRole("button", { name: "Create an account" }));
+    fireEvent.click(screen.getByRole("button", { name: "Create account" }));
     expect(screen.getByTestId("auth-modal")).toHaveTextContent("signup");
   });
 
@@ -614,12 +614,12 @@ describe("step 2: shipping", () => {
     const lastName = screen.getByLabelText("Last name");
     await waitFor(() => expect(lastName).toHaveFocus());
     expect(lastName).toHaveAttribute("aria-invalid", "true");
-    expect(lastName).toHaveAccessibleDescription("Last name is required");
-    expect(screen.getByLabelText("Phone number")).toHaveAccessibleDescription("10-digit mobile number Phone number is required");
-    expect(screen.getByText("Address line 1 is required")).toBeInTheDocument();
-    expect(screen.getByText("City is required")).toBeInTheDocument();
-    expect(screen.getByText("State is required")).toBeInTheDocument();
-    expect(screen.getByText("Postal code is required")).toBeInTheDocument();
+    expect(lastName).toHaveAccessibleDescription("Enter a last name");
+    expect(screen.getByLabelText("Phone number")).toHaveAccessibleDescription("10-digit mobile number Enter a phone number");
+    expect(screen.getByText("Enter the house or flat number and street")).toBeInTheDocument();
+    expect(screen.getByText("Enter a city")).toBeInTheDocument();
+    expect(screen.getByText("Enter a state")).toBeInTheDocument();
+    expect(screen.getByText("Enter a 6-digit PIN")).toBeInTheDocument();
     expect(screen.getByLabelText("First name")).not.toHaveAttribute("aria-invalid");
     expect(screen.getByRole("heading", { level: 2, name: /^Step 2 of 4/ })).toBeInTheDocument();
   });
@@ -628,10 +628,10 @@ describe("step 2: shipping", () => {
     await renderCheckout({ user: NO_ADDRESS_USER });
     await goToShipping();
     fireEvent.click(primary());
-    await screen.findByText("City is required");
+    await screen.findByText("Enter a city");
     fireEvent.change(screen.getByLabelText("City"), { target: { value: "Guwahati" } });
-    expect(screen.queryByText("City is required")).not.toBeInTheDocument();
-    expect(screen.getByText("State is required")).toBeInTheDocument();
+    expect(screen.queryByText("Enter a city")).not.toBeInTheDocument();
+    expect(screen.getByText("Enter a state")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Back" }));
     await stepHeading(1);
     await goToShipping();
@@ -648,8 +648,8 @@ describe("step 2: shipping", () => {
     fill("State", "Assam");
     fill("Postal code", "7813");
     fireEvent.click(primary());
-    expect(await screen.findByText("Enter a valid 10-digit mobile number")).toBeInTheDocument();
-    expect(screen.getByText("Enter a valid 6-digit PIN")).toBeInTheDocument();
+    expect(await screen.findByText("Enter a 10-digit mobile number")).toBeInTheDocument();
+    expect(screen.getByText("Enter a 6-digit PIN")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByLabelText("Phone number")).toHaveFocus());
 
     fill("Phone number", "+91 98765 43210");
@@ -684,7 +684,7 @@ describe("step 2: shipping", () => {
     await screen.findByText(/This address needs a phone number and a 6-digit PIN\./);
     fireEvent.click(screen.getByRole("radio", { name: "A new address" }));
     const form = screen.getByRole("group", { name: "New address" });
-    expect(within(form).queryByText(/is required|Enter a valid/)).not.toBeInTheDocument();
+    expect(within(form).queryByText(/^Enter /)).not.toBeInTheDocument();
     within(form).getAllByRole("textbox").forEach((field) => expect(field).not.toHaveAttribute("aria-invalid"));
   });
 
@@ -699,7 +699,7 @@ describe("step 2: shipping", () => {
     expect(radios[0]).toBeChecked();
     expect(within(group).queryByText("Same Day Delivery")).not.toBeInTheDocument();
     fireEvent.click(radios[1]);
-    expect(totalsText("Shipping")).toBe("₹999.00");
+    expect(totalsText("Delivery")).toBe("₹999.00");
   });
 
   test("Standard reads Free once the subtotal reaches its threshold", async () => {
@@ -708,7 +708,7 @@ describe("step 2: shipping", () => {
     expect(nameOf(screen.getByRole("radio", { name: /^Standard Delivery/ }))).toBe(
       "Standard Delivery, 7–10 business days, Free, Free above ₹9,999.00"
     );
-    expect(totalsText("Shipping")).toBe("Free");
+    expect(totalsText("Delivery")).toBe("Free");
   });
 
   test("while the methods load: a loading line and skeletons, and the summary waits", async () => {
@@ -735,7 +735,7 @@ describe("step 2: shipping", () => {
     await goToShipping();
     expect(primary()).toHaveAttribute("aria-disabled", "true");
     fireEvent.click(primary());
-    expect(screen.queryByText("Please select a shipping method.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Choose a delivery method")).not.toBeInTheDocument();
     const steps = within(screen.getByRole("list", { name: "Checkout progress" })).getAllByRole("listitem");
     expect(steps[1]).toHaveAttribute("aria-current", "step");
     await act(async () => held.resolve(clone(METHODS)));
@@ -749,11 +749,11 @@ describe("step 2: shipping", () => {
     jest.spyOn(console, "error").mockImplementation(() => {});
     await renderCheckout();
     await goToShipping();
-    expect(screen.getByText("No delivery methods are available right now. Please try again later.")).toBeInTheDocument();
-    expect(totalsText("Shipping")).toBe("—Not chosen yet");
+    expect(screen.getByText("No delivery methods are available right now. Try again later.")).toBeInTheDocument();
+    expect(totalsText("Delivery")).toBe("—Not chosen yet");
     fireEvent.click(primary());
     const alert = await screen.findByRole("alert");
-    expect(alert).toHaveTextContent("Please select a shipping method.");
+    expect(alert).toHaveTextContent("Choose a delivery method");
     await waitFor(() => expect(alert).toHaveFocus());
     console.error.mockRestore();
   });
@@ -770,23 +770,23 @@ describe("step 3: payment", () => {
     expect(radios[0]).toBeChecked();
     expect(nameOf(radios[0])).toBe("Credit or debit card, Visa, Mastercard, RuPay");
     expect(nameOf(radios[2])).toBe("Net banking, Pay from your bank account");
-    expect(nameOf(radios[4])).toBe("Cash on delivery, Available for orders up to ₹50,000.00");
+    expect(nameOf(radios[4])).toBe("Cash on Delivery, Available for orders up to ₹50,000.00");
   });
 
   test("COD shows its real condition when it is out of range, and is unavailable", async () => {
     await renderCheckout({ cart: [SOFA(2)] }); // payable above ₹50,000
     await goToPayment();
-    const cod = screen.getByRole("radio", { name: /^Cash on delivery/ });
+    const cod = screen.getByRole("radio", { name: /^Cash on Delivery/ });
     expect(cod).toBeDisabled();
-    expect(nameOf(cod)).toBe("Cash on delivery, Not available for this amount · Available for orders up to ₹50,000.00");
+    expect(nameOf(cod)).toBe("Cash on Delivery, Not available for this amount · Available for orders up to ₹50,000.00");
   });
 
   test("with no COD cap the copy leaves the cap out (it used to say “up to ₹0.00”)", async () => {
     apiService.settings.get.mockResolvedValue({ ...clone(db.settings), payment: { ...db.settings.payment, codMaxOrder: null } });
     await renderCheckout({ cart: [BEDSIDE(1)] });
     await goToPayment();
-    const cod = screen.getByRole("radio", { name: /^Cash on delivery/ });
-    expect(nameOf(cod)).toBe("Cash on delivery, Pay when your order arrives");
+    const cod = screen.getByRole("radio", { name: /^Cash on Delivery/ });
+    expect(nameOf(cod)).toBe("Cash on Delivery, Pay when your order arrives");
     fireEvent.click(cod);
     expect(screen.getByText("Pay with cash when your order is delivered.")).toBeInTheDocument();
     expect(document.body.textContent).not.toMatch(/₹0\.00/);
@@ -799,8 +799,8 @@ describe("step 3: payment", () => {
     });
     const { unmount } = await renderCheckout({ cart: [BEDSIDE(1)] });
     await goToPayment();
-    expect(nameOf(screen.getByRole("radio", { name: /^Cash on delivery/ }))).toBe(
-      "Cash on delivery, Not available for this amount · Available for orders from ₹10,000.00"
+    expect(nameOf(screen.getByRole("radio", { name: /^Cash on Delivery/ }))).toBe(
+      "Cash on Delivery, Not available for this amount · Available for orders from ₹10,000.00"
     );
     unmount();
     localStorage.clear();
@@ -808,9 +808,9 @@ describe("step 3: payment", () => {
     await renderCheckout({ cart: [BEDSIDE(1)] });
     expect(within(screen.getByRole("list", { name: "Our promises" })).queryByText(/Cash on Delivery/)).not.toBeInTheDocument();
     await goToPayment();
-    const cod = screen.getByRole("radio", { name: /^Cash on delivery/ });
+    const cod = screen.getByRole("radio", { name: /^Cash on Delivery/ });
     expect(cod).toBeDisabled();
-    expect(nameOf(cod)).toBe("Cash on delivery, Currently unavailable");
+    expect(nameOf(cod)).toBe("Cash on Delivery, Currently unavailable");
   });
 
   test("the card, UPI and bank details: labelled fields with the right autocomplete and keypads", async () => {
@@ -834,7 +834,7 @@ describe("step 3: payment", () => {
       "Kotak Mahindra Bank",
       "Punjab National Bank",
     ]);
-    fireEvent.click(screen.getByRole("radio", { name: /^Cash on delivery/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Cash on Delivery/ }));
     expect(screen.getByText(/Pay with cash when your order is delivered\. Available for orders up to ₹50,000\.00\./)).toBeInTheDocument();
   });
 
@@ -849,7 +849,7 @@ describe("step 3: payment", () => {
     await renderCheckout();
     await goToPayment();
     expect(screen.getByText("Payment details are collected securely at the gateway.")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("radio", { name: /^Cash on delivery/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Cash on Delivery/ }));
     expect(screen.queryByText(/collected securely at the gateway/)).not.toBeInTheDocument();
   });
 
@@ -884,10 +884,10 @@ describe("step 3: payment", () => {
   test("credit that covers the order: the note, no payment options, and COD falls back to card", async () => {
     await renderCheckout({ cart: [CHAIR(1)] }); // total ₹1,324
     await goToPayment();
-    fireEvent.click(screen.getByRole("radio", { name: /^Cash on delivery/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Cash on Delivery/ }));
     fireEvent.click(screen.getByRole("switch", { name: "Apply to this order" }));
     expect(screen.getByRole("status")).toHaveTextContent(
-      "Your store credit covers this order in full — no further payment needed."
+      "Your store credit covers this order in full. There’s nothing more to pay."
     );
     expect(screen.queryByRole("group", { name: "Payment method" })).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("switch", { name: "Apply to this order" }));
@@ -926,7 +926,7 @@ describe("step 4: review", () => {
     const facts = screen.getByRole("list", { name: "About this order" });
     expect(within(facts).getAllByRole("listitem").map((item) => item.textContent)).toEqual([
       "Delivery in 7–10 business days",
-      "Easy returns within 7 days of delivery",
+      "Returns within 7 days of delivery, on eligible pieces",
       "Secure payment",
     ]);
     // The facts' figure sits beside its label (a presentational pair).
@@ -949,11 +949,11 @@ describe("step 4: review", () => {
   test("COD reads as cash on delivery, in the block and the facts", async () => {
     await renderCheckout();
     await goToPayment();
-    fireEvent.click(screen.getByRole("radio", { name: /^Cash on delivery/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Cash on Delivery/ }));
     fireEvent.click(primary());
     await stepHeading(4);
-    expect(screen.getByRole("region", { name: "Payment" })).toHaveTextContent("Pay ₹5,808.00 in cash on delivery.");
-    expect(screen.getByRole("list", { name: "About this order" })).toHaveTextContent("Pay in cash on delivery");
+    expect(screen.getByRole("region", { name: "Payment" })).toHaveTextContent("Pay ₹5,808.00 by Cash on Delivery.");
+    expect(screen.getByRole("list", { name: "About this order" })).toHaveTextContent("Pay by Cash on Delivery");
   });
 
   test("an order store credit covers: “Place order”, and the block says so", async () => {
@@ -1065,7 +1065,7 @@ describe("placing the order", () => {
     fill("Postal code", "781001");
     fireEvent.click(primary());
     await stepHeading(3);
-    fireEvent.click(screen.getByRole("radio", { name: /^Cash on delivery/ }));
+    fireEvent.click(screen.getByRole("radio", { name: /^Cash on Delivery/ }));
     fireEvent.click(primary());
     await stepHeading(4);
     fireEvent.click(primary());
@@ -1176,7 +1176,7 @@ describe("placing the order", () => {
 
 // ---------------------------------------------------------------------------
 describe("an order that fails", () => {
-  const MESSAGE = "We couldn't place your order. Nothing has been charged. Please try again.";
+  const MESSAGE = "We couldn’t place your order. Nothing has been charged. Try again in a moment.";
   // A click focuses its button in Chromium and Firefox (fireEvent's does not),
   // and the alert waits for focus to land (up to 500ms), so press as a mouse does.
   const pressPlaceOrder = () => {
@@ -1242,7 +1242,7 @@ describe("an order that fails", () => {
     await goToReview();
     pressPlaceOrder();
     await screen.findByText(MESSAGE);
-    expect(Swal.fire).toHaveBeenCalledWith(expect.objectContaining({ icon: "error", title: "Order Failed" }));
+    expect(Swal.fire).toHaveBeenCalledWith(expect.objectContaining({ icon: "error", title: "We couldn’t place your order" }));
   });
 
   test("the alert waits for that dialog to close and hand focus back (it hides the page from assistive tech), so it is announced", async () => {
@@ -1286,7 +1286,7 @@ describe("the order summary", () => {
     expect(within(summary()).getByText("+2 more items")).toBeInTheDocument();
     const money = expected({ lines: [BEDSIDE(1), CHAIR(1), ARMCHAIR(1), RACK(1), SOFA(1)] });
     expect(totalsText("Subtotal")).toBe(formatCurrency(money.subtotal));
-    expect(totalsText("Shipping")).toBe("Free");
+    expect(totalsText("Delivery")).toBe("Free");
     expect(totalsText("Tax (18% GST)")).toBe(formatCurrency(money.tax));
     expect(totalsText("Total")).toBe(formatCurrency(money.total));
   });
@@ -1306,7 +1306,7 @@ describe("the order summary", () => {
     const money = expected({ lines: cart, coupon: COUPONS[0] });
     expect(money.shipping).toBe(0);
     expect(totalsText("Subtotal")).toBe("₹10,396.00");
-    expect(totalsText("Shipping")).toBe("Free");
+    expect(totalsText("Delivery")).toBe("Free");
     expect(totalsText("Total")).toBe(formatCurrency(money.total));
   });
 
@@ -1314,13 +1314,13 @@ describe("the order summary", () => {
     const method = { ...clone(STANDARD), freeAbove: 4499 };
     apiService.shipping.getMethods.mockResolvedValue([method]);
     await renderCheckout({ cart: [BEDSIDE(1)] }); // exactly ₹4,499
-    expect(totalsText("Shipping")).toBe("Free");
+    expect(totalsText("Delivery")).toBe("Free");
     expect(totalsText("Total")).toBe(formatCurrency(expected({ lines: [BEDSIDE(1)], method }).total));
   });
 
   test("Prompt 05's figures for one bedside table: ₹499 delivery, ₹810 tax, ₹5,808", async () => {
     await renderCheckout({ cart: [BEDSIDE(1)] });
-    expect(totalsText("Shipping")).toBe("₹499.00");
+    expect(totalsText("Delivery")).toBe("₹499.00");
     expect(totalsText("Tax (18% GST)")).toBe("₹810.00");
     expect(totalsText("Total")).toBe("₹5,808.00");
   });

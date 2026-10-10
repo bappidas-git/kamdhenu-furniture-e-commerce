@@ -2662,3 +2662,144 @@ No new pairs: the pages reuse pairings `scripts/check-contrast.js` already check
 - **The Support request is the old one** (its call and its seven fields); prefill only fills the form.
 - **An unknown URL stays put** on the 404, inside the storefront shell.
 - **The crash fallback stays neutral and self-contained** (it serves the admin too), with inline token styles and literal fallbacks equal to the tokens.
+
+---
+
+## 39. Voice and microcopy
+
+Added by Prompt 29. Every word a shopper reads on the storefront follows this section: labels, headings, toasts, confirms, field messages, hints, empty, loading and error states, `aria-label`s and `alt` text, document metadata. Edit copy here first in your head, then in the file that owns it (39.9). The admin is out of scope: its own strings are not governed by this guide.
+
+### 39.1 The voice
+
+Refined, warm, aspirational, short, no hype. We sound like a good furniture shop: we name things plainly, say what will happen, and never shout.
+
+- **Short sentences, concrete nouns.** "Add to cart", "Address saved", "Pieces you save will wait here." Not "Your item has been successfully added to your shopping cart!"
+- **Say what is true.** A number appears only when data or a confirmed policy supplies it (39.8).
+- **Never blame.** "We couldn’t load your orders." Not "You are offline" or "Invalid request".
+- **Warm, not cute.** "See you again soon." is the limit; no "Oops", no "Yay", no jokes in errors.
+
+### 39.2 Mechanics
+
+| Rule | Do | Don’t |
+|---|---|---|
+| Sentence case everywhere: headings, buttons, labels, tabs, chips, toasts, sort options, meta titles | "Price: low to high", "Most reviewed", "Couldn’t sign you in" | "Price: Low to High", "Login Failed" |
+| No exclamation marks, no emoji, no hype words ("Oops", "Yay", "Awesome", "Hurry", "Don’t miss out", "Unbeatable", "Best", "unlocked", "exclusive", "guaranteed", "24/7") | "Thank you. Your review will appear…" | "Thanks!", "Free delivery unlocked", "Best sellers" |
+| Typographic punctuation | ’ (apostrophe), “ ” (quotes), … (one character), – (en dash for ranges), × (dimensions, quantities) | ' " ... - |
+| Ranges with an en dash and no spaces; windows in business days | "7–10 business days", "₹1,000 – ₹5,000" (price chips keep their spaced form) | "7-10 days" |
+| No em dash in UI sentences: use a full stop, or a middle dot between two short facts | "WELCOME500 was removed. It needs…", "₹499.00 · free above ₹9,999.00" | "removed — it needs…" |
+| Indian English spelling | catalogue, colour, centre, towards, cancelled | catalog, color, center, toward, canceled |
+| Full stops | Sentences (toast text, lines, empty-state lines, display headings) end with one | Labels, buttons, toast titles, chips, field messages and hints take none |
+| Display headings carry one `*accent*` word (§5.5) and end with a full stop | "Pieces of the *moment*." | Two accents, no stop |
+
+**Money** always goes through `formatCurrency` ("₹1,299.00"). Two compact forms are kept because their helpers are logic other prompts own: the trust-badge detail "Above ₹9,999" (`resolveTrustBadgeDetail`) and coupon figures "₹500 off", "Minimum order ₹5,000" (`offersData.rupees`). Do not add new compact forms.
+
+**Dates** on the storefront go through `formatDateIN` (`src/utils/helpers.js`): day before month, Indian order. `formatDate(…)` stays en-US and is not used by storefront code.
+
+| Format | Output | Used for |
+|---|---|---|
+| `formatDateIN(d)` (medium) | 25 September 2026 | "Placed on …", "Member since …", "Delivered on …", "cancelled on …", the invoice |
+| `formatDateIN(d, "short")` | 25 Sept 2026 | review dates, the store-credit ledger, the tracking steps |
+
+ICU writes September's short form as "Sept"; that is correct en-IN and matches the offers page's expiry dates. Static dates in copy are written the same way ("7 October 2026").
+
+### 39.3 Glossary
+
+| Use | For | Never |
+|---|---|---|
+| A & S Urbanseat | the business (spaces on both sides of &) | A&S, Urbanseat alone in running text |
+| piece, pieces | a unit of furniture, and counts of units ("Cart, 3 pieces", "Your cart · 3 pieces", "3 saved pieces") | product, item (for units) |
+| item, items | a line of an order ("2 items" beside the confirmation's "Order summary"; checkout's "+2 more items") | — |
+| cart | the cart | bag, basket |
+| wishlist; "Save to wishlist", "Saved to wishlist" | the wishlist | favourites, saved items, "Add to wishlist" |
+| Store credit (sentence case) | the account’s balance | Store Credit, Wallet ("Wallet" names only the digital-wallet payment method) |
+| Sign in, Sign out, Create account | the account actions | Log in, Login, Log out, Register, Sign up |
+| My account, My orders, My wishlist | the account destinations in menus | My profile, Order history |
+| delivery; Delivery details; Delivery (summary row); Deliver to | getting the order to the customer | shipping, Ship to, Shipping (customer-facing) |
+| Cash on Delivery (capitalised, a payment method’s name) | COD, also in running text: "Pay by Cash on Delivery" | cash on delivery, COD (except the payment mark's glyph) |
+| Essentials, Premium | the two tiers | non-premium, basic, standard |
+| Café & Restaurant Chairs | the department (as the data names it) | Cafe chairs, Restaurant furniture |
+| Sold out / In stock / Only N left | stock states | Out of stock (one term: "Sold out") |
+| Most reviewed | the listing sort by review count (`?sort=popular`) | Best sellers, Popularity |
+| Help centre (`/help`), Contact us (`/support`; the mobile menu’s "Help & support"), Our story (`/about`) | the content pages | Help Center, Our Story |
+| mobile number; 6-digit PIN | phone and postal-code fields | phone (in messages), zip |
+
+### 39.4 Labels for actions
+
+| Action | Label |
+|---|---|
+| Add a piece | Add to cart (then "Added" with a check for a moment: 1.2s on cards, 1.4s on the product page; visual only, the toast speaks) |
+| Buy straight away | Buy now |
+| Checkout | Checkout (drawer); Continue; Back; Place order · ₹X; Processing… |
+| Account | Sign in; Create account; Sign out; Save changes / Saving…; Update password / Updating…; Save address / Saving… |
+| Lists | Remove; Move to cart; Clear all; Show more; Try again |
+| Codes | Copy code (accessible name "Copy code WELCOME500"); Apply; Remove |
+| Orders | Track; Details; Track order; Cancel order / Cancelling…; Return or exchange; Write a review / Edit review; Print invoice |
+| Going elsewhere | Browse furniture (empty states, 404, the wallet card); Browse all furniture (menus); Continue shopping; Back to home; Shop the collection (hero, closing CTA) |
+| Overlays | Close; Close cart; Close search; Close menu; Open menu |
+
+### 39.5 State patterns
+
+**Empty.** A serif line that says what is missing, one sentence of help, one action.
+
+| Surface | Line | Help | Action |
+|---|---|---|---|
+| Wishlist | Nothing saved yet. | Pieces you save will wait here. | Browse furniture |
+| Cart drawer, checkout | Your cart is empty. | Pieces you add will wait here until you are ready to check out. | Browse furniture |
+| Orders | No orders yet. | When you place an order, it appears here, ready to track. | Browse furniture |
+| Listing | No pieces to show. | the case: search, filters or an empty catalogue | Clear all filters |
+| Reviews | No reviews yet. | Reviews come from verified orders and are published after moderation. | — |
+
+**Loading.** A skeleton in the final layout, plus a visually hidden line in the owner's words ("Loading your orders"). No "Please wait".
+
+**Error.** A serif title that says what happened, one line that says what to do, and "Try again": "We couldn’t load the catalogue." / "Check your connection and try again." / Try again. A one-off failure (a toast, an inline alert) says both in one or two sentences: "We couldn’t save the address. Try again in a moment." Never "Something went wrong" on its own, never "Failed to…", never "Please".
+
+**Success.** Brief and certain, past tense or a state: "Added to cart", "Saved to wishlist", "Address saved.", "Password updated.", "You’re on the list.", "Signed in". No "successfully".
+
+**Validation.** Inline, under the field, specific, an instruction without a full stop: "Enter your email address", "Enter a valid email address, like name@example.com", "Enter a 10-digit mobile number", "Enter a 6-digit PIN", "Use at least 8 characters", "Passwords don’t match", "Choose a star rating". A form whose fields address a recipient says "Enter a first name"; one about the shopper says "Enter your first name". Where a page also raises a toast, the toast is a sentence that says what to do next: "Fill in the marked fields to save the address."
+
+**Confirm dialogs.** The title is the question; the confirm button repeats the action; the cancel button keeps things as they are.
+
+| Confirm | Title | Text | Buttons |
+|---|---|---|---|
+| Sign out | Sign out? | You’ll need to sign in again to see your account. | Sign out · Stay signed in |
+| Delete an address | Delete this address? | This address will be removed from your account. | Delete · Keep address |
+| Cancel an order | Cancel this order? | Order ORD-… will be cancelled. We’ll start a full refund of ₹X to your original payment method. | Cancel order · Keep order |
+| Clear the wishlist | Clear your wishlist? | 3 saved pieces will be removed from your wishlist. | Clear all · Keep wishlist |
+
+**Toasts** (SweetAlert, from the contexts and pages): a title without a full stop, then at most one sentence, often naming the piece: "Added to cart" / "Classic Plastic Chair is in your cart." Failure toasts start "Couldn’t…".
+
+### 39.6 Accessibility copy
+
+- **Names are full phrases with their object:** "Remove Classic Plastic Chair, White from cart", "Save Teak Lounge Chair to wishlist", "Move to cart, Bentwood-Style Café Chair", "Copy code FLAT10", "Call +91 84729 18653".
+- **The visible label comes first** in a name wherever the control shows text (WCAG 2.5.3): "Add to cart, <name>" on the list row, "Copy code <code>". The product card's quick add keeps "Add <name> to cart" (its touch control shows a glyph); Prompt 31 owns that decision.
+- **Counts:** "Cart, 3 pieces", "Wishlist, empty", "Showing 1–12 of 84 pieces", ", 21 pieces" after a filter's name.
+- **Live regions are short:** "Code FLAT10 copied.", "Order ORD-… has been cancelled.", "Couldn’t load the catalogue".
+- **`alt` text** describes the photograph; placeholders say so ("Placeholder for a photograph of the workshop"); a product image's alt is the product's name; decorative thumbnails beside a named link are `alt=""`.
+- Hidden suffixes start with a space and no punctuation (§32 decision): `Edit<span class="sf-visually-hidden"> Home address at …</span>`.
+
+### 39.7 Help and hints
+
+Hints sit under the label, describe the expected input, and end without a full stop: "10-digit mobile number", "6-digit PIN", "House or flat number, building and street", "We deliver within India only", "Email address can’t be changed". Field labels never carry asterisks; optional fields say "(optional)".
+
+### 39.8 Honesty
+
+- **Numbers only from data or confirmed policy.** The delivery window comes from the method ("7–10 business days"), the threshold from the methods ("above ₹9,999"), the returns window from `STOREFRONT_CONFIG.returnsWindowDays`, COD limits from settings. No refund timings (the policy leaves them blank), no reply times, no years in business, no "100%", no "24/7".
+- **Returns are "on eligible pieces"** wherever a window is stated: "7-day returns on eligible pieces", "Returns within 7 days of delivery, on eligible pieces".
+- **No claims a flag cannot back:** the admin's `trending` flag is "Trending · Pieces of the *moment*.", not "What people are choosing"; the review-count sort is "Most reviewed", not "Best sellers".
+- **Drafts stay drafts:** every policy shows "Draft for legal review" until the client approves it (`draft: false`).
+
+### 39.9 Where copy lives
+
+| Copy | File |
+|---|---|
+| Brand lines, About, assurance items | `src/content/brandContent.js` |
+| Home sections, hero, promise steps, marquee, closing CTA | `src/content/homeContent.js` |
+| Policies | `src/content/legalContent.js` |
+| Mega-menu eyebrows | `src/content/navigationContent.js` |
+| FAQ, help topics, support topics, contact facts, policy date | `src/utils/constants.js` |
+| Trust-badge labels | `TRUST_BADGE_CATALOG` in `src/theme/tokens.js` |
+| Toasts and confirms of the cart, wishlist, sign-in and order flows | `title` / `text` of the `Swal.fire` calls in `src/context/*Context.js` |
+| Everything else | the component or page that renders it (constants at the top of the file where there are several) |
+| Default title and description | `public/index.html`, `public/manifest.json` |
+
+The test suites assert copy word for word: change a string and its test together. Admin-managed copy (category descriptions, product copy, shipping method names, coupon descriptions, the offers hero, `settings.store.tagline`, `settings.seo`) is the client's, edited in the admin; suggested wording is listed in `prompts/BUILD_LOG.md` (Prompt 29, "Needs client confirmation"), never written into `db.json` by a prompt.

@@ -81,8 +81,8 @@ export const OrderProvider = ({ children }) => {
 
       Swal.fire({
         icon: "error",
-        title: "Order Failed",
-        text: "There was an error processing your order. Please try again.",
+        title: "We couldn’t place your order",
+        text: "Nothing has been charged, and your cart is as you left it. Try again in a moment.",
       });
 
       return { success: false, error: error.message };
