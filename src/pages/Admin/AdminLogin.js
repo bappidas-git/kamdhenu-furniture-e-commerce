@@ -17,8 +17,8 @@ import { useAdmin } from "../../context/AdminContext";
 import { useTheme } from "../../context/ThemeContext";
 import buildAdminTheme from "../../theme/adminTheme";
 import useAdminBodyClass from "../../hooks/useAdminBodyClass";
+import { LOGO_URLS } from "../../utils/constants";
 
-const LOGO = "https://placehold.co/210x70/4f46e5/ffffff?text=LOGO";
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const AdminLogin = () => {
@@ -134,8 +134,10 @@ const AdminLogin = () => {
               }}
             >
               <img
-                src={LOGO}
+                src={isDarkMode ? LOGO_URLS.white : LOGO_URLS.light}
                 alt={process.env.REACT_APP_NAME || "Admin"}
+                width={169}
+                height={56}
                 style={{ height: 56, width: "auto" }}
               />
             </Box>

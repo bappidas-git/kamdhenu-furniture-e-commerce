@@ -34,9 +34,8 @@ import { useThemeContext } from "../../context/ThemeContext";
 import buildAdminTheme from "../../theme/adminTheme";
 import useAdminBodyClass from "../../hooks/useAdminBodyClass";
 import apiService from "../../services/api";
+import { LOGO_URLS } from "../../utils/constants";
 import Swal from "sweetalert2";
-
-const LOGO = "https://placehold.co/160x40/4f46e5/ffffff?text=LOGO";
 
 const drawerWidth = 260;
 
@@ -333,8 +332,10 @@ const AdminLayout = () => {
         }}
       >
         <img
-          src={LOGO}
+          src={mode === "dark" ? LOGO_URLS.white : LOGO_URLS.light}
           alt={process.env.REACT_APP_NAME || "Admin Panel"}
+          width={97}
+          height={32}
           style={{ height: 32, width: "auto" }}
         />
       </Box>
