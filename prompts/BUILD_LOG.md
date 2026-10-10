@@ -3563,3 +3563,237 @@ Eleven questions, each answered only from what the store does today: how long de
 - **Support:** the eight topic labels, and whether the WhatsApp link stays in the facts.
 - **Contact details** shown across these pages come from `constants.js` (email, phone, WhatsApp, hours, "Assam, India"): confirm them, and the full address if it should be published.
 - **The 404 and crash-screen copy.**
+
+## Prompt 29 — Copy and microcopy pass
+
+**Date:** 2026-10-10. **Result:** the storefront speaks in one voice. **262 strings in 40 files** were rewritten, out of the 1,887 likely-copy strings in the inventory. They cover toasts and confirms, field messages, empty, loading and error states, labels and sort options, accessible names, eyebrows, the content modules, the trust-badge labels and the document title. The rules, applied throughout:
+
+- sentence case;
+- no exclamation marks, hype words or emoji;
+- typographic apostrophes;
+- instructions instead of "… is required";
+- "We couldn’t …" plus what to do, instead of "Failed to …" and "Please try again";
+- one name per thing: "Sold out", "Cash on Delivery", "Delivery", "pieces", "Store credit", "My account".
+
+Storefront dates now read in Indian order through a new `formatDateIN` ("25 September 2026", "25 Sept 2026"). Eight unbacked claims are gone (below). The voice guide is `prompts/DESIGN_SYSTEM.md` §39. **Words only:** no condition, identifier, payload, route, storage key, class name or API call changed. The few structural edits are each a string's shape, listed under Verification.
+
+### What changed, by surface
+
+How strings are counted: a string is one literal, template or JSX text run, and a rewrite counts once. Apostrophe-only fixes (11) and case-only fixes (27) count. The "item"/"items" pair in a plural expression counts as one label.
+
+| Surface | Files (strings) | Strings |
+|---|---|---|
+| Toasts and confirms | `AuthContext` 10, `CartContext` 10, `OrderContext` 2, `WishlistContext` 18 (`title`, `text`, `confirmButtonText`, `cancelButtonText` only) | 40 |
+| Header, mega-menu, mobile menu, bottom bar | `Header` 3, `MegaMenu` 2, `SidebarMenu` 5, `BottomNav` 1 | 11 |
+| Footer and newsletter | `Footer` 3, `Newsletter` 4 | 7 |
+| Search | `SearchModal` 2 | 2 |
+| Sign-in and sign-up | `AuthModal` 18 | 18 |
+| Cart drawer | `CartDrawer` 3 | 3 |
+| Product cards, product page, reviews | `ProductCard` 2, `AddToCartBar` 1, `DeliveryReturnsInfo` 1, `VariantSelector` 5, `ReviewCarousel` 1, `ReviewsSection` 2, `ReviewModal` 2, `ProductDetails` 5 | 19 |
+| Listing | `Products` 15, `ProductListRow` 2 | 17 |
+| Checkout | `Checkout` 29 | 29 |
+| Confirmation and invoice | `OrderConfirmation` 13, `Invoice` 2 | 15 |
+| Orders | `OrderHistory` 18 | 18 |
+| Account (details, addresses, password, store credit, account nav) | `Profile` 38, `AccountNav` 2 | 40 |
+| Wishlist | `Wishlist` 7 | 7 |
+| Offers | `SpecialOffers` 6 | 6 |
+| Support | `Support` 2 | 2 |
+| Crash screen | `ErrorBoundary` 1 | 1 |
+| Content modules | `brandContent` 2, `homeContent` 3, `legalContent` 3, `navigationContent` 1 | 9 |
+| Constants and tokens | `constants.js` 9 (return reasons, FAQ, policy date), `tokens.js` 6 (`TRUST_BADGE_CATALOG` labels) | 15 |
+| Document metadata | `public/index.html` 3 (title, `og:title`, `twitter:title`) | 3 |
+| **Total** | **40 files** | **262** |
+
+Also changed:
+
+- `src/utils/helpers.js`: `formatDateIN` added (below).
+- Comments that quoted old copy, in pages and components (none in the contexts).
+- `prompts/DESIGN_SYSTEM.md`: §39.
+- 35 test files that assert copy word for word.
+
+`public/manifest.json` already read in voice and is unchanged.
+
+### Notable rewrites
+
+| Where | Before | After |
+|---|---|---|
+| Cart toast | Added to Cart / Classic Plastic Chair has been added to your cart | Added to cart / Classic Plastic Chair is in your cart. |
+| Sign-in toast | Login Failed / Invalid email or password | Couldn’t sign you in / Check your email address and password, then try again. |
+| Order failure | Order Failed / There was an error processing your order. Please try again. | We couldn’t place your order / Nothing has been charged, and your cart is as you left it. Try again in a moment. |
+| Clear the wishlist | Clear wishlist? / All 3 saved items will be removed. / Clear All · Keep Items | Clear your wishlist? / 3 saved pieces will be removed from your wishlist. / Clear all · Keep wishlist |
+| Sign-up fields | First name is required; Enter a valid 10-digit phone number; Please confirm your password; You must accept the terms and conditions | Enter your first name; Enter a 10-digit mobile number; Enter your password again; Agree to the terms of service and privacy policy to continue |
+| Address fields (checkout, account) | Address line 1 is required; Postal code is required; Phone number is required | Enter the house or flat number and street; Enter a 6-digit PIN; Enter a phone number |
+| Account toasts | Profile updated successfully. / Failed to update profile. Please try again. | Details saved. / We couldn’t save your details. Try again in a moment. |
+| Review dialog | Please select a star rating. / Something went wrong. Please try again. | Choose a star rating / We couldn’t send your review. Try again in a moment. |
+| Search failure | Search is unavailable right now. / Please check your connection and try again. | We couldn’t load the catalogue. / Check your connection and try again. |
+| Cancel confirm | A full refund of ₹X will be initiated to your original payment. | We’ll start a full refund of ₹X to your original payment method. |
+| Review thanks | Thanks! Your review will appear on the product page once it's approved. | Thank you. Your review will appear on the product page once it’s approved. |
+| Orders action | Rate & review | Write a review |
+| Product page | Out of stock; Exclusive of taxes — calculated at checkout; Easy 7-day returns | Sold out; GST added at checkout; 7-day returns on eligible pieces |
+| Listing sort | Price: Low to High; Avg. Customer Rating; Popularity | Price: low to high; Highest rated; Most reviewed |
+| Checkout | Your store credit covers this order in full — no further payment needed.; CODE was removed — it needs a minimum order of ₹X. | Your store credit covers this order in full. There’s nothing more to pay.; CODE was removed. It needs a minimum order of ₹X. |
+| Confirmation, not found | Order ORD-… may have been placed in a different session. | Check that ORD-… is the right number, or find the order in My orders. |
+| Trust badges | 100% Genuine; Free Shipping; 24/7 Support | Genuine products; Free delivery; Customer support |
+| Heart buttons (accessible name) | Save to wishlist | Save Classic Plastic Chair to wishlist |
+| Document title | A & S Urbanseat \| Furniture & Seating for Home, Office, Café and Outdoor | A & S Urbanseat \| Furniture and seating for home, office, café and outdoor |
+
+### Dates: `formatDateIN`
+
+- **Added** to `src/utils/helpers.js`, a pure addition. It takes the same format names as `formatDate` (`short`, `medium`, `long`, `time`, `datetime`) and calls `toLocaleDateString("en-IN", …)` for day-month-year order: medium "25 September 2026", short "25 Sept 2026". ICU's en-IN short form for September is "Sept".
+- **Switched: 11 call sites, all storefront:**
+  - `ReviewsSection` and `ReviewCarousel`: the review dates;
+  - `OrderHistory`: cancelled on, the tracking-step dates, placed on;
+  - `Profile`: the ledger dates, member since;
+  - `OrderConfirmation`: cancelled on, delivered on, placed on;
+  - `Invoice`: the date.
+
+  The arguments, the format names and the `<time dateTime>` attributes are unchanged.
+- **`formatDate` is unchanged:** en-US, "September 25, 2026", pinned by `helpers.test.js`. No storefront file calls it now. The admin never did: each admin page defines its own local `formatDate` in en-IN. A later prompt can retire it or repoint it.
+- **Static dates** follow suit: `POLICY_LAST_UPDATED` "October 7, 2026" → "7 October 2026".
+
+### Claims removed
+
+1. **"Best sellers"** (footer, mobile menu) and **"Popularity"** (sort) → "Most reviewed". `?sort=popular` orders by `totalReviews`; nothing measures sales.
+2. **"What people are *choosing*."** (the home page's trending rail) → "Pieces of the *moment*.". The rail shows the admin's `trending` flag, not customer behaviour.
+3. **"Refund in progress — typically 5–7 business days"** (orders) → "Refund in progress". The refund policy leaves refund timings blank (Prompt 28).
+4. **"100% Genuine"** (a badge shown beside the buy box) → "Genuine products": nothing backs "100%". **"24/7 Support"** (in the catalogue, not switched on) → "Customer support": support keeps working hours.
+5. **"Light and weather-ready"** (the Plastic Furniture mega-menu eyebrow) → "Light and easy to care for". Weatherproofing is not confirmed.
+6. **"Easy 7-day returns"** (product page) and **"Easy returns within 7 days of delivery"** (checkout) → "7-day returns on eligible pieces" and "Returns within 7 days of delivery, on eligible pieces". The policy excludes assembled and custom-made pieces and unwrapped mattresses.
+7. **"Made in our own workshop, alongside brands we trust, and built for everyday use."** (`HERO_SUPPORT_LINES[1]`, unused today) → "Some made in our own workshop, the rest from makers we trust.". This matches Prompt 28's correction to `ABOUT_INTRO`.
+8. **"Sign in for faster checkout and order tracking."** (mobile menu) → "Sign in to track orders and save your wishlist across devices.". Checkout always needs an account, so signing in makes nothing faster; the wishlist does sync to the account.
+
+Hype removed as well: "Free delivery unlocked" → "Free delivery on this order", "Thanks!" → "Thank you.".
+
+### Decisions
+
+- **One voice guide** (§39) holds the glossary, the labels for actions, the state patterns, the accessibility copy and where copy lives. Later prompts write copy against it.
+- **"Sold out"** is the only zero-stock term: the product page, the buy bar, the variant chips and the wishlist. "In stock" and "Only N left" stay.
+- **"Cash on Delivery"** is the payment method's name, capitalised wherever a shopper reads it: the payment labels, the trust mark, the FAQ, the policies' running text and the promise step.
+- **"Pieces" counts furniture:** "Cart, 3 pieces", "3 saved pieces", "Showing 1–12 of 84 pieces". **"Items" counts order lines:** "2 items" beside the confirmation's "Order summary", and checkout's "+2 more items".
+- **"Delivery", not "shipping", wherever a shopper reads it:**
+  - checkout: the second step, its heading ("Delivery details") and the summary rows;
+  - the invoice: "Deliver to";
+  - orders and confirmation: "No delivery address recorded".
+
+  Data keys, field names and the admin keep "shipping".
+- **Field messages are instructions without a full stop.** Toast texts and lines are sentences and end with one. A form about the shopper says "your" ("Enter your first name"); an address form for a recipient says "a" ("Enter a first name").
+- **Failures say what happened and what to do:**
+  - after a one-off action: "We couldn’t … Try again in a moment.";
+  - under a failed load's heading: "Check your connection and try again.".
+- **Toast titles name the result** ("Saved to wishlist", "Removed from cart", "Signed out"). A text line appears only when it adds something.
+- **"My account"** replaces "My profile" in the header menu, since the account area holds orders, addresses, store credit and the wishlist.
+
+### Deviations from the prompt, and why
+
+1. **The sign-in toast no longer names the shopper:** "Signed in" / "Welcome back." replaces "Welcome John Doe" / "You have successfully logged in". A greeting with the name and the right punctuation ("Welcome back, Bappi.") needs a fallback for a missing name, which is a new condition; the old expression already fell back to "Welcome". The title is now a plain string, so the AST check lists it.
+2. **Four toasts lost their `text`:** "Removed from cart", "Cart cleared", "Removed from wishlist" and "Wishlist cleared". Each text repeated its title ("Item removed from cart"). Deleting the field is the words-only way to say less; SweetAlert shows no body without it.
+3. **Accessible names now include their object, where it was already in scope:**
+   - the heart buttons read "Save <name> to wishlist" and "Remove <name> from wishlist" (`ProductCard` and `ProductListRow`: a template literal over the existing `name`);
+   - the cart drawer's Remove button's hidden suffix ends " from cart".
+
+   The card's and the list row's add buttons keep their names; Prompt 31 owns that decision.
+4. **The confirmation page's load-error line no longer repeats the order number.** The heading says "We couldn’t load your order." and the line says what to do; one `{orderNumber}` left that sentence.
+5. **The review photos' `alt` stays "Customer upload N of M".** The rewrite "Customer photo N of M" set off `jsx-a11y/img-redundant-alt`, a new build warning, so it was reverted.
+6. **Two strings stay because they are logic:** checkout's `"Required"` sentinel (`validateAddress` returns it, and the page swaps in the field's own message) and the order filters' labels (`FILTER_OPTIONS` values are compared, e.g. `activeFilter === "All"`).
+7. **`RETURN_REASONS` were relabelled** even though the storefront does not show them today (the admin has its own list). They sit in `constants.js` with the other shared labels.
+8. **Only pages and components had their comments updated.** In the contexts the brief allows only `Swal.fire` texts, so one comment in `WishlistContext.js` still calls the toast "Added to Cart".
+9. **Files beyond the list:** the 35 test files, `helpers.test.js`'s three new `formatDateIN` tests, and `TrustBadges.js` (one comment).
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **68 suites, 1,219 tests**, up from 1,216 by the three `formatDateIN` tests, with no console warnings. Tests that asserted old copy now assert the new words. None was deleted; checks that a message is absent match the new wording (for example `/^Enter /`).
+- **Build:** `npm run build` prints "Compiled successfully" with no warnings. Gzip: JS 437.47 → 437.34 kB, CSS 52.92 kB (unchanged).
+- **Lint:** ESLint (the project's config) reports nothing in the changed source files. The changed test files carry 163 findings (testing-library and jest rules); `HEAD` has the same 163.
+- **Words only (AST check):** a scratch script parsed each changed source file at `HEAD` and in the working tree, masked every string (literals, template text, JSX text) and compared the token streams. Of 41 files, 28 differ in words or comments only. The other 13 differ only as listed:
+  - `formatDate` → `formatDateIN` in six files, and the helper itself;
+  - the four removed `text` fields (`CartContext`, `WishlistContext`);
+  - `AuthContext`'s title expression, now a string;
+  - the heart labels' template literals (`ProductCard`, `ProductListRow`);
+  - the drawer's added " from cart";
+  - the confirmation's removed `{orderNumber}`.
+- **Static sweeps** over the final inventory (1,882 likely-copy strings) found:
+  - no "!" (the one hit is a CSS `!important`);
+  - no "Oops", "Yay", "Awesome", "Hurry", "Don’t miss out", "Unbeatable" or "Best";
+  - no emoji, no straight apostrophe between letters, no US spelling;
+  - "non-premium" nowhere in storefront code.
+
+  "Please" survives only in the policies' prose and in the out-of-scope strings below.
+- **Data and API:** `node scripts/validate-db.js` passes. `db.json` is unchanged (SHA-256 `5cbc3088…`), and so is `api.js`.
+- **Browser QA:** Playwright and Chromium ran a mock-mode production build against JSON Server on a scratch `db.json`. **104 checks at 360 and 1440px, all passing:**
+  - home: the trending heading; the newsletter's invalid-address and failure messages;
+  - listing: the results line in pieces; the sort labels, which fit the select at 360px; the empty state;
+  - product page: the sold-out option, the returns line, the tax note, the trust labels;
+  - cart drawer: the empty state, the add toast, the Remove and stepper names, "1 piece";
+  - the guest wishlist and the 404;
+  - sign-in and sign-up: a failed sign-in (toast and alert), the sign-up messages, the signed-in toast;
+  - checkout: a refused coupon (with "Invalid coupon code" from `api.js`), the step heading, the address messages, the "Delivery" row;
+  - account and orders: the orders page's cancel confirm (kept, not cancelled), the store-credit dates in Indian order, "Placed on 12 June 2026" on a confirmation, the wishlist's clear confirm (kept);
+  - offers: "Copy code WELCOME500" and "Minimum order";
+  - the sign-out confirm and toast, and search's failure state;
+  - throughout: no page errors and no horizontal overflow.
+
+  Screenshots of the 20 states at both widths were reviewed by eye. The three confirm dialogs were captured again once their fade-in had settled: no button label wraps at 360px.
+- **Accessible names and live regions spot-checked (10):**
+  - "Save Wooden Sofa Set to wishlist" (card heart);
+  - "Remove Classic Plastic Chair, White from cart" (drawer);
+  - "Cart, empty" (header);
+  - the drawer's named stepper group and its "1 piece";
+  - "Copy code WELCOME500";
+  - "Showing 1–12 of 84 pieces" (the listing's status line);
+  - the newsletter's status messages;
+  - the sign-in sheet's alert;
+  - "Clear all saved pieces";
+  - checkout's step heading.
+- **Admin regression:** no admin file changed. Of the changed modules, admin pages import only `helpers.js`, which only gained an export. The admin shares two things with the storefront through `App.js`. The providers' toasts fire only on storefront actions. The crash screen is shared, so its "Go home" button now reads "Back to home" there too. Signed in to the same build's admin, all 13 admin routes (dashboard to settings) render their headings and tables with no page or console errors.
+- **Not available here:** NVDA and VoiceOver.
+
+### Left as they are (out of scope)
+
+- **`AuthContext`'s returned messages:** "Invalid email or password" (the sign-in sheet's alert) and the fallbacks "An error occurred during login. Please try again." / "… during registration …". The brief limits the contexts to `Swal.fire` texts. Proposed:
+  - "Check your email address and password, then try again.";
+  - "We couldn’t sign you in. Try again in a moment.";
+  - "We couldn’t create your account. Try again in a moment.".
+- **`api.js` messages shared with the admin** ("Invalid coupon code" and the rest): accepted by the brief.
+- **`helpers.js`'s `validateForm` messages** ("Please enter a valid email address", "… is required"): nothing calls `validateForm`, and only `formatDateIN` was to be added there.
+- **`src/index.js`'s development error overlay:** developer-facing.
+- **`dealsConfig.js`'s `DEFAULT_DEALS_HERO`:** shown only when the admin's hero is empty; proposed below.
+- **Two compact money forms owned by other prompts' helpers:** `resolveTrustBadgeDetail`'s "Above ₹9,999" and `offersData.rupees`' "₹500 off" and "Minimum order ₹5,000".
+- **SweetAlert options other than the texts:**
+  - the wishlist's clear confirm keeps its brighter red `confirmButtonColor` (the other confirms use the brick token);
+  - on phones a toast can still cover the sign-in sheet's button (Prompt 20).
+- **"Added ✓":** `STOREFRONT_UX_GUIDELINES.md` and a `ProductDetails.js` comment still call the busy state that; the ✓ is an icon.
+
+### Notes for later prompts
+
+- **30 (motion):** no copy change touches a motion; the "Added" state keeps its timings (1.2s on cards, 1.4s on the product page).
+- **31 (a11y):** three items:
+  - the card's quick-add name ("Add <name> to cart") against "Add to cart, <name>" on the list row (§39.6);
+  - the new toast titles and status lines under NVDA and VoiceOver;
+  - the review photos' `alt`.
+- **33 (SEO):** `index.html`'s title is sentence case. The storefront does not read `settings.seo` today; if Prompt 33 wires it, take the sentence-case title (below).
+- **34 (QA):** 35 test files assert copy word for word against §39. A later copy change updates the tests and §39 together.
+
+### Needs client confirmation
+
+- **The new lines:**
+  - "Pieces of the *moment*." (the trending rail);
+  - "Signed in" / "Welcome back." and "Signed out" / "See you again soon.";
+  - "Most reviewed", "Sold out", "Light and easy to care for";
+  - "Genuine products", "Customer support";
+  - "Sign in to track orders and save your wishlist across devices.";
+  - "Pieces you save will wait here.".
+- **House style:** "Cash on Delivery" capitalised, "pieces" for counts, "Delivery" over "Shipping", "My account", Indian date order.
+- **Admin-managed copy in `db.json`** (not changed; change through the admin):
+  - **Shipping methods:** "Standard Delivery", "Express Delivery", "Same Day Delivery", "Free Shipping" → "Standard delivery", "Express delivery", "Same-day delivery", "Free delivery". This is safe: the storefront finds the standard method with `/standard/i`, and "Free delivery" does not match it.
+  - **Coupons:** WELCOME500 "₹500 off your first order above ₹5,000" and NEWHOME20 "20% off your first order, up to ₹3,000". Nothing checks "first order" in the mock or in the coupon logic, so either the Laravel API enforces it or the descriptions drop it ("₹500 off orders above ₹5,000").
+  - **Plastic Furniture's description:** "Light, weather-ready plastic chairs, tables and storage that clean in a moment and stack away neatly." → "Light, easy-care plastic chairs, tables and storage for home and outdoors." Weatherproofing and stacking are unconfirmed.
+  - **Office Tables & Desks' description:** "Work, computer and reading tables that keep a desk orderly and a day productive." → "Office, computer and reading tables for work and study."
+  - **`settings.seo.metaTitle`:** "A & S Urbanseat | Furniture & Seating for Home, Office, Café and Outdoor" → "A & S Urbanseat | Furniture and seating for home, office, café and outdoor", to match `index.html`.
+  - **`settings.store.tagline`:** "Trusted Comfort for Every Home" (also `APP_TAGLINE`; the logo artwork carries it in Title Case). Keep it as a lockup, or use "Trusted comfort for every home" in running text.
+  - **The deals hero's title:** "Offers on pieces we love" → "Offers on pieces we *love*.", if it should follow the display-heading rule (one accent, a full stop).
+  - **Leads 3 and 4:** a smartwatch and running shoes, boilerplate demo data. Replace with furniture examples or delete.
+  - **Product descriptions** use straight apostrophes ("the whole family's pairs"). This is typography only, for a later content pass.
+- **`DEFAULT_DEALS_HERO`** in `dealsConfig.js` (shown only when the admin's hero is empty):
+  - now: "Limited Time" / "Special Offers & Deals" / "Discover unbeatable prices on top products. New deals drop daily — don't miss out!";
+  - proposed: "This week" / "Special offers" / "A short list of pieces at a lower price for now, plus codes you can use at checkout.".
+- **`RETURN_REASONS` wording,** if a storefront return form is added.
