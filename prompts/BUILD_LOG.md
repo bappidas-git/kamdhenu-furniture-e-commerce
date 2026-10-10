@@ -4031,3 +4031,329 @@ No token was added or changed: `storefront-tokens.css` is untouched, and `check-
 ### Needs client confirmation
 
 None.
+
+## Prompt 32 — Performance, SEO and conversion audit
+
+**Date:** 2026-10-10. **Result:** every storefront route now has its own title, description and sharing tags (`usePageMeta`); the product page publishes `Product` JSON-LD that the schema.org validator passes with no error or warning; 14 storefront pages load on demand in 11 chunks, while home, the listing, the product page and the whole admin stay in the main bundle. Main JS **444.1 → 398.0 KB** gzip (−10.4%), main CSS **53.5 → 34.8 KB** (−34.9%); a cold home visit transfers **907 → 720 KB** and makes **12 → 8** API calls. Lighthouse mobile (medians of 3, `HEAD` and the branch interleaved): **LCP 0.6–1.1s faster** on all four audited pages; Accessibility, Best Practices and SEO **100** before and after; **Performance 44–55 → 46–52, below the ≥ 85 target** (why, with an experiment, below). Layout shift is **under 0.05 on every storefront route** at 360, 768, 1,024 and 1,440px (worst 0.038; before, up to 0.56). Conversion checklist: 9 items walked on every surface, **4 passed as found, 5 failed and were fixed**. A follow-up in the same branch ("Follow-up: read errors", at the end of this entry) makes failed wallet, coupon, deals-config and wishlist reads show an error with Try again instead of an empty state. No API call, data shape or route changed; `db.json` and every admin file are untouched (`api.js` and two contexts change in the follow-up only); the admin stays eager, keeps index.html's title and is pixel-identical.
+
+### Lighthouse (mobile)
+
+Lighthouse 12.8.2, default mobile configuration (Moto G Power emulation; simulated throttling: 150ms RTT, 1.6 Mbps, 4× CPU), headless Chromium 141. Production builds of `HEAD` (`55768ff`) and of this branch in JSON Server mode (`REACT_APP_API_URL=http://localhost:3001 REACT_APP_USE_MOCK_API=true`), each served with `serve -s`; JSON Server on a fresh copy of `db.json`. Three runs per page per build, the builds interleaved; medians. Checkout runs signed in with two lines in the cart. The reports are kept outside the repo.
+
+| Page | Performance | A11y | BP | SEO | FCP | LCP | TBT | CLS | Speed Index | Requests | API calls | Transfer |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| Home `/` | 44 → **46** | 100 → 100 | 100 → 100 | 100 → 100 | 5.34 → 5.04s | 7.84 → **6.78s** | 663 → 631ms | 0 → 0 | 6.36 → 5.99s | 31 → 27 | 12 → **8** | 907 → **720 KB** |
+| Listing `/products` | 47 → **51** | 100 → 100 | 100 → 100 | 100 → 100 | 5.18 → 4.74s | 7.12 → **6.26s** | 610 → 532ms | 0 → 0 | 5.86 → 5.52s | 28 → 26 | 7 → 5 | 884 → 698 KB |
+| Product | 47 → **50** | 100 → 100 | 100 → 100 | 100 → 100 | 5.15 → 4.83s | 7.47 → **6.35s** | 594 → 532ms | 0 → 0 | 5.91 → 5.55s | 30 → 27 | 14 → 11 | 892 → 705 KB |
+| Checkout (signed in) | 55 → **52** | 100 → 100 | 100 → 100 | 100 → 100 | 5.13 → 5.27s | 6.98 → **6.36s** | 367 → 472ms | 0 → 0 | 5.13 → 5.56s | 45 → 44 | 30 → 27 | 912 → 698 KB |
+
+Runs (Performance): home 45 / 39 / 44 → 46 / 47 / 43; listing 47 / 44 / 52 → 51 / 53 / 51; product 52 / 47 / 45 → 51 / 50 / 50; checkout 55 / 53 / 55 → 54 / 52 / 51. The baseline taken before any change (same harness) read 46 / 51 / 49 / 55.
+
+**LCP elements (verified in every run):** home, the hero `<img>` (`HeroSection`, eager, `fetchpriority="high"`); listing, the first card's photograph (now eager with `fetchpriority="high"`; before, it was `loading="lazy"` and Lighthouse flagged "Largest Contentful Paint image was lazily loaded"); product, the gallery's first photograph (eager, high priority); checkout, the first line's name (text).
+
+**Why Performance stays under 85.** Lighthouse's LCP breakdown puts 3.3–3.8s of each page's LCP in *render delay*: the LCP image is a 3–5 KB placeholder that arrives early, but nothing paints until the main bundle (383 KiB as served) has crossed the simulated 1.6 Mbps link and run (about 0.9s of script evaluation and compilation at 4× CPU), and Lighthouse counts 230 KiB of it as unused on the home page. The brief keeps the bundle's largest optional part, the admin, eager. An experiment that also split the admin out (not committed) brought the main bundle to 276 KB gzip and Performance only to **51 / 55 / 54** (home / listing / product; LCP 6.2 / 5.8 / 5.7s): the rest is the storefront's own client-side rendering (React, MUI and framer-motion before the first paint). Reaching 85 on Lighthouse's simulated mid-range phone needs the first HTML to carry the page (prerendering or server rendering, which Create React App does not do) or a much smaller first bundle: both beyond this prompt.
+
+**Checkout** gained 0.6s of LCP and lost 3 Performance points: its code is now a chunk (13 KB JS + 5 KB CSS gzip), requested while the main bundle is evaluated (`lazyPages.js` asks for it first thing), and the page renders in two steps (the shell with the skeleton, then the page): two long tasks where there was one (TBT +105ms). On the way there during a visit (the cart drawer's Checkout, Buy now) the chunk is fetched ahead of the click, so that path shows no skeleton.
+
+### Core Web Vitals
+
+**LCP:** above. The hero and the gallery's first photograph were already eager with `fetchpriority="high"`; the listing's first row is new: the first card at high priority, cards 2–3 eager, the rest lazy (the same rule for list rows).
+
+**CLS** (Chromium `layout-shift` entries without recent input; each route loaded cold and left 2.5s after the network went idle; `HEAD` → branch; bold: 0.05 or more):
+
+| Route | 360px | 768px | 1,024px | 1,440px |
+|---|---|---|---|---|
+| `/` | 0 → 0 | 0 → 0 | 0.035 → 0 | 0 → 0 |
+| `/products` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/products?category=sofas` | 0.017 → 0.016 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/products?search=chair` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/products/ribbed-back-plastic-armchair` | <0.001 → 0 | 0 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/products/no-such-piece` | 0.031 → 0.01 | 0.01 → 0.005 | 0.035 → 0 | <0.001 → 0 |
+| `/checkout` (signed in) | 0.037 → 0.035 | 0.038 → 0.038 | **0.066** → 0.025 | 0.021 → 0.016 |
+| `/checkout` | <0.001 → 0.001 | <0.001 → <0.001 | 0.035 → 0 | <0.001 → 0 |
+| `/order-confirmation/ORD-20250318-0002` (signed in) | 0.004 → <0.001 | 0.003 → <0.001 | 0.037 → <0.001 | 0.001 → <0.001 |
+| `/order-confirmation/ORD-NOPE` (signed in) | 0.007 → 0.007 | 0.002 → 0.002 | 0.035 → 0 | <0.001 → <0.001 |
+| `/orders` (signed in) | **0.078** → <0.001 | **0.071** → <0.001 | **0.172** → <0.001 | **0.101** → <0.001 |
+| `/orders` | 0.013 → 0.001 | 0.005 → <0.001 | 0.035 → 0 | <0.001 → 0 |
+| `/profile` (signed in) | 0.019 → <0.001 | 0.013 → <0.001 | 0.047 → <0.001 | 0.001 → <0.001 |
+| `/profile?tab=addresses` (signed in) | 0.013 → 0.002 | 0.01 → <0.001 | 0.046 → <0.001 | 0.008 → <0.001 |
+| `/profile?tab=wallet` (signed in) | 0.021 → <0.001 | 0.029 → <0.001 | 0.036 → <0.001 | 0.002 → <0.001 |
+| `/profile?tab=password` (signed in) | 0.019 → <0.001 | 0.017 → <0.001 | 0.046 → <0.001 | 0.008 → <0.001 |
+| `/wishlist` (signed in) | **0.417** → 0.001 | **0.562** → <0.001 | **0.059** → 0 | 0.016 → <0.001 |
+| `/special-offers` | **0.056** → 0 | **0.067** → <0.001 | 0.042 → <0.001 | 0.003 → <0.001 |
+| `/help` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/support` | 0.001 → 0 | 0.015 → 0 | 0.036 → 0 | 0.001 → 0 |
+| `/about` | 0.013 → <0.001 | 0.005 → 0.001 | **0.061** → 0.001 | 0.004 → 0.001 |
+| `/privacy` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/terms` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/cookies` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/refund` | <0.001 → 0 | <0.001 → 0 | 0.035 → 0 | <0.001 → 0 |
+| `/nonsense` | 0.024 → 0.001 | <0.001 → <0.001 | 0.035 → 0 | <0.001 → 0 |
+
+What moved before: the wishlist's three loading cards collapsed into "Nothing saved yet." for an account with nothing saved and pulled the footer into view (0.42–0.56; the skeleton now has the empty state's shape); on the account pages the menu appeared a frame after the page, once `AuthContext` had read the session, and pushed the column down 72px (My orders 0.06–0.13; a page loaded from its chunk now first paints after the session is read, so the menu is there from the start), and the headings moved when Playfair replaced the fallback serif (0.01–0.03; the size-adjusted fallback faces, §42.6, which also fixed the offers hero's 0.06 and About's and the 404's 0.01–0.02); between 1,024 and 1,279px the header's department row grew a line when the categories arrived (0.035 on every page; the row now holds its two lines while they load). What remains is under the target and was there before: checkout's coupon block moves down when the order lines arrive (0.035–0.038, signed in), and a category's name replaces the listing's interim heading at 360px (0.016).
+
+**INP** (Event Timing API, the measure INP is built on; Playwright at 412px with 4× CPU throttling; three runs per build, medians; for the cart drawer's opening, the median of 14 further runs each):
+
+| Interaction | `HEAD` | Branch | Handler time (max) |
+|---|---|---|---|
+| Listing: tick a category | 216ms | 208ms | 3 / 4ms |
+| Listing: change the sort | < 16ms | < 16ms | — |
+| Listing: next page | 192ms | 208ms | 6 / 8ms |
+| Product: choose an option | 72ms | 80ms | 4 / 3ms |
+| Product: Add to cart (the drawer opens) | 548ms | 536ms | 12 / 10ms |
+| Product: close the cart (Escape) | 152ms | 152ms | 127 / 140ms |
+| Header: open search | 280ms | 296ms | 4 / 5ms |
+| Search: type "chair" | 200ms | 184ms | 5 / 3ms |
+| Search: close (Escape) | 176ms | 152ms | 130 / 114ms |
+| Header: open the menu | 288ms | 280ms | 6 / 5ms |
+
+No event handler runs longer than 140ms at 4× CPU (the brief's bar: 200ms). The longer interactions at 4× are the frames that draw what opens (the cart drawer, the search overlay, the menu): rendering, the same on both builds within run-to-run noise (±50ms). At 1× CPU every interaction is under 200ms on both builds (the drawer opening, the slowest: 112ms median over 7 runs on both). Search scores the catalogue once typing pauses for 300ms (`DEBOUNCE_MS`), so a keystroke's handler takes 3–5ms. Warming checkout's chunk when the drawer opens costs nothing measurable (536ms with the chunk blocked, 536ms without).
+
+### Bundle (`npm run build`, JSON Server mode)
+
+| File | `HEAD` (gzip) | Branch (gzip) |
+|---|---|---|
+| `main.js` | 444,081 B | **398,043 B** (−46,038, −10.4%) |
+| `main.css` | 53,521 B | **34,835 B** (−18,686, −34.9%) |
+| `page-checkout` (JS + CSS) | in main | 12,963 + 4,984 B |
+| `page-orders` | in main | 12,777 + 5,631 B |
+| `page-profile` | in main | 11,886 + 4,594 B |
+| `page-policies` (the four policies) | in main | 7,094 + 972 B |
+| `page-order-confirmation` | in main | 6,811 + 3,761 B |
+| `page-offers` | in main | 6,504 + 2,890 B |
+| `page-wishlist` | in main | 5,128 + 2,352 B |
+| `page-support` | in main | 4,674 + 1,644 B |
+| `page-help` | in main | 3,202 + 2,215 B |
+| `page-about` | in main | 1,599 + 1,272 B |
+| `page-not-found` | in main | 1,060 + 607 B |
+
+(`gzip -9` of each file; CRA's own report prints 398.78 kB and 34.83 kB, and the default build `CI=true npm run build` 398.81 kB and 34.83 kB.) All the JS together is 471.7 KB, 27.7 KB more than `HEAD`'s single file (small modules that several pages share are copied into each chunk), but a visit downloads the main bundle and only the chunks of the pages it opens. No page chunk contains admin code (`grep` for the admin's routes and session keys: none), and `/admin` requests `main.js` and `main.css` only, as before.
+
+### Network
+
+Home, cold load: **8 API calls** (was 12): categories, settings, shipping methods, featured, trending, the deals config, the curated piece and the product list (the reviews are read later, when their section nears the viewport). Before, the categories were read three times (header, footer, home) and the settings and shipping methods twice (footer, assurance strip). `src/services/sharedReads.js` gives reads made in the same moment one request; nothing is cached, and the next read asks the API again, as before. The listing went from 7 to 5 calls, the product page from 14 to 11, Help from 5 to 4.
+
+Duplicates left by this change: the product page read the whole catalogue twice (`api.js`'s related and frequently-bought-together reads); signed-in pages read the cart twice and rewrote it (`CartContext`); My orders read the orders twice (`OrderContext`'s own read, which nothing used, and the page's). The follow-up "Duplicate reads", at the end of this entry, removes all three. Still read twice: checkout and the offers page read the settings, shipping methods or categories again when their chunk arrives, after the shell's reads (a lazy page renders after the shell, so the two reads are no longer in the same moment).
+
+### SEO and sharing
+
+| Check | Result |
+|---|---|
+| Unique titles | 25 deep links walked: every title distinct, except `/products/2`, which redirects to the same product's slug URL and takes its title |
+| Descriptions | the page's own where it has one (a category's introduction, a product's `metaDescription`, a content page's intro, the offers hero line), else the default; at most 160 characters |
+| One `h1` | on every route at every width (104 loads), with no skipped heading level |
+| `og:url` | from `window.location` (origin, path, query) on every route change; index.html's static `og:url` and `twitter:url` stay the placeholder `https://urbanseat.example/` (**flagged: needs the production domain**) |
+| `noindex` | only the soft 404s (an unknown URL; a product or an order that does not exist) and search results. Checkout, the account and found orders stay indexable: a `noindex` there cost 34 points of the SEO score ("Page is blocked from indexing") |
+| Product JSON-LD | `Product` with `offers` (the shown option's price in INR, availability from its stock) and `aggregateRating` only with real ratings |
+| `lang` | `en-IN` (unchanged; a test now reads it from index.html) |
+| Link text | no link or button reads "click here", "here", "more", "read more", "learn more" or "see more" on any route |
+| `robots.txt` | allows everything (rule unchanged); a comment says where a sitemap has to come from |
+
+**Product JSON-LD, as served** (`/products/ribbed-back-plastic-armchair`, the white option; a local origin):
+
+```json
+{
+  "@context": "https://schema.org",
+  "@type": "Product",
+  "name": "Ribbed-Back Plastic Armchair",
+  "url": "http://localhost:5001/products/ribbed-back-plastic-armchair",
+  "image": [
+    "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair",
+    "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair+Detail",
+    "https://placehold.co/1200x1500/f1ebe1/686158?text=Ribbed-Back+Plastic+Armchair+In+situ"
+  ],
+  "description": "Vertical ribs run the height of the back, letting air move through on warm afternoons and giving the chair a crisp, tailored line. The arms are wide enough to rest a cup on, and the seat has a slight scoop so it holds you comfortably without cushions.",
+  "sku": "PLE-ARM-02-WHT",
+  "brand": {
+    "@type": "Brand",
+    "name": "Nilkamal"
+  },
+  "offers": {
+    "@type": "Offer",
+    "url": "http://localhost:5001/products/ribbed-back-plastic-armchair",
+    "price": 999,
+    "priceCurrency": "INR",
+    "availability": "https://schema.org/InStock"
+  },
+  "aggregateRating": {
+    "@type": "AggregateRating",
+    "ratingValue": 4,
+    "reviewCount": 2,
+    "bestRating": 5,
+    "worstRating": 1
+  }
+}
+```
+
+**Validation:** the Schema Markup Validator (validator.schema.org, where Google moved its Structured Data Testing Tool) reports **0 errors and 0 warnings** for this markup, for the shoe rack's (one rating) and for the classic armchair's (no ratings, so no `aggregateRating`). Google's Rich Results Test needs a URL Google can fetch, so it cannot test a local build: run it on a product URL once the site is public. Expected there: valid "Product snippets" and "Merchant listings" with optional-field warnings only (`review`, `priceValidUntil`, `shippingDetails`, `hasMerchantReturnPolicy`, `gtin`). They are left out on purpose: no review is invented, the store states no price end date, and shipping and returns as structured data need confirmed values (below).
+
+### Fonts
+
+One Google Fonts stylesheet with `display=swap` and `preconnect` to both hosts (verified, unchanged). Cold loads at 390px: home and product **4 files** (Inter latin and latin-ext, Playfair Display roman and italic latin), checkout 3, the admin 1 (Inter latin: its 400, 600 and 700 come from the same variable file). New: the `"Playfair Display Fallback"` faces, a local Times New Roman (or Liberation Serif, Tinos) scaled to Playfair's width and vertical metrics (`size-adjust`, `ascent-override`, `descent-override`; values in DESIGN_SYSTEM §42.6), so a heading set before Playfair arrives already wraps and stands as it will afterwards. They are added only because the shifts were measurable (the offers hero 0.06; the 404, About and the account pages 0.01–0.03).
+
+### Images
+
+`grep` over `src` for `<img`, `placehold.co`, `loading=`, `fetchpriority` and `onError`: every storefront `<img>` has an `alt` and `decoding="async"`, and its `loading` follows where it sits (eager with priority for the likely LCP, lazy below the fold; the two that exist only inside an open drawer or dialog load at once); every rendered image on 26 routes at four widths has `width` and `height` or sits in a ratio box. Fixed: the listing's first row (above); the sidebar's account photo (no size, no `decoding`, no fallback: now 48 × 48 and the initial when it fails); the press strip's logos (the name when one fails); the review dialog's thumbnail (`decoding`). **The logo:** the 141 KB PNG was downloaded on every page; `BrandLogo` and the loading screen now take Cloudinary's resized WebP copies through `srcset` (`f_auto,q_auto,w_640`, 13 KB; `w_960` for 3× screens), the PNG staying the `src` and the fallback when a copy fails. No remote fallback URL is left in code: the fallback is the inline `PLACEHOLDER_IMG`; `placehold.co` appears only as data (the seeded catalogue in `db.json`, the placeholder photography in `homeContent.js`).
+
+**Hero preload: skipped.** The hero photograph (`HERO_IMAGE`, `src/content/homeContent.js`) is a placeholder waiting for the client's photography, and `index.html` is the shell of every route: a preload there would download the 2,400px hero on checkout, the account pages and the admin too, and would keep fetching the placeholder if the constant changed without it. The hero `<img>` is already eager with `fetchpriority="high"`. Once the real photograph's URL is final, a preload with `imagesrcset` and `imagesizes` is worth measuring (DESIGN_SYSTEM §42.5).
+
+### Conversion checklist
+
+Walked on every storefront surface with the production build (decision points at 390 and 1,440px; forms; loading and error states with the API slowed by 2.5s and failing with 500 on every read):
+
+| # | Item | Result | Evidence and fix |
+|---|---|---|---|
+| 1 | One clear primary action per screen; consistent CTA hierarchy and wording | **Pass** | Product: "Add to cart" (primary), "Buy now" (ghost), the wishlist toggle; cart: one "Checkout" (primary) and "Continue shopping"; checkout: one primary per step ("Continue", "Place order · ₹…"); empty states: one action ("Browse furniture"). Wording per DESIGN_SYSTEM §39.4. |
+| 2 | Price, savings, availability, delivery and returns next to the buy action | **Fail → fixed** | The product page had all five (price, was-price, "Save ₹150.00", "In stock", delivery methods with times and charges, the free-delivery threshold, cash on delivery, 7-day returns). The cart and checkout's review showed each line's was-price but no saving: both now show **"You save ₹450.00 on these pieces"** beside the buy action (`getCartSavings`: compare-at savings × quantity, display only). |
+| 3 | Trust cues at decision points, from real data | **Pass** | Product buy box, cart and checkout summary: secure payment, cash on delivery only while `settings.payment.codEnabled`, the returns window from `STOREFRONT_CONFIG`, delivery terms from the shipping methods; no counts, awards, certifications or years (Prompt 31's check; the decision points' text read again here). |
+| 4 | Low-friction forms | **Pass** | Newsletter, sign in, create account, checkout's address and payment, support, help search, profile, addresses, password, the listing's filters: every field labelled; `autocomplete` on every personal, address, card and password field (`given-name`, `tel`, `address-line1`, `postal-code`, `cc-number`, `cc-exp`, `cc-csc`, `new-password`…); `inputmode` for email, phone, PIN, card and price fields; inline errors that say how to fix ("Enter a 6-digit PIN"), focus on the first; names and phone prefilled from the account; a new address typed at checkout survives Continue and Back. |
+| 5 | Persistent search and cart, sticky mobile add-to-cart, 44px targets | **Pass** | Search and cart in the header on every route (and in the bottom bar on phones); the product page's sticky bar (Add to cart, 44px) whenever the buy box is out of view at 390px; Prompt 31's 44px audit (no target under 44 × 44 at 360px) unchanged by this prompt. |
+| 6 | Perceived performance: skeletons, reserved image space, lazy below the fold, prioritised hero | **Fail → fixed** | Skeletons with `aria-busy` on every data route (slow-API run: home, listing, product, order confirmation, orders, store credit, wishlist, offers; checkout's summary says "Loading"). Failures found: the listing's LCP photograph was lazy; loading states that moved the page (wishlist 0.42–0.56, account pages, the header row); pages loaded on demand needed a fallback. Fixed as above; every route now under 0.05. |
+| 7 | Honest urgency only | **Fail → fixed** | When the deals config could not be read, api.js's fallback (`{ enabled: true }`) filled in `dealsConfig.js`'s built-ins: "Limited Time", "Discover unbeatable prices… don't miss out!" and a countdown to midnight no one had set. Now the countdown and the hero's tag and line show only from a config the admin saved (it carries `updatedAt`, or a hero of its own); otherwise the plain "Special offers" and no countdown. Since the follow-up, a config read that fails shows the offers' error panel with Try again, and only a config that does not exist yet (404) shows the plain page. Stock lines come from each product's data ("In stock", "Only N left" at its own threshold). |
+| 8 | Empty, loading, error and success states on every surface | **Fail → fixed** | Error states with "Try again" on the listing, the product page, order confirmation, My orders and the offers page; checkout keeps the cart and its summary. Found: the product page called every failed read "not found" (and would have asked not to be indexed): a 404 still says "We couldn't find that piece."; any other failure now says "We couldn't load this piece." with Try again. Also found: store credit showed ₹0.00, the wishlist "Nothing saved yet." and the offers "No codes right now." when their reads failed, because `api.js` answered those failures with 0, [] or a default config and `WishlistContext` kept the device's list without an error flag. Fixed in the follow-up ("Follow-up: read errors"). |
+| 9 | SEO and sharing basics | **Fail → fixed** | Before: one title and description for every route, a static `og:url`, no structured data. Now as in "SEO and sharing". |
+
+### What changed
+
+| File | Change |
+|---|---|
+| New `src/hooks/usePageMeta.js` (+ test) | a storefront page's title, description, sharing tags (`og:url` from the address) and the soft-404 `noindex`; index.html's defaults restored on unmount |
+| New `src/hooks/useStructuredData.js` (+ test) | one JSON-LD block in `<head>` while a page is mounted (`<` escaped) |
+| New `src/pages/ProductDetails/productStructuredData.js` (+ test) | the product page's `Product` JSON-LD from what the page shows |
+| New `src/pages/lazyPages.js` (+ test) | the 14 pages loaded on demand (`React.lazy`, `page-*` chunk names) and the early request for a visit that starts on one |
+| New `src/components/LazyPage/` (`LazyPage.js`, `.module.css`, + test) | `PageFallback` (the `aria-busy` page skeleton) and `LazyPageBoundary` (`Suspense`, and "We couldn't load this page." with Try again when a chunk fails) |
+| New `src/services/sharedReads.js` (+ test) | one request for the categories, settings or shipping methods read in the same moment |
+| `src/App.js` | the lazy pages from `lazyPages.js`; `<LazyPageBoundary>` around the storefront's routes inside `<main>`; the admin's imports unchanged (eager) |
+| `src/index.js` | imports `lazyPages.js` first; on the storefront the loading screen leaves when `#root` first has content (the admin's timing unchanged) |
+| `src/utils/constants.js` | `DEFAULT_PAGE_TITLE`, `DEFAULT_PAGE_DESCRIPTION`, `SITE_URL_PLACEHOLDER` (index.html's static tags) |
+| `Home.js`, `Products.js`, `ProductDetails.js`, `Checkout.js`, `OrderConfirmation.js`, `SpecialOffers.js`, `NotFound.js`; `ContentPage.js` (About, Help, Support, the policies, the 404); `AccountLayout.js` (profile, addresses, orders, store credit, wishlist, password) | `usePageMeta` (titles and descriptions per DESIGN_SYSTEM §42.1) |
+| `ProductDetails.js` | the JSON-LD; the load-error state; settings and shipping methods through `sharedReads`; Buy now warms checkout's chunk |
+| `Products.js`, `ProductListRow.js`, `src/components/storefront/ProductCard.js` | `imagePriority`: the first row eager, the first at high priority; categories through `sharedReads` |
+| `Home.js` | categories through `sharedReads`; the loaded data rendered as a transition |
+| `Header.js`, `Footer.js`, `AssuranceStrip.js` | their reads through `sharedReads` |
+| `MegaMenu.js`, `.module.css` | the department row holds two lines while it loads (1,024–1,279px) |
+| `Wishlist.js`, `.module.css` | loading with nothing saved on the device: the empty state's shape |
+| `SpecialOffers.js` | the countdown and the hero's tag and line only from a saved config; the title and description |
+| `src/utils/helpers.js` (`getCartSavings`); `CartDrawer.js`, `.module.css`; `Checkout.js`, `.module.css` | "You save ₹… on these pieces" beside the buy action; the open cart warms checkout's chunk |
+| `src/components/ui/BrandLogo.js`; `public/index.html` | the logo through Cloudinary's resized WebP copies (`srcset`), the PNG as the fallback |
+| `SidebarMenu.js`, `PressStrip.js`, `ReviewModal.js` | sizes, `decoding` and error fallbacks |
+| `src/theme/storefront-tokens.css`, `src/theme/tokens.js` | the `"Playfair Display Fallback"` faces in `--sf-font-display` / `fontDisplay` |
+| `public/robots.txt` | a comment on the sitemap (the rules unchanged) |
+| `package.json`, `package-lock.json` | `canvas-confetti` removed with `npm uninstall` (`grep`: no import in `src`, `public` or `scripts`; the lockfile loses its one entry, 11 lines) |
+| Tests | 6 new suites (40 tests); new or updated tests in 16 suites (the titles and descriptions of each page, the JSON-LD, the lazy routes and the admin staying eager, the savings line, image priority, the logo's `srcset`, the failure states, the warm-up) |
+| `prompts/DESIGN_SYSTEM.md`; `prompts/00_INDEX.md` | §5.1 (the display stack), §20.4, the new §42; the index's note on `canvas-confetti` |
+
+### Decisions
+
+- **The lazy pages wait inside `<main>`,** around the storefront's `<Routes>`, so the header, footer and bottom bar never unmount and Prompt 31's skip link and route-change focus keep their target. One generic page-shaped skeleton serves every lazy page: it shows only on a page's first visit, for as long as a 1–13 KB chunk takes.
+- **A visit that starts on a lazy page asks for its chunk at once:** `src/index.js` imports `lazyPages.js` before the app, and it matches the address against the same paths as `App.js`, so the request does not wait for the first render.
+- **The loading screen leaves when the app has painted.** React 18 renders after `root.render()` returns, so the old `requestAnimationFrame` hand-off removed the loader before the first render had landed: the page stood empty for about 0.2s on a fast computer and most of a second on a mid-range phone, longer with a page loading from its chunk. It now waits for `#root`'s first content (a `MutationObserver`). The admin keeps its timing exactly.
+- **Shared reads, not a cache:** the duplicate requests are merged without changing when or how often data is read, so no screen can show older data than before.
+- **Home's data renders as a transition** (`startTransition`): the rails and tiles that replace the skeletons render in slices instead of one long task.
+- **`noindex` only on soft 404s and search results;** **JSON-LD follows the page** (the chosen option's price, SKU and stock; the ratings row's own average and count).
+- **No prefetching on load:** a chunk is fetched when its page opens, or ahead of the click on the way to checkout (the cart opening with pieces in it; a pointer or focus reaching Buy now). A prefetch at load or on idle competes with the entry page's own images on a slow link.
+
+### Deviations from the prompt, and why
+
+1. **Lighthouse Performance ≥ 85 is not met** (46–52; the other three categories are 100). The main bundle's download and evaluation set the floor (above); with the admin also split out, an experiment the brief rules out, the pages reach only 51–55. Closing the gap needs prerendering or server rendering, or a storefront first paint without MUI and framer-motion.
+2. **Checkout's Performance fell 3 points** (55 → 52) while its LCP improved by 0.6s: the code split the brief asks for adds a second render step on a cold load. The way there during a visit warms the chunk ahead of the click.
+3. **Files beyond the brief's list:** `src/services/sharedReads.js` and the read call sites in `Header.js`, `Footer.js`, `AssuranceStrip.js`, `Home.js`, `Products.js` and `ProductDetails.js` (the brief's "consolidate duplicate fetches": the same `apiService` calls and answers, only merged when simultaneous); `src/index.js`'s loader hand-off (a blank-page gap that Suspense made longer); the checkout warm-up in `CartDrawer.js` and `ProductDetails.js`; `startTransition` in `Home.js`.
+4. **The product page's failed read** now shows its own state instead of "not found": the read is unchanged, only what the page shows for a non-404 failure.
+5. **Left as found, outside presentation:** the second reads of checkout and the offers page listed under "Network" (the cart, orders and catalogue duplicates are removed in the follow-up); the cart drawer's opening (about 540ms at 4× CPU on both builds, handlers 12ms: the render of `CartContext`'s consumers and the drawer).
+6. **Google's Rich Results Test** cannot reach a local build; the schema.org validator was used, and the test is listed for Prompt 34.
+7. **`settings.seo` in `db.json` is not read:** the admin cannot edit it, and reading it would add a request to every page; the defaults live in `constants.js` and `index.html`.
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **80 suites, 1,361 tests** (74 / 1,276 at `HEAD`: +6 suites, +85 tests), no console warnings.
+- **Build:** `CI=true npm run build` prints "Compiled successfully", no warnings (JS 398.81 kB, CSS 34.83 kB gzip); the JSON Server-mode build the same.
+- **Lint:** ESLint on the 54 changed and new source files reports the same 79 findings as the same files at `HEAD` (all `testing-library/*` rules in test files), none new and none outside tests.
+- **Checks:** `node scripts/check-contrast.js` and `node scripts/validate-db.js` pass. `db.json` (SHA-256 `5cbc3088…`) and `api.js` are unchanged; no file under `src/context` or of the admin changed.
+- **Browser QA** (Playwright 1.56.1, Chromium 141, JSON Server-mode production builds of `HEAD` and the branch):
+  - **Routes:** 25 deep links (titles, one `h1`, `noindex`, JSON-LD, which chunks load, no console error but the expected 404 behind "Piece not found"); 26 routes × 4 widths for layout shift, headings, link text and images; no page scrolls sideways at 360, 768, 1,024 or 1,440px.
+  - **Lazy pages, keyboard and screen reader:** with the page chunks delayed 1.2s, following the footer's Help centre link shows the fallback inside `<main>` with the header and footer in place: `aria-busy="true"`, one `status` ("Loading the page") as the main region's only accessible content, the skeleton blocks hidden; focus on the skip link (§41.1), the next Tab on the header's first link. The page arrives with the chunk (1,450ms), the title follows; Back restores home's title, Forward shows Help again with no second fallback; listing → product → Back → Forward keep their titles. With the page chunks failing, "We couldn't load this page." and Try again appear inside the shell.
+  - **Visual:** 13 routes at 360, 768, 1,024 and 1,440px against `HEAD`: every page the same height; the only differences are the logo (now drawn from the resized WebP, the same at 1×) and sub-pixel antialiasing of a few hairlines.
+  - **Admin:** `/admin` keeps index.html's title, has no `robots` tag or JSON-LD, requests `main.js` and `main.css` only and renders in Inter; login, dashboard, products, orders, categories, settings, reviews and special offers at 1,440 and 390px are pixel-identical to `HEAD` except the notification badge, which also differs between two runs of `HEAD`.
+- **Scratch only:** the admin-split experiment was built from a copy outside the repo and is not part of this change.
+
+### Notes for later prompts
+
+- **33:** a new storefront page calls `usePageMeta` once (DESIGN_SYSTEM §42.1) and, off the purchase path, goes in `lazyPages.js` (§42.3); measure Lighthouse against `HEAD` with the same harness (JSON Server mode, interleaved runs, medians).
+- **34 (final QA):** Google's Rich Results Test on a public product URL; DESIGN_SYSTEM §42.9; the cart drawer's opening cost at 4× CPU (a `CartContext` render question, not presentation).
+
+### Needs client confirmation
+
+- **The production domain**, for the static `og:url` and `twitter:url` in `public/index.html` (`https://urbanseat.example/` today, mirrored by `SITE_URL_PLACEHOLDER` in `constants.js`). Each page builds its own `og:url` from the address it is served at, but link previews (WhatsApp, Facebook, X) read only index.html's static tags.
+- **Sitemap hosting:** a sitemap has to be generated from the catalogue (the Laravel API) and served from the production domain; then add its `Sitemap:` line to `robots.txt`.
+- **Per-page link previews** need prerendering or server rendering (not possible with Create React App alone): confirm whether they matter for launch.
+- **Shipping and returns as structured data** (optional, for Google's merchant listings): the returns window is still a placeholder (`STOREFRONT_CONFIG.returnsWindowDays`).
+
+### Follow-up: read errors
+
+**Asked in the same session, on the same branch:** show errors when wallet, coupon and deals reads fail. Before, `api.js` answered a failed read with an empty value (a balance of 0, an empty ledger, no coupons, `{ enabled: true }`), and `WishlistContext` kept the device's list without saying the account's read had failed. So a failure looked like a real empty state: "₹0.00" of store credit, "No codes right now.", "Nothing saved yet.", and checkout silently hid a customer's credit.
+
+| File | Change |
+|---|---|
+| `src/services/api.js` | `wallet.getBalance`, `wallet.getTransactions`, `coupons.getActive` and `deals.getConfig` rethrow a failure; a 404 (nothing there: no wallet, no coupon list, no saved config) keeps its empty answer (`isNotFound`). The ledger's balance read is split: `readWalletBalance` throws (used by `getBalance`), and `computeWalletBalance`, used by the ledger writes, still reads a failure as 0, so refunds and debits behave exactly as before. The admin reads none of these methods. |
+| `src/context/DealsConfigContext.js` | `error`: true while no config has been read and the last read failed. A read that fails after one has succeeded keeps the config already read. `refresh` returns its promise. |
+| `src/pages/SpecialOffers/SpecialOffers.js` | A config that cannot be read, or a coupon read that fails, shows the page's error panel ("We couldn't load the offers."), never "No codes right now." or a default countdown. Try again reads the config first, then the offers. |
+| `src/pages/Profile/Profile.js` | Unchanged: its "We couldn't load your store credit." state now shows when the reads fail. |
+| `src/pages/Checkout/Checkout.js`, `.module.css` | A balance that cannot be read shows a note where the store credit goes ("We couldn't load your store credit. Check your connection and try again.", Try again). When the read works, focus moves to the credit's switch (or the step's heading when there is no credit). |
+| `src/context/WishlistContext.js` | `loadError` and `reloadWishlist()`. Signing out clears the error, and the loading flag, which a read cut short by a sign-out used to leave on. |
+| `src/pages/Wishlist/Wishlist.js`, `.module.css` | "We couldn't load your wishlist." with Try again, in place of "Nothing saved yet.". Pieces saved on the device stay below the panel, which says whose they are. Focus waits on the h1 during the read, and returns to Try again if it fails again. |
+| Tests | New `src/services/api.reads.test.js` (18 tests, both API modes). New or rewritten tests in `SpecialOffers` (config failure and retry, 404, a coupon failure, a failed refetch keeping the config), `Checkout` (the note and its retry), `Wishlist` (3) and `WishlistContext` (2). |
+
+**Decisions**
+
+- **404 still means "nothing there".** A Laravel backend without a saved deals config, wallet or coupons answers 404. Treating that as an error would put an error on pages that are simply empty.
+- **Without its config, the offers page shows an error, not offers.** It cannot know whether the admin switched the page off or what it features, so showing default offers could contradict the admin. The header's Offers link stays (the default `enabled`), as before.
+- **Checkout keeps the payment step usable:** the note sits where the credit would be, and the customer can pay without it.
+
+**Verification**
+
+- `CI=true npm test -- --passWithNoTests` exits 0: **81 suites, 1,387 tests**, no console warnings.
+- `CI=true npm run build` compiles with no warnings; the JSON Server-mode build is the same. ESLint reports nothing new in the 11 changed files.
+- **Mutation checks:** removing the error flag from each surface (the deals context, the offers page, checkout, the wishlist context) fails its new tests.
+- **Browser** (Playwright, production build, JSON Server): 16 of 16 checks pass:
+  - offers with the config read failing (500, and the network dropping): the error, the plain title, no countdown, no offers; Try again shows the admin's page with focus on the codes;
+  - offers with no config (404): the plain page and its codes; a coupon read failing: the error, then the codes after Try again; coupons 404: "No codes right now.";
+  - store credit: the error, then ₹2,302.00 after Try again;
+  - checkout: the note, then the credit with focus on its switch;
+  - wishlist: the error, never the empty state, then the account's three pieces;
+  - the admin's Special Offers page loads as before.
+- **Layout:** the new states at 390 and 1,440px: no page scrolls sideways.
+
+### Follow-up: duplicate reads
+
+**Asked in the same session, on the same branch:** remove the duplicate cart, orders and catalogue reads found above. Counted with Playwright on JSON Server-mode production builds of the branch before and after (a fresh copy of `db.json` each time). Each load is a full page load that waits 2s after the network goes idle, so the cart's debounced sync has run. The signed-in customer's device holds two cart lines, and the account's cart starts empty: the first visit merges them up, and every later load has nothing to change.
+
+| Load | Requests before | Requests after | Duplicates left |
+|---|---|---|---|
+| guest `/` | 8 (0 cart writes) | 8 (0 cart writes) | — |
+| guest `/products` | 5 (0 cart writes) | 5 (0 cart writes) | — |
+| guest `/products/ribbed-back-plastic-armchair` | 11 (0 cart writes) | 10 (0 cart writes) | — |
+| guest `/special-offers` | 7 (0 cart writes) | 7 (0 cart writes) | GET /categories ×2 |
+| signed in, first visit (the merge), `/profile` | 10 (2 cart writes) | 9 (2 cart writes) | none: the load's read and the replace's own read, then one add per line |
+| signed in `/` | 16 (4 cart writes) | 10 (0 cart writes) | — |
+| signed in `/products` | 13 (4 cart writes) | 7 (0 cart writes) | — |
+| signed in `/products/ribbed-back-plastic-armchair` | 19 (4 cart writes) | 12 (0 cart writes) | — |
+| signed in `/checkout` | 15 (4 cart writes) | 9 (0 cart writes) | GET /settings ×2, GET /shipping_methods?isActive=true ×2 |
+| signed in `/orders` | 14 (4 cart writes) | 8 (0 cart writes) | — |
+| signed in `/profile` | 12 (4 cart writes) | 6 (0 cart writes) | — |
+| signed in `/wishlist` | 12 (4 cart writes) | 6 (0 cart writes) | — |
+| signed in `/special-offers` | 15 (4 cart writes) | 9 (0 cart writes) | GET /categories ×2 |
+
+| What | Why it happened | Change |
+|---|---|---|
+| The cart, signed in | After every page load the cart's mirror to the account ran even when nothing had changed: `replaceApiCart` read the account's rows again, deleted each one and added each line back (2 lines: 1 read, 2 deletes, 2 adds per load). | `CartContext` keeps a key of what the server holds (`syncKey`: the fields the sync writes, one entry per line, sorted), set by the load and by every sync queued. A cart equal to it is not written. A real change is written as before, and a server holding the same line twice still differs, so the next sync tidies it. The first visit's merge is unchanged: it adds the device's lines, after the replace's own read of the rows it rewrites. |
+| The orders | `OrderContext` read every order on every signed-in page load, for a list nothing used (Checkout uses only `createOrder`). My orders reads its own, so `/orders` read them twice. | The mount read is gone; `loadUserOrders` stays for a caller that needs the list, and signing out still clears it. |
+| The catalogue, product page | `getRelated` and `getFrequentlyBoughtTogether` each read the whole catalogue (in both API modes). | They share one request through `shareRead`, now its own module (`src/services/shareRead.js`, used by `sharedReads.js` and `api.js`). Nothing is cached: a later read asks again. |
+
+**Verification**
+
+- `CI=true npm test -- --passWithNoTests` exits 0: **83 suites, 1,397 tests**, no console warnings. New suites: `CartContext.test.js` (5 tests) and `OrderContext.test.js` (3); two more tests in `api.reads.test.js`.
+- **Mutation checks:** writing an unchanged cart, reading orders on mount again, and reading the catalogue per call each fail a new test.
+- `CI=true npm run build` compiles with no warnings; ESLint reports nothing in the 8 changed files.
+- **Browser:** after the visits, the account's cart is the same on both builds (`2-v1×2, 4-v1×1`). A signed-in Add to cart and a "+" in the cart drawer still reach the account, and after a reload the device and the account agree. Admin dashboard, orders, products and special offers load with no error, and read no cart or customer orders.
+- Still read twice, and not part of this follow-up: checkout's settings and shipping methods, and the offers page's categories (see "Network" above).
+

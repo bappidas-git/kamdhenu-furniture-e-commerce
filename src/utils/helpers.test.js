@@ -1,5 +1,5 @@
 import db from "../../db.json";
-import { formatDate, formatDateIN, parseSpecifications } from "./helpers";
+import { formatDate, formatDateIN, getCartSavings, parseSpecifications } from "./helpers";
 
 describe("parseSpecifications", () => {
   test("splits a seeded description into its prose and its specification pairs", () => {
@@ -119,5 +119,25 @@ describe("formatDateIN", () => {
   test("leaves formatDate (en-US, shared) as it was", () => {
     expect(formatDate(DATE)).toBe("September 25, 2026");
     expect(formatDate(DATE, "short")).toBe("Sep 25, 2026");
+  });
+});
+
+describe("getCartSavings (Prompt 32)", () => {
+  test("adds each line's compare-at saving times its quantity, to the paisa", () => {
+    expect(
+      getCartSavings([
+        { price: 999, comparePrice: 1149, quantity: 3 },
+        { price: 699, comparePrice: 0, quantity: 4 },
+        { price: 10.1, comparePrice: 10.3, quantity: 3 },
+      ])
+    ).toBe(450.6);
+  });
+
+  test("a line at or above its compare-at price, or without one, saves nothing", () => {
+    expect(getCartSavings([{ price: 500, comparePrice: 500, quantity: 2 }])).toBe(0);
+    expect(getCartSavings([{ price: 600, comparePrice: 500, quantity: 2 }])).toBe(0);
+    expect(getCartSavings([{ price: 600, quantity: 2 }])).toBe(0);
+    expect(getCartSavings([])).toBe(0);
+    expect(getCartSavings(undefined)).toBe(0);
   });
 });

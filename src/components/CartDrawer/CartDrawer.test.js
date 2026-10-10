@@ -6,6 +6,7 @@ import apiService from "../../services/api";
 import { CartProvider, useCart } from "../../context/CartContext";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
 import db from "../../../db.json";
+import { preloadPageFor } from "../../pages/lazyPages";
 import CartDrawer from "./CartDrawer";
 
 // The drawer runs against the real CartProvider (guest cart in localStorage),
@@ -21,6 +22,8 @@ jest.mock("../../services/api", () => ({
 }));
 jest.mock("../../context/AuthContext", () => ({ useAuth: () => ({ user: null }) }));
 jest.mock("sweetalert2", () => ({ __esModule: true, default: { fire: jest.fn(() => Promise.resolve({})) } }));
+// Checkout's code loads on demand; the drawer asks for it when it opens.
+jest.mock("../../pages/lazyPages", () => ({ preloadPageFor: jest.fn() }));
 
 const SEEDED_METHODS = db.shipping_methods.filter((method) => method.isActive);
 const SETTINGS = db.settings;
@@ -529,6 +532,21 @@ describe("lines", () => {
 });
 
 describe("footer and navigation", () => {
+  test("the lines' compare-at savings sit under the subtotal; none, no line (Prompt 32)", async () => {
+    const { unmount } = renderDrawer();
+    const { dialog } = await openDrawer();
+    await waitForStore(dialog);
+    // The armchair: (₹2,899 − ₹2,499) × 2; the rack has no compare-at price.
+    expect(within(dialog).getByText("You save ₹800.00 on these pieces")).toBeInTheDocument();
+    unmount();
+    localStorage.clear();
+
+    renderDrawer({ lines: [RACK] });
+    const second = await openDrawer();
+    await waitForStore(second.dialog);
+    expect(within(second.dialog).queryByText(/You save/)).not.toBeInTheDocument();
+  });
+
   test("one Checkout link (no duplicate View Cart) and Continue shopping", async () => {
     renderDrawer();
     const { dialog } = await openDrawer();
@@ -541,6 +559,19 @@ describe("footer and navigation", () => {
     fireEvent.click(within(dialog).getByRole("button", { name: "Continue shopping" }));
     await dialogGone();
     expect(currentLocation()).toBe("/products");
+  });
+
+  test("opening a cart with pieces starts loading checkout; an empty cart does not (Prompt 32)", async () => {
+    const { unmount } = renderDrawer({ lines: [] });
+    await openDrawer();
+    expect(preloadPageFor).not.toHaveBeenCalled();
+    unmount();
+
+    renderDrawer();
+    expect(preloadPageFor).not.toHaveBeenCalled();
+    const { dialog } = await openDrawer();
+    await waitForStore(dialog);
+    expect(preloadPageFor).toHaveBeenCalledWith("/checkout");
   });
 
   test("Checkout closes the drawer as it navigates", async () => {

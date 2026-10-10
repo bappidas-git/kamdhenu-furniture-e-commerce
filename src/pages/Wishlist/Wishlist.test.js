@@ -589,6 +589,25 @@ describe("signed in", () => {
     expect(apiService.wishlist.get).toHaveBeenCalledTimes(1);
   });
 
+  test("nothing saved on the device: the loading state takes the empty state's shape, no toolbar (Prompt 32)", async () => {
+    const read = deferred();
+    apiService.wishlist.get.mockReturnValueOnce(read.promise);
+    const { container } = renderPage({ user: SHOPPER });
+    const loading = await screen.findByText("Loading your wishlist");
+    // eslint-disable-next-line testing-library/no-node-access -- the busy wrapper has no role
+    const busy = loading.closest('[aria-busy="true"]');
+    expect(busy).toBeInTheDocument();
+    // eslint-disable-next-line testing-library/no-node-access -- skeleton blocks are hidden from assistive technology
+    expect(busy.querySelectorAll(".sf-skeleton")).toHaveLength(3);
+    expect(container.querySelector(".grid")).not.toBeInTheDocument(); // eslint-disable-line testing-library/no-node-access, testing-library/no-container
+    expect(screen.queryByRole("button", { name: "Clear all saved pieces" })).not.toBeInTheDocument();
+    await act(async () => {
+      read.resolve([]);
+    });
+    expect(await screen.findByRole("heading", { name: "Nothing saved yet." })).toBeInTheDocument();
+    expect(screen.queryByText("Loading your wishlist")).not.toBeInTheDocument();
+  });
+
   test("while the list loads: skeleton pieces in a busy region, the toolbar with Clear all unavailable", async () => {
     const read = deferred();
     apiService.wishlist.get.mockReturnValueOnce(read.promise);
@@ -609,6 +628,56 @@ describe("signed in", () => {
     });
     await loaded();
     expect(screen.getByRole("button", { name: "Clear all saved pieces" })).not.toHaveAttribute("aria-disabled");
+  });
+
+  test("the account's list cannot be read, nothing on the device: the error, never “Nothing saved yet.”; Try again shows the pieces (read errors, Prompt 32)", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    const failed = deferred();
+    apiService.wishlist.get.mockReturnValueOnce(failed.promise);
+    renderPage({ user: SHOPPER });
+    await act(async () => failed.reject(new Error("Network Error")));
+    expect(await screen.findByRole("heading", { level: 2, name: "We couldn’t load your wishlist." })).toBeInTheDocument();
+    expect(screen.getByText("Check your connection and try again.")).toBeInTheDocument();
+    expect(screen.queryByText("Nothing saved yet.")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Clear all saved pieces" })).not.toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+    // The panel makes way for the skeleton; focus waits on the h1.
+    expect(screen.getByText("Loading your wishlist")).toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveFocus();
+    await loaded();
+    expect(shownNames()).toEqual([BENTWOOD, ERGONOMIC, SOFA]);
+    expect(screen.queryByText("We couldn’t load your wishlist.")).not.toBeInTheDocument();
+    expect(screen.getByRole("heading", { level: 1 })).toHaveFocus();
+    expect(apiService.wishlist.get).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
+  });
+
+  test("the account's list cannot be read, pieces on the device: they stay, under the error that says whose they are", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.wishlist.get.mockRejectedValueOnce(new Error("Network Error"));
+    renderPage({ user: SHOPPER, deviceRows: [savedRow(product(4))] });
+    expect(await screen.findByRole("heading", { level: 2, name: "We couldn’t load your wishlist." })).toBeInTheDocument();
+    expect(
+      screen.getByText("These are the pieces saved on this device. Check your connection and try again.")
+    ).toBeInTheDocument();
+    expect(shownNames()).toEqual(["Classic Plastic Chair"]);
+    consoleError.mockRestore();
+  });
+
+  test("Try again that fails again: the error again, with focus back on Try again", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    const failed = deferred();
+    const failedAgain = deferred();
+    apiService.wishlist.get.mockReturnValueOnce(failed.promise).mockReturnValueOnce(failedAgain.promise);
+    renderPage({ user: SHOPPER });
+    await act(async () => failed.reject(new Error("Network Error")));
+    fireEvent.click(await screen.findByRole("button", { name: "Try again" }));
+    await act(async () => failedAgain.reject(new Error("Network Error")));
+    const retry = await screen.findByRole("button", { name: "Try again" });
+    await waitFor(() => expect(retry).toHaveFocus());
+    expect(apiService.wishlist.get).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
   });
 
   test("Laravel's rows (the product nested) render the same pieces", async () => {

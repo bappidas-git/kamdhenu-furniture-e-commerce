@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
+import usePageMeta from "../../hooks/usePageMeta";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
+import { DEFAULT_DEALS_HERO } from "../../utils/dealsConfig";
 import apiService from "../../services/api";
 import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
 import { Reveal, SectionHeading, staggerDelay } from "../../components/ui";
@@ -436,6 +438,23 @@ const CategoryChips = ({ categories, contexts, activeTab, onSelect }) => {
   );
 };
 
+// The document title (Prompt 32) is the page's name, not the admin's hero
+// headline; the description is the admin's hero line (isAdminConfig), else
+// the Help centre's description of this page.
+const PAGE_TITLE = "Special offers";
+const PAGE_DESCRIPTION = "Pieces on offer now, and codes to use at checkout.";
+
+// Honest urgency (Prompt 32): the countdown and the hero's tag and line are
+// shown only from a config the admin has saved. Until the read lands, and
+// when it fails, the page holds dealsConfig.js's built-in config ("Limited
+// Time", "… don't miss out!" and a countdown to midnight that no one set):
+// api.js answers a failed read with { enabled: true }, which
+// normalizeDealsConfig fills with those defaults. A saved config carries
+// updatedAt (api.js stamps every admin save) or a hero of its own.
+const isAdminConfig = (config) =>
+  Boolean(config.updatedAt) ||
+  ["tag", "title", "subtitle"].some((key) => (config.hero?.[key] ?? "") !== DEFAULT_DEALS_HERO[key]);
+
 // ── Main Component ───────────────────────────────────────────────────────────
 
 const SpecialOffers = () => {
@@ -443,15 +462,27 @@ const SpecialOffers = () => {
   const { toggleWishlist, isInWishlist } = useWishlist();
   // The whole page is admin-managed via this config (master toggle, hero,
   // timer, featured coupon/product selections).
-  const { config, loading: configLoading } = useDealsConfig();
+  const {
+    config,
+    loading: configLoading,
+    error: configError,
+    refresh: refreshConfig,
+  } = useDealsConfig();
   const enabled = config.enabled !== false;
   const reduceMotion = useReducedMotion();
+  const adminConfig = !configLoading && isAdminConfig(config);
+  const heroLine = config.hero?.subtitle;
+  usePageMeta({
+    title: PAGE_TITLE,
+    description: adminConfig && enabled && heroLine ? heroLine : PAGE_DESCRIPTION,
+  });
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
   const [coupons, setCoupons] = useState([]);
   const [loading, setLoading] = useState(true);
   // A failed read shows the "Try again" panel; `attempt` re-runs the read.
+  // A coupon read that fails is a failed read too, never "no codes".
   const [fetchError, setFetchError] = useState(false);
   const [attempt, setAttempt] = useState(0);
   const [activeTab, setActiveTab] = useState("all");
@@ -505,11 +536,16 @@ const SpecialOffers = () => {
     };
   }, [enabled, attempt]);
 
+  // The page's reads failed, or the admin's config could not be read (the
+  // context's `error`): without it the page cannot know whether it is on or
+  // what it features, so it shows the same panel.
+  const failed = fetchError || configError;
+
   useEffect(() => {
     if (loading || !focusAfterRetry.current) return;
     focusAfterRetry.current = false;
-    (fetchError ? retryRef.current : codesRef.current)?.focus();
-  }, [loading, fetchError]);
+    (failed ? retryRef.current : codesRef.current)?.focus();
+  }, [loading, failed]);
 
   // Coupons to advertise: the admin's ordered selection (kept to valid ones), or
   // — when nothing is selected — every valid active coupon (automatic).
@@ -592,8 +628,14 @@ const SpecialOffers = () => {
     [toggleWishlist]
   );
 
-  const handleRetry = () => {
+  const handleRetry = async () => {
     focusAfterRetry.current = true;
+    // The config first, when it is what failed: it decides whether the page
+    // is on and what the next read shows. Skeletons meanwhile.
+    if (configError) {
+      setLoading(true);
+      await refreshConfig();
+    }
     setAttempt((n) => n + 1);
   };
 
@@ -615,7 +657,8 @@ const SpecialOffers = () => {
     );
   }
 
-  const hero = config.hero || {};
+  // Without a saved config (isAdminConfig): the plain title, no countdown.
+  const hero = adminConfig ? config.hero || {} : {};
   const isEmpty = !loading && gridProducts.length === 0 && dealOfTheDay.length === 0;
   const pieces = (n) => `${n} ${n === 1 ? "piece" : "pieces"}`;
   const activeCategory = dealCategories.find((c) => c.id === activeTab);
@@ -640,11 +683,11 @@ const SpecialOffers = () => {
             {hero.title || "Special offers"}
           </h1>
           {hero.subtitle && <p className={styles.heroSubtitle}>{hero.subtitle}</p>}
-          <OfferCountdown timer={config.timer} />
+          {adminConfig && <OfferCountdown timer={config.timer} />}
         </div>
       </header>
 
-      {fetchError ? (
+      {failed && !loading ? (
         <div className={styles.content}>
           <section className={styles.section} aria-labelledby="offers-error-title">
             <div className="sf-container sf-container--wide">

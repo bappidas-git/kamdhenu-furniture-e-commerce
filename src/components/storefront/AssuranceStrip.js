@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import apiService from "../../services/api";
+import { readSettings, readShippingMethods } from "../../services/sharedReads";
 import { ASSURANCE_ITEMS } from "../../content/brandContent";
 import { STOREFRONT_CONFIG, resolveTrustBadgeDetail } from "../../theme/tokens";
 import TRUST_ICONS from "./trustIcons";
@@ -71,13 +71,14 @@ const PLACEHOLDER_ITEMS = ASSURANCE_ITEMS.map((item) => ({
       : fillTemplate(item.detail, { days: STOREFRONT_CONFIG.returnsWindowDays }) || " ",
 }));
 
-// Settings and shipping methods, each read once; null until both settle.
+// Settings and shipping methods, each read once (one request with the
+// footer's reads: sharedReads); null until both settle.
 const useAssuranceData = () => {
   const [data, setData] = useState(null);
 
   useEffect(() => {
     let active = true;
-    Promise.allSettled([apiService.settings.get(), apiService.shipping.getMethods()]).then(
+    Promise.allSettled([readSettings(), readShippingMethods()]).then(
       ([settings, shipping]) => {
         if (!active) return;
         setData({

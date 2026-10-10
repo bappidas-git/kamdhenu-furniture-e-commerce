@@ -23,28 +23,32 @@ import Footer from "./components/Footer/Footer";
 import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import PageTransition from "./components/PageTransition/PageTransition";
 import SkipLink, { MAIN_CONTENT_ID } from "./components/SkipLink/SkipLink";
+import LazyPageBoundary from "./components/LazyPage/LazyPage";
 import AdminLayout from "./components/AdminLayout/AdminLayout";
 
-// Storefront Pages
+// Storefront Pages. Home, the listing and the product page load with the
+// app; the rest load on their first visit (React.lazy, src/pages/lazyPages.js).
 import Home from "./pages/Home/Home";
 import Products from "./pages/Products/Products";
 import ProductDetails from "./pages/ProductDetails/ProductDetails";
-import Checkout from "./pages/Checkout/Checkout";
-import OrderConfirmation from "./pages/OrderConfirmation/OrderConfirmation";
-import OrderHistory from "./pages/OrderHistory/OrderHistory";
-import Profile from "./pages/Profile/Profile";
-import HelpCenter from "./pages/HelpCenter/HelpCenter";
-import PrivacyPolicy from "./pages/PrivacyPolicy/PrivacyPolicy";
-import TermsOfService from "./pages/TermsOfService/TermsOfService";
-import CookiePolicy from "./pages/CookiePolicy/CookiePolicy";
-import RefundPolicy from "./pages/RefundPolicy/RefundPolicy";
-import Support from "./pages/Support/Support";
-import AboutUs from "./pages/AboutUs/AboutUs";
-import SpecialOffers from "./pages/SpecialOffers/SpecialOffers";
-import Wishlist from "./pages/Wishlist/Wishlist";
-import NotFound from "./pages/NotFound/NotFound";
+import {
+  AboutUs,
+  Checkout,
+  CookiePolicy,
+  HelpCenter,
+  NotFound,
+  OrderConfirmation,
+  OrderHistory,
+  PrivacyPolicy,
+  Profile,
+  RefundPolicy,
+  SpecialOffers,
+  Support,
+  TermsOfService,
+  Wishlist,
+} from "./pages/lazyPages";
 
-// Admin Pages
+// Admin Pages (in the main bundle, eager, as before)
 import AdminLogin from "./pages/Admin/AdminLogin";
 import AdminDashboard from "./pages/Admin/AdminDashboard";
 import AdminProducts from "./pages/Admin/AdminProducts";
@@ -116,8 +120,12 @@ function App() {
                               when the path changes; see PageTransition. <Routes>
                               is not keyed by location, so AnimatePresence runs no
                               exit animations and no page waits for another. The
-                              skip link's target: focusable from script only. */}
+                              skip link's target: focusable from script only.
+                              LazyPageBoundary: a page fetched on its first visit
+                              waits inside <main> (a quiet skeleton), with the
+                              shell around it unchanged. */}
                           <PageTransition id={MAIN_CONTENT_ID} tabIndex={-1} className="main-content">
+                            <LazyPageBoundary>
                             <AnimatePresence mode="wait">
                               <Routes>
                                 <Route path="/" element={<Home />} />
@@ -144,6 +152,7 @@ function App() {
                                 <Route path="*" element={<NotFound />} />
                               </Routes>
                             </AnimatePresence>
+                            </LazyPageBoundary>
                           </PageTransition>
                           <Footer />
                           <BottomNav />

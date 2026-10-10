@@ -47,7 +47,11 @@ const SORT_OPTIONS = [
 const REMOVE_DELAY_MS = 300;
 const LEAVING_OPACITY = 0.5;
 // Skeleton pieces while the account's list loads: the device's own count
-// when it has one (it is usually the account's), within these bounds.
+// when it has one (it is usually the account's), within these bounds. A
+// device with nothing saved shows the empty state's shape instead (Prompt 32):
+// three skeleton pieces collapsing into "Nothing saved yet." pulled the
+// footer up into view on a phone (a layout shift of 0.41 at 360px), while an
+// account that does have pieces only adds them below.
 const SKELETON_MIN = 3;
 const SKELETON_MAX = 6;
 // Frames a focus move waits for a closing dialog or drawer to leave the page,
@@ -187,7 +191,14 @@ const SavedPiece = forwardRef(function SavedPiece(
 });
 
 const Wishlist = () => {
-  const { wishlistItems, isLoading, removeFromWishlist, clearWishlist } = useWishlist();
+  const {
+    wishlistItems,
+    isLoading,
+    loadError,
+    reloadWishlist,
+    removeFromWishlist,
+    clearWishlist,
+  } = useWishlist();
   const { addToCart, isCartOpen } = useCart();
   const { user, isLoading: authLoading, openAuthModal, authModalOpen } = useAuth();
   const reduceMotion = useReducedMotion();
@@ -205,6 +216,8 @@ const Wishlist = () => {
   const titleRef = useRef(null);
   const listRef = useRef(null);
   const emptyRef = useRef(null);
+  const retryRef = useRef(null);
+  const retrying = useRef(false);
   const sortedIds = useRef([]);
   const lastCount = useRef(null);
   const sawGuest = useRef(false);
@@ -305,6 +318,21 @@ const Wishlist = () => {
 
   const count = wishlistItems.length;
 
+  // Try again, when the account's list could not be read (read errors,
+  // Prompt 32). The panel makes way for the skeleton, so focus waits on the
+  // h1; a read that fails again puts it back on the button.
+  const handleRetryLoad = () => {
+    retrying.current = true;
+    if (titleRef.current) titleRef.current.focus({ preventScroll: true });
+    reloadWishlist();
+  };
+
+  useEffect(() => {
+    if (!retrying.current || pending) return;
+    retrying.current = false;
+    if (loadError) setFocusRequest({ to: "retry", afterRetry: true });
+  }, [pending, loadError]);
+
   // The last piece has left (Remove, Move to cart, Clear all): focus moves
   // to the empty state's line, unless it has somewhere to be already.
   useEffect(() => {
@@ -343,6 +371,7 @@ const Wishlist = () => {
     const targetOf = () => {
       if (request.to === "title") return titleRef.current;
       if (request.to === "empty") return emptyRef.current;
+      if (request.to === "retry") return retryRef.current;
       const list = listRef.current;
       if (!list) return null;
       // The piece that took the left piece's place: the next one in the order
@@ -371,6 +400,8 @@ const Wishlist = () => {
     const focusIsFree = () => {
       const active = document.activeElement;
       if (!active || active === document.body || !active.isConnected) return true;
+      // After Try again, focus waited on the h1 while the list was read.
+      if (request.afterRetry) return active === titleRef.current;
       if (request.from === undefined) return false;
       const piece = active.closest("[data-saved-piece]");
       return Boolean(piece) && piece.getAttribute("data-saved-piece") === String(request.from);
@@ -431,7 +462,29 @@ const Wishlist = () => {
     </div>
   );
 
-  const toolbar = (pending || count > 0) && (
+  // The account's list could not be read: said, with Try again, in the empty
+  // state's place. Pieces saved on this device stay below it, said as such.
+  const loadErrorPanel = !pending && loadError && (
+    <div className={cx("sf-panel", styles.loadError)}>
+      <h2 className={cx("sf-display-sm", styles.loadErrorTitle)}>We couldn’t load your wishlist.</h2>
+      <p className={styles.loadErrorText}>
+        {count > 0 && "These are the pieces saved on this device. "}
+        Check your connection and try again.
+      </p>
+      <button
+        ref={retryRef}
+        type="button"
+        className="sf-btn sf-btn--primary"
+        onClick={handleRetryLoad}
+      >
+        Try again
+      </button>
+    </div>
+  );
+
+  // With pieces to sort or clear (while loading, the device's own: the
+  // empty-shaped skeleton above stands alone).
+  const toolbar = count > 0 && (
     <div className={styles.toolbar}>
       <div className={styles.sort}>
         <label htmlFor="wishlist-sort" className={styles.sortLabel}>
@@ -464,7 +517,19 @@ const Wishlist = () => {
   );
 
   let results;
-  if (pending) {
+  if (pending && count === 0) {
+    // The empty state's box: a title, a line and the button, in sand.
+    results = (
+      <div aria-busy="true">
+        <p className="sf-visually-hidden">Loading your wishlist</p>
+        <div className={styles.empty} aria-hidden="true">
+          <span className={cx("sf-skeleton", styles.skeletonEmptyTitle)} />
+          <span className={cx("sf-skeleton", styles.skeletonEmptyText)} />
+          <span className={cx("sf-skeleton", styles.emptyAction, styles.skeletonEmptyAction)} />
+        </div>
+      </div>
+    );
+  } else if (pending) {
     // The pieces' own boxes (the card's skeleton, the stock line, the
     // actions), so the loaded grid lands where the skeleton was.
     results = (
@@ -503,6 +568,9 @@ const Wishlist = () => {
         </AnimatePresence>
       </ul>
     );
+  } else if (loadError) {
+    // Nothing on the device either: the panel above stands alone.
+    results = null;
   } else {
     results = (
       <div className={styles.empty}>
@@ -535,6 +603,7 @@ const Wishlist = () => {
     >
       <div className={styles.content}>
         {guestBanner}
+        {loadErrorPanel}
         {toolbar}
         {results}
       </div>

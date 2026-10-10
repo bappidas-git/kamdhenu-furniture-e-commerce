@@ -40,14 +40,13 @@ export const OrderProvider = ({ children }) => {
     }
   }, [user]);
 
-  // Load user's orders when authenticated
+  // The customer's orders are read where they are shown: My orders reads its
+  // own. This context no longer reads them on every signed-in page load (only
+  // createOrder is used, by Checkout); loadUserOrders is there for a caller
+  // that needs the list. Signing out clears what it holds.
   useEffect(() => {
-    if (user) {
-      loadUserOrders();
-    } else {
-      setOrders([]);
-    }
-  }, [user, loadUserOrders]);
+    if (!user) setOrders([]);
+  }, [user]);
 
   const createOrder = async (orderData) => {
     try {

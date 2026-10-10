@@ -244,6 +244,13 @@ afterEach(() => {
 
 // ---------------------------------------------------------------------------
 describe("the page frame", () => {
+  test("the document is titled Checkout, with the default description (Prompt 32)", async () => {
+    await renderCheckout();
+    expect(document.title).toBe("Checkout | A & S Urbanseat");
+    // Checkout stays indexable: no robots tag.
+    expect(document.head.querySelector('meta[name="robots"]')).toBeNull(); // eslint-disable-line testing-library/no-node-access
+  });
+
   test("a breadcrumb, the serif h1 and a four-step stepper with the current step", async () => {
     await renderCheckout();
     const trail = screen.getByRole("navigation", { name: "Breadcrumb" });
@@ -917,6 +924,26 @@ describe("step 3: payment", () => {
     await renderCheckout();
     await goToPayment();
     expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+    expect(screen.queryByText(/couldn’t load your store credit/)).not.toBeInTheDocument();
+  });
+
+  test("a balance that cannot be read says so; Try again reads it and focus moves to the switch (read errors, Prompt 32)", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.wallet.getBalance.mockRejectedValueOnce(new Error("Network Error"));
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    await goToPayment();
+    expect(screen.getByRole("heading", { level: 3, name: "Store credit" })).toBeInTheDocument();
+    expect(screen.getByText("We couldn’t load your store credit. Check your connection and try again.")).toBeInTheDocument();
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
+
+    const retry = screen.getByRole("button", { name: "Try again" });
+    retry.focus();
+    fireEvent.click(retry);
+    const toggle = await screen.findByRole("switch", { name: "Apply to this order" });
+    await waitFor(() => expect(toggle).toHaveFocus());
+    expect(screen.queryByText(/couldn’t load your store credit/)).not.toBeInTheDocument();
+    expect(apiService.wallet.getBalance).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
   });
 });
 
@@ -950,6 +977,20 @@ describe("step 4: review", () => {
     // The facts' figure sits beside its label (a presentational pair).
     expect(screen.getByText("Amount payable", { selector: "span" }).nextElementSibling).toHaveTextContent(total); // eslint-disable-line testing-library/no-node-access
     expect(primary()).toHaveTextContent(`Place order · ${total}`);
+  });
+
+  test("the pieces' compare-at savings show under Amount payable; none, no line (Prompt 32)", async () => {
+    const { unmount } = await renderCheckout({ cart: [ARMCHAIR(2), BEDSIDE(1)] });
+    await goToReview();
+    // The armchair: (₹2,899 − ₹2,499) × 2; the bedside table has no compare-at price.
+    expect(screen.getByText("You save ₹800.00 on these pieces")).toBeInTheDocument();
+    unmount();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    await renderCheckout({ cart: [BEDSIDE(1)] });
+    await goToReview();
+    expect(screen.queryByText(/You save/)).not.toBeInTheDocument();
   });
 
   test("Edit goes back to its step and focus lands on that step's heading", async () => {

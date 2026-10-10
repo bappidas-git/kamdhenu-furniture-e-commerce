@@ -314,6 +314,21 @@ test("a guest can sign in or create an account from the menu", async () => {
   await dialogGone();
 });
 
+test("an account photograph is sized and decoded off the main thread; a broken one gives way to the initial (Prompt 32)", async () => {
+  auth = { user: { ...USER, avatar: "/avatars/asha.jpg" }, logout: jest.fn() };
+  renderMenu();
+  const { dialog } = await openMenu();
+  // eslint-disable-next-line testing-library/no-node-access -- a decorative image has no role to query
+  const photo = dialog.querySelector('img[src="/avatars/asha.jpg"]');
+  expect(photo).toHaveAttribute("alt", "");
+  expect(photo).toHaveAttribute("width", "48");
+  expect(photo).toHaveAttribute("height", "48");
+  expect(photo).toHaveAttribute("decoding", "async");
+  fireEvent.error(photo);
+  expect(photo).not.toBeInTheDocument();
+  expect(within(dialog).getByText("A")).toHaveAttribute("aria-hidden", "true");
+});
+
 test("a signed-in shopper sees their account and can sign out", async () => {
   auth = { user: USER, logout: jest.fn() };
   wishlistCount = 3;

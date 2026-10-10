@@ -5,9 +5,16 @@ import { AnimatePresence, LayoutGroup, motion, useIsPresent, useReducedMotion } 
 import { CloseOutlined } from "@mui/icons-material";
 import { useCart } from "../../hooks/useCart";
 import apiService from "../../services/api";
-import { formatCurrency, productPath, PLACEHOLDER_IMG, onImageError } from "../../utils/helpers";
+import {
+  formatCurrency,
+  getCartSavings,
+  productPath,
+  PLACEHOLDER_IMG,
+  onImageError,
+} from "../../utils/helpers";
 import { STOREFRONT_CONFIG, TOKENS, resolveTrustBadgeDetail } from "../../theme/tokens";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
+import { preloadPageFor } from "../../pages/lazyPages";
 import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
 import PriceBlock from "../storefront/PriceBlock";
 import TRUST_ICONS from "../storefront/trustIcons";
@@ -273,6 +280,8 @@ const CartDrawer = ({ open, onClose }) => {
   const isEmpty = lines.length === 0;
   const count = getCartItemCount ? getCartItemCount() : 0;
   const subtotal = getCartTotal ? getCartTotal() : 0;
+  // The pieces' own compare-at savings, beside the buy action (Prompt 32).
+  const savings = getCartSavings(lines);
 
   const panelRef = useRef(null);
   const closeRef = useRef(null);
@@ -288,6 +297,13 @@ const CartDrawer = ({ open, onClose }) => {
 
   const store = useStoreData(open);
   const estimate = store ? deliveryEstimate(store.methods) : null;
+
+  // Checkout loads on its first visit (src/pages/lazyPages.js). An open cart
+  // with pieces in it is the likeliest way there, so its code starts loading
+  // now and Checkout opens without the page skeleton (Prompt 32).
+  useEffect(() => {
+    if (open && !isEmpty) preloadPageFor("/checkout");
+  }, [open, isEmpty]);
   const delivery = describeDelivery(store, estimate, subtotal);
 
   // ---- Free-delivery progress (display only) ---------------------------------
@@ -562,6 +578,9 @@ const CartDrawer = ({ open, onClose }) => {
                     )}
                   </div>
                 </dl>
+                {savings > 0 && (
+                  <p className={styles.savings}>You save {formatCurrency(savings)} on these pieces</p>
+                )}
                 <p className={styles.taxNote}>Taxes calculated at checkout</p>
                 <Link
                   to="/checkout"

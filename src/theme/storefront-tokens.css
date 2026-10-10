@@ -39,6 +39,40 @@
  * (src/theme/adminTheme.js) and never reads --sf-* tokens.
  * ========================================================================== */
 
+/* ---- Display fallback faces (Prompt 32) -------------------------------------
+ * While Playfair Display loads (font-display: swap), headings are set in a
+ * local Times New Roman scaled to Playfair's width and vertical metrics, so
+ * they wrap, and take the height, that they will have once the web font
+ * arrives: a heading no longer re-wraps and pushes the page down (the offers
+ * hero shifted the page by 0.059 on a 360px phone; the 404, the product's
+ * not-found state, About and the account greeting by 0.01–0.03). Ratios
+ * measured in Chromium against Liberation Serif (Times New Roman's metrics)
+ * over the site's headings. A device without these fonts (Android) skips the
+ * faces and falls back as before. Referenced only by --sf-font-display. */
+@font-face {
+  font-family: "Playfair Display Fallback";
+  font-style: normal;
+  font-weight: 400 500;
+  src: local("Times New Roman"), local("TimesNewRomanPSMT"), local("Liberation Serif"),
+    local("Tinos");
+  size-adjust: 109.5%;
+  ascent-override: 98.6%;
+  descent-override: 22.8%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Playfair Display Fallback";
+  font-style: italic;
+  font-weight: 400 500;
+  src: local("Times New Roman Italic"), local("TimesNewRomanPS-ItalicMT"),
+    local("Liberation Serif Italic"), local("Tinos Italic");
+  size-adjust: 104.8%;
+  ascent-override: 103.1%;
+  descent-override: 23.9%;
+  line-gap-override: 0%;
+}
+
 :root {
   /* ---- Brand constants (identical in both modes) -------------------------
      Sampled from the logo artwork; see DESIGN_SYSTEM.md "Sampled logo
@@ -142,7 +176,8 @@
   --sf-shadow-lg: 0 20px 48px rgba(11, 31, 63, 0.14);
 
   /* ---- Typography ------------------------------------------------------- */
-  --sf-font-display: "Playfair Display", Georgia, "Times New Roman", serif;
+  --sf-font-display: "Playfair Display", "Playfair Display Fallback", Georgia,
+    "Times New Roman", serif;
   --sf-font-sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI",
     "Roboto", sans-serif;
   --sf-font-family: var(--sf-font-sans);       /* legacy alias */

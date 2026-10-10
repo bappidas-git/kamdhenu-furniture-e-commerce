@@ -2,8 +2,11 @@ import React, { useState, useEffect, useCallback, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
+import usePageMeta from "../../hooks/usePageMeta";
+import useStructuredData from "../../hooks/useStructuredData";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
+import { readSettings, readShippingMethods } from "../../services/sharedReads";
 import { categoryParam } from "../../utils/categories";
 import { formatCurrency, parseSpecifications } from "../../utils/helpers";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
@@ -24,6 +27,8 @@ import {
   FrequentlyBoughtTogether,
 } from "../../components/storefront";
 import { buildSpecRows } from "./productSpecs";
+import { buildProductStructuredData } from "./productStructuredData";
+import { preloadPageFor } from "../lazyPages";
 import styles from "./ProductDetails.module.css";
 
 // =============================================================================
@@ -149,6 +154,8 @@ const Skeleton = () => (
 
 // ─── Not Found State ────────────────────────────────────────────────────────
 // An in-app state (no redirect): the serif line and a way back to the shop.
+const NOT_FOUND_TITLE = "Piece not found";
+const LOAD_ERROR_TITLE = "Piece unavailable";
 const NotFound = () => (
   <div className={`sf-container sf-container--wide ${styles.notFound}`}>
     <p className="sf-eyebrow">Not found</p>
@@ -159,6 +166,20 @@ const NotFound = () => (
     <Link to="/products" className="sf-btn sf-btn--primary sf-btn--lg">
       Browse furniture
     </Link>
+  </div>
+);
+
+// ─── Load Error State ───────────────────────────────────────────────────────
+// A read that failed (the network, the server) is not a missing piece
+// (Prompt 32): it says so and offers the same read again, the error pattern
+// of the other pages (DESIGN_SYSTEM §39.5). A 404 is still "not found".
+const LoadError = ({ onRetry }) => (
+  <div className={`sf-container sf-container--wide ${styles.notFound}`}>
+    <h1 className={`sf-display-md ${styles.notFoundTitle}`}>We couldn’t load this piece.</h1>
+    <p className={styles.notFoundText}>Check your connection and try again.</p>
+    <button type="button" className="sf-btn sf-btn--primary sf-btn--lg" onClick={onRetry}>
+      Try again
+    </button>
   </div>
 );
 
@@ -184,6 +205,8 @@ const ProductDetails = () => {
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  // The last read failed for another reason than a missing piece.
+  const [loadError, setLoadError] = useState(false);
   const [selectedVariant, setSelectedVariant] = useState(null);
   const [quantity, setQuantity] = useState(1);
   const [added, setAdded] = useState(false);
@@ -213,6 +236,7 @@ const ProductDetails = () => {
     try {
       setLoading(true);
       setNotFound(false);
+      setLoadError(false);
 
       const isLegacyId = /^\d+$/.test(String(slug));
       let data = isLegacyId
@@ -289,7 +313,10 @@ const ProductDetails = () => {
     } catch (error) {
       if (!isLatest()) return;
       console.error("Error fetching product:", error);
-      setNotFound(true);
+      // The API answers 404 for a piece that does not exist (Laravel's slug
+      // and id routes, JSON Server's id route); anything else is a failed read.
+      if (error?.response?.status === 404) setNotFound(true);
+      else setLoadError(true);
     } finally {
       if (isLatest()) setLoading(false);
     }
@@ -339,13 +366,12 @@ const ProductDetails = () => {
   // ── Public store data for trust signals + transparent delivery info ─────
   // Both reads settle (a failure counts as no data) before the promises and
   // the delivery facts are shown, so nothing is claimed ahead of the data.
+  // On a page load they are one request each with the footer's (sharedReads).
   useEffect(() => {
     let active = true;
     Promise.allSettled([
-      apiService.settings.get().then((s) => active && setSettings(s)),
-      apiService.shipping
-        .getMethods()
-        .then((m) => active && setShipping(Array.isArray(m) ? m : [])),
+      readSettings().then((s) => active && setSettings(s)),
+      readShippingMethods().then((m) => active && setShipping(Array.isArray(m) ? m : [])),
     ]).then(() => active && setStoreDataReady(true));
     return () => {
       active = false;
@@ -430,6 +456,38 @@ const ProductDetails = () => {
   const totalRatingsCount = reviewsLoaded ? reviews.length : baseCount;
   const displayAvg = reviewsLoaded ? reviewSum / Math.max(1, reviews.length) : baseRating;
 
+  // ── Document title, description and structured data (Prompt 32) ────────
+  // The catalogue's metaTitle and metaDescription, else the name and the
+  // short description; the defaults while a product loads. The not-found
+  // state asks not to be indexed (the URL still answers 200). The JSON-LD
+  // follows what the page shows: the choice's price, SKU and stock, and the
+  // ratings row's average and count.
+  const shown = !loading && !notFound && !loadError ? product : null;
+  usePageMeta({
+    title: shown
+      ? shown.metaTitle || shown.name
+      : loading
+      ? undefined
+      : loadError
+      ? LOAD_ERROR_TITLE
+      : NOT_FOUND_TITLE,
+    description: shown ? shown.metaDescription || shown.shortDescription : undefined,
+    noindex: !loading && !loadError && !shown,
+  });
+  useStructuredData(
+    shown
+      ? buildProductStructuredData({
+          product: shown,
+          price: currentPrice,
+          sku: currentSku,
+          stock: currentStock,
+          rating: displayAvg,
+          reviewCount: totalRatingsCount,
+        })
+      : null,
+    "product"
+  );
+
   // ── Cart wiring ────────────────────────────────────────────────────────
   const handleAddToCart = useCallback(
     (options) => {
@@ -472,6 +530,11 @@ const ProductDetails = () => {
     navigate("/checkout");
   }, [handleAddToCart, navigate]);
 
+  // Checkout loads on its first visit (src/pages/lazyPages.js): its code
+  // starts loading as a pointer reaches Buy now or focus does, so the page
+  // opens without its skeleton (Prompt 32).
+  const warmCheckout = useCallback(() => preloadPageFor("/checkout"), []);
+
   // The ratings row's jump to the reviews section.
   const scrollToReviews = useCallback(() => {
     jumpTo(reviewsRef.current, reduceMotion);
@@ -500,6 +563,7 @@ const ProductDetails = () => {
 
   // ── Render ─────────────────────────────────────────────────────────────
   if (loading) return <Skeleton />;
+  if (loadError) return <LoadError onRetry={fetchProduct} />;
   if (notFound || !product) return <NotFound />;
 
   const wishlisted = isInWishlist(product.id);
@@ -670,6 +734,9 @@ const ProductDetails = () => {
                 type="button"
                 className={cx("sf-btn sf-btn--ghost sf-btn--lg sf-btn--block", styles.buyNow)}
                 onClick={handleBuyNow}
+                onPointerEnter={warmCheckout}
+                onPointerDown={warmCheckout}
+                onFocus={warmCheckout}
                 disabled={isOutOfStock}
               >
                 Buy now
