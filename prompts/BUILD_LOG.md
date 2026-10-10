@@ -4418,3 +4418,68 @@ Traced after: the add restyles `html` no more; one restyle of the drawer (63 ele
 - **Make the page inert once the drawer has slid in?** About 170ms instead of 252ms at 4× CPU, the drawer unchanged. For those first 320ms the backdrop takes the pointer, the focus trap holds Tab and `aria-modal` marks the dialog, but the page is not yet inert: a change to Prompt 31's overlay contract, so not made.
 - **App.css's universal `::-webkit-scrollbar` rule.** Scoped away from `html` (for example `body ::-webkit-scrollbar`), a restyle of `html` would cost one element instead of every one: the sticky bar showing or hiding, every SweetAlert toast and Back and Forward's scroll hold would stop restyling the whole page. The page's own scrollbar would then be the browser's default on desktop, and the design system forbids editing those rules, so it is a design decision.
 
+---
+
+## Prompt 33 — Admin logo swap
+
+**Date:** 2026-10-10. **Result:** the admin's two placeholder images (an indigo "LOGO" block in the sidebar and on the login card) are now the A & S Urbanseat logo: the full-colour artwork on the white surfaces in light mode, the white artwork on `#111927` in dark mode, switching as the shared theme is toggled. The rendered heights stay 32px (sidebar) and 56px (login), and explicit `width`/`height` attributes hold the logo's box while it loads. **Two files changed, logo lines only** (8 insertions, 5 deletions). In before-and-after screenshots of 16 admin states, no pixel changed outside the logo's box. No other admin file changed, and neither did `db.json`, `api.js` or the storefront. A pre-existing admin accessibility bug turned up during QA ("Pre-existing issues noticed", below); it is left as found.
+
+### What changed
+
+| File | Lines (after) | Change |
+|---|---|---|
+| `src/components/AdminLayout/AdminLayout.js` | 37 | Added `import { LOGO_URLS } from "../../utils/constants";` after the `apiService` import. |
+| | was 39–40 | Removed `const LOGO = "https://placehold.co/160x40/4f46e5/ffffff?text=LOGO";` and the blank line after it, which would otherwise have left two blank lines together. |
+| | 335, 337–338 | The sidebar `<img>`: `src={mode === "dark" ? LOGO_URLS.white : LOGO_URLS.light}`, and `width={97}` and `height={32}` after the unchanged `alt`. `style={{ height: 32, width: "auto" }}` (line 339) is unchanged. |
+| `src/pages/Admin/AdminLogin.js` | 20 | Added `import { LOGO_URLS } from "../../utils/constants";` after the `useAdminBodyClass` import. |
+| | was 21 | Removed `const LOGO = "https://placehold.co/210x70/4f46e5/ffffff?text=LOGO";`. |
+| | 137, 139–140 | The login `<img>`: `src={isDarkMode ? LOGO_URLS.white : LOGO_URLS.light}`, and `width={169}` and `height={56}` after the unchanged `alt`. `style={{ height: 56, width: "auto" }}` (line 141) is unchanged. |
+| `prompts/BUILD_LOG.md` | — | This entry. |
+
+`git diff --stat origin/main` on the code: `AdminLayout.js | 7 ++++---` and `AdminLogin.js | 6 ++++--`, nothing else. The surrounding `Box`es and `Divider`, every `sx`, both `alt` expressions (still "A & S Urbanseat" through `REACT_APP_NAME`), the inline styles, and the "Admin Console" heading and subtitle are as they were. There is no `BrandLogo` import, no `onError` and no CSS.
+
+### Decisions
+
+- **The variant follows the mode already in scope:** `mode` from `useThemeContext()` in the layout, `isDarkMode` from `useTheme()` on the login page. Both read `ThemeContext`, so the AppBar's toggle swaps the sidebar's artwork at once. The login page has no toggle of its own; it shows the mode last set through the shared `theme` key (from the dashboard's AppBar or the storefront).
+- **`width`/`height` use `BrandLogo`'s rounding,** `Math.round(height * 1286 / 426)`: 97 at 32px, 169 at 56px. The browser takes the box's ratio from these attributes before the file arrives, and the inline `height` with `width: auto` still sets the rendered size: 96.59 × 32 and 169.05 × 56 once loaded (the artwork's own 3.0188 : 1).
+
+### Deviations from the prompt, and why
+
+None in the code. One formatting detail: the blank line after `AdminLayout.js`'s `LOGO` constant went with it (see the table).
+
+### Verification
+
+- **Tests:** `CI=true npm test -- --passWithNoTests` exits 0: **84 suites, 1,408 tests**, the same as at `HEAD`, with no console warnings.
+- **Build:** `CI=true npm run build` prints "Compiled successfully" with no warnings. Built in JSON Server mode, `HEAD` and the branch differ only in `main.js`, which carries the admin (399.68 → 399.67 kB gzip, −8 B). `main.css` and all 22 page-chunk files are byte-identical, and `index.html` and `asset-manifest.json` differ only by the bundle's hash. The placeholder URLs are gone from the bundle.
+- **Lint:** ESLint reports nothing in either file, as at `HEAD`.
+- **Data:** `db.json` is unchanged (SHA-256 `5cbc3088…`), and so is `api.js`.
+
+**Browser QA** (Playwright 1.56.1, Chromium; JSON Server-mode production builds of `HEAD` (`a3381df`) and the branch, served side by side; JSON Server on a copy of `db.json`):
+
+| Check | Result |
+|---|---|
+| Variant per mode: login and dashboard, light and dark, at 360, 768, 1,024 and 1,440px (below 900px with the drawer opened from the hamburger) | 16 of 16: light shows `urbanseat-logo.png` on `rgb(255, 255, 255)`, dark shows `urbanseat-logo-white.png` on `rgb(17, 25, 39)` (`#111927`). The light logo never sits on the dark surface. |
+| Rendered size | Sidebar 96.59 × 32 and login 169.05 × 56 at every width; the artwork loaded at 1,286 × 426 (`naturalWidth`). The logos' top edges are where the placeholders' were. |
+| Nothing else changed | The 16 before-and-after screenshot pairs differ only inside the old placeholder's box (128 × 32, 168 × 56): **0 differing pixels outside it** (the AppBar, the notifications badge, the navigation, the login form and the page around them). |
+| No shift while loading | With the logo's response held for 2–2.5s, the sidebar's box is already 97 × 32 and the login's 169 × 56, at their final positions. The divider (y 64), the first nav item (y 73) and "Admin Console" do not move when the file arrives, and no layout-shift entry involves the image. Before, the placeholder sat at 0 × 32 and 0 × 56 until it arrived. |
+| Theme toggle, live | In the AppBar at 1,440px and with the 360px drawer: the light artwork, then the white artwork on `#111927`, then the light artwork again, without a reload. |
+| Login page in dark mode, reached through the app | Toggled to dark in the dashboard, then logged out through the SweetAlert confirm ("Stay Signed In" once, then "Log Out"): the login card shows the white logo at 169.05 × 56 on `#111927`, and the session is cleared. |
+| Keyboard | The login form's tab order is the same on both builds: email, password, Show password, Sign In, Back to Store. |
+| Modules | Dashboard, Products, Categories, Orders, Returns, Payments, Users, Shipping, Coupons, Special Offers, Reviews, Leads and Settings open with the same headings on both builds, and the Add Product dialog opens and closes. **No console error or warning** on either build in any run. |
+| Requests | The branch never requests `placehold.co`; the admin asks only for the light or the white PNG. |
+| Storefront | `/` at 1,440px (reduced motion): **0 differing pixels** between the builds, with the same title and header logo. |
+
+### Pre-existing issues noticed (not changed)
+
+- **After the logout confirm, the admin is hidden from screen readers.** Opening the account menu sets `aria-hidden="true"` on `#root` (MUI's modal behaviour). "Logout" closes the menu and opens the SweetAlert confirm in the same moment, before the menu's exit transition has removed that attribute. SweetAlert saves each element's `aria-hidden` when it opens (`data-previous-aria-hidden`) and restores it when it closes, so it puts `true` back on `#root`. After either answer, `#root` stays `aria-hidden="true"`: "Stay Signed In" leaves the whole dashboard hidden, and "Log Out" leaves the login page hidden (Playwright finds neither "Account menu" nor "Sign In" by role). It is the same on `HEAD` and the branch, so this change did not cause it. The fix belongs in `handleLogout` in `AdminLayout.js`, for example by opening the confirm once the menu has finished closing. That is admin code outside this prompt's scope, so it needs the owner's go-ahead.
+
+### Notes for later prompts
+
+- **34 (admin diff):** to see the whole build's admin change, diff against the first commit (`91f7b51`). It shows these two files and `AdminProducts.js` (+4 lines), Prompt 03's owner-approved follow-up ("Admin fix: variant attributes kept on save"), and nothing else. A fresh clone's local `main` can be stale (this session's was `10847d4`, from August), so run `git fetch origin main` and compare with `origin/main`.
+- **34 (performance):** the admin's two `<img>`s load the original PNGs (light 141,685 B, white 57,581 B, each once, then cached), not the ~13 KB WebP copies `BrandLogo` takes through `srcset`. The brief sets `src` to `LOGO_URLS` and rules out `BrandLogo`; a `srcset` like `BrandLogo`'s would be a further admin change for the owner to approve.
+- Prompt 32's note for "33" (`usePageMeta`, `lazyPages.js`, Lighthouse) does not apply here: no storefront page was added, and every storefront chunk is byte-identical.
+
+### Needs client confirmation
+
+None.
+
