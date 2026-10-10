@@ -1,8 +1,10 @@
 import React, { useState, useEffect, useLayoutEffect, useMemo, useCallback, useRef, useId } from "react";
 import { useSearchParams } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
+import usePageMeta from "../../hooks/usePageMeta";
 import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
+import { readCategories } from "../../services/sharedReads";
 import {
   categoryParam,
   resolveCategory,
@@ -89,6 +91,11 @@ const PER_PAGE_OPTIONS = [12, 24, 48];
 const RAIL_QUERY = "(min-width: 1024px)";
 // The first cards enter with the staggered reveal; the rest render at once.
 const REVEAL_COUNT = 6;
+// The first row's photographs are on screen as the page opens (three columns
+// at most): they load at once, and the first, the page's largest paint, at
+// high priority. The rest load as they come near (Prompt 32).
+const EAGER_IMAGES = 3;
+const imagePriorityAt = (index) => (index === 0 ? "high" : index < EAGER_IMAGES ? "eager" : "lazy");
 // Air between the sticky header and the results after a page change.
 const RESULTS_SCROLL_GAP = 16;
 
@@ -299,7 +306,8 @@ const Products = () => {
     try {
       const [productsData, categoriesData] = await Promise.all([
         apiService.products.getAll(),
-        apiService.categories.getAll(),
+        // One request with the header's and the footer's (sharedReads).
+        readCategories(),
       ]);
       setAllProducts(Array.isArray(productsData) ? productsData : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
@@ -865,6 +873,15 @@ const Products = () => {
         ? selectedCategoryList[0].description || null
         : null;
 
+  // The document's title and description (Prompt 32): the heading and the
+  // introduction, the defaults while a deep-linked category is still being
+  // named. Search results ask not to be indexed.
+  usePageMeta({
+    title: headerPending && !urlSearch ? undefined : heading,
+    description: intro || undefined,
+    noindex: Boolean(urlSearch),
+  });
+
   // Home › Furniture › Department › Group › Leaf: every ancestor of the
   // selected category, each linking to its own listing; the last is the page.
   const breadcrumbItems = useMemo(() => {
@@ -1248,6 +1265,7 @@ const Products = () => {
                 onAddToCart={(item) => addToCart(item)}
                 onToggleWishlist={toggleWishlist}
                 isWishlisted={isInWishlist(product.id)}
+                imagePriority={imagePriorityAt(index)}
               />
             ) : (
               <>
@@ -1256,6 +1274,7 @@ const Products = () => {
                   onAddToCart={(item) => addToCart(item)}
                   onToggleWishlist={toggleWishlist}
                   isWishlisted={isInWishlist(product.id)}
+                  imagePriority={imagePriorityAt(index)}
                 />
                 {lowStock != null && <p className={styles.stockNote}>Only {lowStock} left</p>}
               </>

@@ -47,7 +47,11 @@ const SORT_OPTIONS = [
 const REMOVE_DELAY_MS = 300;
 const LEAVING_OPACITY = 0.5;
 // Skeleton pieces while the account's list loads: the device's own count
-// when it has one (it is usually the account's), within these bounds.
+// when it has one (it is usually the account's), within these bounds. A
+// device with nothing saved shows the empty state's shape instead (Prompt 32):
+// three skeleton pieces collapsing into "Nothing saved yet." pulled the
+// footer up into view on a phone (a layout shift of 0.41 at 360px), while an
+// account that does have pieces only adds them below.
 const SKELETON_MIN = 3;
 const SKELETON_MAX = 6;
 // Frames a focus move waits for a closing dialog or drawer to leave the page,
@@ -431,7 +435,9 @@ const Wishlist = () => {
     </div>
   );
 
-  const toolbar = (pending || count > 0) && (
+  // With pieces to sort or clear (while loading, the device's own: the
+  // empty-shaped skeleton above stands alone).
+  const toolbar = count > 0 && (
     <div className={styles.toolbar}>
       <div className={styles.sort}>
         <label htmlFor="wishlist-sort" className={styles.sortLabel}>
@@ -464,7 +470,19 @@ const Wishlist = () => {
   );
 
   let results;
-  if (pending) {
+  if (pending && count === 0) {
+    // The empty state's box: a title, a line and the button, in sand.
+    results = (
+      <div aria-busy="true">
+        <p className="sf-visually-hidden">Loading your wishlist</p>
+        <div className={styles.empty} aria-hidden="true">
+          <span className={cx("sf-skeleton", styles.skeletonEmptyTitle)} />
+          <span className={cx("sf-skeleton", styles.skeletonEmptyText)} />
+          <span className={cx("sf-skeleton", styles.emptyAction, styles.skeletonEmptyAction)} />
+        </div>
+      </div>
+    );
+  } else if (pending) {
     // The pieces' own boxes (the card's skeleton, the stock line, the
     // actions), so the loaded grid lands where the skeleton was.
     results = (

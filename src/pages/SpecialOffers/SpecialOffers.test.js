@@ -7,6 +7,7 @@ import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { DealsConfigProvider } from "../../context/DealsConfigContext";
 import { buildCartItem, getProductMaxDiscount, getProductMinPrice, formatCurrency } from "../../utils/helpers";
+import { DEFAULT_DEALS_HERO } from "../../utils/dealsConfig";
 import db from "../../../db.json";
 import SpecialOffers from "./SpecialOffers";
 
@@ -156,6 +157,59 @@ test("the hero renders the admin's tag, title and subtitle as given, with one h1
   expect(screen.getByText(CONFIG.hero.subtitle)).toBeInTheDocument();
   await findRegion("Codes to use at checkout.");
   expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+});
+
+test("the document is titled Special offers, described by the hero's line (Prompt 32)", async () => {
+  const description = () =>
+    document.head.querySelector('meta[name="description"]')?.getAttribute("content"); // eslint-disable-line testing-library/no-node-access
+  const { unmount } = renderPage();
+  await screen.findByRole("heading", { level: 1, name: "Offers on pieces we love" });
+  await findRegion("Codes to use at checkout.");
+  expect(document.title).toBe("Special offers | A & S Urbanseat");
+  await waitFor(() => expect(description()).toBe(CONFIG.hero.subtitle));
+  unmount();
+
+  withConfig({ hero: { tag: "", title: "", subtitle: "" } });
+  renderPage();
+  await screen.findByRole("heading", { level: 1, name: "Special offers" });
+  expect(description()).toBe("Pieces on offer now, and codes to use at checkout.");
+});
+
+// api.js answers a failed read with { enabled: true } (it never rethrows);
+// the context keeps its default config if a read throws.
+test.each([
+  ["api.js's answer to a failed read", () => apiService.deals.getConfig.mockResolvedValue({ enabled: true })],
+  ["a read that throws", () => apiService.deals.getConfig.mockRejectedValue(new Error("Network Error"))],
+])(
+  "a config that cannot be read (%s): the plain title, no countdown and no built-in hero copy (Prompt 32)",
+  async (_, failRead) => {
+    const error = jest.spyOn(console, "error").mockImplementation(() => {});
+    failRead();
+    renderPage();
+    expect(await screen.findByRole("heading", { level: 1, name: "Special offers" })).toBeInTheDocument();
+    await findRegion("Codes to use at checkout.");
+    expect(screen.queryByRole("timer")).not.toBeInTheDocument();
+    expect(screen.queryByText(/Limited time/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/unbeatable|don.t miss out/i)).not.toBeInTheDocument();
+    expect(document.title).toBe("Special offers | A & S Urbanseat");
+    // eslint-disable-next-line testing-library/no-node-access -- the page writes <head>, which has no roles to query
+    expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute(
+      "content",
+      "Pieces on offer now, and codes to use at checkout."
+    );
+    error.mockRestore();
+  }
+);
+
+test("a config the admin saved is shown as saved, even with the built-in hero copy (Prompt 32)", async () => {
+  // A saved config carries updatedAt (api.js stamps every admin save).
+  withConfig({ hero: { ...DEFAULT_DEALS_HERO } });
+  renderPage();
+  expect(
+    await screen.findByRole("heading", { level: 1, name: DEFAULT_DEALS_HERO.title })
+  ).toBeInTheDocument();
+  expect(screen.getByText(DEFAULT_DEALS_HERO.tag)).toBeInTheDocument();
+  await findRegion("Codes to use at checkout.");
 });
 
 test("an empty title falls back to the default; an empty tag and subtitle are left out", async () => {

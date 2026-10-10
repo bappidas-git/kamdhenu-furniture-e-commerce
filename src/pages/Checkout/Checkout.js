@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence, useIsPresent, useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
+import usePageMeta from "../../hooks/usePageMeta";
 import { useOrder } from "../../context/OrderContext";
 import apiService, { getErrorMessage } from "../../services/api";
 import { IS_MOCK_API } from "../../services/baseURL";
@@ -10,7 +11,13 @@ import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import TRUST_ICONS from "../../components/storefront/trustIcons";
 import { prefersReducedMotion } from "../../components/ui/motionPresets";
 import { STOREFRONT_CONFIG, TOKENS } from "../../theme/tokens";
-import { formatCurrency, isValidPhone, onImageError, PLACEHOLDER_IMG } from "../../utils/helpers";
+import {
+  formatCurrency,
+  getCartSavings,
+  isValidPhone,
+  onImageError,
+  PLACEHOLDER_IMG,
+} from "../../utils/helpers";
 import styles from "./Checkout.module.css";
 
 // =============================================================================
@@ -748,6 +755,9 @@ const Checkout = () => {
 
   const summaryScrolls = useScrolls(summaryNode);
 
+  // The document title (Prompt 32); the default description.
+  usePageMeta({ title: "Checkout" });
+
   // Nothing is drawn while the session is restored (the first render): the
   // account and the saved cart arrive together on the next one, so a reload
   // never flashes the empty state.
@@ -785,6 +795,9 @@ const Checkout = () => {
   const savedAddresses = user?.addresses?.length > 0 ? defaultFirst(user.addresses) : [];
   const hasAddressErrors = Object.values(addressErrors).some(Boolean);
   const returnsDays = STOREFRONT_CONFIG.returnsWindowDays;
+  // The pieces' own compare-at savings, shown beside Place order (Prompt 32).
+  // Display only: no total uses it.
+  const pieceSavings = getCartSavings(cartItems);
   const gatewayConfigured =
     !IS_MOCK_API && Boolean(storeSettings?.payment?.razorpayEnabled || storeSettings?.payment?.stripeEnabled);
 
@@ -1566,6 +1579,9 @@ const Checkout = () => {
           <span className={styles.factsLabel}>Amount payable</span>
           <span className={styles.factsValue}>{formatCurrency(amountPayable)}</span>
         </p>
+        {pieceSavings > 0 && (
+          <p className={styles.factsSavings}>You save {formatCurrency(pieceSavings)} on these pieces</p>
+        )}
         <ul className={styles.factsList} aria-label="About this order">
           {promise && (
             <li className={styles.fact}>

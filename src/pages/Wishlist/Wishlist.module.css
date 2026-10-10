@@ -263,6 +263,30 @@
   margin-top: var(--sf-space-2);
 }
 
+/* While the account's list loads on a device with nothing saved: the empty
+   state's lines, in its own box (Prompt 32). */
+.skeletonEmptyTitle {
+  width: min(13ch, 100%);
+  height: calc(var(--sf-text-display-md) * var(--sf-leading-heading));
+  font-size: var(--sf-text-display-md);
+}
+
+.skeletonEmptyText {
+  width: min(20rem, 100%);
+  height: calc(var(--sf-text-base) * var(--sf-leading-body));
+}
+
+/* Full width on phones, as the button (.emptyAction, below). */
+.skeletonEmptyAction {
+  height: var(--sf-tap-target);
+}
+
+@media (min-width: 481px) {
+  .skeletonEmptyAction {
+    width: 10.5rem;
+  }
+}
+
 /* Phones: the banner's and the empty state's buttons run full width. */
 @media (max-width: 480px) {
   .bannerAction,

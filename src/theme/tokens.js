@@ -36,7 +36,7 @@ export const TOKENS = {
   containerMax: 1280,
   container: { max: 1280, wide: 1440, narrow: 720 },
   type: {
-    fontDisplay: '"Playfair Display", Georgia, "Times New Roman", serif',
+    fontDisplay: '"Playfair Display", "Playfair Display Fallback", Georgia, "Times New Roman", serif',
     fontSans: '"Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto", sans-serif',
     // Keys match the --sf-text-* suffixes
     size: {

@@ -132,3 +132,27 @@ test("inside the app's main it adds no landmark besides the nav", () => {
   expect(screen.queryByRole("complementary")).not.toBeInTheDocument();
   expect(screen.getAllByRole("navigation")).toHaveLength(1);
 });
+
+// Prompt 32: each section names the document; the default description stays.
+test.each([
+  ["profile", "My account"],
+  ["addresses", "Addresses"],
+  ["orders", "My orders"],
+  ["wallet", "Store credit"],
+  ["wishlist", "My wishlist"],
+  ["password", "Change password"],
+  [undefined, "My account"],
+])("active %s titles the document %s", (active, title) => {
+  signIn();
+  const { unmount } = renderLayout({ active });
+  expect(document.title).toBe(`${title} | A & S Urbanseat`);
+  unmount();
+  expect(document.title).toBe(
+    "A & S Urbanseat | Furniture and seating for home, office, café and outdoor"
+  );
+});
+
+test("pageTitle replaces the section's name", () => {
+  renderLayout({ active: "orders", pageTitle: "Track an order" });
+  expect(document.title).toBe("Track an order | A & S Urbanseat");
+});

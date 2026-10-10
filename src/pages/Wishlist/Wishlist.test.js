@@ -589,6 +589,25 @@ describe("signed in", () => {
     expect(apiService.wishlist.get).toHaveBeenCalledTimes(1);
   });
 
+  test("nothing saved on the device: the loading state takes the empty state's shape, no toolbar (Prompt 32)", async () => {
+    const read = deferred();
+    apiService.wishlist.get.mockReturnValueOnce(read.promise);
+    const { container } = renderPage({ user: SHOPPER });
+    const loading = await screen.findByText("Loading your wishlist");
+    // eslint-disable-next-line testing-library/no-node-access -- the busy wrapper has no role
+    const busy = loading.closest('[aria-busy="true"]');
+    expect(busy).toBeInTheDocument();
+    // eslint-disable-next-line testing-library/no-node-access -- skeleton blocks are hidden from assistive technology
+    expect(busy.querySelectorAll(".sf-skeleton")).toHaveLength(3);
+    expect(container.querySelector(".grid")).not.toBeInTheDocument(); // eslint-disable-line testing-library/no-node-access, testing-library/no-container
+    expect(screen.queryByRole("button", { name: "Clear all saved pieces" })).not.toBeInTheDocument();
+    await act(async () => {
+      read.resolve([]);
+    });
+    expect(await screen.findByRole("heading", { name: "Nothing saved yet." })).toBeInTheDocument();
+    expect(screen.queryByText("Loading your wishlist")).not.toBeInTheDocument();
+  });
+
   test("while the list loads: skeleton pieces in a busy region, the toolbar with Clear all unavailable", async () => {
     const read = deferred();
     apiService.wishlist.get.mockReturnValueOnce(read.promise);

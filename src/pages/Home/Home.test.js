@@ -211,6 +211,18 @@ test("reads each source once: categories, featured, trending, then the anchor", 
   expect(apiService.products.getRelated).not.toHaveBeenCalled();
 });
 
+test("the document is titled with the brand tagline in sentence case (Prompt 32)", async () => {
+  serve();
+  const { unmount } = await renderHome();
+  expect(document.title).toBe("Trusted comfort for every home | A & S Urbanseat");
+  // eslint-disable-next-line testing-library/no-node-access -- reading the document's head
+  expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust."
+  );
+  unmount();
+});
+
 test("carries no flash deals, countdown or promotional banner", async () => {
   serve();
   const { container } = await renderHome();

@@ -49,6 +49,11 @@ import styles from "./ProductCard.module.css";
 //   onToggleWishlist  fn      (product) => void   — omit to hide the heart
 //   isWishlisted      boolean
 //   showAddToCart     boolean default true (when onAddToCart given)
+//   imagePriority     "lazy" (default) | "eager" | "high": how the photograph
+//                     loads. A grid's first row, on screen as the page opens,
+//                     passes "eager"; its first card, the page's largest
+//                     paint, "high" (eager with fetchpriority="high"). Rails
+//                     and everything further down keep "lazy" (Prompt 32).
 //
 // Also exports ProductCardSkeleton: the same box (4:5 image + three lines) for
 // pages to show while products load.
@@ -108,6 +113,7 @@ const ProductCard = ({
   onToggleWishlist,
   isWishlisted = false,
   showAddToCart = true,
+  imagePriority = "lazy",
 }) => {
   const id = useId();
   const nameId = `${id}name`;
@@ -182,7 +188,9 @@ const ProductCard = ({
               aria-hidden="true"
               width={IMAGE_WIDTH}
               height={IMAGE_HEIGHT}
-              loading="lazy"
+              loading={imagePriority === "lazy" ? "lazy" : "eager"}
+              // React 18.2 does not know the camelCase prop (as in BrandLogo).
+              fetchpriority={imagePriority === "high" ? "high" : undefined}
               decoding="async"
               onError={onImageError}
             />

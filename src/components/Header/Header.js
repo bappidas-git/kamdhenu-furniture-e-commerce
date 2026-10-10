@@ -5,7 +5,7 @@ import { useCart } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
-import apiService from "../../services/api";
+import { readCategories } from "../../services/sharedReads";
 import { getCategoryScopeIds, resolveCategory } from "../../utils/categories";
 import { SUPPORT_PHONE, FREE_SHIPPING_THRESHOLD } from "../../utils/constants";
 import { formatCurrency } from "../../utils/helpers";
@@ -117,7 +117,8 @@ const Header = () => {
     let active = true;
     const fetchCategories = async () => {
       try {
-        const data = await apiService.categories.getAll();
+        // Shared with the footer's and the page's read of the same moment.
+        const data = await readCategories();
         if (active) setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch categories:", err);

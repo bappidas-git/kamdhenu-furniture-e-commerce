@@ -70,6 +70,23 @@ test("is an article named by the product, with one link around its image and nam
   expect(image).toHaveAttribute("loading", "lazy");
 });
 
+test("imagePriority loads a first-row photograph at once, the first at high priority (Prompt 32)", () => {
+  const photo = () =>
+    // eslint-disable-next-line testing-library/no-node-access -- a decorative image has no role to query
+    screen.getByRole("link", { name: "Teak Lounge Chair" }).querySelector("img");
+  const { unmount: unmountLazy } = renderCard();
+  expect(photo()).toHaveAttribute("loading", "lazy");
+  expect(photo()).not.toHaveAttribute("fetchpriority");
+  unmountLazy();
+  const { unmount: unmountEager } = renderCard({ imagePriority: "eager" });
+  expect(photo()).toHaveAttribute("loading", "eager");
+  expect(photo()).not.toHaveAttribute("fetchpriority");
+  unmountEager();
+  renderCard({ imagePriority: "high" });
+  expect(photo()).toHaveAttribute("loading", "eager");
+  expect(photo()).toHaveAttribute("fetchpriority", "high");
+});
+
 test("links by id without a slug, and falls back to the placeholder image", () => {
   render(
     <MemoryRouter>

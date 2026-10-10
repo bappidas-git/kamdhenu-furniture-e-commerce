@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useMediaQuery } from "@mui/material";
 import { useDealsConfig } from "../../context/DealsConfigContext";
-import apiService from "../../services/api";
+import { readCategories, readSettings, readShippingMethods } from "../../services/sharedReads";
 import { categoryParam, getMainMenuCategories } from "../../utils/categories";
 import {
   APP_NAME,
@@ -177,8 +177,9 @@ const cx = (...names) => names.filter(Boolean).join(" ");
 const telHref = (phone) => `tel:${String(phone).replace(/[^\d+]/g, "")}`;
 const NewTab = () => <span className="sf-visually-hidden"> (opens in a new tab)</span>;
 
-// Categories, settings and shipping methods, each read once. A failed read
-// leaves the empty value in place (no departments, no COD, no threshold).
+// Categories, settings and shipping methods, each read once (one request with
+// the header's and the page's reads of the same moment: sharedReads). A failed
+// read leaves the empty value in place (no departments, no COD, no threshold).
 const useFooterData = () => {
   const [data, setData] = useState({ categories: [], settings: null, shipping: null });
 
@@ -192,9 +193,9 @@ const useFooterData = () => {
           if (active) setData((prev) => ({ ...prev, [key]: value }));
         });
     const list = (value) => (Array.isArray(value) ? value : []);
-    read("categories", () => apiService.categories.getAll(), list);
-    read("settings", () => apiService.settings.get(), (value) => value || {});
-    read("shipping", () => apiService.shipping.getMethods(), list);
+    read("categories", readCategories, list);
+    read("settings", readSettings, (value) => value || {});
+    read("shipping", readShippingMethods, list);
     return () => {
       active = false;
     };

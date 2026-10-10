@@ -1,10 +1,13 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import React, { startTransition, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useCart } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import useNearViewport from "../../hooks/useNearViewport";
+import usePageMeta from "../../hooks/usePageMeta";
 import apiService from "../../services/api";
+import { readCategories } from "../../services/sharedReads";
 import { categoryParam } from "../../utils/categories";
+import { APP_TAGLINE } from "../../utils/constants";
 import HeroSection from "../../components/HeroSection/HeroSection";
 import AssuranceStrip from "../../components/storefront/AssuranceStrip";
 import FeaturedProducts from "../../components/FeaturedProducts/FeaturedProducts";
@@ -68,6 +71,11 @@ import styles from "./Home.module.css";
 // Must match the key written by ProductDetails.js so viewing a product
 // populates this list end-to-end.
 const RECENTLY_VIEWED_KEY = "recentlyViewed";
+
+// The document title (Prompt 32): the brand tagline in sentence case, as
+// running text and meta titles take it (DESIGN_SYSTEM §39.2), "Trusted
+// comfort for every home | A & S Urbanseat"; the default description.
+const PAGE_TITLE = APP_TAGLINE.charAt(0) + APP_TAGLINE.slice(1).toLowerCase();
 
 const getRecentlyViewed = () => {
   try {
@@ -432,6 +440,7 @@ const PromiseSteps = ({ data, sectionRef }) => {
 const Home = () => {
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  usePageMeta({ title: PAGE_TITLE });
 
   const [categories, setCategories] = useState([]);
   const [featuredProducts, setFeaturedProducts] = useState([]);
@@ -459,20 +468,27 @@ const Home = () => {
     const fetchData = async () => {
       try {
         const [cats, featured, trending] = await Promise.all([
-          apiService.categories.getAll().catch(() => []),
+          // One request with the header's and the footer's (sharedReads).
+          readCategories().catch(() => []),
           apiService.products.getFeatured(8).catch(() => []),
           apiService.products.getTrending(8).catch(() => []),
         ]);
         if (!active) return;
 
         const featuredList = Array.isArray(featured) ? featured.slice(0, 8) : [];
-        setCategories(Array.isArray(cats) ? cats : []);
-        setFeaturedProducts(featuredList);
-        setTrendingProducts(Array.isArray(trending) ? trending.slice(0, 8) : []);
-        setLoading(false);
+        // The sections that replace the skeletons (two rails of cards, the
+        // space tiles) render as a transition: React works through them in
+        // short slices, so the page stays responsive while they arrive
+        // instead of freezing for one long render (Prompt 32).
+        startTransition(() => {
+          setCategories(Array.isArray(cats) ? cats : []);
+          setFeaturedProducts(featuredList);
+          setTrendingProducts(Array.isArray(trending) ? trending.slice(0, 8) : []);
+          setLoading(false);
+        });
 
         const result = await loadCompleteTheSpace(featuredList);
-        if (active) setCuration(result);
+        if (active) startTransition(() => setCuration(result));
       } catch (err) {
         console.error("Error fetching home data:", err);
         if (active) setLoading(false);

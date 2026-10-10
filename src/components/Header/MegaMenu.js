@@ -335,7 +335,7 @@ const MegaMenu = ({ departments = [], ready = true, dealsEnabled = true, activeD
           if (next && navRef.current && !navRef.current.contains(next)) closeMenu();
         }}
       >
-        <ul className={styles.row}>
+        <ul className={cx(styles.row, !ready && styles.rowPending)}>
           {ready &&
             departments.map(({ category }) => {
               const id = String(category.id);

@@ -100,6 +100,14 @@ describe.each(PAGES)("%s", (route, Page, doc) => {
   });
 });
 
+test.each(PAGES)("%s names the document after the policy, with its intro as the description", (path, Page, doc) => {
+  const { unmount } = renderPage(<Page />);
+  expect(document.title).toBe(`${doc.crumb} | A & S Urbanseat`);
+  // eslint-disable-next-line testing-library/no-node-access -- reading the document's head
+  expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute("content", doc.intro);
+  unmount();
+});
+
 test("an approved document drops the draft line", () => {
   renderPage(<PolicyPage document={{ ...PRIVACY_POLICY, draft: false }} />);
   expect(screen.getByText(`Last reviewed: ${POLICY_LAST_UPDATED}`)).toBeInTheDocument();

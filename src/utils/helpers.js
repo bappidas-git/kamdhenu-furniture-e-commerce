@@ -379,6 +379,21 @@ export const filterByQuery = (items, query, keys = ["name"]) => {
   });
 };
 
+// What the cart's pieces would cost more at their own compare-at ("was")
+// prices: Σ (comparePrice − price) × quantity over the lines priced below
+// their compare-at price, to the paisa. Display only (the cart drawer and the
+// checkout review show it beside the buy action); no total uses it.
+export const getCartSavings = (lines) => {
+  if (!Array.isArray(lines)) return 0;
+  const paise = lines.reduce((sum, line) => {
+    const was = Number(line?.comparePrice) || 0;
+    const now = Number(line?.price) || 0;
+    const quantity = Number(line?.quantity) || 0;
+    return was > now && quantity > 0 ? sum + Math.round((was - now) * 100) * quantity : sum;
+  }, 0);
+  return paise / 100;
+};
+
 export const calculateCartTotal = (items) => {
   return items.reduce((total, item) => total + item.price * item.quantity, 0);
 };

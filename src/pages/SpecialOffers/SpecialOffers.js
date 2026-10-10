@@ -2,8 +2,10 @@ import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 
 import { Link } from "react-router-dom";
 import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
 import { useCart } from "../../hooks/useCart";
+import usePageMeta from "../../hooks/usePageMeta";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
+import { DEFAULT_DEALS_HERO } from "../../utils/dealsConfig";
 import apiService from "../../services/api";
 import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
 import { Reveal, SectionHeading, staggerDelay } from "../../components/ui";
@@ -436,6 +438,23 @@ const CategoryChips = ({ categories, contexts, activeTab, onSelect }) => {
   );
 };
 
+// The document title (Prompt 32) is the page's name, not the admin's hero
+// headline; the description is the admin's hero line (isAdminConfig), else
+// the Help centre's description of this page.
+const PAGE_TITLE = "Special offers";
+const PAGE_DESCRIPTION = "Pieces on offer now, and codes to use at checkout.";
+
+// Honest urgency (Prompt 32): the countdown and the hero's tag and line are
+// shown only from a config the admin has saved. Until the read lands, and
+// when it fails, the page holds dealsConfig.js's built-in config ("Limited
+// Time", "… don't miss out!" and a countdown to midnight that no one set):
+// api.js answers a failed read with { enabled: true }, which
+// normalizeDealsConfig fills with those defaults. A saved config carries
+// updatedAt (api.js stamps every admin save) or a hero of its own.
+const isAdminConfig = (config) =>
+  Boolean(config.updatedAt) ||
+  ["tag", "title", "subtitle"].some((key) => (config.hero?.[key] ?? "") !== DEFAULT_DEALS_HERO[key]);
+
 // ── Main Component ───────────────────────────────────────────────────────────
 
 const SpecialOffers = () => {
@@ -446,6 +465,12 @@ const SpecialOffers = () => {
   const { config, loading: configLoading } = useDealsConfig();
   const enabled = config.enabled !== false;
   const reduceMotion = useReducedMotion();
+  const adminConfig = !configLoading && isAdminConfig(config);
+  const heroLine = config.hero?.subtitle;
+  usePageMeta({
+    title: PAGE_TITLE,
+    description: adminConfig && enabled && heroLine ? heroLine : PAGE_DESCRIPTION,
+  });
 
   const [products, setProducts] = useState([]);
   const [categories, setCategories] = useState([]);
@@ -615,7 +640,8 @@ const SpecialOffers = () => {
     );
   }
 
-  const hero = config.hero || {};
+  // Without a saved config (isAdminConfig): the plain title, no countdown.
+  const hero = adminConfig ? config.hero || {} : {};
   const isEmpty = !loading && gridProducts.length === 0 && dealOfTheDay.length === 0;
   const pieces = (n) => `${n} ${n === 1 ? "piece" : "pieces"}`;
   const activeCategory = dealCategories.find((c) => c.id === activeTab);
@@ -640,7 +666,7 @@ const SpecialOffers = () => {
             {hero.title || "Special offers"}
           </h1>
           {hero.subtitle && <p className={styles.heroSubtitle}>{hero.subtitle}</p>}
-          <OfferCountdown timer={config.timer} />
+          {adminConfig && <OfferCountdown timer={config.timer} />}
         </div>
       </header>
 

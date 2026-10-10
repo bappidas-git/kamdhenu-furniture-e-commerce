@@ -8,6 +8,20 @@ export const APP_TAGLINE = "Trusted Comfort for Every Home";
 export const APP_DESCRIPTION =
   "Furniture and seating for homes, offices, cafés and outdoor spaces, made to be lived with.";
 
+// Document metadata: the defaults every page's own title and description
+// (usePageMeta, src/hooks) fall back to and return to when the page unmounts.
+// They equal the static tags in public/index.html word for word
+// (usePageMeta.test.js compares them), so a route that sets nothing (the
+// admin) keeps the document exactly as index.html shipped it.
+export const DEFAULT_PAGE_TITLE =
+  "A & S Urbanseat | Furniture and seating for home, office, café and outdoor";
+export const DEFAULT_PAGE_DESCRIPTION =
+  "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust.";
+// Placeholder until the production domain is confirmed: index.html's static
+// og:url and twitter:url. At run time each page's og:url is built from
+// window.location, so it always names the domain actually serving the page.
+export const SITE_URL_PLACEHOLDER = "https://urbanseat.example/";
+
 // Logo artwork (1286 × 426 PNG). `light` sits on light backgrounds, `white` on
 // dark ones; render it through <BrandLogo /> (src/components/ui) so the
 // variant always matches the background.
