@@ -1,6 +1,7 @@
 import React, { useEffect, useId, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import apiService from "../../services/api";
+import usePageMeta from "../../hooks/usePageMeta";
 import {
   copyToClipboard,
   formatCurrency,
@@ -214,6 +215,22 @@ const OrderConfirmation = () => {
   const copyTimer = useRef(null);
   const retrying = useRef(false);
   const revealingInvoice = useRef(false);
+
+  // The document title (Prompt 32): the order's state as the eyebrow names it
+  // ("Order confirmed", "Payment failed"…), else what kept it from showing.
+  // An order that does not exist asks not to be indexed (a "soft 404": the
+  // URL still answers 200).
+  const notFound = !order && !loading && !fetchError;
+  usePageMeta({
+    title: order
+      ? EYEBROW[orderStage(order)]
+      : loading
+      ? undefined
+      : fetchError
+      ? "Order unavailable"
+      : "Order not found",
+    noindex: notFound,
+  });
 
   useEffect(() => {
     fetchOrder();

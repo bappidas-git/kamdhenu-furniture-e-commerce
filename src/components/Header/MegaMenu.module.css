@@ -115,6 +115,14 @@
   .rowLink {
     --row-link-tracking: 0.08em;
   }
+
+  /* While the departments load, the row holds the two lines they take here,
+     so the page below does not drop 44px when they arrive (a layout shift of
+     0.03 on every page between 1024px and 1279px; Prompt 32). From 1280px
+     they fit on the one line the row already holds. */
+  .rowPending {
+    min-height: calc(2 * var(--sf-tap-target) + 4px);
+  }
 }
 
 /* ---- Panel -----------------------------------------------------------------

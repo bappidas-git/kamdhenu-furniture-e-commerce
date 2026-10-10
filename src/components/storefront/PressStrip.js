@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { WordmarkStrip } from "./BrandStrip";
 import styles from "./BrandStrip.module.css";
 
@@ -14,14 +14,17 @@ import styles from "./BrandStrip.module.css";
 //
 // Props:
 //   items      [{ name, logo? }]  name (required, also the logo's alt text);
-//                                 logo: an image URL shown instead of the name
+//                                 logo: an image URL shown instead of the
+//                                 name (24px tall; a logo that fails to load
+//                                 gives way to the name)
 //   label      string            the row's heading, e.g. "As featured in"
 //   headingId, className         as BrandStrip
 // Returns null unless `items` holds at least one named item.
 // =============================================================================
 
-const PressMark = ({ name, logo }) =>
-  logo ? (
+const PressMark = ({ name, logo }) => {
+  const [failed, setFailed] = useState(false);
+  return logo && !failed ? (
     <img
       className={styles.logo}
       src={logo}
@@ -29,10 +32,12 @@ const PressMark = ({ name, logo }) =>
       height="24"
       loading="lazy"
       decoding="async"
+      onError={() => setFailed(true)}
     />
   ) : (
     name
   );
+};
 
 const PressStrip = ({ items, label, headingId, className }) => {
   const named = (Array.isArray(items) ? items : []).filter(

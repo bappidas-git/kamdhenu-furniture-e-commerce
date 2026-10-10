@@ -45,8 +45,10 @@
     display: flex;
   }
 
-  /* While the bar is up, keep focused and scrolled-to content clear of it. */
-  :global(html):has(.visible) {
+  /* While the bar is up, keep focused and scrolled-to content clear of it.
+     The bar sets the attribute while it is shown (AddToCartBar.js): no
+     html:has() rule, which restyled the whole page on every element added. */
+  :global(html[data-sf-sticky-bar]) {
     scroll-padding-bottom: calc(var(--bar-height, 64px) + env(safe-area-inset-bottom, 0px) + var(--sf-space-4));
   }
 }

@@ -1,0 +1,73 @@
+/* =============================================================================
+ * LazyPage — the fallback while a page's chunk loads, and its failure state
+ * (Prompt 32). Tokens only.
+ * =============================================================================
+ * The skeleton takes the content pages' header rhythm (ContentPage): the
+ * section's air above the trail, a 12px eyebrow, a display-lg title and three
+ * body lines on 60ch. It holds at least a screen of height under the header,
+ * so the footer stays below the fold until the page replaces it.
+ * ========================================================================== */
+
+.page {
+  min-height: calc(100vh - var(--sf-header-height));
+  min-height: calc(100svh - var(--sf-header-height));
+  padding-top: var(--sf-section-y);
+  padding-bottom: calc(var(--sf-section-y) / 2);
+}
+
+.crumb {
+  display: block;
+  width: 9rem;
+  height: 0.75rem;
+  margin-bottom: var(--sf-space-4);
+}
+
+.eyebrow {
+  display: block;
+  width: 6rem;
+  height: 0.75rem;
+}
+
+.title {
+  display: block;
+  width: min(32rem, 85%);
+  height: var(--sf-text-display-lg);
+  margin-top: var(--sf-space-3);
+}
+
+.intro {
+  display: block;
+  max-width: 60ch;
+  margin-top: var(--sf-space-5);
+  font-size: var(--sf-text-md);
+}
+
+@media (min-width: 768px) {
+  .crumb {
+    margin-bottom: var(--sf-space-6);
+  }
+}
+
+/* "We couldn’t load this page.": the error panel of the other states. */
+.error {
+  max-width: 40rem;
+  padding: clamp(var(--sf-space-8), 5vw, var(--sf-space-16));
+}
+
+.errorTitle {
+  margin: 0;
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-md);
+  font-weight: var(--sf-font-normal);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+  color: var(--sf-color-text);
+}
+
+.errorText {
+  max-width: 48ch;
+  margin: var(--sf-space-3) 0 var(--sf-space-6);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+  color: var(--sf-color-text-secondary);
+}

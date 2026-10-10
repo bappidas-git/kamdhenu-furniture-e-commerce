@@ -224,8 +224,11 @@
           height="426"
           decoding="async"
           fetchpriority="high"
+          sizes="min(60vw, 320px)"
           data-src-light="https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo.png"
+          data-srcset-light="https://res.cloudinary.com/v8vrixwq/image/upload/f_auto,q_auto,w_640/v1787597119/urbanseat-logo.png 640w, https://res.cloudinary.com/v8vrixwq/image/upload/f_auto,q_auto,w_960/v1787597119/urbanseat-logo.png 960w"
           data-src-white="https://res.cloudinary.com/v8vrixwq/image/upload/v1787597119/urbanseat-logo-white.png"
+          data-srcset-white="https://res.cloudinary.com/v8vrixwq/image/upload/f_auto,q_auto,w_640/v1787597119/urbanseat-logo-white.png 640w, https://res.cloudinary.com/v8vrixwq/image/upload/f_auto,q_auto,w_960/v1787597119/urbanseat-logo-white.png 960w"
         />
         <div class="loader-progress" aria-hidden="true">
           <div class="loader-progress-bar"></div>
@@ -235,12 +238,22 @@
     <script>
       // Pick the logo variant for the splash background: the light logo on
       // paper, the white logo on the dark base. Set here (not in markup) so
-      // only the matching variant is downloaded.
+      // only the matching variant is downloaded. The srcset holds Cloudinary's
+      // resized WebP copies (about 13 KB at 640px, the file BrandLogo's
+      // header logo reuses, against 141 KB for the PNG); the PNG stays as the
+      // src for browsers without srcset and for a copy that fails to load.
       (function () {
         var logo = document.getElementById("loader-logo");
         if (!logo) return;
         var isDark = document.body.classList.contains("dark");
-        logo.src = logo.getAttribute(isDark ? "data-src-white" : "data-src-light");
+        var variant = isDark ? "white" : "light";
+        logo.onerror = function () {
+          if (!logo.hasAttribute("srcset")) return;
+          logo.removeAttribute("srcset");
+          logo.removeAttribute("sizes");
+        };
+        logo.srcset = logo.getAttribute("data-srcset-" + variant);
+        logo.src = logo.getAttribute("data-src-" + variant);
       })();
     </script>
 

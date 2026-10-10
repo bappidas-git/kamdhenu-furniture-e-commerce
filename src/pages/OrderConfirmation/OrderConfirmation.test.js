@@ -212,6 +212,21 @@ describe("the read", () => {
     expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
   });
 
+  test("the document is titled by the order's state; only a missing order asks not to be indexed (Prompt 32)", async () => {
+    const robots = () => document.head.querySelector('meta[name="robots"]'); // eslint-disable-line testing-library/no-node-access
+    const { unmount } = renderAt(DELIVERED);
+    await thankYou();
+    await waitFor(() => expect(document.title).toBe("Order confirmed | A & S Urbanseat"));
+    expect(robots()).toBeNull();
+    unmount();
+
+    apiService.orders.getByOrderNumber.mockResolvedValue(undefined);
+    renderAt("ORD-NOPE-0000");
+    await screen.findByRole("heading", { level: 1, name: /We couldn.t find this order\./ });
+    await waitFor(() => expect(document.title).toBe("Order not found | A & S Urbanseat"));
+    expect(robots()).toHaveAttribute("content", "noindex");
+  });
+
   test("a failed read offers a retry and never claims the order does not exist", async () => {
     const error = jest.spyOn(console, "error").mockImplementation(() => {});
     apiService.orders.getByOrderNumber.mockRejectedValueOnce(new Error("Network Error"));

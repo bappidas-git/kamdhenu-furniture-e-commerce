@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useLocation, Link } from "react-router-dom";
 import { useTheme } from "../../context/ThemeContext";
-import { useCart } from "../../hooks/useCart";
+import { useCart, useCartActions } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
-import apiService from "../../services/api";
+import { readCategories } from "../../services/sharedReads";
 import { getCategoryScopeIds, resolveCategory } from "../../utils/categories";
 import { SUPPORT_PHONE, FREE_SHIPPING_THRESHOLD } from "../../utils/constants";
 import { formatCurrency } from "../../utils/helpers";
@@ -76,6 +76,38 @@ const AccountSummary = ({ user }) => (
 );
 AccountSummary.muiSkipListHighlight = true;
 
+// The two parts of the header that read the cart: its button (the count) and
+// the drawer. A change to the cart re-renders these alone, not the menus and
+// dialogs the header also mounts (Prompt 32 follow-up: every add re-rendered
+// them under the opening drawer).
+const CartAction = () => {
+  const { getCartItemCount, setIsCartOpen } = useCart();
+  const cartCount = getCartItemCount();
+  return (
+    <button
+      type="button"
+      className={`${styles.action} ${styles.cartAction}`}
+      onClick={() => setIsCartOpen(true)}
+      aria-label={countLabel("Cart", cartCount)}
+      aria-haspopup="dialog"
+    >
+      <span className={styles.actionIcon}>
+        <ShoppingBagOutlined />
+        <CountDisc count={cartCount} className={styles.count} />
+      </span>
+      <span className={styles.actionLabel} aria-hidden="true">
+        Cart
+      </span>
+    </button>
+  );
+};
+
+const HeaderCartDrawer = () => {
+  const { isCartOpen } = useCart();
+  const { setIsCartOpen } = useCartActions();
+  return <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />;
+};
+
 const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -89,13 +121,12 @@ const Header = () => {
     openAuthModal,
     closeAuthModal,
   } = useAuth();
-  const { getCartItemCount, isCartOpen, setIsCartOpen } = useCart();
   const { getWishlistCount } = useWishlist();
   // The "Offers" entry is hidden when the admin turns the deals page off.
   const { enabled: dealsEnabled } = useDealsConfig();
 
-  // Live badge counts (context exposes getters, not raw values)
-  const cartCount = getCartItemCount();
+  // Live badge count (context exposes getters, not raw values); the cart's is
+  // CartAction's.
   const wishlistCount = getWishlistCount();
 
   const headerRef = useRef(null);
@@ -117,7 +148,8 @@ const Header = () => {
     let active = true;
     const fetchCategories = async () => {
       try {
-        const data = await apiService.categories.getAll();
+        // Shared with the footer's and the page's read of the same moment.
+        const data = await readCategories();
         if (active) setCategories(Array.isArray(data) ? data : []);
       } catch (err) {
         console.error("Failed to fetch categories:", err);
@@ -199,7 +231,6 @@ const Header = () => {
     navigate("/");
   };
 
-  const handleCartClick = () => setIsCartOpen(true);
   const handleSearchClick = () => setSearchModalOpen(true);
   const handleMobileMenuClick = () => setSidebarOpen(true);
 
@@ -332,21 +363,7 @@ const Header = () => {
                   Wishlist
                 </span>
               </Link>
-              <button
-                type="button"
-                className={`${styles.action} ${styles.cartAction}`}
-                onClick={handleCartClick}
-                aria-label={countLabel("Cart", cartCount)}
-                aria-haspopup="dialog"
-              >
-                <span className={styles.actionIcon}>
-                  <ShoppingBagOutlined />
-                  <CountDisc count={cartCount} className={styles.count} />
-                </span>
-                <span className={styles.actionLabel} aria-hidden="true">
-                  Cart
-                </span>
-              </button>
+              <CartAction />
             </div>
           </div>
         </div>
@@ -415,7 +432,7 @@ const Header = () => {
       </Menu>
 
       {/* ===== MODALS & DRAWERS ===== */}
-      <CartDrawer open={isCartOpen} onClose={() => setIsCartOpen(false)} />
+      <HeaderCartDrawer />
       <SidebarMenu
         open={sidebarOpen}
         onClose={() => setSidebarOpen(false)}

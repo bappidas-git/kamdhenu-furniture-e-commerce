@@ -1,3 +1,8 @@
 # https://www.robotstxt.org/robotstxt.html
 User-agent: *
 Disallow:
+
+# No Sitemap line yet: the catalogue lives in the API, so a sitemap has to be
+# generated where the products are (the production API) and served from the
+# production domain. Add "Sitemap: https://<production domain>/sitemap.xml"
+# here once it exists.

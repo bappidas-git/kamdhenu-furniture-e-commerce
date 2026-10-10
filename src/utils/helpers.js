@@ -13,14 +13,24 @@ export const onImageError = (e) => {
   e.currentTarget.src = PLACEHOLDER_IMG;
 };
 
+// One formatter per currency, made on first use: building an Intl.NumberFormat
+// costs far more than formatting with one, and an opening cart formats a
+// dozen amounts in a single frame (Prompt 32 follow-up). Same output as before.
+const currencyFormats = new Map();
+
 export const formatCurrency = (amount, currency = "INR") => {
-  const locale = currency === "INR" ? "en-IN" : "en-US";
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency: currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(amount);
+  let format = currencyFormats.get(currency);
+  if (!format) {
+    const locale = currency === "INR" ? "en-IN" : "en-US";
+    format = new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency: currency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    });
+    currencyFormats.set(currency, format);
+  }
+  return format.format(amount);
 };
 
 // Get the minimum price from product variants
@@ -377,6 +387,21 @@ export const filterByQuery = (items, query, keys = ["name"]) => {
       return value && value.toString().toLowerCase().includes(searchQuery);
     });
   });
+};
+
+// What the cart's pieces would cost more at their own compare-at ("was")
+// prices: Σ (comparePrice − price) × quantity over the lines priced below
+// their compare-at price, to the paisa. Display only (the cart drawer and the
+// checkout review show it beside the buy action); no total uses it.
+export const getCartSavings = (lines) => {
+  if (!Array.isArray(lines)) return 0;
+  const paise = lines.reduce((sum, line) => {
+    const was = Number(line?.comparePrice) || 0;
+    const now = Number(line?.price) || 0;
+    const quantity = Number(line?.quantity) || 0;
+    return was > now && quantity > 0 ? sum + Math.round((was - now) * 100) * quantity : sum;
+  }, 0);
+  return paise / 100;
 };
 
 export const calculateCartTotal = (items) => {

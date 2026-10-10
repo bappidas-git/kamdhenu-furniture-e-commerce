@@ -27,8 +27,9 @@ import styles from "./ProductListRow.module.css";
 //     constant label: "Save {name} to wishlist").
 //
 // Props: product, onAddToCart(cartItem), onToggleWishlist(product),
-// isWishlisted, lowStock (a number, or null). Also exports
-// ProductListRowSkeleton for the loading list.
+// isWishlisted, lowStock (a number, or null), imagePriority (ProductCard's:
+// "lazy", "eager" or "high"; Prompt 32). Also exports ProductListRowSkeleton
+// for the loading list.
 // =============================================================================
 
 // The catalogue's photographs are 1200 × 1500 (4:5).
@@ -61,6 +62,7 @@ const ProductListRow = ({
   onToggleWishlist,
   isWishlisted = false,
   lowStock = null,
+  imagePriority = "lazy",
 }) => {
   const id = useId();
   const nameId = `${id}name`;
@@ -108,7 +110,8 @@ const ProductListRow = ({
             alt={name}
             width={IMAGE_WIDTH}
             height={IMAGE_HEIGHT}
-            loading="lazy"
+            loading={imagePriority === "lazy" ? "lazy" : "eager"}
+            fetchpriority={imagePriority === "high" ? "high" : undefined}
             decoding="async"
             onError={onImageError}
           />

@@ -3,7 +3,7 @@ import { MemoryRouter } from "react-router-dom";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { stripAccent } from "../../components/ui";
 import {
@@ -36,7 +36,7 @@ jest.mock("../../services/api", () => ({
     shipping: { getMethods: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
 // The hero and the strip have their own tests (Prompt 10).
 jest.mock("../../components/HeroSection/HeroSection", () => ({
@@ -151,7 +151,7 @@ beforeEach(() => {
   addToCart = jest.fn(() => Promise.resolve());
   setIsCartOpen = jest.fn();
   toggleWishlist = jest.fn();
-  useCart.mockReturnValue({ addToCart, setIsCartOpen });
+  useCartActions.mockReturnValue({ addToCart, setIsCartOpen });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => id === FEATURED[1].id });
   localStorage.clear();
 });
@@ -209,6 +209,18 @@ test("reads each source once: categories, featured, trending, then the anchor", 
   expect(apiService.products.getFrequentlyBoughtTogether).toHaveBeenCalledWith(ANCHOR, 4);
   // The curated pair is enough: related products are not needed.
   expect(apiService.products.getRelated).not.toHaveBeenCalled();
+});
+
+test("the document is titled with the brand tagline in sentence case (Prompt 32)", async () => {
+  serve();
+  const { unmount } = await renderHome();
+  expect(document.title).toBe("Trusted comfort for every home | A & S Urbanseat");
+  // eslint-disable-next-line testing-library/no-node-access -- reading the document's head
+  expect(document.head.querySelector('meta[name="description"]')).toHaveAttribute(
+    "content",
+    "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust."
+  );
+  unmount();
 });
 
 test("carries no flash deals, countdown or promotional banner", async () => {

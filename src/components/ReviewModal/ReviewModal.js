@@ -277,6 +277,7 @@ const ReviewModal = ({ open, onClose, product, existing, onSubmit, isDarkMode })
                   alt=""
                   width="44"
                   height="55"
+                  decoding="async"
                   onError={onImageError}
                 />
                 <p id={id("product")} className={styles.productName}>

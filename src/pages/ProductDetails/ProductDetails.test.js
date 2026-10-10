@@ -4,10 +4,11 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import "@testing-library/jest-dom";
 import { useReducedMotion } from "framer-motion";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { buildCartItem } from "../../utils/helpers";
 import db from "../../../db.json";
+import { preloadPageFor } from "../lazyPages";
 import ProductDetails from "./ProductDetails";
 
 jest.mock("framer-motion", () => ({
@@ -30,8 +31,10 @@ jest.mock("../../services/api", () => ({
     shipping: { getMethods: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
+// Checkout's code loads on demand; Buy now asks for it ahead of the click.
+jest.mock("../lazyPages", () => ({ preloadPageFor: jest.fn() }));
 
 // The sticky bar watches the buy box through an IntersectionObserver; tests
 // move the buy box in and out of view by hand.
@@ -99,7 +102,7 @@ beforeEach(() => {
   addToCart = jest.fn();
   toggleWishlist = jest.fn();
   wishlisted = new Set();
-  useCart.mockReturnValue({ addToCart });
+  useCartActions.mockReturnValue({ addToCart });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => wishlisted.has(id) });
 });
 
@@ -342,6 +345,104 @@ test("an unknown slug shows the not-found state with a way back to the shop", as
   expect(currentPath()).toBe("/products/no-such-piece");
 });
 
+// ── Document metadata and structured data (Prompt 32) ─────────────────────
+
+// The page writes <head>, which has no roles to query.
+/* eslint-disable testing-library/no-node-access */
+const metaContent = (attribute, key) =>
+  document.head.querySelector(`meta[${attribute}="${key}"]`)?.getAttribute("content");
+const robotsTag = () => document.head.querySelector('meta[name="robots"]');
+const jsonLd = () => {
+  const blocks = document.head.querySelectorAll('script[type="application/ld+json"]');
+  return Array.from(blocks).map((block) => JSON.parse(block.textContent));
+};
+/* eslint-enable testing-library/no-node-access */
+
+test("the title and description are the catalogue's; the JSON-LD says what the page shows", async () => {
+  const piece = product("covered-plastic-shoe-rack");
+  const { unmount } = renderAt("/products/covered-plastic-shoe-rack");
+  await loaded();
+  expect(await screen.findByRole("region", { name: accentName("What customers say.") })).toBeInTheDocument();
+  expect(document.title).toBe("Covered Plastic Shoe Rack | A & S Urbanseat");
+  expect(metaContent("name", "description")).toBe(piece.metaDescription);
+  expect(metaContent("property", "og:title")).toBe("Covered Plastic Shoe Rack");
+  expect(metaContent("property", "og:url")).toBe("http://localhost/products/covered-plastic-shoe-rack");
+  expect(robotsTag()).toBeNull();
+
+  const [data] = jsonLd();
+  expect(jsonLd()).toHaveLength(1);
+  expect(data).toMatchObject({
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: "Covered Plastic Shoe Rack",
+    sku: "PLE-SHR-03-2S",
+    brand: { "@type": "Brand", name: "Nilkamal" },
+    offers: {
+      "@type": "Offer",
+      price: 1899,
+      priceCurrency: "INR",
+      availability: "https://schema.org/InStock",
+    },
+    aggregateRating: { "@type": "AggregateRating", ratingValue: 4, reviewCount: 1 },
+  });
+  expect(data.image).toEqual(piece.images);
+  expect(data).not.toHaveProperty("review");
+
+  // The JSON-LD follows the choice on screen.
+  fireEvent.click(screen.getByRole("radio", { name: "5 shelves" }));
+  await waitFor(() => expect(jsonLd()[0].sku).toBe("PLE-SHR-03-5S"));
+  expect(jsonLd()[0].offers.price).toBe(3449);
+
+  unmount();
+  expect(jsonLd()).toHaveLength(0);
+  expect(document.title).toBe(
+    "A & S Urbanseat | Furniture and seating for home, office, café and outdoor"
+  );
+});
+
+test("an unreviewed piece has no aggregateRating", async () => {
+  renderAt("/products/classic-plastic-armchair");
+  await loaded();
+  await flush();
+  expect(jsonLd()[0]).not.toHaveProperty("aggregateRating");
+});
+
+test("an unknown slug is titled as such, asks not to be indexed and has no JSON-LD", async () => {
+  renderAt("/products/no-such-piece");
+  await title();
+  await flush();
+  expect(document.title).toBe("Piece not found | A & S Urbanseat");
+  expect(robotsTag()).toHaveAttribute("content", "noindex");
+  expect(jsonLd()).toHaveLength(0);
+});
+
+test("a failed read says so and offers Try again; it never claims the piece is missing (Prompt 32)", async () => {
+  const error = jest.spyOn(console, "error").mockImplementation(() => {});
+  apiService.products.getBySlug.mockRejectedValueOnce(
+    Object.assign(new Error("Request failed with status code 500"), { response: { status: 500 } })
+  );
+  renderAt("/products/covered-plastic-shoe-rack");
+  expect(await title()).toHaveTextContent("We couldn’t load this piece.");
+  expect(screen.getByText("Check your connection and try again.")).toBeInTheDocument();
+  expect(screen.queryByText("We couldn’t find that piece.")).not.toBeInTheDocument();
+  await waitFor(() => expect(document.title).toBe("Piece unavailable | A & S Urbanseat"));
+  expect(robotsTag()).toBeNull();
+
+  fireEvent.click(screen.getByRole("button", { name: "Try again" }));
+  expect(await loaded()).toHaveTextContent("Covered Plastic Shoe Rack");
+  expect(apiService.products.getBySlug).toHaveBeenCalledTimes(2);
+  error.mockRestore();
+});
+
+test("a 404 from the API is the not-found state", async () => {
+  const error = jest.spyOn(console, "error").mockImplementation(() => {});
+  apiService.products.getBySlug.mockRejectedValueOnce(notFoundError());
+  renderAt("/products/covered-plastic-shoe-rack");
+  expect(await title()).toHaveTextContent("We couldn’t find that piece.");
+  await flush();
+  error.mockRestore();
+});
+
 test("shows the page skeleton while the product loads", async () => {
   apiService.products.getBySlug.mockReturnValue(new Promise(() => {}));
   const { container } = renderAt("/products/covered-plastic-shoe-rack");
@@ -482,6 +583,19 @@ test("Buy now adds without opening the drawer, then goes to checkout", async () 
   );
 });
 
+test("a pointer or focus reaching Buy now starts loading checkout (Prompt 32)", async () => {
+  renderAt("/products/covered-plastic-shoe-rack");
+  await loaded();
+  expect(preloadPageFor).not.toHaveBeenCalled();
+  const buyNow = screen.getByRole("button", { name: "Buy now" });
+  fireEvent.pointerEnter(buyNow);
+  expect(preloadPageFor).toHaveBeenLastCalledWith("/checkout");
+  fireEvent.focus(buyNow);
+  fireEvent.pointerDown(buyNow);
+  expect(preloadPageFor).toHaveBeenCalledTimes(3);
+  expect(addToCart).not.toHaveBeenCalled();
+});
+
 test("the wishlist heart is a pressed toggle", async () => {
   const { unmount } = renderAt("/products/covered-plastic-shoe-rack");
   await loaded();
@@ -562,6 +676,20 @@ test("the delivery facts come from the live methods and settings", async () => {
   expect(screen.queryByText("Same Day Delivery")).not.toBeInTheDocument();
 });
 
+// The follow-up to Prompt 32: an add re-renders the button for its "Added"
+// moment, not the page around it, which used to re-render whole (the gallery,
+// the reviews, the related pieces) under the opening drawer. The page calls
+// useWishlist once per render; nothing else here does.
+test("Add to cart re-renders the button for its Added moment, not the page", async () => {
+  renderAt("/products/covered-plastic-shoe-rack");
+  await loaded();
+  const pageRenders = useWishlist.mock.calls.length;
+  fireEvent.click(within(buyBox()).getByRole("button", { name: "Add to cart" }));
+  expect(addToCart).toHaveBeenCalledTimes(1);
+  expect(within(buyBox()).getByRole("button", { name: "Added" })).toBeInTheDocument();
+  expect(useWishlist.mock.calls.length).toBe(pageRenders);
+});
+
 // ── The sticky bar ──────────────────────────────────────────────────────────
 
 test("the sticky bar follows the buy box and adds the chosen variant", async () => {
@@ -585,6 +713,8 @@ test("the sticky bar follows the buy box and adds the chosen variant", async () 
 
   fireEvent.click(barButton());
   expect(addToCart).toHaveBeenCalledWith(expect.objectContaining({ id: "11-v1" }), 1, undefined);
+  // The bar's button and the buy box's both read Added, as before.
+  expect(screen.getAllByRole("button", { name: "Added" })).toHaveLength(2);
 });
 
 // ── Below the first screen (Prompt 17) ─────────────────────────────────────

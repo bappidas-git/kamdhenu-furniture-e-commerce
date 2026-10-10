@@ -86,6 +86,11 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
   useFocusTrap(panelRef, { active: open, onEscape: onClose, initialFocusRef: closeRef });
   useBodyScrollLock(open);
 
+  // The account's photograph, when it has one; a photograph that fails to
+  // load gives way to the initial, as an account without one shows.
+  const avatarUrl = user?.avatar || user?.profileImage || "";
+  const [failedAvatar, setFailedAvatar] = useState(null);
+
   // ---- Categories: read on every open, the last good list kept ------------
   const [categories, setCategories] = useState(null);
   const [failed, setFailed] = useState(false);
@@ -211,8 +216,15 @@ const SidebarMenu = ({ open, onClose, onOpenAuth }) => {
               {user ? (
                 <div className={styles.account}>
                   <span className={styles.avatar} aria-hidden="true">
-                    {user.avatar || user.profileImage ? (
-                      <img src={user.avatar || user.profileImage} alt="" />
+                    {avatarUrl && failedAvatar !== avatarUrl ? (
+                      <img
+                        src={avatarUrl}
+                        alt=""
+                        width="48"
+                        height="48"
+                        decoding="async"
+                        onError={() => setFailedAvatar(avatarUrl)}
+                      />
                     ) : (
                       initialOf(user)
                     )}

@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import Breadcrumb from "../Breadcrumb/Breadcrumb";
 import { renderAccent } from "../ui";
+import usePageMeta from "../../hooks/usePageMeta";
 import { SUPPORT_EMAIL } from "../../utils/constants";
 import styles from "./ContentPage.module.css";
 
@@ -27,6 +28,10 @@ import styles from "./ContentPage.module.css";
 //            (1280px: About, Help centre, Support)
 // contact    false leaves the closing contact line out
 // titleRef   a ref to the h1 (tabIndex -1), for moving focus there
+// pageTitle, description, noindex
+//            the document's metadata (usePageMeta, Prompt 32). By default
+//            the title is the trail's label (else the eyebrow) and the
+//            description the intro, so each content page is named once.
 //
 // It renders inside the app's <main>, so its <header> is a plain group (no
 // landmark). One h1 per page: this one. The page's own headings are h2s.
@@ -51,37 +56,50 @@ const ContentPage = ({
   width = "narrow",
   contact = true,
   titleRef,
+  pageTitle,
+  description,
+  noindex = false,
   className,
   children,
-}) => (
-  <div
-    className={cx(
-      "sf-container",
-      width === "narrow" && "sf-container--narrow",
-      styles.page,
-      className
-    )}
-  >
-    {crumb && <Breadcrumb items={[{ label: crumb }]} className={styles.trail} />}
+}) => {
+  // The document's title and description (usePageMeta): the page's name from
+  // the trail (else the eyebrow) and the intro, unless the page passes its own.
+  usePageMeta({
+    title: pageTitle || crumb || eyebrow,
+    description: description || (typeof intro === "string" ? intro : undefined),
+    noindex,
+  });
 
-    <header className={styles.header}>
-      {eyebrow && <p className={cx("sf-eyebrow", styles.eyebrow)}>{eyebrow}</p>}
-      <h1
-        ref={titleRef}
-        tabIndex={titleRef ? -1 : undefined}
-        className={cx("sf-display-lg", styles.title)}
-      >
-        {typeof title === "string" ? renderAccent(title) : title}
-      </h1>
-      {intro && <p className={styles.intro}>{intro}</p>}
-      {meta}
-      {extra}
-    </header>
+  return (
+    <div
+      className={cx(
+        "sf-container",
+        width === "narrow" && "sf-container--narrow",
+        styles.page,
+        className
+      )}
+    >
+      {crumb && <Breadcrumb items={[{ label: crumb }]} className={styles.trail} />}
 
-    {children}
+      <header className={styles.header}>
+        {eyebrow && <p className={cx("sf-eyebrow", styles.eyebrow)}>{eyebrow}</p>}
+        <h1
+          ref={titleRef}
+          tabIndex={titleRef ? -1 : undefined}
+          className={cx("sf-display-lg", styles.title)}
+        >
+          {typeof title === "string" ? renderAccent(title) : title}
+        </h1>
+        {intro && <p className={styles.intro}>{intro}</p>}
+        {meta}
+        {extra}
+      </header>
 
-    {contact && <ContactNote />}
-  </div>
-);
+      {children}
+
+      {contact && <ContactNote />}
+    </div>
+  );
+};
 
 export default ContentPage;

@@ -1,5 +1,5 @@
 import React, { createRef } from "react";
-import { render, screen, within } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import BrandStrip from "./BrandStrip";
 import PressStrip from "./PressStrip";
@@ -72,5 +72,13 @@ describe("PressStrip", () => {
       "src",
       "/logos/design.svg"
     );
+  });
+
+  test("a logo that fails to load gives way to the name (Prompt 32)", () => {
+    render(<PressStrip label="As featured in" items={[{ name: "Design Weekly", logo: "/logos/x.svg" }]} />);
+    const region = screen.getByRole("region", { name: "As featured in" });
+    fireEvent.error(within(region).getByRole("img", { name: "Design Weekly" }));
+    expect(within(region).queryByRole("img")).not.toBeInTheDocument();
+    expect(within(region).getByRole("listitem")).toHaveTextContent("Design Weekly");
   });
 });

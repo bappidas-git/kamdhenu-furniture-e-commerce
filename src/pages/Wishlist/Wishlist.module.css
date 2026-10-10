@@ -29,6 +29,27 @@
   min-width: 0;
 }
 
+/* ── The account's list could not be read (read errors, Prompt 32) ───────── */
+.loadError {
+  --sf-card-padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
+  display: grid;
+  justify-items: start;
+  gap: var(--sf-space-4);
+}
+
+.loadErrorTitle {
+  margin: 0;
+  color: var(--sf-color-text);
+}
+
+.loadErrorText {
+  max-width: 52ch;
+  margin: 0 0 var(--sf-space-2);
+  color: var(--sf-color-text-secondary);
+  font-size: var(--sf-text-base);
+  line-height: var(--sf-leading-body);
+}
+
 /* ── Guest banner: saved on this device, sign in to keep it ───────────────── */
 .banner {
   --sf-card-padding: clamp(var(--sf-space-5), 3vw, var(--sf-space-8));
@@ -261,6 +282,30 @@
 
 .emptyAction {
   margin-top: var(--sf-space-2);
+}
+
+/* While the account's list loads on a device with nothing saved: the empty
+   state's lines, in its own box (Prompt 32). */
+.skeletonEmptyTitle {
+  width: min(13ch, 100%);
+  height: calc(var(--sf-text-display-md) * var(--sf-leading-heading));
+  font-size: var(--sf-text-display-md);
+}
+
+.skeletonEmptyText {
+  width: min(20rem, 100%);
+  height: calc(var(--sf-text-base) * var(--sf-leading-body));
+}
+
+/* Full width on phones, as the button (.emptyAction, below). */
+.skeletonEmptyAction {
+  height: var(--sf-tap-target);
+}
+
+@media (min-width: 481px) {
+  .skeletonEmptyAction {
+    width: 10.5rem;
+  }
 }
 
 /* Phones: the banner's and the empty state's buttons run full width. */

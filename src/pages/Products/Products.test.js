@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes, useLocation } from "react-router-dom";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
-import { useCart } from "../../hooks/useCart";
+import { useCartActions } from "../../hooks/useCart";
 import { useWishlist } from "../../context/WishlistContext";
 import { APP_DESCRIPTION } from "../../utils/constants";
 import { buildCartItem, getProductMinPrice } from "../../utils/helpers";
@@ -22,7 +22,7 @@ jest.mock("../../services/api", () => ({
     categories: { getAll: jest.fn() },
   },
 }));
-jest.mock("../../hooks/useCart", () => ({ useCart: jest.fn() }));
+jest.mock("../../hooks/useCart", () => ({ useCartActions: jest.fn() }));
 jest.mock("../../context/WishlistContext", () => ({ useWishlist: jest.fn() }));
 
 // jsdom has no IntersectionObserver (Reveal uses one): report every observed
@@ -64,7 +64,7 @@ beforeEach(() => {
   addToCart = jest.fn();
   toggleWishlist = jest.fn();
   wishlisted = new Set();
-  useCart.mockReturnValue({ addToCart });
+  useCartActions.mockReturnValue({ addToCart });
   useWishlist.mockReturnValue({ toggleWishlist, isInWishlist: (id) => wishlisted.has(id) });
 });
 
@@ -239,6 +239,46 @@ test("several categories read as a list in the title", async () => {
   ).toBeInTheDocument();
   await waitForResults();
   expect(resultsText()).toBe("Showing 7 pieces");
+});
+
+// ── Document title and description (Prompt 32) ──────────────────────────────
+
+// eslint-disable-next-line testing-library/no-node-access -- the page writes <head>, which has no roles to query
+const metaContent = (name) => document.head.querySelector(`meta[name="${name}"]`)?.getAttribute("content");
+
+test("the document is named like the page: its heading and its introduction", async () => {
+  const { unmount } = renderAt("/products");
+  await waitForResults();
+  expect(screen.getByRole("heading", { level: 1, name: "All furniture" })).toBeInTheDocument();
+  expect(document.title).toBe("All furniture | A & S Urbanseat");
+  expect(metaContent("description")).toBe(APP_DESCRIPTION);
+  expect(metaContent("robots")).toBeUndefined();
+  unmount();
+
+  const sofas = db.categories.find((c) => c.slug === "sofas");
+  renderAt("/products?category=sofas");
+  await waitForResults();
+  expect(screen.getByRole("heading", { level: 1, name: "Sofas" })).toBeInTheDocument();
+  expect(document.title).toBe("Sofas | A & S Urbanseat");
+  expect(metaContent("description")).toBe(sofas.description);
+});
+
+test("search results are titled by the query and ask not to be indexed", async () => {
+  renderAt("/products?search=chair");
+  await waitForResults();
+  expect(screen.getByRole("heading", { level: 1, name: "Results for “chair”" })).toBeInTheDocument();
+  expect(document.title).toBe("Results for “chair” | A & S Urbanseat");
+  expect(metaContent("robots")).toBe("noindex");
+});
+
+test("the first row of cards loads its photographs at once, the first at high priority", async () => {
+  renderAt("/products");
+  await waitForResults();
+  // eslint-disable-next-line testing-library/no-node-access -- the cards' photographs are decorative (no role)
+  const photos = Array.from(results().querySelectorAll("article img:first-of-type"));
+  expect(photos.slice(0, 3).map((img) => img.getAttribute("loading"))).toEqual(["eager", "eager", "eager"]);
+  expect(photos.slice(0, 3).map((img) => img.getAttribute("fetchpriority"))).toEqual(["high", null, null]);
+  expect(photos[3]).toHaveAttribute("loading", "lazy");
 });
 
 // ── Category outline ─────────────────────────────────────────────────────────

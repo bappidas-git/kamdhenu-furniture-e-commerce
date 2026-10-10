@@ -94,6 +94,11 @@ export const WishlistProvider = ({ children }) => {
   const { user } = useAuth();
   const [wishlistItems, setWishlistItems] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
+  // The account's list could not be read (read errors, Prompt 32): the
+  // Wishlist page says so, with Try again (reloadWishlist), instead of
+  // passing the device's copy off as the account's list.
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
 
   // Skips the very first "save" so the initial empty state can't overwrite the
   // persisted wishlist before the "load" effect has hydrated it.
@@ -138,6 +143,9 @@ export const WishlistProvider = ({ children }) => {
     prevUserRef.current = user;
 
     if (!user) {
+      // No account's list to read (a read cut short by a sign-out included).
+      setLoadError(false);
+      setIsLoading(false);
       // Only a genuine logout (had a user, now null) clears the list — not the
       // initial null render or a browsing guest.
       if (prevUser) {
@@ -196,9 +204,12 @@ export const WishlistProvider = ({ children }) => {
         );
         if (cancelled) return;
         setWishlistItems([...serverItems, ...savedMeanwhile, ...uploaded]);
+        setLoadError(false);
       } catch (error) {
-        // Leave whatever is stored locally rather than wiping the list.
+        // Leave whatever is stored locally rather than wiping the list, and
+        // say the account's list could not be read.
         console.error("Error loading wishlist:", error);
+        if (!cancelled) setLoadError(true);
       } finally {
         if (!cancelled) setIsLoading(false);
       }
@@ -207,7 +218,16 @@ export const WishlistProvider = ({ children }) => {
     return () => {
       cancelled = true;
     };
-  }, [user]);
+  }, [user, loadAttempt]);
+
+  // Reads the account's list again (the Wishlist page's Try again). The page
+  // shows its loading state at once, and the error again only if this read
+  // fails too.
+  const reloadWishlist = useCallback(() => {
+    setLoadError(false);
+    setIsLoading(true);
+    setLoadAttempt((attempt) => attempt + 1);
+  }, []);
 
   // ── Mutations ─────────────────────────────────────────────────────────────
   const addToWishlist = useCallback(
@@ -399,6 +419,8 @@ export const WishlistProvider = ({ children }) => {
   const value = {
     wishlistItems,
     isLoading,
+    loadError,
+    reloadWishlist,
     addToWishlist,
     removeFromWishlist,
     toggleWishlist,

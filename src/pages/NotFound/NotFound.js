@@ -8,7 +8,9 @@ import styles from "./NotFound.module.css";
 // §38.8). Until Prompt 28 an unknown URL redirected silently to "/"; now it
 // stays put inside the storefront shell (header, footer, bottom nav) and says
 // so, with a way home and a way into the catalogue. It reads nothing and sets
-// nothing else.
+// nothing else, beyond its document title ("Page not found") and a robots
+// "noindex": the single-page app answers 200 for any URL, so the tag keeps
+// search engines from indexing it as a page (a "soft 404").
 // =============================================================================
 
 const NotFound = () => (
@@ -18,6 +20,7 @@ const NotFound = () => (
     title="This page has moved or never existed."
     intro="The link may be out of date, or the address may have a typo. Start again from the home page, or browse the collection."
     contact={false}
+    noindex
   >
     <div className={styles.actions}>
       <Link to="/" className="sf-btn sf-btn--primary">

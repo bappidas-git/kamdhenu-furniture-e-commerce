@@ -506,6 +506,17 @@
   vertical-align: middle;
 }
 
+/* "You save ₹450.00 on these pieces": the lines' compare-at savings, in the
+   discount colour of the product page's "Save ₹…" (Prompt 32). */
+.savings {
+  margin: 0;
+  font-size: var(--sf-text-sm);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-normal);
+  color: var(--sf-color-discount);
+  font-variant-numeric: tabular-nums;
+}
+
 .taxNote {
   margin: 0;
   font-size: var(--sf-text-xs);

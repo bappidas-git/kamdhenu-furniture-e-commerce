@@ -222,3 +222,39 @@ describe("the merge on a sign-in", () => {
     expect(accountRows(SHOPPER.id).map((row) => row.id)).toEqual([1, 2, 3]);
   });
 });
+
+// ── A read that fails (read errors, Prompt 32) ────────────────────────────────
+
+describe("an account's list that cannot be read", () => {
+  test("keeps the device's copy and says so (loadError); reloadWishlist reads it again and merges", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.wishlist.get.mockRejectedValueOnce(new Error("Network Error"));
+    renderProviders({ user: SHOPPER, deviceRows: [savedRow(product(4))] });
+    await waitFor(() => expect(latest.wishlist.loadError).toBe(true));
+    expect(shown()).toMatch(/^4:local-test-\d+$/);
+    expect(apiService.wishlist.add).not.toHaveBeenCalled();
+
+    act(() => latest.wishlist.reloadWishlist());
+    // At once: loading, no error.
+    expect(shown()).toBe("loading");
+    expect(latest.wishlist.loadError).toBe(false);
+    await waitFor(() => expect(shown()).toBe("48:1 31:2 37:3 4:1001"));
+    expect(latest.wishlist.loadError).toBe(false);
+    expect(apiService.wishlist.get).toHaveBeenCalledTimes(2);
+    consoleError.mockRestore();
+  });
+
+  test("signing out clears the error", async () => {
+    const consoleError = jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.wishlist.get.mockRejectedValueOnce(new Error("Network Error"));
+    apiService.auth.logout.mockResolvedValue(undefined);
+    renderProviders({ user: SHOPPER });
+    await waitFor(() => expect(latest.wishlist.loadError).toBe(true));
+    await act(async () => {
+      await latest.auth.logout();
+    });
+    expect(latest.wishlist.loadError).toBe(false);
+    expect(latest.wishlist.isLoading).toBe(false);
+    consoleError.mockRestore();
+  });
+});
