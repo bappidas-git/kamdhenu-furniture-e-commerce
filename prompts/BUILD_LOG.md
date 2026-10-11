@@ -4828,3 +4828,114 @@ Observations with no change: the 0.6s fade-out has never shown (the boilerplate'
 - **Production domain:** for `og:url`, `twitter:url` and `SITE_URL_PLACEHOLDER`.
 - **Sharing image:** a flattened sharing image instead of the transparent logo.
 - **Browser bar colour:** whether it should follow the site's switch rather than the device (F1).
+
+---
+
+## Prompt V2-02 — Catalogue data I (max-effort re-verification of Prompt 03)
+
+**Date:** 2026-10-11. **Start:** `11e5750` (V2-01 merged); the V2 baseline stays `0b9153e`. `db.json` SHA-256 `3fc7f8f3…` before, `887637ee…` after.
+
+**Result:** every requirement of Prompt 03 for departments 1–6, the Plastic and Office Chairs subtrees (10–29) and the 46 client-range products was audited with evidence. The requirement matrix was committed before any edit (`e9b0c2d`); the full matrix, the audit and the evidence are in `prompts/prompt_V2/reports/V2-02_REPORT.md`.
+- **172 requirements** (scope, field shapes and code rules, the tree, the 18 checklist lines, the brand and design rules with each price band, the 7 guardrails, what stays broken until 05, the implementation notes and the validator, 7 acceptance criteria, 7 QA steps, the per-record deep checks).
+- **As found:** 160 met, 7 superseded by recorded later decisions, 3 gaps, 2 partial.
+- **Now:** 165 met, 7 superseded, 0 gaps, 0 partial.
+- **How:** a scratch audit script of 3,054 checks per category and product that imports the storefront's own `parseSpecifications`, `slugify`, `getProductMinPrice`, `buildCartItem` and variant helpers (6 failures before, 0 after), and a Playwright suite of 120 checks on a JSON Server-mode build against a scratch `db.json` (120 of 120 before and after).
+
+### Gaps found and fixed
+
+| # | Gap | Fix | Records |
+|---|---|---|---|
+| R112 | The three shoe racks printed "Width: approx. 50 / 78 / 62 cm" above the table's "Dimensions (L × W × H) 50 × 30 / 78 × 32 / 62 × 33 × 96 cm": the width read one figure in one row and another in the next. Prompt 34's check reads only "Overall size" and "Height" | "Width × depth: approx. 50 × 30 / 78 × 32 / 62 × 33 cm", the fields' first two figures in Prompt 04's racks' own wording; `productSpecs.test.js:22` and `ProductDetails.test.js:809` pinned the old row and now expect the new one | products 9, 10, 11 (`description`) |
+| R110, R130 | Copy their own data contradicted: 8 and 19 said "lawn(s)" while their Use pairs say covered areas (19's own prose: "finished to sit outdoors under cover"); 17 said it "sits lower and broader than our everyday tables" at 44 cm against 42 cm | "lawn" → "covered terrace" in 8's and 19's short description and first paragraph, the meta descriptions following; 17: "It is broader than our everyday tables" (70 cm against 60 cm). Fields and specifications unchanged (Prompt 34's precedent); no other copy touched | products 8, 19 (`shortDescription`, `description`, `metaDescription`), 17 (`description`) |
+| R153 | `validate-db.js` did not assert most of Prompt 03's machine-checkable rules, and Prompt 34's size check ran in full mode only | catalogue-mode assertions for every rule (below); Prompt 34's check moved unchanged so `--catalogue` runs it too | `scripts/validate-db.js` |
+| R169 | Prompt 03's entry says 15 of 46 products carry a compare-at price and variants hold 9–48 units | the correct figures, recorded here: **16 of 46** (2, 5, 7, 11, 12, 18, 19, 21, 25, 27, 29, 33, 35, 37, 40, 46; its own table lists 16) and **9–47 units**; Prompt 03's entry stays as written | this entry |
+
+All data edits were made by one script: exact, once-only replacements on the parsed objects, written back as 2-space JSON without a trailing newline. `updatedAt` was not moved (as with Prompt 34's corrections).
+
+### Validator assertions added (catalogue mode; full mode runs them too)
+
+- **Reads the storefront's own `parseSpecifications` and `slugify`** from `src/utils/helpers.js`, and fails if it cannot.
+- **Categories:** the six department names; the Prompt 03 subtree (id, name, slug, parent, `sortOrder`, active); ids 10–19 under Plastic Furniture and 20–29 under Office Chairs; one-sentence descriptions with a full stop; no "cheap"/"basic"; `1600x1000` placeholder images in the tones (or a Cloudinary photograph); `createdAt` ≤ `updatedAt` ≤ now; "dependable everyday value" on the Essentials groups, "heavier build" and "finer finish" on the Premium groups; Prompt 03's categories created within the six months before the build.
+- **Every product:**
+  - no electronics or fashion words in the catalogue;
+  - variants: key order; name equals the attribute value; SKU = product SKU + code; one price across colour or finish options;
+  - the slug is `slugify()` of the folded name;
+  - the description: the product page reads 2–3 paragraphs and 5–7 rows; cm and kg values say "approx."; no certification or warranty words; no "!";
+  - names without a tier prefix or a model number;
+  - money: prices ending 49/99/00; compare-at 10–20% above; cost 60–70%;
+  - stock 0–60 on a product without variants;
+  - placeholder image labels: the name, "… Detail", "… In situ";
+  - `metaTitle` set; `metaDescription` set and ≤ 160 characters;
+  - 3+ related ids within the department (a department of fewer than four lists its own first: the Outdoor pair);
+  - the tier tag under Essentials or Premium; no future dates.
+- **The 46:**
+  - each line's price band and variants;
+  - the type tag and a material tag the specifications use;
+  - Nilkamal on plastic, no brand elsewhere; all active; created within the window; exactly 46;
+  - Premium above Essentials in six pairs; compare-at prices on 25–40%;
+  - 2–3 low-stock and 1–2 sold-out variants;
+  - featured 8–10 across the four departments, trending 6–8, hot 3–4.
+- **Sizes:** "Width × depth" = L × W; a bare "Width", "Length" or "Depth" fails; "Seat height" below the overall height; a "Weight" pair equals the field; the script's reading of the pairs equals the product page's.
+- **Self-test:** 41 faults seeded into a scratch copy, every one reported (52 problems, exit 1); a compare-at price exactly 10% above passes; a badly encoded image label is reported, not a crash. The baseline seed fails on exactly the three shoe racks; the repaired seed passes in both modes.
+
+### Superseded decisions honoured (not gaps)
+
+- **Prompt 05:** the dangling references (R3, R137), the deals config's id arrays (R10, R160), `rating`/`totalReviews` from approved reviews (R24, R132; V2-04 owns them).
+- **Prompt 29 (§39.9):** category and product copy is the client's; its proposals for Plastic Furniture's "weather-ready … stack away neatly" and Office Tables & Desks' description, and the straight apostrophes, stay open for the client (R51).
+- **Prompt 04:** the bundle extensions (an office chair with a desk) and the subtrees it added under departments 1, 5 and 6.
+- **Prompt 34:** the corrected sizes of 2, 3, 5, 6 and 11 (kept); its size check (moved unchanged into catalogue mode).
+- **Prompt 03's own recorded choices, kept:** slugs from `slugify()` after folding accents (the six "Café" names); the Outdoor pair's related ids (the department holds two products, so each lists the other first, then three outdoor-suited plastic pieces; now encoded in the validator); the Lobby Set's and Jhula's fields describing the Large.
+- The V2-02 prompt expected Prompts 29 and 32 to have edited catalogue data; neither did. Only Prompts 03, 04, 05 and 34 ever touched `db.json` (finding F6).
+
+### Identity stability (before → after)
+
+The audit's snapshots compared field by field, **30 comparisons, 0 changed**:
+- the 18 collections and their order, and every record count;
+- 43 categories' ids, slugs, parents and key order;
+- 84 products' ids, slugs, SKUs, category placements, key orders, dimension keys, ratings and review counts;
+- all 199 variants' ids, SKUs, key orders and attribute keys;
+- SHA-256 of each of the 16 other collections, of products 47–84 and of the categories outside the scope.
+
+A field-by-field walk of both seeds finds exactly the 10 values of the table above, and `git diff --stat db.json` shows 10 insertions and 10 deletions.
+
+### Findings handed on
+
+1. **F1 (V2-05 / owner).** `getRelated` tops up with any product of the same brand or a shared tag: every unbranded product matches every other, and the tier tags cross departments, so 28 of the 46 product pages' related rails show pieces from another department (office chairs on the outdoor pair's pages, plastic chairs on the office chairs'). The curated ids are within the department. The fix is in `api.js` (protected).
+2. **F2 (V2-04).** Six orders and two reviews are dated before their product's `createdAt` (products 6, 9, 20, 29, 33, 40); Prompt 05 kept the order timestamps; Prompt 03's six-month window leaves only product 9 movable from the catalogue side.
+3. **F3 (V2-03).** 22 Prompt 04 products have no material tag; the checklist assertions can be extended to Prompt 04's lines.
+4. **F4 (V2-03).** The mattresses' nominal inch sizes carry no "approx." (cm and kg are asserted).
+5. **F5 (V2-03 / V2-05).** In JSON Server mode the home Featured rail shows the first 8 featured by id, all Prompt 03's; Prompt 04's five featured pieces and 39 never appear there.
+6. **F6 (V2-05).** Prompts 29 and 32 changed no catalogue data, contrary to the V2-02 prompt's note.
+7. **F7 (V2-05).** An admin save stamps `updatedAt` (the mock, by design): "saved without change" means identical apart from that, and `git diff db.json` stays empty only with JSON Server on a scratch copy.
+
+### Gate
+
+- `node scripts/validate-db.js --catalogue` and full mode: `✓ all checks passed`.
+- `CI=true npm test -- --passWithNoTests`: **86 suites, 1,429 tests, exit 0**, no console warning.
+- `npm run build` and `CI=true npm run build`: "Compiled successfully.", main JS 399.62 kB, CSS 34.97 kB gzip, only the documented dependency notices. In JSON Server mode all 35 build files are byte-identical to the baseline's.
+- **Browser** (Playwright, JSON Server mode, scratch `db.json`): 120 of 120 before and after:
+  - the six departments in order and the flyouts;
+  - 23 listings equal to the data (`plastic-furniture` 21 of 21, `office-chairs-premium` 8, `plastic-shoe-racks` 3);
+  - all 46 product pages and their specifications tables;
+  - the shoe rack's options (price, SKU, stock), the keyboard, the café chair's swatches, the Lobby Set's sizes;
+  - the cart drawer; search "chair" (42) and "waiting" (6);
+  - four widths;
+  - the admin's tree, its category filter, and edit-save without change on 10 products and 5 categories;
+  - a clean console.
+- **Development server:** 0 console errors or warnings over 18 loads.
+- **Diff:** `db.json` (10 field values), `scripts/validate-db.js`, two tests, the report and this entry. No `src/services/api.js` (SHA-256 `c32e6138…`), admin, `public/` or other `src/` file.
+
+### Needs client confirmation (these ranges, refreshed)
+
+- **Names:** all 46 product names. "Lobby Set" (our reading of "Looby set") and "Jhula (Garden Swing)" ("Julna"), with what their Small and Large contain and each size's real measurements and weight (the fields hold the Large's).
+- **Prices and stock:** all prices, compare-at prices (16), cost prices and stock levels.
+- **Specifications, dimensions, weights, colours and finishes,** including:
+  - the shoe racks' "Width × depth";
+  - where the plastic tables and the Lobby Set may stand (the copy now says covered terraces, as their specifications do).
+- **Brand attribution:** Nilkamal on all 18 plastic pieces; office, café and outdoor pieces unbranded.
+- **Category copy** and the tier names Essentials and Premium, with Prompt 29's open proposals for Plastic Furniture and Office Tables & Desks.
+- **Typography:** straight apostrophes in product copy.
+- **Merchandising:**
+  - the featured, trending and hot flags;
+  - the related pieces, including the Outdoor pair's plastic picks;
+  - the bundles.

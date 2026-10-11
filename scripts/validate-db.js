@@ -18,7 +18,15 @@
 // extended the full-mode checks (nothing loosened): leads in the boilerplate
 // scan, "Overall size"/"Height" specs against the dimension fields, a full
 // return leaving its order "returned", no pending payment on a paid order, and
-// coupon expiries at the end of an Indian day.
+// coupon expiries at the end of an Indian day. V2-02 (the max-effort
+// re-verification of Prompt 03) added the catalogue-mode checks marked
+// "V2-02": every machine-checkable rule of Prompt 03 (department names, the
+// Plastic and Office Chairs subtrees, category copy and images, price bands and
+// formats, stock counts, flags, relations, tags, image texts, dates), the
+// specifications read by the product page's own parser, and Prompt 34's size
+// check moved unchanged into catalogue mode (it still runs in full mode) and
+// extended to "Width × depth", bare "Width"/"Length"/"Depth", "Seat height"
+// and "Weight". Nothing was removed or loosened.
 // =============================================================================
 
 const fs = require("fs");
@@ -46,10 +54,11 @@ const PRODUCT_KEYS = [
 const DIMENSION_KEYS = ["length", "width", "height"];
 const VARIANT_KEYS = ["id", "name", "price", "stock", "sku", "attributes", "swatchHex"]; // last two optional
 
-// The six departments, fixed in id, slug and menu order.
+// The six departments, fixed in id, slug and menu order (and, V2-02, name).
 const DEPARTMENTS = [
-  [1, "plastic-furniture"], [2, "office-chairs"], [3, "cafe-restaurant-chairs"],
-  [4, "outdoor-furniture"], [5, "home-furniture"], [6, "office-tables-desks"],
+  [1, "plastic-furniture", "Plastic Furniture"], [2, "office-chairs", "Office Chairs"],
+  [3, "cafe-restaurant-chairs", "Café & Restaurant Chairs"], [4, "outdoor-furniture", "Outdoor Furniture"],
+  [5, "home-furniture", "Home Furniture"], [6, "office-tables-desks", "Office Tables & Desks"],
 ];
 
 // Proof of coverage: exact product count per category slug. Every active
@@ -115,6 +124,63 @@ const VARIANT_RULES = {
   "computer-tables": { attr: "Size", values: ["90 × 60 cm", "120 × 60 cm"], perVariantPrice: true },
   "reading-tables": { attr: "Size", values: ["75 × 50 cm", "90 × 60 cm"], perVariantPrice: true },
 };
+// V2-02: Prompt 03's Plastic (10–19) and Office Chairs (20–29) subtrees, by the
+// id plan: id -> [name, slug, parent id, sortOrder].
+const TREE_03 = {
+  10: ["Essentials", "plastic-essentials", 1, 1],
+  11: ["Chairs with Arms", "plastic-essentials-armchairs", 10, 1],
+  12: ["Chairs without Arms", "plastic-essentials-chairs", 10, 2],
+  13: ["Centre Tables", "plastic-essentials-centre-tables", 10, 3],
+  14: ["Shoe Racks", "plastic-shoe-racks", 10, 4],
+  15: ["Premium", "plastic-premium", 1, 2],
+  16: ["Chairs with Arms", "plastic-premium-armchairs", 15, 1],
+  17: ["Chairs without Arms", "plastic-premium-chairs", 15, 2],
+  18: ["Centre Tables", "plastic-premium-centre-tables", 15, 3],
+  20: ["Essentials", "office-chairs-essentials", 2, 1],
+  21: ["High-Back Chairs", "office-essentials-high-back", 20, 1],
+  22: ["Low-Back Chairs", "office-essentials-low-back", 20, 2],
+  23: ["Waiting Chairs", "office-essentials-waiting", 20, 3],
+  24: ["Premium", "office-chairs-premium", 2, 2],
+  25: ["High-Back Chairs", "office-premium-high-back", 24, 1],
+  26: ["Low-Back Chairs", "office-premium-low-back", 24, 2],
+  27: ["Waiting Chairs", "office-premium-waiting", 24, 3],
+};
+// V2-02: Prompt 03's checklist line by line: the type tag, the indicative price
+// band (every variant price inside it) and the variants the line asks for
+// (attribute, fewest and most options; [] allowed where the line says "none").
+const PROMPT_03 = {
+  "plastic-essentials-armchairs": { type: "armchair", band: [650, 1300], attr: ["Colour"], min: 3, max: 4 },
+  "plastic-essentials-chairs": { type: "chair", band: [650, 1300], attr: ["Colour"], min: 2, max: 4 },
+  "plastic-essentials-centre-tables": { type: "centre table", band: [900, 2600], attr: ["Colour"], min: 2, max: 2 },
+  "plastic-shoe-racks": { type: "shoe rack", band: [1200, 3600], attr: ["Shelves"], min: 4, max: 4 },
+  "plastic-premium-armchairs": { type: "armchair", band: [1400, 2900], attr: ["Colour"], min: 2, max: 4 },
+  "plastic-premium-chairs": { type: "chair", band: [1400, 2900], attr: ["Colour"], min: 2, max: 4 },
+  "plastic-premium-centre-tables": { type: "centre table", band: [900, 2600], attr: ["Colour"], min: 2, max: 2 },
+  "outdoor-furniture": { attr: ["Size"], min: 2, max: 2 }, // type and band per product, below
+  "office-essentials-high-back": { type: "office chair", band: [3500, 8500], attr: ["Colour"], min: 2, max: 3 },
+  "office-essentials-low-back": { type: "office chair", band: [3500, 8500], attr: ["Colour"], min: 2, max: 3 },
+  "office-essentials-waiting": { type: "waiting chair", band: [4500, 16000], attr: ["Colour"], min: 0, max: 3 },
+  "office-premium-high-back": { type: "office chair", band: [9000, 22000], attr: ["Colour"], min: 2, max: 3 },
+  "office-premium-low-back": { type: "office chair", band: [9000, 22000], attr: ["Colour"], min: 2, max: 3 },
+  "office-premium-waiting": { type: "waiting chair", band: [4500, 16000], attr: ["Colour"], min: 0, max: 3 },
+  "cafe-restaurant-chairs": { type: "cafe chair", band: [1800, 6500], attr: ["Colour", "Finish"], min: 2, max: 3 },
+};
+const OUTDOOR_03 = { "lobby-set": { type: "lobby set", band: [18000, 45000] }, "jhula-garden-swing": { type: "jhula", band: [9000, 26000] } };
+// Premium above Essentials within the same type: [Essentials slug, Premium slug].
+const TIER_PAIRS = [
+  ["plastic-essentials-armchairs", "plastic-premium-armchairs"], ["plastic-essentials-chairs", "plastic-premium-chairs"],
+  ["plastic-essentials-centre-tables", "plastic-premium-centre-tables"], ["office-essentials-high-back", "office-premium-high-back"],
+  ["office-essentials-low-back", "office-premium-low-back"], ["office-essentials-waiting", "office-premium-waiting"],
+];
+// Material tags a Prompt 03 product may carry, each with the words its own
+// specifications must use for it.
+const MATERIAL_TAGS = {
+  plastic: /plastic|polypropylene/, polypropylene: /polypropylene/, mesh: /mesh/, fabric: /fabric/,
+  leatherette: /leatherette/, steel: /steel/, metal: /metal|steel|wire|iron|aluminium/, wood: /wood|timber/, cane: /cane/,
+};
+// "Within the last six months" of the build: Prompt 03 ran on 2026-10-07.
+const BUILD_DATE = "2026-10-07T23:59:59.999Z";
+const WINDOW_START = "2026-04-07T00:00:00.000Z";
 
 // ---------------------------------------------------------------- helpers
 const failures = [];
@@ -130,6 +196,20 @@ const slugify = (text) => fold(text).toLowerCase().replace(/\s+/g, "-")
   .replace(/[^\w-]+/g, "").replace(/--+/g, "-").replace(/^-+/, "").replace(/-+$/, "");
 const dupes = (list) => list.filter((v, i) => list.indexOf(v) !== i);
 const ISO = /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(\.\d{3})?Z$/;
+// V2-02: the product page's own functions, read from src/utils/helpers.js (an
+// ES module the app imports), so these checks parse a description and build a
+// slug exactly as the storefront does and cannot drift from it.
+const helpersSource = fs.readFileSync(path.join(__dirname, "..", "src", "utils", "helpers.js"), "utf8");
+const appFunction = (name) => {
+  const m = helpersSource.match(new RegExp(`\\nexport const ${name} = (\\([^)]*\\) => \\{[\\s\\S]*?\\n\\});`));
+  try { return m ? new Function(`return (${m[1]});`)() : null; } catch (e) { return null; }
+};
+const parseSpecifications = appFunction("parseSpecifications");
+const appSlugify = appFunction("slugify");
+check(typeof parseSpecifications === "function" && typeof appSlugify === "function",
+  "src/utils/helpers.js", "parseSpecifications or slugify could not be read; update appFunction() in this script");
+const parsedSpecs = (description) => (parseSpecifications ? parseSpecifications(description) : { body: String(description), specs: [] });
+const NOW = new Date().toISOString();
 
 // ---------------------------------------------------------------- banned wording
 check(!/non[- ]?premium/i.test(raw), "db.json", 'contains "non-premium"');
@@ -192,6 +272,51 @@ const deptOf = (catId) => {
   return c ? c.id : null;
 };
 const hasActiveChildren = (id) => categories.some((c) => String(c.parentId) === String(id) && c.isActive);
+
+// ---- V2-02: Prompt 03's tree and category copy ------------------------------
+DEPARTMENTS.forEach(([id, , name]) => {
+  const c = catById.get(String(id));
+  if (c) check(c.name === name, `department ${id}`, `name "${c.name}" ≠ "${name}"`);
+});
+Object.entries(TREE_03).forEach(([id, [name, slug, parentId, sortOrder]]) => {
+  const c = catById.get(id);
+  if (check(c, "tree", `Prompt 03 category ${id} (${slug}) missing`)) {
+    check(c.name === name && c.slug === slug && c.parentId === parentId && c.sortOrder === sortOrder && c.isActive,
+      `category ${id} (${c.slug})`, `must be "${name}" (${slug}), active, under ${parentId} at sortOrder ${sortOrder}`);
+  }
+});
+// The id plan: 10–19 belong to Plastic Furniture, 20–29 to Office Chairs.
+// (A bounded walk: a parent cycle is reported above and must not hang this.)
+const rootOf = (c) => {
+  let x = c;
+  for (let i = 0; x && x.parentId !== null && i < 20; i += 1) x = catById.get(String(x.parentId));
+  return x ? x.id : null;
+};
+categories.forEach((c) => {
+  const at = `category ${c.id} (${c.slug})`;
+  if (c.id >= 10 && c.id <= 19) check(rootOf(c) === 1, at, "ids 10–19 belong to the Plastic Furniture subtree");
+  if (c.id >= 20 && c.id <= 29) check(rootOf(c) === 2, at, "ids 20–29 belong to the Office Chairs subtree");
+  // One refined sentence (the listing's introduction and the mega-menu), and
+  // the tiers in honest words.
+  check((String(c.description).match(/[.!?](\s|$)/g) || []).length === 1 && /\.$/.test(c.description),
+    at, "description must be one sentence ending in a full stop");
+  check(!/\bcheap|\bbasic\b/i.test(`${c.name} ${c.description}`), at, 'says "cheap" or "basic"');
+  check(/^https:\/\/placehold\.co\/1600x1000\/f1ebe1\/686158\?text=.+/.test(c.image) || /^https:\/\/res\.cloudinary\.com\//.test(c.image),
+    at, `image is not a 1600x1000 placeholder in the design-system tones: ${c.image}`);
+  check(c.createdAt <= c.updatedAt && c.updatedAt <= NOW, at, "createdAt must not follow updatedAt, and updatedAt must not lie in the future");
+});
+[10, 20].forEach((id) => {
+  const c = catById.get(String(id));
+  if (c) check(/dependable everyday value/i.test(c.description), `category ${id} (${c.slug})`, 'an Essentials group must say "dependable everyday value"');
+});
+[15, 24].forEach((id) => {
+  const c = catById.get(String(id));
+  if (c) check(/heavier build/i.test(c.description) && /finer finish/i.test(c.description), `category ${id} (${c.slug})`, 'a Premium group must say "heavier build" and "finer finish"');
+});
+[...DEPARTMENTS.map(([id]) => id), ...Object.keys(TREE_03).map(Number)].forEach((id) => {
+  const c = catById.get(String(id));
+  if (c) check(c.createdAt >= WINDOW_START && c.createdAt <= BUILD_DATE, `category ${id} (${c.slug})`, `createdAt ${c.createdAt} is not within the six months before the build`);
+});
 
 // ---------------------------------------------------------------- products
 const products = db.products || [];
@@ -340,6 +465,195 @@ Object.entries(VARIANT_RULES).forEach(([slug, rule]) => {
 });
 check(lowStockVariants >= 2, "stock", `need 2+ low-stock variants to exercise the UI (found ${lowStockVariants})`);
 check(outOfStockVariants >= 1, "stock", `need 1+ out-of-stock variant to exercise the UI (found ${outOfStockVariants})`);
+
+// ---- V2-02: the catalogue rules of Prompt 03, for every product --------------
+const catSlugOf = (p) => catById.get(String(p.categoryId))?.slug;
+const roundPrice = (n) => /(49|99|00)$/.test(String(n));
+// The tier a product sits under: the Essentials (10, 20) or Premium (15, 24) group.
+const tierOf = (catId) => {
+  let c = catById.get(String(catId));
+  for (let i = 0; c && i < 20; i += 1) {
+    if ([10, 20].includes(c.id)) return "essentials";
+    if ([15, 24].includes(c.id)) return "premium";
+    c = c.parentId === null ? null : catById.get(String(c.parentId));
+  }
+  return null;
+};
+check(!/electronic|smartwatch|earbud|headphone|t-shirt|sneaker|smartphone|fashion/i.test(JSON.stringify({ categories, products })),
+  "catalogue", "categories or products still mention the boilerplate's electronics/fashion catalogue");
+products.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const vs = Array.isArray(p.variants) ? p.variants : [];
+  vs.forEach((v) => {
+    const vat = `${at} variant ${v.id}`;
+    const order = VARIANT_KEYS.filter((k) => k in v);
+    check(JSON.stringify(Object.keys(v)) === JSON.stringify(order), vat, `keys out of order: ${Object.keys(v).join(",")} (expected ${order.join(",")})`);
+    // The selector prints the attribute value, the cart and orders the name.
+    if (v.attributes && Object.keys(v.attributes).length) {
+      check(Object.values(v.attributes).join(" / ") === v.name, vat, `name "${v.name}" ≠ its attribute value "${Object.values(v.attributes).join(" / ")}"`);
+    }
+    check(typeof v.sku === "string" && v.sku.startsWith(`${p.sku}-`), vat, `SKU ${v.sku} must be the product's SKU plus a code`);
+  });
+  if (vs.length && vs.every((v) => v.attributes && Object.keys(v.attributes).length === 1 && /colou?r|shade|finish/i.test(Object.keys(v.attributes)[0]))) {
+    check(new Set(vs.map((v) => v.price)).size === 1, at, "colour or finish options must share one price");
+  }
+  if (appSlugify) check(p.slug === appSlugify(fold(p.name)), at, `slug must be helpers.js slugify() of the name with accents folded ("${appSlugify(fold(p.name))}")`);
+  // The description as the product page reads it: 2–3 paragraphs of prose and
+  // 5–7 specification rows, measurements hedged, no certification or warranty.
+  const { body, specs } = parsedSpecs(p.description);
+  const prose = String(body).split(/\n[^\S\n]*\n\s*/).filter((x) => x.trim());
+  check(prose.length >= 2 && prose.length <= 3 && specs.length >= 5 && specs.length <= 7, at,
+    `the product page reads ${prose.length} paragraph(s) and ${specs.length} specification row(s); needs 2–3 and 5–7`);
+  specs.filter((s) => /\d\s*(cm|kg)\b/.test(s.value) && !/approx\./.test(s.value))
+    .forEach((s) => fail(at, `"${s.key}: ${s.value}" gives a measurement without "approx."`));
+  const copy = `${p.name} ${p.shortDescription} ${p.description}`;
+  check(!/warrant|guarantee|certif|\bISI\b|\bBIS\b|\bISO\s?\d|BIFMA|lifetime|tested to|approved by/i.test(copy), at, "claims a certification or warranty");
+  check(!copy.includes("!"), at, "copy uses an exclamation mark");
+  check(!/^(essentials|non[- ]?premium)\b/i.test(p.name) && !p.name.split(/\s+/).some((t) => /[A-Za-z]/.test(t) && /\d/.test(t) && !/^\d+-Seater$/.test(t)),
+    at, "name must stand alone: no tier prefix, no model number");
+  // Money: round figures, compare-at 10–20% above, cost 60–70% of the price.
+  [p.price, ...(p.comparePrice ? [p.comparePrice] : []), ...vs.map((v) => v.price)]
+    .forEach((n) => check(roundPrice(n), at, `price ${n} must end in 49, 99 or 00`));
+  // (Whole-number arithmetic: 1000 * 1.1 is 1100.0000000000002.)
+  if (p.comparePrice) check(p.comparePrice * 10 >= p.price * 11 && p.comparePrice * 10 <= p.price * 12, at, `comparePrice ${p.comparePrice} must be 10–20% above price ${p.price}`);
+  check(p.costPrice * 10 >= p.price * 6 && p.costPrice * 10 <= p.price * 7, at, `costPrice ${p.costPrice} must be 60–70% of price ${p.price}`);
+  if (!vs.length) check(Number.isInteger(p.stock) && p.stock <= 60, at, "stock must be an integer 0–60");
+  // A placeholder image is labelled with the name, the storefront's alt text.
+  (p.images || []).forEach((u, i) => {
+    const m = /^https:\/\/placehold\.co\/1200x1500\/f1ebe1\/686158\?text=(.+)$/.exec(u);
+    const label = [p.name, `${p.name} Detail`, `${p.name} In situ`][i];
+    let text = null;
+    try { text = m ? decodeURIComponent(m[1].replace(/\+/g, " ")) : null; } catch (e) { text = undefined; }
+    if (m) check(text === label, at, text === undefined ? `image ${i + 1}'s label is not URL-encoded` : `image ${i + 1} must be labelled "${label}"`);
+  });
+  // Prompt 32 makes these the product page's title and description.
+  check(typeof p.metaTitle === "string" && p.metaTitle.trim() && typeof p.metaDescription === "string" && p.metaDescription.trim()
+    && p.metaDescription.length <= 160, at, "metaTitle and metaDescription must be set, the description at most 160 characters");
+  // Related: 3–5 within the department. A department with fewer than four
+  // products (Prompt 03's Outdoor: two) lists all its own first, then others.
+  const rel = p.relatedProductIds || [];
+  const dep = deptOf(p.categoryId);
+  const own = products.filter((q) => q.isActive && q.id !== p.id && deptOf(q.categoryId) === dep).map((q) => q.id);
+  check(rel.length >= 3, at, `relatedProductIds has ${rel.length} ids (3–5)`);
+  if (own.length >= 3) rel.forEach((id) => check(own.includes(id), at, `related product ${id} is not in the same department`));
+  else check(JSON.stringify(rel.slice(0, own.length).sort()) === JSON.stringify([...own].sort()), at, `related ids must start with the department's own products (${own.join(",")})`);
+  const tier = tierOf(p.categoryId);
+  if (tier) check((p.tags || []).includes(tier), at, `tags must include the tier "${tier}"`);
+  check(p.createdAt <= NOW && p.updatedAt <= NOW, at, "dates must not lie in the future");
+});
+
+// ---- V2-02: the 46 products of Prompt 03's checklist -------------------------
+const P03 = products.filter((p) => Object.prototype.hasOwnProperty.call(PROMPT_03, catSlugOf(p)));
+P03.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const rule = PROMPT_03[catSlugOf(p)];
+  const type = rule.type || OUTDOOR_03[p.slug]?.type;
+  const band = rule.band || OUTDOOR_03[p.slug]?.band;
+  const vs = p.variants || [];
+  const prices = vs.length ? vs.map((v) => v.price) : [p.price];
+  check(band && prices.every((x) => x >= band[0] && x <= band[1]), at, `prices ${prices.join(" / ")} outside the band ${band ? band.join("–") : "(none for this piece)"}`);
+  const attr = vs.length ? Object.keys(vs[0].attributes || {})[0] : null;
+  check(vs.length === 0 ? rule.min === 0 : rule.attr.includes(attr) && vs.length >= Math.max(2, rule.min) && vs.length <= rule.max,
+    at, `variants must be ${rule.attr.join(" or ")}, ${Math.max(2, rule.min)}–${rule.max} options${rule.min === 0 ? ", or none" : ""}`);
+  check(type && (p.tags || []).includes(type), at, `tags must include the type "${type}"`);
+  const specText = `${p.name} ${parsedSpecs(p.description).specs.map((s) => s.value).join(" ")}`.toLowerCase();
+  const materials = (p.tags || []).filter((t) => MATERIAL_TAGS[t]);
+  check(materials.length > 0 && materials.every((t) => MATERIAL_TAGS[t].test(specText)), at,
+    `tags must name a material its specifications use (${materials.join(", ") || "none"})`);
+  const dep = deptOf(p.categoryId);
+  check(dep === 1 ? p.brand === "Nilkamal" : p.brand === "", at, `brand must be ${dep === 1 ? '"Nilkamal" (plastic)' : '"" (office, café, outdoor)'}`);
+  check(p.isActive, at, "Prompt 03's products are all active");
+  check(p.createdAt >= WINDOW_START && p.createdAt <= BUILD_DATE, at, `createdAt ${p.createdAt} is not within the six months before the build`);
+});
+check(P03.length === 46, "coverage", `Prompt 03's checklist has 46 products, found ${P03.length}`);
+TIER_PAIRS.forEach(([essentials, premium]) => {
+  const e = P03.filter((p) => catSlugOf(p) === essentials).map((p) => p.price);
+  const pr = P03.filter((p) => catSlugOf(p) === premium).map((p) => p.price);
+  if (e.length && pr.length) check(Math.max(...e) < Math.min(...pr), "prices", `${premium} (from ${Math.min(...pr)}) must sit above ${essentials} (to ${Math.max(...e)})`);
+});
+const compared03 = P03.filter((p) => p.comparePrice > 0).length;
+check(P03.length && compared03 / P03.length >= 0.25 && compared03 / P03.length <= 0.4, "prices", `${compared03} of ${P03.length} Prompt 03 products have a comparePrice; give roughly a third one`);
+let low03 = 0;
+let soldOut03 = 0;
+P03.forEach((p) => (p.variants.length ? p.variants : [{ stock: p.stock }]).forEach((v) => {
+  if (v.stock === 0) soldOut03 += 1;
+  else if (v.stock <= p.lowStockThreshold) low03 += 1;
+}));
+check(low03 >= 2 && low03 <= 3, "stock", `Prompt 03's products need 2–3 deliberately low-stock variants (found ${low03})`);
+check(soldOut03 >= 1 && soldOut03 <= 2, "stock", `Prompt 03's products need 1–2 sold-out variants (found ${soldOut03})`);
+const flagged03 = (k) => P03.filter((p) => p[k]);
+const featuredDepts = new Set(flagged03("featured").map((p) => deptOf(p.categoryId))).size;
+check(flagged03("featured").length >= 8 && flagged03("featured").length <= 10 && featuredDepts === 4,
+  "flags", `featured: ${flagged03("featured").length} of Prompt 03's products in ${featuredDepts} departments (8–10, all four)`);
+check(flagged03("trending").length >= 6 && flagged03("trending").length <= 8, "flags", `trending: ${flagged03("trending").length} of Prompt 03's products (6–8)`);
+check(flagged03("hot").length >= 3 && flagged03("hot").length <= 4, "flags", `hot: ${flagged03("hot").length} of Prompt 03's products (3–4)`);
+
+// ---- Prompt 34: what a shopper or the admin would see disagree ------------
+// (Moved here unchanged from the full-mode block by V2-02, so that
+// --catalogue runs it too; full mode still does.)
+// The product page prints the description's "Specifications:" pairs and,
+// beside them, the dimension fields as "Dimensions (L × W × H)". An "Overall
+// size" must give the fields' three figures in that order (a height range
+// ends at the field's height), and a "Height" listing several options must
+// top out at it.
+const specPairs = (description) => {
+  const paras = String(description || "").replace(/\r\n?/g, "\n").trim().split(/\n[^\S\n]*\n\s*/);
+  const m = /^specifications\s*:\s*([\s\S]*)$/i.exec(paras[paras.length - 1] || "");
+  if (!m) return [];
+  return m[1].split(/\s*;\s*/).map((part) => {
+    const at = part.indexOf(": ");
+    return at > 0 ? [part.slice(0, at).trim().toLowerCase(), part.slice(at + 2).trim()] : null;
+  }).filter(Boolean);
+};
+const N = "(\\d+(?:\\.\\d+)?)"; // a figure, as a capture group
+products.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const d = p.dimensions || {};
+  specPairs(p.description).forEach(([key, value]) => {
+    if (key === "overall size") {
+      const box = value.match(new RegExp(`${N}\\s*×\\s*${N}\\s*×\\s*${N}(?:\\s*[–-]\\s*${N})?\\s*cm`));
+      const round = value.match(new RegExp(`${N}\\s*cm diameter\\s*×\\s*${N}\\s*cm high`));
+      const [l, w, h] = box ? [box[1], box[2], box[4] || box[3]].map(Number) : round ? [round[1], round[1], round[2]].map(Number) : [];
+      if (box || round) {
+        check(l === d.length && w === d.width && h === d.height, at,
+          `"Overall size: ${value}" ≠ dimensions ${d.length} × ${d.width} × ${d.height} (L × W × H)`);
+      }
+    }
+    if (key === "height") {
+      const heights = (value.split("(")[0].match(/\d+(?:\.\d+)?/g) || []).map(Number);
+      if (heights.length) check(Math.max(...heights) === d.height, at, `"Height: ${value}" tops out at ${Math.max(...heights)}, dimensions say ${d.height}`);
+    }
+  });
+});
+// V2-02: the table's other size rows. "Width × depth" gives the fields' first
+// two figures; a bare "Width", "Length" or "Depth" reads against the row's own
+// W (the shoe racks printed "Width: approx. 62 cm" above "62 × 33 × 96 cm");
+// a seat sits below the overall height; a "Weight" pair (it replaces the
+// field's row) must equal the field. And this script's reading of the pairs
+// must equal the product page's.
+products.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const d = p.dimensions || {};
+  const pagePairs = parsedSpecs(p.description).specs.map((s) => [s.key.toLowerCase(), s.value]);
+  check(JSON.stringify(specPairs(p.description)) === JSON.stringify(pagePairs), at, "this script and the product page's parseSpecifications() read the specifications differently");
+  specPairs(p.description).forEach(([key, value]) => {
+    if (key === "width × depth") {
+      const m = value.match(new RegExp(`${N}\\s*×\\s*${N}\\s*cm`));
+      check(m && Number(m[1]) === d.length && Number(m[2]) === d.width, at, `"Width × depth: ${value}" ≠ dimensions ${d.length} × ${d.width} (L × W)`);
+    }
+    if (["width", "length", "depth"].includes(key)) {
+      fail(at, `"${key}: ${value}" reads against the table's "Dimensions (L × W × H)" row; give "Width × depth" or "Overall size"`);
+    }
+    if (key === "seat height") {
+      const heights = (value.match(/\d+(?:\.\d+)?/g) || []).map(Number);
+      check(heights.length && Math.max(...heights) < d.height, at, `"Seat height: ${value}" must sit below the overall height ${d.height}`);
+    }
+    if (key === "weight") {
+      const kg = Number((value.match(/\d+(?:\.\d+)?/) || [])[0]);
+      check(kg === p.weight, at, `"Weight: ${value}" ≠ weight ${p.weight} kg`);
+    }
+  });
+});
 
 // ---------------------------------------------------------------- full mode
 const pushRef = (where, productId, variantId) => {
@@ -618,41 +932,8 @@ if (!CATALOGUE_ONLY) {
     check(orders.some((o) => o.orderNumber === l.orderNumber), `lead ${l.id}`, `orderNumber ${l.orderNumber} matches no order`);
   });
 
-  // ---- Prompt 34: what a shopper or the admin would see disagree ------------
-  // The product page prints the description's "Specifications:" pairs and,
-  // beside them, the dimension fields as "Dimensions (L × W × H)". An "Overall
-  // size" must give the fields' three figures in that order (a height range
-  // ends at the field's height), and a "Height" listing several options must
-  // top out at it.
-  const specPairs = (description) => {
-    const paras = String(description || "").replace(/\r\n?/g, "\n").trim().split(/\n[^\S\n]*\n\s*/);
-    const m = /^specifications\s*:\s*([\s\S]*)$/i.exec(paras[paras.length - 1] || "");
-    if (!m) return [];
-    return m[1].split(/\s*;\s*/).map((part) => {
-      const at = part.indexOf(": ");
-      return at > 0 ? [part.slice(0, at).trim().toLowerCase(), part.slice(at + 2).trim()] : null;
-    }).filter(Boolean);
-  };
-  const N = "(\\d+(?:\\.\\d+)?)"; // a figure, as a capture group
-  products.forEach((p) => {
-    const at = `product ${p.id} (${p.slug})`;
-    const d = p.dimensions || {};
-    specPairs(p.description).forEach(([key, value]) => {
-      if (key === "overall size") {
-        const box = value.match(new RegExp(`${N}\\s*×\\s*${N}\\s*×\\s*${N}(?:\\s*[–-]\\s*${N})?\\s*cm`));
-        const round = value.match(new RegExp(`${N}\\s*cm diameter\\s*×\\s*${N}\\s*cm high`));
-        const [l, w, h] = box ? [box[1], box[2], box[4] || box[3]].map(Number) : round ? [round[1], round[1], round[2]].map(Number) : [];
-        if (box || round) {
-          check(l === d.length && w === d.width && h === d.height, at,
-            `"Overall size: ${value}" ≠ dimensions ${d.length} × ${d.width} × ${d.height} (L × W × H)`);
-        }
-      }
-      if (key === "height") {
-        const heights = (value.split("(")[0].match(/\d+(?:\.\d+)?/g) || []).map(Number);
-        if (heights.length) check(Math.max(...heights) === d.height, at, `"Height: ${value}" tops out at ${Math.max(...heights)}, dimensions say ${d.height}`);
-      }
-    });
-  });
+  // Prompt 34's "Overall size"/"Height" check runs above, in both modes
+  // (moved there unchanged by V2-02).
 
   // A processed full return leaves its order "returned" (api.js's return
   // cascade writes fulfillmentStatus "returned"); My orders and the
@@ -691,6 +972,8 @@ row("Variants", products.reduce((a, p) => a + (p.variants || []).length, 0));
 row("Featured / trending / hot", ["featured", "trending", "hot"].map((k) => products.filter((p) => p[k]).length).join(" / "));
 row("Brands", [...new Set(products.map((p) => p.brand).filter(Boolean))].join(", "));
 row("Low-stock / out-of-stock variants", `${lowStockVariants} / ${outOfStockVariants}`);
+row("Prompt 03 set (V2-02)", `${P03.length} products: compare-at ${compared03}, low ${low03} / sold out ${soldOut03}, `
+  + `featured ${flagged03("featured").length} / trending ${flagged03("trending").length} / hot ${flagged03("hot").length}`);
 DEPARTMENTS.forEach(([id, slug]) => row(`  dept ${id} ${slug}`, `${products.filter((p) => deptOf(p.categoryId) === id).length} products`));
 COVERAGE.forEach(([slug, n]) => row(`  ${slug}`, `${slugCount[slug] || 0}/${n}`));
 if (!CATALOGUE_ONLY) {

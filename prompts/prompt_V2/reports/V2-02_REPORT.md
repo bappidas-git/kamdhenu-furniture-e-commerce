@@ -4,7 +4,10 @@ V2 baseline: 0b9153e490c87c0713c8c802f67185266da424a2 · V2-02 start: 11e57509fa
 
 **Date:** 2026-10-11. **Re-verifies:** Prompt 03 (`prompts/03_catalogue-data-client-ranges.md`, commit `6616837`). **Scope:** categories 1–6 and 10–29, the 46 products of Prompt 03 (ids 1–46), and `scripts/validate-db.js`. **Start:** `git rev-parse HEAD` = `11e5750` (V2-01 merged); `db.json` SHA-256 `3fc7f8f3…`, the seed Prompt 34 committed and V2-01 left unchanged.
 
-**Status:** matrix written before any edit. **172 requirements: 160 met, 7 superseded by a recorded later decision, 3 gaps (R110, R112, R153) and 2 partial (R130, R169).** Repairs follow in §6.
+**Status: complete, no row left as a gap or partial.**
+- **As found** (matrix committed before any edit, `e9b0c2d`): 172 requirements; 160 met, 7 superseded by a recorded later decision, 3 gaps (R110, R112, R153) and 2 partial (R130, R169).
+- **After V2-02's repairs** (§6): 165 met (5 of them repaired here), 7 superseded, 0 gaps, 0 partial. Ten field values in six products changed; no id, slug, SKU, key, key order or collection (§7).
+- **Gate green** (§11). Seven findings handed on (§9).
 
 ---
 
@@ -73,7 +76,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 |---|---|---|---|---|
 | R14 | Category shape, 12 keys in order (03:26–31) | every category | ✅ Met | audit CT01; `validate-db.js:145` |
 | R15 | Product shape, 30 keys in order (03:33–44) | every product | ✅ Met | audit K01; `validate-db.js:210` |
-| R16 | Variant shape `id, name, price, stock, sku, attributes, swatchHex` (03:39–40) | order kept on all 114 variants | ✅ Met | audit K04 46/46 (the validator checks the set, not the order: R153) |
+| R16 | Variant shape `id, name, price, stock, sku, attributes, swatchHex` (03:39–40) | order kept on all 114 variants | ✅ Met | audit K04 46/46; asserted since V2-02 (`validate-db.js:488–490`) |
 | R17 | `attributes` on one variant ⇒ on all, same keys (03:48) | 42 products with variants: all structured, one attribute each (Colour 27, Finish 10, Shelves 3, Size 2) | ✅ Met | audit A01, A02; `validate-db.js:258–261`; `variantUtils.js:22–27` |
 | R18 | `swatchHex` optional, only for a colour attribute (03:48) | on the 27 Colour and 10 Finish products; `isColorAttribute` (`/colou?r\|shade\|finish/`) makes Finish a swatch row | ✅ Met | audit A03, A07 37/37; `variantUtils.js:51–52`; browser: variants/café chair swatches |
 | R19 | No variants → `[]`, never `null` (03:48) | 26, 27, 28, 36 | ✅ Met | audit K02 |
@@ -182,9 +185,9 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R107 | Realistic and hedged ("approx.") (03:127) | every value in cm or kg carries "approx." | ✅ Met | audit D06 |
 | R108 | Never certification or warranty claims (03:127) | none | ✅ Met | audit D07 |
 | R109 | Brand voice: refined, warm, no hype (03:127) | no "!" and no hype word of §39.2 ("look its best" in 36 is an idiom) | ✅ Met | audit D08 |
-| R110 | Specific: the copy true to the record's own data (03:127, "specific"; guardrail 4) | **Found:** 8 Round Plastic Centre Table: "on a veranda or lawn" (short and meta description) and "a veranda, a lawn or a compact living room", while its Use pair says "Indoor and covered outdoor areas". 19 Lobby Set: "for verandas and lawns" and "veranda, lobby or lawn", while its Use says "Covered outdoor areas and lobbies" and its own prose "finished to sit outdoors under cover". 17 Premium Round Plastic Centre Table: "It sits lower and broader than our everyday tables", but it stands 44 cm against the everyday round table's 42 cm | ❌ Gap | audit Z03 (8, 17, 19); browser `before/visual/*-details.txt` |
+| R110 | Specific: the copy true to the record's own data (03:127, "specific"; guardrail 4) | **Found:** 8 Round Plastic Centre Table: "on a veranda or lawn" (short and meta description) and "a veranda, a lawn or a compact living room", while its Use pair says "Indoor and covered outdoor areas". 19 Lobby Set: "for verandas and lawns" and "veranda, lobby or lawn", while its Use says "Covered outdoor areas and lobbies" and its own prose "finished to sit outdoors under cover". 17 Premium Round Plastic Centre Table: "It sits lower and broader than our everyday tables", but it stands 44 cm against the everyday round table's 42 cm. **Repaired:** "lawn" → "covered terrace" in 8's and 19's short description and first paragraph (meta descriptions follow); 17: "It is broader than our everyday tables" (70 cm against 60 cm) | ✅ Met: repaired by V2-02 (was a gap, §6.2) | before: audit Z03 (8, 17, 19), browser `before/visual/*-details.txt`; after: audit Z03 46/46, browser `after/visual/*-details.txt` |
 | R111 | Dimensions and weight realistic per type (03:128) | chairs 43–60 × 49–57 × 76–96 cm, 2.4–6.5 kg; office chairs 57–68 wide, 94–135 high, 9–20 kg; waiting seating 110–220 cm long, 16–30 kg; tables 60–70 cm; racks 50–78 × 30–33 × 96 cm; Lobby Set 150 × 70 × 80 cm, 38 kg and Jhula 190 × 110 × 195 cm, 32 kg (the Large: Prompt 03's recorded convention) | ✅ Met | audit K03; data |
-| R112 | (V2 deep check) Specification sizes and weights agree with `dimensions` and `weight` | "Overall size", "Height" and "Seat height" agree (Prompt 34's check passes). **Found:** the three shoe racks print "Width: approx. 50 / 78 / 62 cm" directly above "Dimensions (L × W × H) 50 × 30 / 78 × 32 / 62 × 33 × 96 cm": the width reads 50 in one row and 30 in the next. Prompt 34's check reads only "Overall size" and "Height", so they slipped through | ❌ Gap | audit Z02 (9, 10, 11); browser `before/spec-covered-plastic-shoe-rack.json` and `before/visual/covered-plastic-shoe-rack-specs.png`; `ProductDetails.test.js:809` |
+| R112 | (V2 deep check) Specification sizes and weights agree with `dimensions` and `weight` | "Overall size", "Height" and "Seat height" agree (Prompt 34's check passes). **Found:** the three shoe racks print "Width: approx. 50 / 78 / 62 cm" directly above "Dimensions (L × W × H) 50 × 30 / 78 × 32 / 62 × 33 × 96 cm": the width reads 50 in one row and 30 in the next. Prompt 34's check reads only "Overall size" and "Height", so they slipped through. **Repaired:** "Width × depth: approx. 50 × 30 / 78 × 32 / 62 × 33 cm", the fields' first two figures, in Prompt 04's racks' own wording; the validator now reads "Width × depth" and rejects a bare "Width", "Length" or "Depth" | ✅ Met: repaired by V2-02 (was a gap, §6.1) | before: audit Z02 (9, 10, 11), browser `before/spec-covered-plastic-shoe-rack.json`, `before/visual/covered-plastic-shoe-rack-specs.png`; after: audit Z01, Z02 46/46, browser `after/visual/covered-plastic-shoe-rack-specs.png`; `validate-db.js:628–656` |
 | R113 | Three images per product (03:129) | 46/46 | ✅ Met | audit I01 |
 | R114 | External placeholders falling back to `PLACEHOLDER_IMG` through `onImageError` (03:129) | every data image has `onError={onImageError}` | ✅ Met | `helpers.js:6–15`; `DESIGN_SYSTEM.md` §11 |
 | R115 | `placehold.co/1200x1500/<bg>/<fg>` in the design-system tones, 4:5 (03:129) | 138/138 | ✅ Met | audit I02; browser: width/* (ratio 0.80) |
@@ -194,8 +197,8 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R119 | `featured` on 8–10 across all four departments (03:130) | 9: 1, 11, 12 (Plastic), 19, 20 (Outdoor), 21, 31 (Office), 37, 39 (Café) | ✅ Met | audit G09 |
 | R120 | `trending` on 6–8 (03:130) | 7: 4, 7, 9, 27, 30, 38, 40 | ✅ Met | audit G10 |
 | R121 | `hot` on 3–4 (03:130) | 4: 14, 18, 33, 45 | ✅ Met | audit G11 |
-| R122 | `relatedProductIds`: 3–5 ids (03:131) | 4 on every product | ✅ Met | audit R01 46/46 (the validator checks ≤ 5 only: R153) |
-| R123 | …within the same department (03:131) | 44 of 46. Outdoor holds two products, so 19 and 20 cannot name three of their own: each lists the other first, then 3, 14 and 8, outdoor-suited plastic pieces (Prompt 03's recorded deviation). Listing only the other piece would let `getRelated` fill the rail with office chairs (empty brands match) | ✅ Met (44 of 46; the outdoor pair as far as the data allows) | audit R03; BUILD_LOG line 261; `api.js` `getRelated` |
+| R122 | `relatedProductIds`: 3–5 ids (03:131) | 4 on every product | ✅ Met | audit R01 46/46; ≥ 3 asserted since V2-02 (`validate-db.js:537`) |
+| R123 | …within the same department (03:131) | 44 of 46. Outdoor holds two products, so 19 and 20 cannot name three of their own: each lists the other first, then 3, 14 and 8, outdoor-suited plastic pieces (Prompt 03's recorded deviation). Listing only the other piece would let `getRelated` fill the rail with office chairs (empty brands match) | ✅ Met (44 of 46; the outdoor pair as far as the data allows) | audit R03; BUILD_LOG line 261; `api.js` `getRelated`; asserted since V2-02, the exception included (`validate-db.js:532–539`) |
 | R124 | `frequentlyBoughtTogetherIds` only for natural bundles, 1–2 ids, `[]` elsewhere (03:131) | plastic chairs → a centre table of their tier; tables → two chairs; office high-back → a waiting chair (+ a desk, Prompt 04); waiting seating → a high- or low-back chair; low-back → the matching high-back (24 → 21, 32 → 30) and a desk; shoe racks, outdoor and café `[]` | ✅ Met | audit R04; list in §5 |
 | R125 | Dates within the last six months, ISO (03:132) | categories 2026-04-10 → 2026-10-06; products created 2026-04-18 → 2026-09-10, updated ≤ 2026-10-06: within six months before the build (2026-10-07) | ✅ Met | audit CT16, CT17, DT1, DT2 |
 
@@ -207,7 +210,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R127 | 1. No new collections or fields; `api.js` unchanged | the 18 collections in the boilerplate's order; `api.js` SHA-256 `c32e6138…` (Prompt 34's) | ✅ Met | `91f7b51` vs `HEAD`; `sha256sum src/services/api.js` |
 | R128 | 2. Placeholder tones from `DESIGN_SYSTEM.md` | yes | ✅ Met | R115, R117 |
 | R129 | 3. Admin untouched; Products and Categories open every new record (edit dialog, image preview, variant table) | both open and save; the owner's follow-up keeps `attributes`/`swatchHex` on save | ✅ Met | browser: admin/* (17 checks); `704888b` |
-| R130 | 4. Names and copy in the A & S Urbanseat voice; no "non-premium" | the voice holds (R109); three records make claims their own data contradicts (R110) | ⚠ Partial | R109, R110 |
+| R130 | 4. Names and copy in the A & S Urbanseat voice; no "non-premium" | the voice holds (R109); the three claims their own data contradicted are corrected (R110) | ✅ Met: repaired by V2-02 (was partial, R110) | R109, R110 |
 | R131 | 5. Image `?text=` labels meaningful (names reused as `alt`) | each product image's text is its name (+ "Detail", "In situ"); a category image's `alt` is its name | ✅ Met | audit I03; `DESIGN_SYSTEM.md` §39.6 |
 | R132 | 6. `rating`/`totalReviews` 0 until Prompt 05 | (R24) | ↪ Superseded by Prompt 05 | R24 |
 | R133 | 6. No fake stock: 4–60 per variant | in-stock variants 9–47 (113 of 118 units of sale), the deliberately low 4, 4, 5; products without variants 26–40 | ✅ Met | audit S03 46/46 |
@@ -240,7 +243,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R150 | 3. Key-set equality per collection | categories, products (reviews, coupons, shipping methods, banners and wishlist added by Prompt 05) | ✅ Met | `validate-db.js:145, 210, 428–437` |
 | R151 | 3. The coverage counts (46 across the slugs, 3 shoe racks × 4 shelf variants) | yes | ✅ Met | `validate-db.js:57–73, 318–340` |
 | R152 | 3. Full mode: references, order money, wallet ledger | yes (and Prompts 05, 34) | ✅ Met | `validate-db.js:353–410` |
-| R153 | 3. (V2) Every machine-checkable Prompt 03 rule asserted in catalogue mode | **Found, not asserted:** department names; the Prompt 03 subtree's names, parents and `sortOrder` (`TREE` covers Prompt 04 only) and its id ranges; one-sentence category descriptions; the Essentials and Premium hints; "cheap"/"basic"; the `1600x1000` category image; category dates beyond ISO; variant key order; the specifications by the app's parser; hedging; certification or warranty words; the price bands; Premium above Essentials; 49/99/00; compare-at 10–20% and its share; `costPrice` 60–70% (only 0 < cost < price); in-stock variants ≥ 4; exactly 2–3 low and 1–2 sold-out in the 46 (only ≥ 2 and ≥ 1, catalogue-wide); the flag counts and departments; related ≥ 3 and within the department; tier, type and material tags; the image texts; the brand by department; the date window; electronics/fashion words in the catalogue (the scan covers supporting data only). Prompt 34's "Overall size"/"Height" check runs in full mode only and does not read "Width" | ❌ Gap | `validate-db.js` read in full; the audit rules without a counterpart (§5) |
+| R153 | 3. (V2) Every machine-checkable Prompt 03 rule asserted in catalogue mode | **Found, not asserted:** department names; the Prompt 03 subtree's names, parents and `sortOrder` (`TREE` covers Prompt 04 only) and its id ranges; one-sentence category descriptions; the Essentials and Premium hints; "cheap"/"basic"; the `1600x1000` category image; category dates beyond ISO; variant key order; the specifications by the app's parser; hedging; certification or warranty words; the price bands; Premium above Essentials; 49/99/00; compare-at 10–20% and its share; `costPrice` 60–70% (only 0 < cost < price); in-stock variants ≥ 4; exactly 2–3 low and 1–2 sold-out in the 46 (only ≥ 2 and ≥ 1, catalogue-wide); the flag counts and departments; related ≥ 3 and within the department; tier, type and material tags; the image texts; the brand by department; the date window; electronics/fashion words in the catalogue (the scan covers supporting data only). Prompt 34's "Overall size"/"Height" check runs in full mode only and does not read "Width" **Repaired:** each is now asserted in catalogue mode (§8); Prompt 34's check moved into catalogue mode unchanged and extended; the specifications read by the app's own `parseSpecifications`. Nothing removed or loosened. Self-test: 41 seeded faults, all reported | ✅ Met: repaired by V2-02 (was a gap, §6.3, §8) | before: `validate-db.js` read in full; after: `validate-db.js:127–183, 199–212, 276–319, 469–656`; the baseline seed now fails on the three shoe racks only; self-test §8 |
 | R154 | 4. Keep JSON Server running while editing | a process note; V2-02 ran it on a scratch copy | ✅ Met | §1 |
 | R155 | 5. Demo accounts untouched | `users` and `admins` unchanged by `6616837` | ✅ Met | per-collection comparison |
 
@@ -266,7 +269,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R166 | 4. Build passes; tests exit 0 | yes | ✅ Met | §1 |
 | R167 | 5. Nothing relies on a JSON Server-only shape | data only | ✅ Met | `git show --stat 6616837`; `QA_CHECKLIST.md` D |
 | R168 | 6. Admin: Categories tree; Products filters by the new categories; edit and save without change leaves the record unchanged | 43 rows; "Shoe Racks" → 3 rows; 10 products and 5 categories saved unchanged: identical apart from `updatedAt`, which `api.js`'s mock stamps on every save | ✅ Met | browser: admin/*; `api.js` `admin.updateProduct`, `updateCategory` |
-| R169 | 7. The build-log entry: the coverage table with ids and names, id ranges, image URL pattern, price bands, brand mapping, dangling references, "Needs client confirmation" | all present; two figures are off: "15 of 46 products have a `comparePrice`" (its own table lists 16) and "variants hold 9–48 units" (9–47) | ⚠ Partial | BUILD_LOG lines 226–333; audit G06 |
+| R169 | 7. The build-log entry: the coverage table with ids and names, id ranges, image URL pattern, price bands, brand mapping, dangling references, "Needs client confirmation" | all present; two figures are off: "15 of 46 products have a `comparePrice`" (its own table lists 16) and "variants hold 9–48 units" (9–47). **Repaired:** the correct figures are recorded in the V2-02 entry; Prompt 03's entry stays as written (V2-01's precedent) | ✅ Met: repaired by V2-02 (was partial, §6.4) | BUILD_LOG lines 226–333; audit G06; the V2-02 entry |
 
 ### 4.11 Per-record deep checks of the V2-02 prompt not already rows above
 
@@ -276,7 +279,9 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R171 | A variant's name equals its attribute value (cart and orders print the name, the selector the value) | 114/114 | ✅ Met | audit A04 |
 | R172 | `metaTitle` "<name> \| A & S Urbanseat" and `metaDescription` ≤ 160 (the page's title and description since Prompt 32) | 46/46; 104–124 characters | ✅ Met | audit X03, X04; `ProductDetails.js:503–517` |
 
-**Totals, counted from the tables (as found).** 172 requirements: ✅ Met 160 · ↪ Superseded 7 (R3, R10, R24, R51, R132, R137, R160) · ❌ Gap 3 (R110, R112, R153) · ⚠ Partial 2 (R130, R169).
+**Totals, counted from the tables.** 172 requirements.
+- **As found:** ✅ Met 160 · ↪ Superseded 7 (R3, R10, R24, R51, R132, R137, R160) · ❌ Gap 3 (R110, R112, R153) · ⚠ Partial 2 (R130, R169).
+- **Now:** ✅ Met 165 (R110, R112, R130, R153 and R169 repaired by V2-02) · ↪ Superseded 7 · ❌ 0 · ⚠ 0.
 
 ## 5. Audit-script summary (baseline)
 
@@ -311,29 +316,145 @@ Bundles (`frequentlyBoughtTogetherIds`, R124): 1, 2, 3 → 8 · 4, 5, 6 → 7 ·
 
 Report-only output (not Prompt 03 rules; §9): the product page's related rail (`getRelated`, limit 10) takes pieces from another department on 28 of the 46 pages; six orders and two reviews are dated before their product's `createdAt`; ratings agree with the approved reviews.
 
+**After the repair** (same script, same 3,054 checks): **0 failures.** R03 now encodes the Outdoor exception the way the validator does (a department with fewer than four products lists its own products first), so the recorded deviation of 19 and 20 passes as designed; run on the baseline seed with that rule, the audit fails on exactly the six gap items above (8, 9, 10, 11, 17, 19).
+
+
 ## 6. Gaps found and repairs
 
-Planned at the time of the matrix (the repairs follow in the next commit, by script):
+Every data repair was made by one script (`repair-v2-02.cjs`, session scratchpad): each edit an exact replacement that must match once, values changed in place on the parsed objects (key sets and key order untouched), the file written back as 2-space JSON without a trailing newline. `JSON.stringify(JSON.parse(db.json), null, 2)` reproduced the seed byte for byte before the run, so the diff is exactly the ten field values below (§7). `updatedAt` is not moved: Prompt 34's seed corrections did not move it either, and the six-month rule (R125) keeps it at or before the build.
 
-1. **R112 (shoe racks 9, 10, 11).** Replace each bare "Width: approx. N cm" with "Width × depth: approx. N × D cm", the figures of `dimensions.length × dimensions.width`. That is the wording Prompt 04's racks (71, 72) already use, and it reads in the same order as the table's "L × W × H" row. Seven pairs stay seven. Two tests pin the old row and change with it (`productSpecs.test.js:22`, `ProductDetails.test.js:809`).
-2. **R110 / R130 (8, 17, 19).** Correct the three claims the records' own data contradicts, with the least wording: "lawn" → "covered terrace" in 8's and 19's short description and first paragraph (their `metaDescription` follows the short description, the Prompt 32 pattern); 17's "It sits lower and broader than our everyday tables" → "It is broader than our everyday tables" (70 cm against 60 cm is true; 44 cm against 42 cm is not lower). The specifications and fields stay as they are (the fields are the truth, Prompt 34's precedent); no other copy changes (§39.9).
-3. **R153.** Tighten `scripts/validate-db.js` (catalogue mode) to assert every machine-checkable Prompt 03 rule listed in R153, run Prompt 34's size check in catalogue mode too and extend it to "Width × depth" and bare "Width"/"Length"/"Depth", and read the specifications with the app's own `parseSpecifications` (loaded from `helpers.js`). Nothing removed or loosened. Self-test with seeded faults.
-4. **R169.** Record the corrected figures (16 compare-at prices; in-stock variants 9–47) in the V2-02 build-log entry; Prompt 03's entry stays as written (V2-01's precedent).
+### 6.1 R112: the shoe racks' "Width" read against the table's own W
 
-## 7. Identity stability
+- **Found.** The specifications table prints the parsed pairs, then "Dimensions (L × W × H)" from the fields (Prompt 17). On the three shoe racks a bare "Width: approx. 62 cm" sat four rows above "62 × 33 × 96 cm": the width was 62 in one row and 33 in the other. Prompt 34's check reads only "Overall size" and "Height", so the rows slipped through.
+- **Repair** (descriptions of 9, 10, 11):
 
-Snapshot `identity-before.json` written at the baseline: 18 collections in order; 43 categories (id, slug, parent, key order); 84 products (id, slug, SKU, category, key order, dimension keys, each variant's id, SKU, key order and attribute keys, rating, totalReviews); SHA-256 of the 16 other collections, of products 47–84 and of categories outside the scope. Compared after the repair in §7 of the final report.
+  | Product | Before | After |
+  |---|---|---|
+  | 9 Slim Plastic Shoe Rack | Width: approx. 50 cm | Width × depth: approx. 50 × 30 cm |
+  | 10 Wide Plastic Shoe Rack | Width: approx. 78 cm | Width × depth: approx. 78 × 32 cm |
+  | 11 Covered Plastic Shoe Rack | Width: approx. 62 cm | Width × depth: approx. 62 × 33 cm |
+
+  The figures are the fields' first two, in the table's order; "Width × depth" is the wording Prompt 04's racks (71, 72) already use. The pairs stay seven; the "Height" pair (each shelf count) and the 5-shelf fields (Prompt 03's recorded convention) stay.
+- **Tests.** Two pinned the old row and now expect the corrected one, as the scope allows for a data fix that changes a pinned value: `src/pages/ProductDetails/productSpecs.test.js:22` (the row keys: "Width" → "Width × depth") and `src/pages/ProductDetails/ProductDetails.test.js:809` (the rendered row: `["Width", "approx. 62 cm"]` → `["Width × depth", "approx. 62 × 33 cm"]`). Nothing else in either test changed.
+- **Re-verified.** Audit Z01/Z02 46/46. The product page shows "Width × depth approx. 62 × 33 cm" above "Dimensions (L × W × H) 62 × 33 × 96 cm" (`before/visual/covered-plastic-shoe-rack-specs.png` → `after/visual/…`; the slim and wide racks likewise). The tightened validator rejects the baseline seed on exactly these three.
+
+### 6.2 R110 (and R130): three claims the records' own data contradicted
+
+| Product | Field | Before | After |
+|---|---|---|---|
+| 8 Round Plastic Centre Table | `shortDescription` | "…fits easily between chairs on a veranda or lawn." | "…fits easily between chairs on a veranda or a covered terrace." (95 characters) |
+| 8 | `description`, paragraph 1 | "…between chairs on a veranda, a lawn or a compact living room." | "…between chairs on a veranda, a covered terrace or a compact living room." |
+| 8 | `metaDescription` | the old short description + " Shop online at A & S Urbanseat." | the new one + the same suffix (127 characters) |
+| 19 Lobby Set | `shortDescription` | "An outdoor seating set for verandas and lawns, in a small and a large configuration." | "An outdoor seating set for verandas and covered terraces, in a small and a large configuration." (95) |
+| 19 | `description`, paragraph 1 | "A complete seating group for the veranda, lobby or lawn: …" | "A complete seating group for the veranda, lobby or covered terrace: …" |
+| 19 | `metaDescription` | follows the short description | (127) |
+| 17 Premium Round Plastic Centre Table | `description`, paragraph 2 | "It sits lower and broader than our everyday tables, with room for a tray and a vase." | "It is broader than our everyday tables, with room for a tray and a vase." |
+
+- **Why the copy, not the fields.** The fields are what the admin edits and the table prints; Prompt 34 made copy agree with them. 8's and 19's own Use pairs say "Indoor and covered outdoor areas" and "Covered outdoor areas and lobbies", and 19's own prose says "finished to sit outdoors under cover"; "covered terrace" is the specs' own meaning. The Jhula (20), whose Use names gardens, keeps "lawn". 17 stands 44 cm against the everyday round table's 42 cm, but 70 cm against 60 cm across: "broader" is true, "lower" is not.
+- **Why this is not a §39.9 rewrite.** §39.9 keeps suggested wording out of `db.json`. These edits correct facts the records contradict, as Prompt 34's size corrections did; no voice change and no other copy. Prompt 29's open proposals (the Plastic Furniture and Office Tables & Desks descriptions, straight apostrophes) stay with the client (R51).
+- **Snapshots.** None of 8, 17, 19 is in a wishlist row; orders keep names, images and SKUs, not descriptions. Full mode passes.
+- **Re-verified.** Audit Z03 46/46; the product pages' "About this piece" read the new sentences (`after/visual/*-details.txt`).
+
+### 6.3 R153: the validator
+
+Every machine-checkable rule of Prompt 03 is now asserted in catalogue mode (which full mode also runs): §8.
+
+### 6.4 R169: the Prompt 03 entry's figures
+
+The V2-02 build-log entry records the correct figures; Prompt 03's entry stays as written. 16 of the 46 products carry a compare-at price, not 15 (its own table lists 16: 2, 5, 7, 11, 12, 18, 19, 21, 25, 27, 29, 33, 35, 37, 40, 46); in-stock variants hold 9–47 units, not 9–48.
+
+### 6.5 Left as they are, on purpose
+
+- **Plastic Furniture's "weather-ready … stack away neatly" and Office Tables & Desks' "…a day productive"** (R51): Prompt 29 judged both and left them to the client (§39.9).
+- **Straight apostrophes** in product copy: Prompt 29's open item ("typography only, for a later content pass").
+- **The Outdoor pair's cross-department relations** (R123): the department holds two products; the validator now encodes the exception.
+- **The Lobby Set's and Jhula's dimensions and weight**, which describe the Large (Prompt 03's recorded convention; O1).
+- **Product dates against older orders and reviews**: V2-04's (F2).
+
+## 7. Identity stability (before → after)
+
+`compare-identity.cjs` on the snapshots the audit wrote at the baseline (`identity-before.json`, seed SHA-256 `3fc7f8f3…`) and after the repair (`identity-after.json`, seed `887637ee…`):
+
+```
+IDENTICAL collection list and order (18 collections)
+IDENTICAL record counts per collection (banners 3, users 3, admins 1, categories 43, products 84, cart 0, orders 11, returns 2, payments 9, refunds 3, shipping_methods 4, coupons 5, reviews 26, wishlist 3, leads 4, settings object, walletTransactions 3, dealsConfig object)
+IDENTICAL categories: id, slug, parentId, key order (43 records)
+IDENTICAL products: id (84 records)
+IDENTICAL products: slug (84 records)
+IDENTICAL products: sku (84 records)
+IDENTICAL products: categoryId (84 records)
+IDENTICAL products: keys (84 records)
+IDENTICAL products: dims (84 records)
+IDENTICAL products: variants (84 records, 199 variants (id, SKU, key order, attribute keys))
+IDENTICAL products: rating (84 records)
+IDENTICAL products: totalReviews (84 records)
+IDENTICAL banners, users, admins, cart, orders, returns, payments, refunds, shipping_methods, coupons, reviews, wishlist, leads, settings, walletTransactions, dealsConfig (SHA-256 of each collection, 16 lines)
+IDENTICAL products 47–84 (SHA-256)
+IDENTICAL categories outside 1–6, 10–29 (SHA-256)
+
+30 comparisons, 0 changed
+```
+
+Every field that differs between the two seeds (a field-by-field walk of all 18 collections): `products[8].shortDescription`, `products[8].description`, `products[8].metaDescription`, `products[9].description`, `products[10].description`, `products[11].description`, `products[17].description`, `products[19].shortDescription`, `products[19].description`, `products[19].metaDescription`. **10 fields; no id, slug, SKU, variant id, category placement, key, key order, rating or collection changed.** `git diff --stat db.json`: 10 insertions, 10 deletions.
 
 ## 8. Validator assertions added
 
-After the repair (§6 item 3).
+All in `scripts/validate-db.js`, in the part both modes run; marked "V2-02". Nothing removed or loosened.
 
-## 9. Findings for V2-03, V2-04 and V2-05 (so far)
+- **The app's own functions** (`:199–212`): `parseSpecifications` and `slugify` read from `src/utils/helpers.js` and run as the storefront runs them; the script fails if either cannot be read.
+- **Categories** (`:276–319`): the six department names; the Prompt 03 subtree (`TREE_03`: id, name, slug, parent, `sortOrder`, active for 10–18 and 20–27); ids 10–19 under Plastic Furniture, 20–29 under Office Chairs; every description one sentence ending in a full stop; no "cheap" or "basic"; every image a `1600x1000` placeholder in the tones (or a Cloudinary photograph); `createdAt` ≤ `updatedAt` ≤ now; the Essentials groups say "dependable everyday value", the Premium groups "heavier build" and "finer finish"; the 23 Prompt 03 categories created within the six months before the build (2026-04-07 → 2026-10-07).
+- **Every product** (`:469–543`): no electronics or fashion words in the catalogue; variant key order; a variant's name equals its attribute value; a variant's SKU is the product's plus a code; colour or finish options share one price; the slug is `slugify()` of the folded name; the product page's parser reads 2–3 paragraphs and 5–7 specification rows; centimetres and kilograms carry "approx."; no certification or warranty words; no "!"; names without a tier prefix or a model number; prices ending 49/99/00; a compare-at price 10–20% above (whole-number arithmetic); cost 60–70% of the price; stock 0–60 on a product without variants; placeholder images labelled with the name, "… Detail", "… In situ"; `metaTitle` set and `metaDescription` set and ≤ 160 characters; at least 3 related ids, all in the department (a department of fewer than four products lists its own first); the tier tag under an Essentials or Premium group; no date in the future.
+- **The 46** (`:545–589`): each line's price band (the Lobby Set and the Jhula by product); each line's variants (attribute and number of options); the type tag; a material tag the specifications use; Nilkamal on plastic, no brand on office, café and outdoor; all active; created within the window; exactly 46; Premium above Essentials in six pairs; compare-at prices on 25–40% (16 of 46); 2–3 low-stock and 1–2 sold-out variants; featured 8–10 across the four departments, trending 6–8, hot 3–4.
+- **Sizes** (`:591–656`): Prompt 34's "Overall size"/"Height" check, moved unchanged out of the full-mode block so `--catalogue` runs it too (full mode still does); "Width × depth" equals L × W; a bare "Width", "Length" or "Depth" fails; "Seat height" below the overall height; a "Weight" pair (it replaces the field's row) equals the field; the script's reading of the pairs equals the product page's.
+- **Summary:** a "Prompt 03 set (V2-02)" row (46 products: compare-at 16, low 3 / sold out 2, featured 9 / trending 7 / hot 4).
+- **Scope.** Catalogue-wide where all 84 products already pass (Prompt 04's included); the checklist's own rules (bands, lines, counts, brand by department, type and material tags, the window) for the 46. V2-03 can widen those to Prompt 04's records (F3).
+- **Self-test** (`selftest.cjs`, scratchpad): 41 faults seeded into a scratch copy, at least one per new assertion plus Prompt 34's moved check → **52 problems, exit 1, every fault reported**. A compare-at price exactly 10% above passes; a badly encoded image label is reported, not a crash. On the baseline seed the validator fails on exactly the three shoe racks; on the repaired seed it passes in both modes.
+- **Lint:** `eslint` (node, ES2022, `no-undef`, `no-unused-vars`, `no-redeclare`) finds nothing new; one pre-existing `no-shadow` warning in Prompt 05's coupon code.
+
+## 9. Findings for V2-03, V2-04 and V2-05
 
 | # | Finding | Owner |
 |---|---|---|
-| F1 | `getRelated` (`api.js`) tops up the curated ids with the same category, then any product with the **same brand or a shared tag**. Every unbranded product matches every other (`"" === ""`), and the tier tags "essentials"/"premium" are shared across departments, so on 28 of the 46 pages the 10-piece "You may also like" rail shows pieces from another department: Essentials office chairs show plastic Essentials chairs (1–6), Premium office chairs show Premium plastic chairs (12–17), the outdoor pair show office chairs (21–25). The curated ids are within the department. A fix (skip empty brands; prefer the same department) is in `api.js`, a protected file | V2-05 / owner |
-| F2 | Orders and reviews dated before their product's `createdAt`: ORD-20250310-0001 (2026-01-15) → 29 (created 2026-08-05); ORD-20250318-0002 (2026-02-01) → 33 (2026-08-03); ORD-20260310-0003 (2026-03-10) → 40 (2026-06-11); ORD-20260315-0004 (2026-03-15) → 6 (2026-06-06); ORD-MMYJ01ED-ZR26 (2026-03-20) → 20 (2026-07-17); ORD-MQDVIQCV-30A9 (2026-06-14) → 9 (2026-09-05); reviews 2 (2026-06-24, product 9) and 3 (2026-02-20, product 33). Prompt 05 recorded keeping the order timestamps. Prompt 03's six-month window (2026-04-07 → 2026-10-07) leaves only product 9 movable from the catalogue side; the others need the order side | V2-04 |
-| F3 | 22 Prompt 04 products carry no material tag (47–50, 58–63, 66–68, 71, 72, 76–81), which Prompt 03's tag rule asks for and V2-03 inherits. V2-02's validator asserts the material tag for the Prompt 03 set only | V2-03 |
-| F4 | The mattresses' "Sizes: Single 36 × 78, … King 72 × 78 in" (58, 59) are nominal sizes without "approx."; V2-02's hedging rule covers cm and kg only | V2-03 |
-| F5 | The home Featured rail in JSON Server mode takes the first 8 featured products by id (`getFeatured`: `slice(0, 8)`), all Prompt 03's (1, 11, 12, 19, 20, 21, 31, 37): Prompt 04's five featured pieces (47, 55, 68, 74, 76) and 39 never appear there | V2-03 / V2-05 |
+| F1 | `getRelated` (`api.js`) tops up the curated ids with the same category, then any product with the **same brand or a shared tag**. Every unbranded product matches every other (`"" === ""`), and the tier tags "essentials"/"premium" are shared across departments, so on 28 of the 46 pages the 10-piece "You may also like" rail shows pieces from another department: Essentials office chairs show plastic Essentials chairs (1–6), Premium office chairs show Premium plastic chairs (12–17), the outdoor pair show office chairs (21–25), café chairs show a plastic chair. The curated ids are within the department (asserted). A fix (skip empty brands; prefer the same department) is in `api.js`, a protected file | V2-05 / owner |
+| F2 | Orders and reviews dated before their product's `createdAt`: ORD-20250310-0001 (2026-01-15) → 29 (created 2026-08-05); ORD-20250318-0002 (2026-02-01) → 33 (2026-08-03); ORD-20260310-0003 (2026-03-10) → 40 (2026-06-11); ORD-20260315-0004 (2026-03-15) → 6 (2026-06-06); ORD-MMYJ01ED-ZR26 (2026-03-20) → 20 (2026-07-17); ORD-MQDVIQCV-30A9 (2026-06-14) → 9 (2026-09-05); reviews 2 (2026-06-24, product 9) and 3 (2026-02-20, product 33). Prompt 05 recorded keeping the order timestamps. Prompt 03's window (2026-04-07 → 2026-10-07) leaves only product 9 movable from the catalogue side; the rest need the order side | V2-04 |
+| F3 | 22 Prompt 04 products carry no material tag (47–50, 58–63, 66–68, 71, 72, 76–81), which Prompt 03's tag rule asks for and V2-03 inherits; V2-02 asserts it for the 46 only. V2-03 can also extend the checklist assertions (bands, counts, window) to Prompt 04's lines | V2-03 |
+| F4 | The mattresses' "Sizes: Single 36 × 78, … King 72 × 78 in" (58, 59) are nominal sizes without "approx."; the hedging assertion covers cm and kg only | V2-03 |
+| F5 | The home Featured rail in JSON Server mode takes the first 8 featured products by id (`getFeatured`: `slice(0, 8)`), all Prompt 03's (1, 11, 12, 19, 20, 21, 31, 37); Prompt 04's five featured pieces (47, 55, 68, 74, 76) and 39 never appear there | V2-03 / V2-05 |
+| F6 | The V2-02 prompt says Prompts 29 and 32 edited catalogue copy and data; neither did (`git log --full-history -- db.json`: Prompts 03, 04, 05, 34 only). Prompt 29 proposed copy; Prompt 32 reads `metaTitle`/`metaDescription` | V2-05 (sign-off wording) |
+| F7 | An admin save stamps `updatedAt` (`api.js`'s mock, by design), so "edit and save without change" leaves a record identical **apart from `updatedAt`**, and `git diff db.json` stays empty only when JSON Server runs on a scratch copy (`JSON_SERVER_DB`), as every V2 browser pass does | V2-05 (check wording) |
+
+## 10. Observations (no change)
+
+- **O1. The Lobby Set and the Jhula** describe the Large in their dimension and weight fields (Prompt 03's recorded convention). With Small chosen the table still shows 150 × 70 × 80 cm and 38 kg (Lobby Set) or 190 × 110 × 195 cm and 32 kg (Jhula); the specifications list each size's contents but not its measurements. Prompt 04's sized products give every option's size in the paragraph. The client's real per-size measurements would settle it (§12).
+- **O2. The V2-02 grep** (`laptop|phone|headphone|t-shirt|sneaker|electronics|fashion`) matches nothing in the 46 or the in-scope categories. Across the catalogue it matches three Prompt 04 records' furniture copy ("a laptop in bed" on the folding bed table and its category, "the phone" on a bedside table) and "sarees" on the iron alna: legitimate, V2-03's. The validator's catalogue scan leaves out "laptop" and "phone" for that reason.
+- **O3. Search** "chair" returns 42 results today (Prompt 03 recorded 41 on the listing; Prompt 15 changed the search and Prompt 04 added pieces); "waiting" returns the 6 waiting pieces.
+- **O4. Child category images** are labelled with slug words (Prompt 03's choice); only the departments' images are shown (mega-menu, home tiles), with the category name as `alt`.
+- **O5.** The validator runs `parseSpecifications` and `slugify` from `helpers.js`'s source; changing how either is declared makes it fail loudly with a pointer to `appFunction()`.
+
+## 11. Gate (after the repairs)
+
+| Check | Result |
+|---|---|
+| `node scripts/validate-db.js --catalogue` | `✓ all checks passed` (43 categories, 84 products, 199 variants; Prompt 03 set: 46, compare-at 16, low 3 / sold out 2, featured 9 / trending 7 / hot 4) |
+| `node scripts/validate-db.js` (full) | `✓ all checks passed` |
+| The tightened validator on the baseline seed | fails, on exactly the three shoe racks (exit 1) |
+| Validator self-test | 41 seeded faults, all reported (52 problems, exit 1) |
+| Audit script | 3,054 checks, 0 failures (6 on the baseline seed) |
+| `CI=true npm test -- --passWithNoTests` | **86 suites, 1,429 tests, exit 0** (93 s), no console warning; the same as at the start |
+| `npm run build` (`.env.production`) and `CI=true npm run build` | "Compiled successfully." main JS 399.62 kB, CSS 34.97 kB gzip (Prompt 34's figures); only the dependency notices of `DESIGN_SYSTEM.md` §43.6 |
+| Build in JSON Server mode | 399.59 / 34.97 kB; every one of its 35 files byte-identical to the baseline build (no app code changed) |
+| Browser, JSON Server mode, scratch `db.json` | **after: 120 of 120** (before: 120 of 120): the six departments in order and two flyouts; 23 listings each equal to the data (`plastic-furniture` 21 of 21, `office-chairs-premium` 8, `plastic-shoe-racks` 3); all 46 product pages with their specifications tables; the shoe rack's options (price, SKU, stock), arrow keys, the café chair's swatches, a sold-out option, the Lobby Set's sizes; three lines in the cart drawer; search "chair" 42, "waiting" 6; 360/768/1024/1440 without overflow and with 4:5 images; the admin's categories tree (43), its "Shoe Racks" filter (3), and edit-save without change on products 1, 8, 9, 10, 11, 17, 19, 20, 26, 37 and categories 1, 4, 11, 14, 24, each record identical apart from the `updatedAt` the mock stamps; console clean |
+| Development server (`npm start`, mock mode) | 18 loads (light and dark; home, two listings, the six repaired product pages): 0 console errors or warnings |
+| ESLint, the two edited tests | 17 findings before and after (pre-existing testing-library rules) |
+| Scope of the change | `db.json` (10 field values), `scripts/validate-db.js`, the two tests, this report, `prompts/BUILD_LOG.md`. `src/services/api.js` SHA-256 `c32e6138…` (unchanged); no admin, `public/` or other `src/` file. The repository's `db.json` was never written by the app (SHA-256 `887637ee…` after both browser passes) |
+
+## 12. Needs client confirmation (these ranges)
+
+- **All 46 product names** (placeholders; "Square/Round Plastic Centre Table" are the only names from the client's site).
+- **"Lobby Set"** (our reading of "Looby set") and **"Jhula (Garden Swing)"** ("Julna"), what their Small and Large contain, and their real measurements and weights per size (the fields hold the Large's: O1).
+- **Prices, compare-at prices, cost prices and stock levels** (bands in R88–R97; 16 compare-at prices; the deliberately low and sold-out options).
+- **Specifications, dimensions, weights, colours and finishes**, including the shoe racks' "Width × depth" figures and where the plastic tables and the Lobby Set may stand (the copy now says covered terraces, as their specifications do).
+- **Brand attribution:** Nilkamal on all 18 plastic pieces; office, café and outdoor pieces unbranded.
+- **Category copy** and the tier names Essentials and Premium, including Prompt 29's proposals for Plastic Furniture ("weather-ready" and stacking unconfirmed) and Office Tables & Desks.
+- **Straight apostrophes** in product copy (Prompt 29).
+- **Merchandising:** the featured, trending and hot flags; the related pieces, including the Outdoor pair's plastic picks (3, 14, 8); the bundles.

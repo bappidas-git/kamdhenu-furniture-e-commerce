@@ -19,7 +19,7 @@ test("the parsed pairs come first, in their order, then the catalogue's fields",
   expect(rows.map((row) => row.key)).toEqual([
     "Material",
     "Shelves",
-    "Width",
+    "Width × depth",
     "Height",
     "Pairs per shelf",
     "Assembly",
