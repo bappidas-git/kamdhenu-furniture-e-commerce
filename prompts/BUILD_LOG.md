@@ -5072,3 +5072,202 @@ A field-by-field walk of both seeds finds exactly the 34 values above (2 categor
 - **Category copy** for the 20 categories, including 34 "almirahs (wardrobes)" and 47 "with a drawer for stationery".
 - **Copy statements no data backs:** 82 "the table is folded into a corner"; 58 "arrives roll-free".
 - **Merchandising:** the flags (and F4); the related pieces (54 and 69 now within their rooms); the bundles (25 now names both reading tables); the material tags on 16 pieces.
+
+---
+
+## Prompt V2-04 — Supporting data and integrity (max-effort re-verification of Prompt 05)
+
+**Date:** 2026-10-11. **Start:** `75071f0` (V2-03 merged); the V2 baseline stays `0b9153e`. `db.json` SHA-256 `d689a95f…` before, `a15d361a…` after.
+
+**Result:** every requirement of Prompt 05 for the supporting collections (settings, shipping methods, coupons, the deals config, banners, orders, payments, refunds, returns, the store-credit ledger and caches, reviews and ratings, the wishlist, leads) and every deep check of the V2-04 prompt was audited with evidence. The requirement matrix was committed before any edit (`8c7460e`); the full matrix, the formulas, the recomputation and the evidence are in `prompts/prompt_V2/reports/V2-04_REPORT.md`.
+- **165 requirements** (scope; every collection bullet; the 7 guardrails; the implementation notes and the validator; 6 acceptance criteria; 6 QA steps; the build-log obligations; 21 V2-04 deep checks).
+- **As found:** 147 met, 4 superseded by recorded later decisions, 9 gaps, 5 partial.
+- **Now:** 161 met (14 repaired here), 4 superseded, 0 gaps, 0 partial.
+- **How:** an independent recomputation (`recompute.cjs`, listed in the report's Appendix A) rebuilds every order line from today's catalogue and every figure from the inputs, twice: by a re-implementation and by **the app's own expressions lifted from the source with the Babel parser** (`couponDiscountFor` and the order math of `Checkout.js`, `placeOrder`'s item mapper, `createPaymentForOrder`, `appendPaymentRefund`, `readWalletBalance`, `buildWishlistItem`, `deriveOrderStatus`, `isCouponValid`, `getProductMaxDiscount`). **Every stored figure already equalled its recomputation**; the gaps were content, state and dating consistency and the validator's coverage. After the repairs: **0 mismatches** in every category. A Playwright suite on a JSON Server-mode build against a scratch `db.json`: 69 of 69 before, 78 of 78 after (9 checks on the repaired records added).
+
+### The money and cascade rules, as the code implements them
+
+- **Line:** `name + " - " + variantName` (a hyphen, not Prompt 05's en dash), the product's first image, the variant's price, `subtotal = price × quantity`; `sku: item.sku || ""`, and no cart line carries a SKU, so storefront orders store `""` (the seed keeps the variant SKU, as Prompt 05 asked).
+- **Coupon** (mock): active, not expired, `usedCount < usageLimit`, `subtotal ≥ minOrderAmount` (before the discount); "first order" and `perUserLimit` are not checked. **Discount:** percentage `Math.round(subtotal × value / 100)`, or the fixed value, capped by `maxDiscount` and the subtotal.
+- **Delivery:** free when `rateType` is free or `freeAbove && subtotal ≥ freeAbove`, on the **pre-discount** subtotal and **inclusive** (Prompt 05's text said after the discount; the code wins, as Prompt 05 recorded); else `flatRate`.
+- **Tax:** `Math.round(max(0, subtotal − discount) × taxRate / 100)`, no tax on delivery; `taxIncluded` is not read. **Total:** subtotal − discount + delivery + tax.
+- **Store credit:** applied last, `min(balance, total)`; `amountPayable = total − credit`. **COD:** offered while `0 < amountPayable ≤ codMaxOrder`; `codFee` is never charged.
+- **Placing an order** (mock): a payment for the payable (`captured` when paid, `pending` for COD), the coupon's `usedCount + 1`, a wallet debit of the credit used.
+- **Wallet:** `balance = max(0, round(Σ credits − Σ debits))` (`readWalletBalance`; `computeWalletBalance` wraps it); debits capped at the balance; `users[].storeCredit` mirrors `balanceAfter`.
+- **Cancel** (`orders.cancel` → `performCancel`): a paid order opens a refund of `amountPayable − refundedAmount` and returns the credit used; an uncollected payment is **voided** ("Payment voided"). **Order refunds:** initiate, then complete (books on the payment). **Return refunds:** the admin types `refundAmount`; processing writes the return `refunded`, books `refundAmount − deductionAmount` on the payment (`partially_refunded` until it covers the amount) and leaves the order `returned`.
+- **Ratings:** no code computes them in mock mode; the seed's rule is the mean of approved ratings to one decimal and the approved count. **Deals:** the page shows the admin's picks in order and never checks a discount.
+
+### Before → after (money unchanged; three states and three timestamps corrected)
+
+| Order | Total | Payable | Payment | Refunded | State before → after |
+|---|---|---|---|---|---|
+| 1 ORD-20250310-0001 | ₹16,519 | — | 1 ₹16,519 | ₹16,519 (return 1) | unchanged; return 1 `approved` → `refunded` |
+| 2 ORD-20250318-0002 | ₹33,628 | — | 2 ₹33,628 | — | unchanged |
+| 3 ORD-20260310-0003 | ₹9,937 | — | 3 ₹9,937 | ₹9,937 | unchanged |
+| 4 ORD-20260315-0004 | ₹3,893 | — | none | — | unchanged |
+| 5 ORD-MMYJ01ED-ZR26 | ₹14,159 | — | none | — | payment `pending` → `voided`, + "Payment voided" |
+| 6 ORD-MQA9I6E7-0IR2 | ₹8,758 | — | 4 ₹8,758 | — | unchanged (return 2 requested: processing books ₹8,259 → `partially_refunded`, checked on a scratch copy) |
+| 7 ORD-MQB0JHUB-9KL6 | ₹10,527 | — | 5 ₹10,527 | — | `updatedAt` → its last event (+28 ms) |
+| 8 ORD-MQC1HWSZ-CAN8 | ₹4,302 | — | 6 ₹4,302 | ₹4,302 to store credit | `updatedAt` → its last event (+69 ms) |
+| 9 ORD-MQCGV6OM-Z965 | ₹38,939 | ₹37,939 | 7 ₹37,939 | — | unchanged |
+| 10 ORD-MQDUWC74-RUVY | ₹56,638 | ₹56,638 | 8 ₹56,638 | — | unchanged |
+| 11 ORD-MQDVIQCV-30A9 | ₹9,819 | ₹8,819 | 9 ₹8,819 | — | `updatedAt` → its last event (+26 ms) |
+
+Wallet (user 3), unchanged: +₹4,302 (refund REF-20260613-JQ3L) → ₹4,302; −₹1,000 (ORD-MQCGV6OM-Z965) → ₹3,302; −₹1,000 (ORD-MQDVIQCV-30A9) → ₹2,302 = `users[2].storeCredit` = `readWalletBalance` run on the data; users 1 and 2 at ₹0.
+
+### Review → rating mapping (unchanged)
+
+Approved ratings → `rating` / `totalReviews`: 2 (4, 4) 4 / 2 · 11 (4) · 12 (4; 1 pending) · 19 (4) · 21 (4, 5) 4.5 / 2 · 33 (4) · 37 (5, 4) 4.5 / 2 · 46 (3) · 47 (5, 4, 5) 4.7 / 3 (1 pending) · 55 (5) · 58 (4, 5) 4.5 / 2 (1 rejected) · 64 (5) · 74 (4) · 76 (5) · 81 (5). Products 6 (rejected only) and 9 (pending only) and 67 others: 0 / 0. 26 reviews (21 / 3 / 2) on 17 products in all six departments; 5 verified (user 3: 64 approved, 9 pending; user 1: 33, 76 approved, 6 rejected), each on an order of that product.
+
+### Gaps found and fixed, by collection
+
+| Collection | Gap | Fix |
+|---|---|---|
+| `settings` | `seo.metaTitle` still the old Title Case title (R29) | `index.html`'s title, = `DEFAULT_PAGE_TITLE` (Prompt 29 proposed exactly this) |
+| `coupons` | WELCOME500 promised "your first order": not in Prompt 05's line, enforced nowhere, and both seeded uses were later orders (R43) | "₹500 off orders above ₹5,000" (Prompt 29's wording); `SpecialOffers.test.js:296` updated, the only test change. NEWHOME20 keeps Prompt 05's "first order" |
+| `banners` | `gradient` wrapped the navy in `linear-gradient(…)` (R59) | `#0b1f3f`, `DESIGN_SYSTEM.md` §12's literal (`--sf-brand-navy`) |
+| `reviews` | health effects in 11 and 17 (V2-03 F3), a set-up service the store has not confirmed in 6, armrests product 21 never lists in 10 (R97) | those statements re-worded; ratings, dates, names and counts kept |
+| `reviews`, `wishlist` | reviews 2, 3, 4 and wishlist rows 1, 2 dated before their product (V2-02/V2-03 F2, R163) | reviews moved after their product (still after their order); the three wishlist rows moved together by 61 days, order kept |
+| `orders` | order 5 cancelled with its COD payment still `pending`, a state neither cancel path leaves (R150) | `voided` and the "Payment voided" event `orders.cancel` writes; the dashboard's pending orders 5 → 4 |
+| `orders` | orders 7, 8, 11: last event 26–69 ms after `updatedAt` (R153) | `updatedAt` = the last event |
+| `returns` | return 1 `approved` though refunded, so Admin → Returns offered "Mark as Received" again, a path to a second ₹16,519 refund (R151) | `refunded`, what Process Refund writes |
+| `scripts/validate-db.js` | most machine-checkable rules unasserted (R162) | the V2-04 block (below) |
+
+All data edits were made by one script (`repair.cjs`, the report's Appendix B): exact, once-only replacements that assert the old value and the key order, written back as 2-space JSON without a trailing newline; dry-run on a copy first; `updatedAt` of re-worded records not moved. **26 paths changed** (25 values, one timeline entry); ids, order numbers, keys, key orders, record counts, collections and every money field identical (field walk, report §11).
+
+**Kept on purpose:** the 7 orders dated before their products (9 lines). Orders 5–11's numbers are `Date.now()` in base 36 and decode to their `createdAt` to the millisecond, orders 3 and 4's carry their dates, order numbers are frozen, and Prompt 05 kept the timestamps; product dates belong to Prompts 03 and 04's window, and every product is dated after 2026-04-07, so orders 1–5 could reference none. Neither date is shown anywhere. The validator now asserts the number ↔ `createdAt` binding.
+
+### Validator assertions added (full mode, marked V2-04)
+
+- **Counts** of every collection Prompt 05 kept.
+- **Settings:** the 42 key paths in order and every value (contact facts from `constants.js`; `seo` from `public/index.html`).
+- **Shipping methods** by id with their values.
+- **Coupons:**
+  - the five codes and values;
+  - WORKSPACE15 without a category claim;
+  - 2027 expiries, modest use, `usedCount` ≥ the seeded orders using the code;
+  - "first order" only where every seeded use was a first order.
+- **Orders:**
+  - item price = the variant's;
+  - delivery charged by an **active** method (the old check accepted the inactive Free Shipping, so any ₹0 passed);
+  - the coupon's minimum, validity on the order's date and per-customer limit;
+  - credit matched by a debit;
+  - `createdAt` ≤ events ≤ `updatedAt`; `deliveredAt` and `cancelledAt` in the timeline;
+  - each event's state, and no cancelled order with a pending payment;
+  - `paymentStatus` ↔ the payment; every ₹ amount in any timeline entry;
+  - the order number encoding `createdAt`.
+- **Payments, returns, refunds, wallet:**
+  - refund states and timestamps;
+  - a return's status = its last timeline action, `processed` ⇔ `refunded`;
+  - wallet rows linked to what moved the money.
+- **Reviews:**
+  - 20–26; 3–4 pending, 1–2 rejected; 14–18 products in all six departments;
+  - ratings 3–5 (the old check allowed 1–5); 1–3 plain sentences;
+  - no health effect, no set-up claim;
+  - dated after the product.
+- **Wishlist:** user 3's, active products, saved after they existed.
+- **Deals config:** the shape, no urgency wording, two valid coupons, three discounted deals (the old check accepted any compare-at), 6–8 discounted grid pieces spanning every department that has one.
+- **Banners:** department links and §12's navy.
+
+**Self-test:**
+- 69 faults seeded one at a time: **69 of 69 reported** (125 problems in all).
+- The as-found seed fails with exactly the audit's gaps (20 problems); the repaired seed passes.
+- Catalogue mode is unchanged and passes.
+- ESLint: the same single pre-existing note before and after.
+
+### Superseded decisions honoured (not gaps)
+
+- **Prompt 34:**
+  - order 1 returned and delivered;
+  - payment 5 captured;
+  - coupon expiries at 18:29:59Z;
+  - leads 3 and 4 rewritten.
+- **Prompt 29:**
+  - the sentence-case title that `seo.metaTitle` now follows;
+  - its proposals for the shipping names, the tagline's casing and the deals title's accent stay the client's (unchanged).
+- **Prompts 18 and 34:** every surface reads the live threshold; `FREE_SHIPPING_THRESHOLD` (9999, unchanged) is the seed's reference only.
+- **Prompt 24:** "Return or exchange" is a Support link (checked prefilled).
+- **Prompt 17:** the product page counts its visible reviews.
+
+### Findings handed on (report §12)
+
+1. **F1 (V2-05).** `00_INDEX.md` §6's coupon line: only NEWHOME20 still says "first order".
+2. **F2 (owner).** Admin → Leads logs a development-only React warning (`hover` through `motion.tr`, `AdminLeads.js:438–444`, unchanged since the first commit; the same on the as-found seed).
+3. **F3 (owner, `api.js`).** The mock stamps `updatedAt` before appending events. Validate a scratch copy only after restoring it.
+4. **F4 (owner).** The offers page shows any picked product as a deal of the day, discounted or not.
+5. **F5 (V2-05).** "Review not approved" shows on `/orders` only on a scratch copy (reject review 2).
+6. **F6 (owner).** Storefront orders store an empty SKU.
+7. **F7 (owner, admin).** Admin → Returns builds its actions from `status` alone.
+8. **F8 (client/owner).** The demo orders dated before their products.
+
+### Gate
+
+- **Validator:** `node scripts/validate-db.js` (full) and `--catalogue`: `✓ all checks passed`.
+- **Recomputation:** 0 mismatches.
+- **Tests:** `CI=true npm test -- --passWithNoTests`: **86 suites, 1,429 tests, exit 0**, no console warning.
+- **Builds:** `npm run build` and `CI=true npm run build`: "Compiled successfully.", main JS 399.62 kB, CSS 34.97 kB gzip, only the documented dependency notices. In JSON Server mode all 35 build files are byte-identical to the baseline's.
+- **Browser** (Playwright, JSON Server mode, scratch `db.json`): **78 of 78**.
+  - **My orders** as `mail4bappidas@gmail.com`: totals, details, tracking, review chips; cancel only on the two processing orders; Return or exchange prefilled.
+  - **Wallet:** ₹2,302 = the ledger = checkout's balance.
+  - **Wishlist:** three pieces in order; Move to cart.
+  - **Product pages:**
+    - the Wooden Sofa Set 4.7 / 3;
+    - the re-worded reviews;
+    - "No reviews yet." on the L-Shaped Sofa.
+  - **Special offers:** codes, pieces, a live countdown, Copy code.
+  - **Header:** "Free delivery on orders above ₹9,999.00".
+  - **Checkout to Review:** a ₹9,999 cart ships free (WELCOME500 −₹500, tax ₹1,710, total ₹11,209, ₹2,302 credit, ₹8,907 by COD).
+  - **Other demo users:** both load their orders.
+  - **Widths:** 360 / 768 / 1024 / 1440 without overflow.
+  - **Admin:**
+    - the dashboard and every dialog;
+    - the return-refund cascade;
+    - a customer cancel returning ₹1,000 of credit;
+    - review approval;
+    - Settings saved unchanged;
+    - the repaired records on screen.
+  - **Console:** clean. The seed was never written.
+- **Development server:** 26 loads; only F2's pre-existing warning.
+- **Diff:** `db.json` (26 paths), `scripts/validate-db.js` (+249), `SpecialOffers.test.js` (1 line), the report and this entry. No `src/services/api.js` (SHA-256 `c32e6138…`), `src/utils/constants.js`, admin, `public/` or other `src/` file.
+
+### Needs client confirmation (refreshed)
+
+- **Tax:** GST 18%, added to tax-exclusive prices on every product.
+- **COD limits:** no fee, no minimum, a ₹50,000 cap on the amount collected; many sofa, bed and dining orders exceed it.
+- **Shipping rates and windows:**
+  - Standard ₹499 / 7–10 business days;
+  - Express ₹999 / 3–5;
+  - same-day off;
+  - carrier Shiprocket;
+  - parcel 8 kg, 65 × 60 × 75 cm.
+- **Free-delivery threshold:** ₹9,999 on the subtotal before coupons, inclusive. `FREE_SHIPPING_THRESHOLD` mirrors it for the validator only.
+- **Coupon codes and values:**
+  - WELCOME500 "₹500 off orders above ₹5,000", one per customer;
+  - FLAT10;
+  - FESTIVE25 (expired);
+  - NEWHOME20 "20% off your first order, up to ₹3,000": nothing checks "first order" in the mock. Either the Laravel API enforces it, or the line drops it;
+  - WORKSPACE15;
+  - their minimums, caps, limits and expiries.
+- **Store contact:**
+  - `info@kamdhenufurniture.com` (the old brand's domain);
+  - `+91 84729 18653`;
+  - WhatsApp `+91 84729 19541`;
+  - "Assam, India" without street or PIN;
+  - which is the source of truth, `constants.js` or Admin → Settings.
+- **Also:**
+  - the special-offers selection and hero copy;
+  - Prompt 29's open copy proposals;
+  - the seeded reviews' wording.
+
+### Remove or replace before launch
+
+- **Demo reviews:** all 26, and every rating and count derived from them.
+- **Demo orders:**
+  - the 11 orders with their 9 payments, 3 refunds, 2 returns and 3 wallet rows;
+  - user 3's ₹2,302 store credit;
+  - the orders dated before their products;
+  - the coupons' `usedCount` values;
+  - the four demo leads.
+- **Images:** the placeholder (`placehold.co`) photography.
+- **Prices:** placeholder prices, stock and specifications; the placeholder tax, COD, delivery and coupon settings.
+- **Accounts:** `user@example.com` / `password123`, `jane@example.com` / `password123`, `mail4bappidas@gmail.com` / `Bappi@12345`, admin `admin@store.com` / `admin123`, with their plaintext passwords.

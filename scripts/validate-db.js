@@ -37,6 +37,22 @@
 // options, weight capacity where the leaf gives one, Prompt 04's size pairs
 // against the fields, related pieces within their room, cross-department
 // bundles returned, and every office chair and desk bundled with each other.
+// V2-04 (the max-effort re-verification of Prompt 05) added the full-mode
+// checks marked "V2-04": frozen record counts; the settings' 42 key paths and
+// Prompt 05's values (contact facts from constants.js, the SEO title and
+// description from public/index.html); the four shipping methods; the five
+// coupons' values, 2027 expiries, modest use and honest descriptions (no
+// "first order" a seeded order contradicts); each order's delivery charged by
+// an active method, the coupon's minimum, validity and per-customer limit,
+// item prices, timeline order (createdAt ≤ events ≤ updatedAt), the states its
+// events leave (a cancelled order's uncollected payment voided), payment
+// status, every ₹ amount quoted, and order numbers that encode createdAt;
+// payment, return and refund states and timestamps; wallet rows linked to what
+// moved the money; review counts, 3–5 ratings, 1–3 plain sentences, no health
+// or unconfirmed-service claim, products and departments covered, dates after
+// the product existed; user 3's wishlist on active products saved after they
+// existed; the deals config's shape and selection rules; banner links to
+// departments and DESIGN_SYSTEM.md §12's literal navy. Nothing was loosened.
 // =============================================================================
 
 const fs = require("fs");
@@ -1216,6 +1232,236 @@ if (!CATALOGUE_ONLY) {
       `expiresAt ${c.expiresAt} is the end of a UTC day; use 18:29:59Z (23:59:59 in India)`);
   });
 
+  // ---- V2-04: Prompt 05's remaining machine-checkable rules ----------------
+  // Every value below is Prompt 05's (or a later recorded decision's); the
+  // money rules are the checkout's and the cascade's, as src implements them.
+  const srcFile = (...p) => fs.readFileSync(path.join(__dirname, "..", ...p), "utf8");
+  const constantsSrc = srcFile("src", "utils", "constants.js");
+  const constString = (name) => {
+    const m = constantsSrc.match(new RegExp(`export const ${name} =[^"\\n]*"([^"]+)"`));
+    return m ? m[1] : undefined;
+  };
+  const SUPPORT_EMAIL = constString("SUPPORT_EMAIL");
+  const html = srcFile("public", "index.html");
+  const decode = (s) => s.replace(/&amp;/g, "&").replace(/&quot;/g, '"').replace(/&#39;/g, "'");
+  const htmlTitle = decode((html.match(/<title>([^<]*)<\/title>/) || [])[1] || "");
+  const htmlDescription = decode((html.match(/name="description"\s+content="([^"]*)"/) || [])[1] || "");
+  const brandNavy = (srcFile("src", "theme", "storefront-tokens.css").match(/--sf-brand-navy:\s*(#[0-9a-fA-F]{6})/) || [])[1];
+  const dept = (pid) => { const p = prodById.get(String(pid)); return p ? deptOf(p.categoryId) : null; };
+  const discounted = (p) => p && Number(p.comparePrice) > Number(p.price) && Number(p.price) > 0; // getProductMaxDiscount > 0
+  const couponValid = (c) => c && c.isActive !== false && (!c.expiresAt || c.expiresAt > nowIso) && !(c.usageLimit && c.usedCount >= c.usageLimit); // offersData.js isCouponValid
+  const user3 = users.find((u) => u.email === "mail4bappidas@gmail.com");
+
+  // record counts are frozen (Prompt 05 kept every record; V2 changes values only)
+  Object.entries({ banners: 3, users: 3, admins: 1, orders: 11, returns: 2, payments: 9, refunds: 3, shipping_methods: 4, coupons: 5, wishlist: 3, leads: 4, walletTransactions: 3 })
+    .forEach(([k, n]) => check((db[k] || []).length === n, k, `${(db[k] || []).length} records; Prompt 05 kept ${n}`));
+
+  // settings: every key of the boilerplate, in order, with Prompt 05's values
+  const keyPaths = (o, p = "") => Object.entries(o).flatMap(([k, v]) => (v && typeof v === "object" && !Array.isArray(v) ? keyPaths(v, `${p}${k}.`) : [`${p}${k}`]));
+  const SETTINGS_PATHS = ["store.name", "store.tagline", "store.email", "store.phone", "store.address", "store.currency", "store.currencySymbol", "store.timezone", "store.logo", "store.favicon", "store.taxRate", "store.taxIncluded",
+    "shipping.shiprocketEnabled", "shipping.shiprocketEmail", "shipping.shiprocketPassword", "shipping.defaultWeight", "shipping.defaultDimensions.length", "shipping.defaultDimensions.width", "shipping.defaultDimensions.height",
+    "payment.razorpayEnabled", "payment.razorpayKeyId", "payment.stripeEnabled", "payment.stripePublishableKey", "payment.codEnabled", "payment.codFee", "payment.codMinOrder", "payment.codMaxOrder",
+    "notifications.orderConfirmationEmail", "notifications.shippingUpdateEmail", "notifications.adminNewOrderEmail", "notifications.adminEmail", "notifications.lowStockAlert", "notifications.lowStockEmail",
+    "seo.metaTitle", "seo.metaDescription", "seo.googleAnalyticsId", "seo.facebookPixelId", "social.facebook", "social.instagram", "social.twitter", "social.youtube", "social.whatsapp"];
+  check(JSON.stringify(keyPaths(settings)) === JSON.stringify(SETTINGS_PATHS), "settings", "key paths differ from the boilerplate's 42");
+  const st = settings.store || {};
+  check(st.tagline === constString("APP_TAGLINE") && st.email === SUPPORT_EMAIL && st.phone === constString("SUPPORT_PHONE") && st.address === constString("SUPPORT_ADDRESS"),
+    "settings.store", "tagline, email, phone and address must equal constants.js");
+  check(st.currency === "INR" && st.currencySymbol === "₹" && st.timezone === "Asia/Kolkata" && st.logo === null && st.favicon === null && st.taxRate === 18 && st.taxIncluded === false,
+    "settings.store", "INR, ₹, Asia/Kolkata, logo and favicon null, taxRate 18, taxIncluded false");
+  check(sp.codEnabled === true && sp.codFee === 0 && sp.codMinOrder === 0 && sp.codMaxOrder === 50000 && sp.razorpayEnabled === false && sp.stripeEnabled === false,
+    "settings.payment", "COD on, fee 0, min 0, max 50,000; gateways off");
+  const ship = settings.shipping || {};
+  check(ship.defaultWeight === 8 && ["length", "width", "height"].every((k) => isNum(ship.defaultDimensions?.[k]) && ship.defaultDimensions[k] > 0),
+    "settings.shipping", "defaultWeight 8 kg and positive carton dimensions");
+  check(settings.notifications?.adminEmail === SUPPORT_EMAIL && settings.notifications?.lowStockEmail === SUPPORT_EMAIL, "settings.notifications", "emails must be the support email");
+  check(settings.seo?.metaTitle === htmlTitle, "settings.seo", `metaTitle "${settings.seo?.metaTitle}" ≠ index.html's title "${htmlTitle}"`);
+  check(settings.seo?.metaDescription === htmlDescription, "settings.seo", "metaDescription ≠ index.html's description");
+  const soc = settings.social || {};
+  check(soc.whatsapp === (constantsSrc.match(/WHATSAPP:\s*"([^"]*)"/) || [])[1] && ["facebook", "instagram", "twitter", "youtube"].every((k) => soc[k] === ""),
+    "settings.social", "whatsapp = SOCIAL_LINKS.WHATSAPP, the others \"\"");
+
+  // shipping methods: the four records, by id
+  check(JSON.stringify(methods.map((m) => [m.id, m.name])) === JSON.stringify([[1, "Standard Delivery"], [2, "Express Delivery"], [3, "Same Day Delivery"], [4, "Free Shipping"]]),
+    "shipping_methods", "ids 1–4: Standard Delivery, Express Delivery, Same Day Delivery, Free Shipping");
+  const [m1, m2, m3, m4] = [1, 2, 3, 4].map((id) => methods.find((m) => m.id === id) || {});
+  check(m1.carrier === "Shiprocket" && m1.description === "Delivered in 7–10 business days" && m1.rateType === "flat" && m1.flatRate === 499 && m1.freeAbove === 9999 && m1.estimatedDays === "7-10" && m1.isActive === true,
+    "shipping_method 1", "Standard: Shiprocket, flat ₹499, free above ₹9,999, 7-10 days, active");
+  check(m2.flatRate === 999 && m2.freeAbove === null && m2.estimatedDays === "3-5" && m2.isActive === true, "shipping_method 2", "Express: ₹999, never free, 3-5 days, active");
+  check(m3.isActive === false && m4.isActive === false, "shipping_methods", "Same Day and Free Shipping stay inactive");
+  const activeMethods = methods.filter((m) => m.isActive);
+
+  // coupons: Prompt 05's five, honest descriptions, modest use
+  const C = Object.fromEntries(coupons.map((c) => [c.code, c]));
+  check(JSON.stringify(coupons.map((c) => c.id)) === "[1,2,3,4,5]" && ["WELCOME500", "FLAT10", "FESTIVE25", "NEWHOME20"].every((k) => C[k]) && (C.WORKSPACE15 || C.OFFICE15),
+    "coupons", "ids 1–5: WELCOME500, FLAT10, FESTIVE25, NEWHOME20, WORKSPACE15 (or OFFICE15)");
+  const w15 = C.WORKSPACE15 || C.OFFICE15 || {};
+  check(C.WELCOME500?.type === "fixed" && C.WELCOME500.value === 500 && C.WELCOME500.minOrderAmount === 5000, "coupon WELCOME500", "fixed ₹500, minimum ₹5,000");
+  check(C.FLAT10?.type === "percentage" && C.FLAT10.value === 10 && C.FLAT10.maxDiscount === 2000 && C.FLAT10.minOrderAmount === 2000, "coupon FLAT10", "10%, up to ₹2,000, minimum ₹2,000");
+  check(C.FESTIVE25 && !C.FESTIVE25.isActive && C.FESTIVE25.expiresAt < nowIso && C.FESTIVE25.usageLimit !== null && C.FESTIVE25.usedCount >= C.FESTIVE25.usageLimit, "coupon FESTIVE25", "inactive, expired and exhausted");
+  check(C.NEWHOME20?.type === "percentage" && C.NEWHOME20.value === 20 && C.NEWHOME20.maxDiscount === 3000, "coupon NEWHOME20", "20%, up to ₹3,000");
+  check(w15.type === "percentage" && w15.value === 15 && w15.minOrderAmount === 15000 && !/office|furniture|chair|desk|table|categor/i.test(w15.description || ""),
+    `coupon ${w15.code}`, "15% off orders above ₹15,000, with no category claim (coupons have no category restriction)");
+  coupons.forEach((c) => {
+    const at = `coupon ${c.id} (${c.code})`;
+    const used = orders.filter((o) => o.couponCode === c.code);
+    if (c.isActive) {
+      check(/^2027-/.test(c.expiresAt || ""), at, "an active coupon expires in 2027");
+      check(c.usedCount <= 50, at, `usedCount ${c.usedCount} is not modest`);
+    }
+    check(c.usedCount >= used.length, at, `usedCount ${c.usedCount} is below the ${used.length} seeded orders that used it`);
+    // the description promises nothing the seed contradicts: "first order" only
+    // where every seeded use was the customer's first order
+    if (/first order/i.test(c.description || "")) {
+      used.forEach((o) => check(!orders.some((x) => x.userId === o.userId && x.createdAt < o.createdAt), at, `says "first order", but ${o.orderNumber} is not the customer's first`));
+    }
+  });
+
+  // orders: the checkout's rules at the order's date, timelines, states
+  const STATE_OF_PAYMENT = { paid: ["captured"], pending: ["pending"], refunded: ["refunded"], partially_refunded: ["partially_refunded"], voided: ["voided"], failed: ["failed"] };
+  orders.forEach((o) => {
+    const at = `order ${o.id} (${o.orderNumber})`;
+    const hist = o.statusHistory || [];
+    const has = (re) => hist.some((h) => re.test(h.action));
+    (o.items || []).forEach((it, i) => {
+      const p = prodById.get(String(it.productId));
+      const v = p && (p.variants || []).find((x) => x.id === it.variantId);
+      // historic orders keep their snapshot price; on this seed every snapshot equals the catalogue
+      if (p) check(it.price === (v ? v.price : p.price), `${at} item ${i}`, `price ${it.price} ≠ the variant's ${v ? v.price : p.price}`);
+    });
+    const charge = activeMethods.map((m) => (m.rateType === "free" || (m.freeAbove && o.subtotal >= m.freeAbove) ? 0 : m.flatRate));
+    check(charge.includes(o.shippingAmount), at, `shippingAmount ${o.shippingAmount} is no active method's charge at subtotal ${o.subtotal} (${charge.join(" / ")})`);
+    if (o.couponCode && C[o.couponCode]) {
+      const c = C[o.couponCode];
+      check(o.subtotal >= c.minOrderAmount, at, `subtotal ${o.subtotal} is below ${c.code}'s minimum ${c.minOrderAmount}`);
+      check(c.createdAt <= o.createdAt && (!c.expiresAt || c.expiresAt > o.createdAt), at, `${c.code} was not valid on ${o.createdAt.slice(0, 10)}`);
+      const uses = orders.filter((x) => x.userId === o.userId && x.couponCode === c.code).length;
+      check(!c.perUserLimit || uses <= c.perUserLimit, at, `${c.code} used ${uses} times by user ${o.userId} (limit ${c.perUserLimit})`);
+    }
+    if ((o.storeCreditUsed || 0) > 0) {
+      check(o.storeCreditUsed <= o.total, at, "storeCreditUsed above the total");
+      check((db.walletTransactions || []).some((t) => t.type === "debit" && String(t.orderId) === String(o.id) && t.amount === o.storeCreditUsed), at, "store credit used with no matching wallet debit");
+    }
+    // timeline: createdAt ≤ every event ≤ updatedAt, in order
+    const times = [o.createdAt, ...hist.map((h) => h.at)];
+    check(times.every((t) => ISO.test(t)) && times.every((t, i) => i === 0 || t >= times[i - 1]), at, "timeline out of order (createdAt ≤ each event, in sequence)");
+    check(hist.every((h) => h.at <= o.updatedAt) && o.updatedAt <= nowIso, at, `an event follows updatedAt ${o.updatedAt}`);
+    const delivered = hist.find((h) => h.action === "Marked delivered");
+    if (o.deliveredAt) check(o.deliveredAt >= o.createdAt && o.deliveredAt <= o.updatedAt && (!delivered || o.deliveredAt <= delivered.at), at, "deliveredAt outside the timeline");
+    if (o.cancelledAt) check(hist.some((h) => h.action === "Order cancelled" && h.at === o.cancelledAt), at, "cancelledAt is not the cancellation's time");
+    // each event leaves its state (api.js's cascades)
+    check(!has(/^Order cancelled/) || o.fulfillmentStatus === "cancelled", at, "cancelled in the timeline, not in fulfillmentStatus");
+    check(!has(/^Marked delivered/) || o.shippingStatus === "delivered", at, "delivered in the timeline, not in shippingStatus");
+    check(!has(/^Fulfilled & shipped/) || ["fulfilled", "returned", "cancelled"].includes(o.fulfillmentStatus), at, "shipped in the timeline, not fulfilled");
+    check(!has(/^Return refund processed/) || o.fulfillmentStatus === "returned", at, "a processed return refund leaves the order returned");
+    check(!(has(/^Refund (issued|completed)/) || has(/^Return refund processed/)) || ["refunded", "partially_refunded"].includes(o.paymentStatus), at, "a booked refund in the timeline, but the payment is not refunded");
+    check(!has(/^Payment voided/) || o.paymentStatus === "voided", at, "voided in the timeline, not in paymentStatus");
+    check(!(o.fulfillmentStatus === "cancelled" && o.paymentStatus === "pending"), at, "cancelled with the payment still pending (performCancel voids an uncollected payment)");
+    const pay = payments.find((p) => String(p.orderId) === String(o.id));
+    if (pay) check((STATE_OF_PAYMENT[o.paymentStatus] || []).includes(pay.status) || (o.paymentStatus === "paid" && pay.status === "refund_pending"), at, `paymentStatus ${o.paymentStatus} but payment ${pay.id} is ${pay.status}`);
+    // every ₹ amount the timeline quotes is a booked refund, a return payable or the credit used
+    const allowed = new Set([...refunds.filter((r) => String(r.orderId) === String(o.id)).map((r) => r.amount),
+      ...returns.filter((r) => String(r.orderId) === String(o.id)).map((r) => r.refundAmount - (r.deductionAmount || 0)), o.storeCreditUsed || 0]);
+    hist.forEach((h) => (`${h.action} ${h.note || ""}`.match(/₹[\d,]+/g) || []).forEach((q) => check(allowed.has(Number(q.slice(1).replace(/,/g, ""))), at, `timeline quotes ${q}, which matches no refund, return or credit`)));
+    // an ORD-<Date.now() in base 36>-XXXX number encodes its createdAt: the
+    // reason order timestamps stay frozen with the numbers (V2-04)
+    const m = /^ORD-([0-9A-Z]{8})-[0-9A-Z]{4}$/.exec(o.orderNumber);
+    if (m && !/^\d{8}$/.test(m[1])) check(new Date(parseInt(m[1], 36)).toISOString() === o.createdAt, at, "the order number no longer encodes createdAt");
+  });
+
+  // payments: refund state and timestamps
+  payments.forEach((p) => {
+    const at = `payment ${p.id}`;
+    const o = orderById.get(String(p.orderId));
+    const refunded = (p.refunds || []).reduce((a, r) => a + r.amount, 0);
+    if (["captured", "pending", "voided"].includes(p.status)) check(refunded === 0, at, `${p.status} but ₹${refunded} refunded`);
+    if (p.status === "partially_refunded") check(refunded > 0 && refunded < p.amount, at, "partially_refunded needs 0 < refunded < amount");
+    if (o) check(p.createdAt >= o.createdAt && p.updatedAt >= p.createdAt && (p.refunds || []).every((r) => r.at >= p.createdAt && r.at <= p.updatedAt), at, "timestamps out of order");
+  });
+
+  // returns: the status the admin's actions leave, and the timeline
+  const RETURN_STATE = [[/^Refund processed/, "refunded"], [/^Items received/, "received"], [/^Return in transit/, "in_transit"], [/^Return pickup scheduled/, "pickup_scheduled"], [/^Return approved/, "approved"], [/^Return rejected/, "rejected"], [/^Return created/, "requested"]];
+  returns.forEach((r) => {
+    const at = `return ${r.id} (${r.returnNumber})`;
+    const hist = r.statusHistory || [];
+    const last = hist.length ? hist[hist.length - 1].action : "";
+    const expected = (RETURN_STATE.find(([re]) => re.test(last)) || [])[1];
+    check(r.status === expected, at, `status ${r.status}, but its timeline ends "${last}" (${expected})`);
+    check((r.refundStatus === "processed") === (r.status === "refunded"), at, "refundStatus processed ⇔ status refunded (AdminReturns' Process Refund writes both)");
+    const times = [r.createdAt, ...hist.map((h) => h.at)];
+    check(times.every((t, i) => i === 0 || t >= times[i - 1]) && hist.every((h) => h.at <= r.updatedAt), at, "timeline out of order");
+    const o = orderById.get(String(r.orderId));
+    if (o) check(r.createdAt >= o.createdAt, at, "dated before its order");
+    const p = o && payments.find((x) => String(x.orderId) === String(o.id));
+    if (p) check(r.refundAmount - (r.deductionAmount || 0) <= p.amount, at, "refunds more than the payment holds");
+  });
+
+  // refunds ledger timestamps
+  refunds.forEach((f) => {
+    check(f.createdAt === f.initiatedAt && (!f.settledAt || f.settledAt >= f.initiatedAt) && f.updatedAt >= f.createdAt && (f.status !== "completed" || f.settledAt),
+      `refund ${f.id} (${f.refundNumber})`, "initiatedAt = createdAt ≤ settledAt ≤ updatedAt; a completed refund is settled");
+  });
+
+  // wallet rows link what moved the money, and follow their order
+  (db.walletTransactions || []).forEach((t) => {
+    const at = `walletTransaction ${t.id}`;
+    const o = orderById.get(String(t.orderId));
+    if (t.type === "debit") check(o && /^Applied to order /.test(t.reason), at, "a debit names the order it paid");
+    else check((t.refundId != null && refunds.some((f) => String(f.id) === String(t.refundId) && f.method === "store_credit")) || /^Store credit returned/.test(t.reason), at, "a credit links a store-credit refund or a cancellation");
+    if (o) check(t.createdAt >= o.createdAt, at, "dated before its order");
+  });
+
+  // reviews: Prompt 05's counts and content rules
+  const rv = db.reviews || [];
+  const byStatus = (s) => rv.filter((r) => r.status === s).length;
+  check(rv.length >= 20 && rv.length <= 26, "reviews", `${rv.length} reviews (20–26)`);
+  check(byStatus("pending") >= 3 && byStatus("pending") <= 4 && byStatus("rejected") >= 1 && byStatus("rejected") <= 2, "reviews", `${byStatus("pending")} pending (3–4), ${byStatus("rejected")} rejected (1–2)`);
+  const reviewed = [...new Set(rv.map((r) => r.productId))];
+  check(reviewed.length >= 14 && reviewed.length <= 18, "reviews", `${reviewed.length} distinct products (14–18)`);
+  check(DEPARTMENTS.every(([id]) => reviewed.some((pid) => dept(pid) === id)), "reviews", "reviews must cover all six departments");
+  const HEALTH = /\b(pain|aches?|aching|sore|backache|lower back|spine|spinal|posture|orthop\w*|medical|doctor|therapeutic|cures?d?|heal\w*|insomnia)\b|sleep(ing)? (much |so |far )?better/i;
+  rv.forEach((r) => {
+    const at = `review ${r.id}`;
+    check(Number.isInteger(r.rating) && r.rating >= 3 && r.rating <= 5, at, "rating must be 3–5");
+    const sentences = String(r.body).split(/(?<=[.!?])\s+/).filter(Boolean).length;
+    check(sentences >= 1 && sentences <= 3 && !/!/.test(`${r.title} ${r.body}`), at, `${sentences} sentences; bodies are 1–3 plain sentences`);
+    check(!HEALTH.test(`${r.title} ${r.body}`), at, "states a health effect");
+    // assembly or installation by the store is unconfirmed (legalContent.js CONFIRM)
+    check(!/\b(set (it|them) up for (us|me)|assembled (it|them) for (us|me)|install(ed|ation))\b/i.test(r.body), at, "claims a set-up service the store has not confirmed");
+    const p = prodById.get(String(r.productId));
+    if (p) check(r.createdAt >= p.createdAt, at, `dated before product ${p.id} existed (${p.createdAt.slice(0, 10)})`);
+  });
+
+  // wishlist: user 3's three active pieces, saved after they existed
+  (db.wishlist || []).forEach((w) => {
+    const at = `wishlist ${w.id}`;
+    const p = prodById.get(String(w.productId));
+    check(user3 && String(w.userId) === String(user3.id), at, "rows belong to mail4bappidas@gmail.com (user 3)");
+    if (p) check(p.isActive, at, `product ${p.id} is inactive`);
+    if (p) check(w.addedAt >= p.createdAt && (!user3 || w.addedAt >= user3.createdAt) && w.addedAt <= nowIso, at, `addedAt ${w.addedAt} is before product ${p.id} or the account existed`);
+  });
+
+  // deals config: Prompt 05's shape and the page's own selection rules
+  check(d.enabled === true && ["tag", "title", "subtitle"].every((k) => typeof d.hero?.[k] === "string" && d.hero[k].trim()), "dealsConfig", "enabled, with a hero tag, title and subtitle");
+  check(!/unbeatable|don.t miss|hurry|limited time|selling fast/i.test(JSON.stringify(d.hero || {})), "dealsConfig", "hero copy in the brand voice (no urgency)");
+  check(d.timer?.enabled === true && d.timer?.endAt === "" && d.timer?.onExpiry === "endOfDay", "dealsConfig", "timer: enabled, endAt \"\", onExpiry endOfDay");
+  check((d.featuredCouponIds || []).length === 2 && d.featuredCouponIds.every((id) => couponValid(coupons.find((c) => String(c.id) === String(id)))),
+    "dealsConfig", "two featured coupons, each active, unexpired and not exhausted");
+  check((d.dealOfTheDayIds || []).length === 3 && d.dealOfTheDayIds.every((id) => { const p = prodById.get(String(id)); return p && p.isActive && discounted(p); }),
+    "dealsConfig", "three deals of the day, each active with comparePrice above price");
+  const grid = (d.featuredProductIds || []).map((id) => prodById.get(String(id)));
+  check(grid.length >= 6 && grid.length <= 8 && grid.every((p) => p && p.isActive && discounted(p)), "dealsConfig", "6–8 grid pieces, each active and discounted");
+  const deptsWithDeals = new Set(products.filter((p) => p.isActive && discounted(p)).map((p) => deptOf(p.categoryId)));
+  check([...deptsWithDeals].every((id) => grid.some((p) => p && deptOf(p.categoryId) === id)), "dealsConfig", "the grid spans every department that has a discounted piece");
+  check(ISO.test(d.updatedAt || "") && d.updatedAt <= nowIso, "dealsConfig", "updatedAt must be a past ISO date");
+
+  // banners: department links and DESIGN_SYSTEM.md §12's literal navy
+  (db.banners || []).forEach((b) => {
+    const slug = (String(b.link).match(/[?&]category=([^&]+)/) || [])[1];
+    check(categories.some((c) => c.slug === slug && c.parentId === null && c.isActive), `banner ${b.id}`, `link ${b.link} is not a department`);
+    check(b.gradient === brandNavy, `banner ${b.id}`, `gradient ${JSON.stringify(b.gradient)} ≠ ${brandNavy} (DESIGN_SYSTEM.md §12, --sf-brand-navy)`);
+  });
+
 }
 
 // ---------------------------------------------------------------- summary
@@ -1238,6 +1484,9 @@ if (!CATALOGUE_ONLY) {
   row("Reviews (approved / pending / rejected)", ["approved", "pending", "rejected"].map((st) => (db.reviews || []).filter((r) => r.status === st).length).join(" / "));
   row("Products with reviews / without", `${products.filter((p) => p.totalReviews > 0).length} / ${products.filter((p) => p.totalReviews === 0).length}`);
   row("Store credit (users[].storeCredit)", (db.users || []).map((u) => `user ${u.id}: ${u.storeCredit || 0}`).join(", "));
+  row("Supporting data (V2-04)", `coupons ${(db.coupons || []).filter((c) => c.isActive).length} active of ${(db.coupons || []).length}; `
+    + `deals ${(db.dealsConfig?.dealOfTheDayIds || []).length} + ${(db.dealsConfig?.featuredProductIds || []).length}; `
+    + `reviewed products ${new Set((db.reviews || []).map((r) => r.productId)).size}; wishlist ${(db.wishlist || []).length}`);
 }
 const w = Math.max(...summary.map(([l]) => l.length));
 console.log(`\nvalidate-db: ${path.relative(process.cwd(), file) || file}`);
