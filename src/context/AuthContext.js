@@ -5,6 +5,22 @@ import Swal from "sweetalert2";
 
 const AuthContext = createContext();
 
+// The sign-in sheet's message for a failed request (Prompt 34): the API's own
+// words when it sent some (Laravel's validation text, e.g. "The email has
+// already been taken."), else the storefront's line. Never axios's "Network
+// Error" or "Request failed with status code 500", which getErrorMessage
+// falls back to when there is no response body.
+const SIGN_IN_FAILED = "We couldn’t sign you in. Try again in a moment.";
+const SIGN_UP_FAILED = "We couldn’t create your account. Try again in a moment.";
+const WRONG_CREDENTIALS = "Check your email address and password, then try again.";
+// The mock API's duplicate-email error (code EMAIL_TAKEN) reads "… Please log
+// in instead."; the storefront says Sign in, and no "Please" (DESIGN_SYSTEM §39).
+const EMAIL_TAKEN = "An account with this email already exists. Sign in instead.";
+const apiMessage = (error) => {
+  const data = error?.response?.data;
+  return data && (data.message || data.errors) ? getErrorMessage(error) : "";
+};
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
@@ -70,33 +86,15 @@ export const AuthProvider = ({ children }) => {
 
         return { success: true, user: userData };
       } else {
-        Swal.fire({
-          icon: "error",
-          title: "Couldn’t sign you in",
-          text: "Check your email address and password, then try again.",
-          toast: true,
-          position: "bottom-end",
-          showConfirmButton: false,
-          timer: 3000,
-        });
-
-        return { success: false, error: "Invalid email or password" };
+        // No toast for a failure: the sign-in sheet (the only caller) shows the
+        // message in its own alert, just above its button, and a toast there
+        // covered that button at phone widths for three seconds (Prompt 34).
+        return { success: false, error: WRONG_CREDENTIALS };
       }
     } catch (error) {
       console.error("Login error:", error);
 
-      const errorMessage = getErrorMessage(error) || "An error occurred during login. Please try again.";
-
-      Swal.fire({
-        icon: "error",
-        title: "Couldn’t sign you in",
-        text: errorMessage,
-        toast: true,
-        position: "bottom-end",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
+      const errorMessage = apiMessage(error) || SIGN_IN_FAILED;
       return { success: false, error: errorMessage };
     }
   };
@@ -120,18 +118,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       if (error.code !== "EMAIL_TAKEN") console.error("Registration error:", error);
 
-      const errorMessage = getErrorMessage(error) || "An error occurred during registration. Please try again.";
-
-      Swal.fire({
-        icon: "error",
-        title: "Couldn’t create your account",
-        text: errorMessage,
-        toast: true,
-        position: "bottom-end",
-        showConfirmButton: false,
-        timer: 3000,
-      });
-
+      // Shown by the sheet's alert, not a toast (see login).
+      const errorMessage = error.code === "EMAIL_TAKEN" ? EMAIL_TAKEN : apiMessage(error) || SIGN_UP_FAILED;
       return { success: false, error: errorMessage };
     }
   };

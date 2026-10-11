@@ -4531,3 +4531,176 @@ None.
 
 None.
 
+---
+
+## Prompt 34 — Final QA and parity
+
+**Date:** 2026-10-11. **Result:** the final walkthrough ran sections A to G of the brief against the whole storefront and the admin, in both colour modes. The first pass found 16 issues: 10 in the storefront, 5 in the seed data and 1 in the documentation. **All 16 are fixed in this session,** and the final re-run of sections A to F passes, so there are no open defects. `prompts/QA_CHECKLIST.md` is the executed checklist, every item marked with its evidence. The admin is unchanged in this session. Its screenshots and computed styles match the pre-redesign build everywhere except the logo. `api.js`, the `db.json` schema, the routes and the price rules are unchanged. Decisions for the client or the owner are consolidated in `00_INDEX.md` sections 6 and 7, and repeated at the end of this entry. The index's Status line now reads "Build complete — zero known issues (2026-10-11)".
+
+### What was fixed
+
+| # | Issue (where found) | Fix | Files |
+|---|---|---|---|
+| 1 | The header's free-delivery line came from `FREE_SHIPPING_THRESHOLD`, a constant, so an Admin → Shipping change missed it (C3) | `freeDeliveryLine(methods, formatCurrency)` over the live methods, read through `readShippingMethods` and shared with the footer's read: no extra request | `CartDrawer/cartDelivery.js` (+test), `Header/Header.js`, `utils/constants.js` (comment) |
+| 2 | A low-stock option's stock was stated twice on the product page (C2) | `VariantSelector` states no stock; the page's line is the one statement | `storefront/VariantSelector.js`, `.module.css` (−3 rules), tests; `ProductDetails.test.js` |
+| 3 | A failed sign-in or sign-up raised a toast that covered the submit button at 360px; the messages were off voice ("Invalid email or password", axios's "Network Error", "Please log in instead.") (C8) | The sheet's alert only, in the voice guide's words; the API's own message when it sends one (both branches); success toasts unchanged | `context/AuthContext.js`, `AuthModal/AuthModal.test.js` |
+| 4 | The empty reviews note claimed "verified orders" (C2) | "Customers can review a piece from My orders once it arrives. Reviews appear after moderation." | `storefront/ReviewsSection.js` (+test), `ProductDetails.test.js` |
+| 5 | Order confirmation called Laravel's 404 for an unknown number a failed read (C6) | A 404 is "Order not found" (as on the product page); other failures keep Try again | `OrderConfirmation/OrderConfirmation.js` (+test) |
+| 6 | The offers headline printed the admin's `*accent*` asterisks (C11) | `renderAccent` on the hero title | `SpecialOffers/SpecialOffers.js` (+test) |
+| 7 | A failure before React rendered showed the boilerplate's red or orange monospace panel (`#1a1a2e`), the raw message inserted through `innerHTML` (A, B) | `renderBootError`: the boundary's crash screen in plain DOM, styled from the tokens, releasing the loader | New `ErrorBoundary/bootError.js` (+test), `index.js`, `index.css` (`.sf-boot-error`) |
+| 8 | The footer kept a copy of the trust icon map (B) | One map, `storefront/trustIcons.js` | `Footer/Footer.js`, `storefront/trustIcons.js` (comment) |
+| 9 | Below 1024px `.main-content` reserved room for a 70px header: a short or still-loading page showed the top 10px (phone) or 6px (tablet) of the footer (E) | `min-height: calc(100vh - var(--sf-header-height, 70px))` below 1024px, appended after the Tablet block | `App.css` (+11; no admin-inherited rule touched) |
+| 10 | Checkout said "Your cart is empty." to a signed-in shopper whose cart was on the account only, then replaced it with the page (CLS 0.061–0.071 at 360px) (E) | `isCartReady` from `useCart()`; checkout shows "Loading your cart…" until the account's cart has been read | `context/CartContext.js` (+test), `Checkout/Checkout.js` (+test) |
+| 11–15 | Seed inconsistencies (C2, C7, C9, C10, C12): order ORD-20250310-0001 fully returned but "fulfilled"/"shipped"; ORD-MQB0JHUB-9KL6 paid with a pending payment; four chairs' "Overall size", three beds' size order and the shoe rack's height against their dimension fields; leads 3 and 4 about a smartwatch and running shoes; coupon expiries at 05:29 IST the next day | Values corrected, in fields sibling records already carry; new validator checks so they cannot return | `db.json`, `scripts/validate-db.js`; `ProductDetails.test.js`, `productSpecs.test.js`, `SpecialOffers.test.js` (the new seed values) |
+| 16 | Stale documentation (G) | `DESIGN_SYSTEM.md`: about 40 passages corrected and §43 added; "Added" wording in two comments and `STOREFRONT_UX_GUIDELINES.md` | docs; `ProductDetails.js`, `WishlistContext.js` (comments) |
+
+Also new: `prompts/QA_CHECKLIST.md`; `00_INDEX.md` (the Status line, the run instructions, open questions 11, 14, 16, 21, 23, 26 and new 27–30, sections 6 and 7 consolidated).
+
+### Decisions
+
+- **Two fixes touch state, not just presentation, and keep the contract.** `isCartReady` is derived during render from which account's cart has been read (`loadedFor === user.id`), so no request, response or stored shape changed, and checkout only chooses which state to show. The confirmation page's 404 handling reads the status axios already reports, as the product page has done since Prompt 32. `AuthContext` still resolves `{ success, error }`. The header's extra read is a call to the shared read the footer makes in the same commit, so it adds no request.
+- **Not changed, by rule or on purpose:**
+  - `api.js` and the protected files.
+  - The product page's slug-then-id lookup (from the first commit). It is why an unknown slug logs the browser's 404 line and `api.js`'s `console.error`.
+  - framer-motion's development-only reduced-motion notice. It comes with `MotionConfig reducedMotion="user"`, and production builds are silent.
+  - The two dependency notices in the build output, and the npm audit advisories. The package files are frozen.
+  - Checkout's and the offers page's second reads when their chunks arrive. Checkout prices from its own read.
+  - The pre-existing testing-library lint findings in four test files, unchanged in number.
+- **Seed fixes reuse existing fields.** Order 1 gained `deliveredAt` and a "Marked delivered" history entry, as orders 7, 8 and 11 have. Payment 5 gained a COD reference in the format payment 4, the other captured COD payment, uses. No collection gained a key its other records do not already carry.
+- **The "before" set for the admin** is the pre-redesign commit `10847d4` (this clone's stale local `main`). Since the first commit, the admin differs in exactly three owner-approved changes (Prompt 03's variant spread, Prompt 33's logo lines, Prompt 33's logout `flushSync` and its test). This session changed none of them.
+
+### Verification (final re-run, after every fix)
+
+- **A. Environment:**
+  - `npm ci` exits 0; the package files are unchanged.
+  - The validator passes in full and catalogue mode. Its new checks report 16 problems on `HEAD`'s seed and none on the fixed one.
+  - `CI=true npm run build` prints "Compiled successfully." with no warning, in Laravel mode (main JS 399.62 kB, CSS 34.97 kB gzip) and JSON Server mode. Against `HEAD` in JSON Server mode: main JS 399.67 → 399.59 kB, main CSS 34.84 → 34.97 kB (the crash screen's styles and the page-area rule, less the selector's stock note), checkout chunk 13.21 → 13.25 kB.
+  - `CI=true npm test -- --passWithNoTests` exits 0: **86 suites, 1,429 tests** (+1 suite, +19 tests), with no console warnings.
+  - ESLint: nothing new in the 28 changed files.
+  - `node scripts/check-contrast.js` passes.
+  - Re-run in full at the end on a fresh `npm ci` (1,663 packages, exit 0): JSON Server and the dev server up ("Compiled successfully!"), the validator in both modes, the build, and the tests, all as above.
+- **Console**, 62 loads per sweep:
+  - Development and production builds, light without reduced motion and dark with it: no error or warning on any route.
+  - Only the deliberate unknown product URL logs the browser's 404 line and `api.js`'s `console.error`.
+  - Framer-motion logs its development-only reduced-motion notice (67 times over 62 loads, dark sweep only).
+- **B. Brand:**
+  - Logo variants: correct on every surface in both modes (header at rest and compact, mobile header, sidebar, footer, auth modal, printed invoice, loading screen, 404, admin login and sidebar).
+  - The page scrollbar is the `--sf-color-border-strong` thumb in both modes; the admin keeps its own.
+  - The colour, font and gradient greps list only the documented exceptions (DESIGN_SYSTEM §43.4), and there are no branding leftovers.
+  - Contact sheets of all 26 routes' first screens (light and dark, 1,440 and 360px) show one type scale, rhythm, hairline and radius system.
+- **C. Features:** every area passes: C1 15/15, C2 15/15 (all 84 product pages), C3 15/15 (the header line now follows Admin → Shipping), C4 8/8, C5 25/25, C6 7/7, C7 20/20, C8 11/11, C9 9/9, C10 14/14, C11 6/6, C12 14/14. C5–C7 ran as one chain because C6 and C7 use C5's orders.
+- **D. Contract:**
+  - No `data[0]`, `.data.data`, `axios` or `fetch` outside `api.js`.
+  - `IS_MOCK_API` is read once, by checkout's gateway note (kept).
+  - `git diff origin/main -- src/services/api.js` is empty (SHA-256 `c32e6138…`).
+  - The validator's key checks pass.
+- **E. Responsive, accessibility, motion, performance:**
+  - 26 routes × light and dark × 360, 768, 1,024 and 1,440px × reduced motion off and on (416 loads): no horizontal overflow, one `h1` each, and no axe violation of any impact (WCAG 2.0–2.2 A/AA and best practices). Reduced motion: 15/15 (durations collapse, nothing runs at rest, instant storefront scroll, no drawer slide).
+  - CLS: 92 cold loads, none at 0.05 or more (worst 0.0154).
+  - Lighthouse (cold, 3 runs, medians, `HEAD` → fix):
+    - Performance: home 55 → 59, listing 66 → 63, product 53 → 64, checkout 60 → 64.
+    - Accessibility, Best Practices and SEO: 100; CLS 0.
+    - Performance ≥ 85 remains unmet, as in Prompt 32 (owner decision).
+- **F. Admin:**
+  - No admin file changed in this session.
+  - 51 captures of every admin page, dialog, confirm and the theme toggle, light and dark, against the pre-redesign build: 0 differing pixels outside the logo's box. 28 states, 23,360 elements: computed styles identical except the logo `<img>`. Functional walkthrough 13/13 (category and product create, edit and delete; ship and deliver an order; process a return; moderate a review). The settings, shipping and deals edits ran through the admin UI in C11.
+- **Fix checks** (`verify-fixes`, 19/19):
+  - the header line on five routes, with no extra shipping read;
+  - stock stated once;
+  - the specs agree with the dimensions;
+  - the review note;
+  - the auth messages, with no toast at 360px;
+  - the offers accent;
+  - order ORD-20250310-0001 returned everywhere;
+  - a real boot failure (a thrown error in light and dark, and a rejection).
+
+### Data restored
+
+- **How:** before every browser suite, and after every destructive test, `qa/restore-db.sh` stopped JSON Server, copied the seed back over `db.json` and restarted it. The seed is the file as committed in this change: Prompt 34's seed fixes, SHA-256 `3fc7f8f3…`. JSON Server keeps the data in memory, so copying the file alone would have been overwritten. C5, C6 and C7 ran as one chain between two restores, because C6 and C7 read the orders C5 places.
+- **C5's evidence, recorded before the restore** (final chain; orders E and A by Bappi Das, order B by Jane Smith):
+  - Before: 11 orders, 9 payments, WELCOME500 `usedCount` 14, FLAT10 37, Bappi's store credit ₹2,302 (3 ledger rows).
+  - Order E, `ORD-MV3OUHEO-YFHV`, all store credit: total ₹1,324; a wallet debit of ₹1,324 (balance ₹2,302 → ₹978); payments 9 → 10.
+  - Order A, `ORD-MV3OUZF8-ND0Z`, WELCOME500 with partial credit: total ₹10,527, credit ₹978, UPI ₹9,549 `captured`; WELCOME500 14 → 15; balance → ₹0.
+  - Order B, `ORD-MV3OVB5X-ZF6K`, Cash on Delivery with FLAT10 and a new address: total ₹3,893, payment `pending`; FLAT10 37 → 38.
+  - After: 14 orders, 12 payments, 5 ledger rows. (Pass one placed the same three orders with the same figures: `ORD-MV3HWM7T-J8YP`, `ORD-MV3HX40Z-BTE5`, `ORD-MV3HXG46-PS2G`.)
+- **Also written during the run and removed by the restores:**
+  - C7: a cancellation (order A cancelled, its refund processing, its payment `refund_pending`, ₹978 of store credit returned), and a review left pending, approved in the admin, then shown on the product page.
+  - C8: registered test accounts.
+  - C9: profile, address and password edits.
+  - C10 and C11: deals-config, settings and shipping edits (each also put back by the suite).
+  - C12: a newsletter lead and a contact lead.
+  - F4: the category, product, order, return and review edits.
+  - Lighthouse: the account cart rows written by the checkout runs.
+- **Final state:** `db.json` equals the committed seed byte for byte (SHA-256 `3fc7f8f3…`); `node scripts/validate-db.js` passes; `cart` is `[]`. `git diff db.json` shows only fixes 11–15.
+
+### Needs client confirmation (consolidated)
+
+The same list as `00_INDEX.md` section 6 (each item names the prompts that raised it):
+
+**Brand and design**
+
+- The colour adaptations: a deepened caramel (`#ae773d`) for light-mode UI text, where the logo's `#ddb185` cannot meet AA; a calmer UI navy (`#0b1f3f`); warm off-white on navy. Playfair Display as the display face (the logo's own serif can replace it through `--sf-font-display` alone) [01].
+- The tagline ("Trusted Comfort for Every Home", from the logo; "Trusted comfort for every home" in running text) and every proposed brand line: hero headlines and support line, brand promise, About intro, story and values, promise steps, closing CTA, marquee phrases, section headings, menu eyebrows and labels, newsletter line, and the page copy of the help, support, offers, account, 404 and crash screens [02, 07–12, 19–24, 28, 29].
+- Visible choices offered for review: paper buttons turning caramel on hover, serif initials on avatars, ink stars, "New" driven by the admin's Hot flag, Buy now only in the buy box, the chair glyph in the bottom bar [06, 09, 13, 16].
+
+**Catalogue**
+
+- Every product name, description, specification, dimension, weight, configuration, colour, finish, price, compare-at and cost price, and stock level (placeholders) [03, 04].
+- "Lobby Set" and "Jhula (Garden Swing)": our reading of "Looby set" and "Julna", with their Small/Large contents [03].
+- Brand attributions: Nilkamal on the plastic pieces (the reference site names it only for the plastic sofa and the mattress), Carlton and Winsome, the unbranded items, and "A & S Urbanseat" on workshop pieces; whether these brand names may be shown (home page, About) [02, 03, 04, 12, 28].
+- "Made in our own workshop": used on the four pieces the reference site marks as own manufacturing (47, 77, 79, 81), in the home story, About and the meta description. "20+ years", "since 20+ years" and warranty claims: not used anywhere until confirmed [02, 04, 11, 28].
+- Category copy, the tier names Essentials and Premium, the single-product Plastic Sofas leaf, and department names short enough for one row at 1024–1279px [03, 04, 07].
+- Admin-managed copy proposed for `db.json` (changed through the admin): shipping method names, the Plastic Furniture and Office Tables & Desks descriptions, `settings.seo.metaTitle`, the store tagline's casing, straight apostrophes in descriptions [29].
+- Whether the admin's Trending flag reflects real popularity ("Pieces of the *moment*.", the search overlay's "Popular") [11, 15, 29].
+- The listing's quick price ranges are the boilerplate's values: "Under ₹500" matches no product [14, 34].
+
+**Commerce rules (placeholders in settings and data)**
+
+- Delivery: Standard ₹499 / 7–10 days and Express ₹999 / 3–5 days, free Standard above ₹9,999, same-day off, Shiprocket, the parcel defaults, delivery within India. The header, cart, footer, assurance strip, product page and checkout all read these from Admin → Shipping [05, 08, 10, 18, 34].
+- Returns: the 7-day window (`STOREFRONT_CONFIG.returnsWindowDays`), eligibility, collection or drop-off, exchanges, and refund timing ("typically 5–7 business days"); returns are handled through Support (no self-service form) [02, 05, 24, 28].
+- Cash on Delivery: no fee, no minimum, a ₹50,000 cap; whether the assurance strip, the promise steps and the cart should mention the cap [05, 10, 12, 18, 26].
+- GST at 18%, shown on top of tax-exclusive prices as "Tax (18% GST)" [05, 26, 27].
+- Coupons: the five codes, values, minimums, caps, limits and expiry dates. WELCOME500 and NEWHOME20 say "first order", which neither the mock nor the coupon logic checks: the Laravel API enforces it, or the descriptions drop it [05, 29].
+- Payment: which methods the store takes and through which gateway (Razorpay and Stripe are both off, so the card form stays a placeholder and no gateway note shows), the brand names in the method descriptions, the bank list, the payment marks [08, 26].
+- Store credit: whether it expires ("It never expires" is held back), the facts' wording, the name "Store credit" [21, 23].
+- Special offers: the selection and the hero copy in the deals config; the countdown's ticking seconds (minutes only would be calmer); the deals hero title "Offers on pieces we *love*." (typed with the asterisks, it now renders the accent, Prompt 34); `DEFAULT_DEALS_HERO`'s "Limited Time … don't miss out!" in `dealsConfig.js`, shown only for a saved config without a hero (the file is protected; Prompt 29 proposed replacement copy) [05, 19, 29, 34].
+
+**Accounts and orders**
+
+- Sign-in sheet: the two subtitle lines; social sign-in (needs an OAuth flow on the Laravel side first); password reset (none: "Forgot password?" points to Support; can Support reset by hand, is self-service planned?); a "Stay signed in on this device" hint for Remember me; the phone hint [20].
+- Account: the guest panel and greeting; how a customer changes their email; the phone format (the data holds "98765 43210", "+91 9876543210" and "+919876543210"): what the Laravel API expects, and whether the storefront should normalise it [21, 22].
+- Addresses and password: "Postal code" with the "6-digit PIN" hint (enforce six digits?); "Currently shipping within India only"; the intro and empty lines; the locked-default hint; the password checklist and how strict to be (it should match the Laravel API's rules) [22].
+- Orders: the cancel confirm's wording and "Amount due"; whether orders should store the chosen shipping method (a real delivery estimate); whether order confirmation and its invoice should require the signed-in owner; that the store emails tracking details, as the delivery line says; that returns created in the admin (such as RET-20260612-0002) do not appear on My orders, which has no return view [24, 27, 34].
+- The invoice's legal details: GSTIN, PAN, registered name and address, invoice number series, HSN/SAC codes, place of supply and the CGST/SGST/IGST split (none is known; it is titled "Invoice", not "Tax invoice") [27].
+
+**Content, legal and launch**
+
+- Contact details: the email (on the old site's domain), phone, WhatsApp, hours, and the street address with PIN (missing); social profiles (only WhatsApp is set). The storefront reads them from `src/utils/constants.js`, not from Admin → Settings: which is the source of truth [02, 05, 08, 28, 34].
+- Every policy, section by section (each marked "Draft for legal review"; set `draft: false` per document once approved): governing law (Assam proposed), the grievance officer, retention periods, the minimum age, assembly and collection charges, refund times, and no analytics or advertising tools before launch [28].
+- A reply-time promise (none is made) [28].
+- The production domain (`og:url`, `SITE_URL_PLACEHOLDER`), a sitemap generated from the catalogue and served from that domain, per-page link previews (need prerendering or server rendering), and shipping and returns as structured data [02, 32].
+- Real photography (hero, spaces, story blocks, promise steps, portrait-safe category photos, products, About) and whether press or client logos exist (the slot shows nothing without a data source) [07, 10–12, 28].
+- Checks that need the public URL or tools this build did not have: Google's Rich Results Test, and screen-reader walk-throughs with NVDA and VoiceOver [31, 32, 34].
+
+**Owner decisions (technical)**
+
+- Lighthouse Performance ≥ 85 (Prompt 32's target) is not met: cold mobile runs score 59–64 (medians, Prompt 34); Accessibility, Best Practices and SEO score 100 and CLS is 0. The main bundle's download and evaluation set the floor; closing the gap needs prerendering or server rendering, or a storefront first paint without MUI and framer-motion. Splitting out the admin (ruled out by the brief) reached only 51–55 [32, 34].
+- The cart drawer's opening (252ms at 4× CPU): making the page inert once the drawer has slid in would bring it to about 170ms, a change to the overlay contract [32].
+- App.css's universal `::-webkit-scrollbar` rule (inherited by the admin, never edited): scoped away from `html`, a restyle of `html` would no longer reach every element; the page's own scrollbar would then be the browser's default on desktop [32].
+- Dependencies: the package files were left as they were. `npm ci` reports 104 audit advisories (14 low, 45 moderate, 41 high, 4 critical), mostly in Create React App 5's build tooling (CRA is no longer maintained); the build prints Browserslist's caniuse-lite notice and `babel-preset-react-app`'s plugin notice [34].
+- Pre-existing admin issues found during QA (the admin changes only with the owner): the coupon form's expiry field shifts by the UTC offset on save; Add Product's category select has no accessible name; saving a shipping method drops its `createdAt`; duplicate category names are accepted; in JSON Server mode "Mark as paid" does not update the order's payment record (`api.js` mock) [34].
+- JSON Server mode only: changing the password stores nothing (`api.js` mock); in production the Laravel API's rules apply [22, 34].
+
+### Remove or replace before launch (consolidated)
+
+The same list as `00_INDEX.md` section 7:
+
+- **Demo data in `db.json`:** all 26 seeded reviews and the ratings derived from them; the 11 demo orders with their payments, refunds, returns and wallet ledger rows (user 3's ₹2,302 store credit); coupon `usedCount` values; the four demo leads (furniture enquiries since Prompt 34, still demo).
+- **Demo accounts and their plaintext passwords in `db.json`:** `user@example.com`, `jane@example.com`, `mail4bappidas@gmail.com`, admin `admin@store.com`.
+- **Placeholder images:** the `placehold.co` URLs on products, categories, the hero, spaces, story blocks, promise steps and About, and the inline "Image coming soon" fallback as any product's only image.
+- **Placeholder catalogue and settings values:** prices, stock, specifications and model names; tax, COD, shipping and coupon settings (section 6).
+- **Placeholder contact details** (address, email, hours, social links in `constants.js` and Admin → Settings) and **every "Draft for legal review" policy** (`draft: true`, the 22 `// CONFIRM:` comments, `POLICY_LAST_UPDATED`).
+- **Placeholder constants:** `STOREFRONT_CONFIG.returnsWindowDays` (7) and `FREE_SHIPPING_THRESHOLD` (₹9,999, the seed's reference only); `SITE_URL_PLACEHOLDER` and `index.html`'s `og:url`/`twitter:url` (`https://urbanseat.example/`); a `Sitemap:` line in `robots.txt` once a sitemap exists.
+- **`.env.production`:** the API URL (a Cloudways placeholder) and the `REACT_APP_*` values (`REACT_APP_ENABLE_ANALYTICS=true` has no analytics code behind it).
+- **The checkout card form**, a visual placeholder (never validated or sent) until a gateway is connected.
+- **Dead code:** `getImageUrl`, `validateForm` and `isPasswordStrong` (`src/utils/helpers.js`), `useSound` and `src/assets/click-sound-1.wav`. `scripts/validate-db.js` and `scripts/check-contrast.js` may stay as dev tools.

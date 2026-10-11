@@ -5,31 +5,19 @@ import ReactDOM from "react-dom/client";
 import "./pages/lazyPages";
 import "./index.css";
 import App from "./App";
+import { renderBootError } from "./components/ErrorBoundary/bootError";
 // import reportWebVitals from "./reportWebVitals";
 
-// Catch any JS errors that occur before or outside React's tree
+// Catch any JS errors that occur before or outside React's tree. While #root
+// is still empty (React never rendered), show the crash screen the
+// ErrorBoundary shows once it has (bootError.js); after that, React's own
+// boundary handles render errors and these change nothing.
 window.onerror = function (msg, src, line, col, error) {
-  const el = document.getElementById("root");
-  if (el && !el.hasChildNodes()) {
-    el.innerHTML =
-      '<div style="color:red;padding:20px;font-family:monospace;background:#1a1a2e;min-height:100vh">' +
-      "<h2>JS Error (window.onerror)</h2><pre>" +
-      msg +
-      "\n" +
-      (error ? error.stack : "") +
-      "</pre></div>";
-  }
+  renderBootError(document.getElementById("root"), error ? error.stack || String(error) : msg);
 };
 
 window.addEventListener("unhandledrejection", function (event) {
-  const el = document.getElementById("root");
-  if (el && !el.hasChildNodes()) {
-    el.innerHTML =
-      '<div style="color:orange;padding:20px;font-family:monospace;background:#1a1a2e;min-height:100vh">' +
-      "<h2>Unhandled Promise Rejection</h2><pre>" +
-      String(event.reason) +
-      "</pre></div>";
-  }
+  renderBootError(document.getElementById("root"), String(event.reason));
 });
 
 const root = ReactDOM.createRoot(document.getElementById("root"));

@@ -6,7 +6,6 @@ import {
   getAttributeValues,
   isColorAttribute,
   buildColorMap,
-  variantStock,
   isVariantOutOfStock,
   optionAvailability,
   facetInStockGlobally,
@@ -28,9 +27,12 @@ import styles from "./VariantSelector.module.css";
 //
 // Honesty: per-variant price and REAL availability are reflected; impossible
 // combinations are disabled and out-of-stock options are clearly marked — no
-// faked availability. Implemented as ARIA radiogroups: one tab stop per group
-// (the chosen option), the arrow keys, Home and End move the choice, and a
-// sold-out option is skipped (it is disabled).
+// faked availability. The chosen option's stock is stated once, by the product
+// page beside the quantity ("In stock", "Only N left", "Sold out"), and is
+// announced with the option; this picker's own line repeated it two lines
+// higher (removed in Prompt 34). Implemented as ARIA radiogroups: one tab stop
+// per group (the chosen option), the arrow keys, Home and End move the choice,
+// and a sold-out option is skipped (it is disabled).
 //
 // Props:
 //   variants       array   product.variants
@@ -264,19 +266,6 @@ const VariantSelector = ({
           </div>
         );
       })}
-      {/* Honest, real per-variant facts for the resolved selection. */}
-      {value && (
-        <div className={styles.selectedMeta}>
-          {(() => {
-            const s = variantStock(value, productStock);
-            if (typeof s !== "number") return null;
-            if (s <= 0) return <span className={styles.metaOos}>This option is sold out</span>;
-            if (s <= (value.lowStockThreshold || 5))
-              return <span className={styles.metaLow}>Only {s} left in this option</span>;
-            return null;
-          })()}
-        </div>
-      )}
     </div>
   );
 };

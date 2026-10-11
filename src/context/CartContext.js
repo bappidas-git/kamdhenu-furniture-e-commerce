@@ -151,6 +151,12 @@ export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // The account whose saved cart has been read and merged (Prompt 34). Until
+  // it is the signed-in user's, that cart is not known yet (a cart saved on
+  // another device arrives with this read), so checkout shows that it is
+  // loading instead of "Your cart is empty." Derived during render
+  // (isCartReady, below), so even the first frame after sign-in is covered.
+  const [loadedFor, setLoadedFor] = useState(null);
 
   // Skips the very first "save" so the initial empty state can't overwrite the
   // persisted cart before the "load" effect has hydrated it.
@@ -285,6 +291,7 @@ export const CartProvider = ({ children }) => {
       if (prevUser) {
         cartLoadedRef.current = false;
         serverKeyRef.current = null;
+        setLoadedFor(null);
         setCartItems([]);
         setIsCartOpen(false);
         localStorage.removeItem("cart");
@@ -312,6 +319,7 @@ export const CartProvider = ({ children }) => {
         if (!cancelled) {
           cartLoadedRef.current = true;
           setIsLoading(false);
+          setLoadedFor(user.id);
         }
       }
     })();
@@ -448,9 +456,13 @@ export const CartProvider = ({ children }) => {
 
   const toggleCart = useCallback(() => setIsCartOpen((open) => !open), []);
 
+  // A guest's cart is the device's; a signed-in shopper's is known once the
+  // account's saved cart has been read (a failed read counts as read).
+  const isCartReady = !user || loadedFor === user.id;
+
   const state = useMemo(
-    () => ({ cartItems, isCartOpen, isLoading, getCartTotal, getCartItemCount }),
-    [cartItems, isCartOpen, isLoading, getCartTotal, getCartItemCount]
+    () => ({ cartItems, isCartOpen, isLoading, isCartReady, getCartTotal, getCartItemCount }),
+    [cartItems, isCartOpen, isLoading, isCartReady, getCartTotal, getCartItemCount]
   );
   const actions = useMemo(
     () => ({ addToCart, removeFromCart, updateQuantity, clearCart, toggleCart, setIsCartOpen }),

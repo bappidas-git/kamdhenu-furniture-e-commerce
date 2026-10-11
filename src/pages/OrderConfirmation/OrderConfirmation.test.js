@@ -227,6 +227,15 @@ describe("the read", () => {
     expect(robots()).toHaveAttribute("content", "noindex");
   });
 
+  test("a 404 from the API (Laravel's answer for an unknown number) is 'not found', not a failed read", async () => {
+    const notFound = Object.assign(new Error("Request failed with status code 404"), { response: { status: 404, data: {} } });
+    apiService.orders.getByOrderNumber.mockRejectedValue(notFound);
+    renderAt("ORD-NOPE-0000");
+    expect(await screen.findByRole("heading", { level: 1, name: /We couldn.t find this order\./ })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    expect(screen.queryByText(/couldn.t load/)).not.toBeInTheDocument();
+  });
+
   test("a failed read offers a retry and never claims the order does not exist", async () => {
     const error = jest.spyOn(console, "error").mockImplementation(() => {});
     apiService.orders.getByOrderNumber.mockRejectedValueOnce(new Error("Network Error"));

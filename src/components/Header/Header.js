@@ -5,13 +5,14 @@ import { useCart, useCartActions } from "../../hooks/useCart";
 import { useAuth } from "../../hooks/useAuth";
 import { useWishlist } from "../../context/WishlistContext";
 import { useDealsConfig } from "../../context/DealsConfigContext";
-import { readCategories } from "../../services/sharedReads";
+import { readCategories, readShippingMethods } from "../../services/sharedReads";
 import { getCategoryScopeIds, resolveCategory } from "../../utils/categories";
-import { SUPPORT_PHONE, FREE_SHIPPING_THRESHOLD } from "../../utils/constants";
+import { SUPPORT_PHONE } from "../../utils/constants";
 import { formatCurrency } from "../../utils/helpers";
 import { TOKENS } from "../../theme/tokens";
 import { BrandLogo, CountDisc, cssEase } from "../ui";
 import CartDrawer from "../CartDrawer/CartDrawer";
+import { activeMethods, freeDeliveryLine } from "../CartDrawer/cartDelivery";
 import SidebarMenu from "../SidebarMenu/SidebarMenu";
 import AuthModal from "../AuthModal/AuthModal";
 import SearchModal from "../SearchModal/SearchModal";
@@ -138,6 +139,7 @@ const Header = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [searchModalOpen, setSearchModalOpen] = useState(false);
   const [compact, setCompact] = useState(() => window.scrollY > COMPACT_AFTER);
+  const [shippingMethods, setShippingMethods] = useState(null);
 
   // Fetch categories on mount. Also refetch when the tab regains focus so any
   // change the admin makes (toggling a category into the main menu, reordering
@@ -163,6 +165,22 @@ const Header = () => {
     return () => {
       active = false;
       window.removeEventListener("focus", onFocus);
+    };
+  }, []);
+
+  // The utility strip's free-delivery line comes from the shipping methods,
+  // as the cart drawer, the footer and the assurance strip do, so an Admin →
+  // Shipping change reaches all four. Shared with the footer's read of the
+  // same moment (no extra request); nothing is said until it has answered.
+  useEffect(() => {
+    let active = true;
+    readShippingMethods()
+      .then((data) => {
+        if (active) setShippingMethods(activeMethods(data));
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
     };
   }, []);
 
@@ -237,9 +255,7 @@ const Header = () => {
   const userMenuOpen = Boolean(userMenuAnchor);
   const themeLabel = isDarkMode ? "Switch to light mode" : "Switch to dark mode";
   const ThemeIcon = isDarkMode ? LightModeOutlined : DarkModeOutlined;
-  const freeDeliveryLine = FREE_SHIPPING_THRESHOLD
-    ? `Free delivery on orders above ${formatCurrency(FREE_SHIPPING_THRESHOLD)}`
-    : "";
+  const deliveryNote = freeDeliveryLine(shippingMethods, formatCurrency);
 
   return (
     <>
@@ -247,7 +263,7 @@ const Header = () => {
         {/* ===== UTILITY STRIP (desktop) ===== */}
         <div className={styles.utility}>
           <div className={styles.utilityInner}>
-            <p className={styles.utilityNote}>{freeDeliveryLine}</p>
+            <p className={styles.utilityNote}>{deliveryNote}</p>
             <ul className={styles.utilityLinks}>
               <li>
                 <a

@@ -301,7 +301,7 @@ export const WishlistProvider = ({ children }) => {
 
   const removeFromWishlist = useCallback(
     // `silent` skips the "Removed" toast (errors still surface) — used by
-    // Move-to-Cart so its "Added to Cart" toast isn't immediately replaced.
+    // Move-to-Cart so its "Added to cart" toast isn't immediately replaced.
     async (productId, { silent = false } = {}) => {
       const item = wishlistItemsRef.current.find(
         (row) => row.productId === productId

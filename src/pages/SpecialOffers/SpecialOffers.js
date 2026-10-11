@@ -8,7 +8,7 @@ import { useDealsConfig } from "../../context/DealsConfigContext";
 import { DEFAULT_DEALS_HERO } from "../../utils/dealsConfig";
 import apiService from "../../services/api";
 import { ProductCard, ProductCardSkeleton } from "../../components/storefront";
-import { Reveal, SectionHeading, staggerDelay } from "../../components/ui";
+import { Reveal, SectionHeading, renderAccent, staggerDelay } from "../../components/ui";
 import { TOKENS } from "../../theme/tokens";
 import {
   formatCurrency,
@@ -679,8 +679,10 @@ const SpecialOffers = () => {
       <header className={styles.hero}>
         <div className="sf-container sf-container--wide">
           {hero.tag && <p className={`sf-eyebrow sf-eyebrow--rule ${styles.heroTag}`}>{hero.tag}</p>}
+          {/* The admin's headline may mark one accent word as *word*, as every
+              display headline does (DESIGN_SYSTEM §5.5); plain text otherwise. */}
           <h1 className={`sf-display-xl ${styles.heroTitle}`}>
-            {hero.title || "Special offers"}
+            {hero.title ? renderAccent(hero.title) : "Special offers"}
           </h1>
           {hero.subtitle && <p className={styles.heroSubtitle}>{hero.subtitle}</p>}
           {adminConfig && <OfferCountdown timer={config.timer} />}

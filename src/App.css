@@ -192,6 +192,17 @@ body:not(.admin-area) *::-webkit-scrollbar-thumb:hover {
   }
 }
 
+/* Phones and tablets: below 1024px the header never compacts, so its live
+   height (--sf-header-height, published before the first paint) is exactly the
+   room it takes. The 70px above assumed a taller header than the 60px phone
+   and 64px tablet rows, so a short page, or one still loading, showed the top
+   10px (phone) or 6px (tablet) of the footer inside the window (Prompt 34). */
+@media (max-width: 1023px) {
+  .main-content {
+    min-height: calc(100vh - var(--sf-header-height, 70px));
+  }
+}
+
 /* =====================================================================
    SweetAlert2 theming
    Swal renders directly under <body>, outside both MUI ThemeProviders,

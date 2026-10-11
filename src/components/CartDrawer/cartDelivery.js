@@ -76,3 +76,20 @@ export const deliveryEstimate = (methods) => {
   const carrier = methods.find((method) => freeAboveOf(method) === threshold);
   return { threshold, rate: methodRate(carrier) };
 };
+
+/**
+ * The header's free-delivery line for the active `methods`: the threshold the
+ * drawer names, "Free delivery on every order" when a method is free at any
+ * amount, or "" when there is nothing true to say (no free delivery, or no
+ * methods read yet). `formatCurrency` is passed in so this module stays free
+ * of the helpers it does not otherwise need. (Prompt 34: the header read
+ * FREE_SHIPPING_THRESHOLD, a constant, so an Admin → Shipping change reached
+ * the drawer, the footer and the assurance strip but not the header.)
+ */
+export const freeDeliveryLine = (methods, formatCurrency) => {
+  const estimate = deliveryEstimate(methods);
+  if (!estimate) return "";
+  if (estimate.threshold !== null) return `Free delivery on orders above ${formatCurrency(estimate.threshold)}`;
+  if (estimate.rate === 0) return "Free delivery on every order";
+  return "";
+};
