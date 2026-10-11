@@ -1,8 +1,8 @@
 # A & S Urbanseat Storefront — Build Prompt Index
 
-**Status:** prompts generated 2026-10-06; build not started. Each prompt (`01_*.md` … `34_*.md`) runs in a fresh session, in order. Before any prompt, read this file, `BUILD_LOG.md` and (after Prompt 01) `DESIGN_SYSTEM.md`.
+**Status:** Build complete — zero known issues (2026-10-11). All 34 prompts have run (prompts generated 2026-10-06); `BUILD_LOG.md` records each, and `QA_CHECKLIST.md` is the final pass with its evidence. Decisions still open for the client or the owner are in sections 6 and 7. Before any further change, read this file, `BUILD_LOG.md` and `DESIGN_SYSTEM.md` (§43 is the maintainer checklist).
 
-**How to run a prompt:** open a fresh session on the repository, run `npm ci` if `node_modules` is missing, start `npm run server` (JSON Server on :3001 reading `db.json`) and `npm start` (CRA on :3000; `.env` selects mock mode), paste the prompt file's content, and let the session finish with its build-log entry. There are no unit tests in the repository; `CI=true npm test -- --passWithNoTests` must still exit 0 and `npm run build` must pass after every prompt.
+**How to run a prompt:** open a fresh session on the repository, run `npm ci` if `node_modules` is missing, start `npm run server` (JSON Server on :3001 reading `db.json`) and `npm start` (CRA on :3000; `.env` selects mock mode), paste the prompt file's content, and let the session finish with its build-log entry. The repository started with no unit tests and ends the build with 86 Jest suites (1,429 tests); `CI=true npm test -- --passWithNoTests` must exit 0 and `npm run build` must pass after every change.
 
 ---
 
@@ -153,51 +153,97 @@ Contexts (`Auth`, `Cart`, `Wishlist`, `Order`, `DealsConfig`, `Admin`) keep thei
 8. **Home review carousel.** No storefront endpoint lists all approved reviews; the carousel aggregates `products.getReviews` for the featured products (≤ 8 calls, lazy).
 9. **Reference site facts are thin.** kamdhenufurniture.in lists ranges and one-line descriptions only: no model names, specs, colours, sizes or prices (its template even labels plastic chairs "Premium Wood"); its `+91 98765 43210` is a template placeholder; its email is on `.com` while the site is `.in`; no street address, no social profiles. All names, prices and specs are placeholders (section 6).
 10. **"Lobby set" and "Jhula".** Our reading of the client's "Looby set" and "Julna"; not on the site; unverified.
-11. **404 page.** `*` currently redirects silently to `/`; Prompt 28 introduces a branded 404 page (behaviour change).
+11. **404 page.** `*` redirected silently to `/`; Prompt 28 added the branded 404 page (behaviour change, done).
 12. **Cart drawer.** The duplicate "View Cart" button (both buttons went to `/checkout`) is dropped; the free-delivery indicator reads live shipping methods instead of the constant + a stale local `FLAT_SHIPPING = 99`.
 13. **Auth modal.** Disabled "Soon" Google/Facebook buttons are removed (no flow exists); the "Forgot password" info banner stays (no reset flow exists).
-14. **Dates.** `formatDate` is shared with nine admin pages and stays `en-US`; currency is already `en-IN`. Prompt 29 may add a storefront-only `formatDateIN` helper.
+14. **Dates.** `formatDate` is shared with nine admin pages and stays `en-US`; currency is `en-IN`. Done: Prompt 29 added the storefront-only `formatDateIN` (Indian date order), and every storefront date uses it.
 15. **Pre-paint background.** `index.html` wrote a purple gradient through the `background` shorthand (leaking a `background-image` under the admin's overscroll); Prompt 02 switches to a solid `backgroundColor` matching `colors.js`.
-16. **ErrorBoundary** wraps the admin too; Prompt 28 restyles it neutrally with CSS-variable inline styles and documented fallbacks.
+16. **ErrorBoundary** wraps the admin too; Prompt 28 restyled it neutrally with CSS-variable inline styles and documented fallbacks. Prompt 34: a failure before React renders shows the same screen, from the tokens (`bootError.js`), instead of the boilerplate's red monospace text.
 17. **CssBaseline coupling.** The storefront MUI theme feeds the global baseline the admin body inherits; Prompt 01 recommends Inter as the UI sans and requires admin screenshot parity.
 18. **Order confirmation** has no ownership guard (anyone with the number can view); unchanged, noted. Orders do not store the chosen shipping method, so the page can no longer show an invented "+5 days" estimate; it shows an honest line. Storing the method on orders is a backend/schema question for later.
 19. **Returns.** No storefront return form exists (`apiService.returns.create` is unused); "Return or exchange" keeps routing to Support, now with `?order=&category=returns` prefill.
 20. **Material Icons stylesheet** (unused) and the duplicate Inter `@import` are removed in Prompt 01.
-21. **Dead code left as is unless a prompt says otherwise:** `getImageUrl`, `useSound` + `src/assets/click-sound-1.wav`, `APP_DESCRIPTION`, `RETURN_REASONS`, `validateForm`, `isPasswordStrong`, the `canvas-confetti` dependency (removed by Prompt 32: no import anywhere), `settings.payment.codFee` (never applied; unchanged).
+21. **Dead code left as is unless a prompt says otherwise.** Final state: `canvas-confetti` removed (Prompt 32); `APP_DESCRIPTION` (the listing's introduction) and `RETURN_REASONS` (Admin → Returns) are used; still unused: `getImageUrl`, `validateForm`, `isPasswordStrong` (`helpers.js`), `useSound` + `src/assets/click-sound-1.wav` (section 7); `settings.payment.codFee` is never applied (unchanged).
 22. **Broken deep links fixed by their prompts:** `/products?filter=trending|best-sellers` (sidebar), `/products?sort=sale|featured|trending|discount` (home/hero); valid sorts are `relevance, price-low, price-high, newest, rating, popularity` (`popular` alias).
-23. **Two `SearchModal` instances** (Header + BottomNav) exist today; Prompt 09 decides whether to consolidate.
+23. **Two `SearchModal` instances** (Header + BottomNav): Prompt 09 kept both (only one can be open; routing the bottom bar through the header's would need lifted state in `Header.js`).
 24. **Admin theme toggle** flips the storefront mode too (shared `theme` key); pre-existing and unchanged.
 25. **Placeholder images** stay on `placehold.co` URLs in neutral tones (the boilerplate's approach) with the inline `PLACEHOLDER_IMG` fallback; real photography replaces them through the admin with no code change.
-26. **Node/tests.** `node_modules` is absent (`npm ci` per session); no tests exist.
+26. **Node/tests.** `node_modules` is absent (`npm ci` per session). No tests existed at the start; the build ends with 86 Jest suites and 1,429 tests.
+27. **Contract (Prompt 34).** No storefront code relies on a JSON Server-only shape (`data[0]`, `.data.data`) or calls `axios`/`fetch` outside `api.js`. `IS_MOCK_API` is read outside the services layer in one place, checkout's gateway note (Prompt 26), so the demo never claims a payment gateway. `api.js` is byte-identical to `origin/main`; since the first commit it carries Prompt 32's two owner-approved follow-ups (failed wallet, coupon and deals reads rethrow; one shared catalogue read), with both branches intact.
+28. **Admin since the first commit (Prompt 34).** Three owner-approved changes, nothing else: Prompt 03's variant spread in `AdminProducts.js`, Prompt 33's logo lines, and Prompt 33's logout-confirm fix (`flushSync`) with its test. Screenshots and computed styles of every admin page are identical outside the logo's box.
+29. **Repeat reads kept on purpose (Prompt 34).** Checkout and the offers page read the settings, shipping methods or categories again when their chunk arrives (after the shell's reads, Prompt 32): checkout prices an order from its own read, never from an earlier answer.
+30. **Console notices that are not defects (Prompt 34).** In development with reduced motion on, framer-motion 10.18 logs "You have Reduced Motion enabled on your device…" once per page load (production builds are silent; it comes with honouring the setting through `MotionConfig`). An unknown product URL logs the browser's 404 line and `api.js`'s own `console.error`; the page shows its not-found state. The build prints two dependency notices before compiling (Browserslist's caniuse-lite data, `babel-preset-react-app`'s plugin note); clearing them changes the package files (section 6).
 
 ---
 
 ## 6. Needs client confirmation
 
-- Tagline adoption ("Trusted Comfort for Every Home", from the logo) and every proposed brand line (hero headlines/support lines, brand promise, newsletter line, about intro, promise steps, closing CTA) — Prompt 02/10/12.
-- All product names, descriptions, specifications, materials, colours, sizes, shelf counts, dimensions, weights, stock levels and prices (INR placeholders) — Prompts 03/04.
-- Manufacturer brand attributions: Nilkamal on plastic chairs/dining/sofa, Carlton and Nilkamal mattresses, Winsome tables, "A & S Urbanseat" on workshop-made wooden pieces (own manufacturing) — Prompts 03/04.
-- "Lobby set" and "Jhula (Garden Swing)" names and their Small/Large sizing — Prompt 03.
-- Contact details: email `info@kamdhenufurniture.com`, phone `+91 84729 18653`, WhatsApp `+91 84729 19541`, street address and PIN (missing), hours Mon–Sat 9–7 — Prompt 02/05.
-- Social profiles (none found) — Prompt 02/08.
-- Delivery: methods, rates (₹499 / ₹999), windows (7–10 / 3–5 days), free-delivery threshold (₹9,999), service area — Prompt 05.
-- Returns window (7 days) and furniture-specific eligibility; refund timelines — Prompts 02/05/28.
-- COD cap (₹50,000), COD fee (0), GST rate (18%, tax-exclusive display) — Prompt 05/26.
-- Coupon codes and values — Prompt 05.
-- Warranty claims ("20+ years" on the reference site), "since 20+ years", "own manufacturing" statements — excluded until confirmed (Prompts 02/04/28).
-- Payment methods actually offered (card/UPI/net banking/wallet/COD) and gateway; bank list — Prompt 26.
-- Legal: governing law (Assam proposed), GSTIN/registered address for the invoice, all policy texts (drafts) — Prompts 27/28.
-- Support response-time promise, store-credit expiry — Prompts 23/28.
-- Real photography for hero, spaces, stories, promise steps, categories and products; whether press/client logos exist — Prompts 10–12.
-- Production domain for `og:url` and sitemap hosting — Prompts 02/32.
-- Hero copy wording in the admin-managed deals config — Prompt 05/19.
+Consolidated by Prompt 34 from every build-log entry (01–34): decisions for the client or the owner, not defects. The prompts that raised each item are in brackets; their build-log entries carry the detail.
+
+**Brand and design**
+
+- The colour adaptations: a deepened caramel (`#ae773d`) for light-mode UI text, where the logo's `#ddb185` cannot meet AA; a calmer UI navy (`#0b1f3f`); warm off-white on navy. Playfair Display as the display face (the logo's own serif can replace it through `--sf-font-display` alone) [01].
+- The tagline ("Trusted Comfort for Every Home", from the logo; "Trusted comfort for every home" in running text) and every proposed brand line: hero headlines and support line, brand promise, About intro, story and values, promise steps, closing CTA, marquee phrases, section headings, menu eyebrows and labels, newsletter line, and the page copy of the help, support, offers, account, 404 and crash screens [02, 07–12, 19–24, 28, 29].
+- Visible choices offered for review: paper buttons turning caramel on hover, serif initials on avatars, ink stars, "New" driven by the admin's Hot flag, Buy now only in the buy box, the chair glyph in the bottom bar [06, 09, 13, 16].
+
+**Catalogue**
+
+- Every product name, description, specification, dimension, weight, configuration, colour, finish, price, compare-at and cost price, and stock level (placeholders) [03, 04].
+- "Lobby Set" and "Jhula (Garden Swing)": our reading of "Looby set" and "Julna", with their Small/Large contents [03].
+- Brand attributions: Nilkamal on the plastic pieces (the reference site names it only for the plastic sofa and the mattress), Carlton and Winsome, the unbranded items, and "A & S Urbanseat" on workshop pieces; whether these brand names may be shown (home page, About) [02, 03, 04, 12, 28].
+- "Made in our own workshop": used on the four pieces the reference site marks as own manufacturing (47, 77, 79, 81), in the home story, About and the meta description. "20+ years", "since 20+ years" and warranty claims: not used anywhere until confirmed [02, 04, 11, 28].
+- Category copy, the tier names Essentials and Premium, the single-product Plastic Sofas leaf, and department names short enough for one row at 1024–1279px [03, 04, 07].
+- Admin-managed copy proposed for `db.json` (changed through the admin): shipping method names, the Plastic Furniture and Office Tables & Desks descriptions, `settings.seo.metaTitle`, the store tagline's casing, straight apostrophes in descriptions [29].
+- Whether the admin's Trending flag reflects real popularity ("Pieces of the *moment*.", the search overlay's "Popular") [11, 15, 29].
+- The listing's quick price ranges are the boilerplate's values: "Under ₹500" matches no product [14, 34].
+
+**Commerce rules (placeholders in settings and data)**
+
+- Delivery: Standard ₹499 / 7–10 days and Express ₹999 / 3–5 days, free Standard above ₹9,999, same-day off, Shiprocket, the parcel defaults, delivery within India. The header, cart, footer, assurance strip, product page and checkout all read these from Admin → Shipping [05, 08, 10, 18, 34].
+- Returns: the 7-day window (`STOREFRONT_CONFIG.returnsWindowDays`), eligibility, collection or drop-off, exchanges, and refund timing ("typically 5–7 business days"); returns are handled through Support (no self-service form) [02, 05, 24, 28].
+- Cash on Delivery: no fee, no minimum, a ₹50,000 cap; whether the assurance strip, the promise steps and the cart should mention the cap [05, 10, 12, 18, 26].
+- GST at 18%, shown on top of tax-exclusive prices as "Tax (18% GST)" [05, 26, 27].
+- Coupons: the five codes, values, minimums, caps, limits and expiry dates. WELCOME500 and NEWHOME20 say "first order", which neither the mock nor the coupon logic checks: the Laravel API enforces it, or the descriptions drop it [05, 29].
+- Payment: which methods the store takes and through which gateway (Razorpay and Stripe are both off, so the card form stays a placeholder and no gateway note shows), the brand names in the method descriptions, the bank list, the payment marks [08, 26].
+- Store credit: whether it expires ("It never expires" is held back), the facts' wording, the name "Store credit" [21, 23].
+- Special offers: the selection and the hero copy in the deals config; the countdown's ticking seconds (minutes only would be calmer); the deals hero title "Offers on pieces we *love*." (typed with the asterisks, it now renders the accent, Prompt 34); `DEFAULT_DEALS_HERO`'s "Limited Time … don't miss out!" in `dealsConfig.js`, shown only for a saved config without a hero (the file is protected; Prompt 29 proposed replacement copy) [05, 19, 29, 34].
+
+**Accounts and orders**
+
+- Sign-in sheet: the two subtitle lines; social sign-in (needs an OAuth flow on the Laravel side first); password reset (none: "Forgot password?" points to Support; can Support reset by hand, is self-service planned?); a "Stay signed in on this device" hint for Remember me; the phone hint [20].
+- Account: the guest panel and greeting; how a customer changes their email; the phone format (the data holds "98765 43210", "+91 9876543210" and "+919876543210"): what the Laravel API expects, and whether the storefront should normalise it [21, 22].
+- Addresses and password: "Postal code" with the "6-digit PIN" hint (enforce six digits?); "Currently shipping within India only"; the intro and empty lines; the locked-default hint; the password checklist and how strict to be (it should match the Laravel API's rules) [22].
+- Orders: the cancel confirm's wording and "Amount due"; whether orders should store the chosen shipping method (a real delivery estimate); whether order confirmation and its invoice should require the signed-in owner; that the store emails tracking details, as the delivery line says; that returns created in the admin (such as RET-20260612-0002) do not appear on My orders, which has no return view [24, 27, 34].
+- The invoice's legal details: GSTIN, PAN, registered name and address, invoice number series, HSN/SAC codes, place of supply and the CGST/SGST/IGST split (none is known; it is titled "Invoice", not "Tax invoice") [27].
+
+**Content, legal and launch**
+
+- Contact details: the email (on the old site's domain), phone, WhatsApp, hours, and the street address with PIN (missing); social profiles (only WhatsApp is set). The storefront reads them from `src/utils/constants.js`, not from Admin → Settings: which is the source of truth [02, 05, 08, 28, 34].
+- Every policy, section by section (each marked "Draft for legal review"; set `draft: false` per document once approved): governing law (Assam proposed), the grievance officer, retention periods, the minimum age, assembly and collection charges, refund times, and no analytics or advertising tools before launch [28].
+- A reply-time promise (none is made) [28].
+- The production domain (`og:url`, `SITE_URL_PLACEHOLDER`), a sitemap generated from the catalogue and served from that domain, per-page link previews (need prerendering or server rendering), and shipping and returns as structured data [02, 32].
+- Real photography (hero, spaces, story blocks, promise steps, portrait-safe category photos, products, About) and whether press or client logos exist (the slot shows nothing without a data source) [07, 10–12, 28].
+- Checks that need the public URL or tools this build did not have: Google's Rich Results Test, and screen-reader walk-throughs with NVDA and VoiceOver [31, 32, 34].
+
+**Owner decisions (technical)**
+
+- Lighthouse Performance ≥ 85 (Prompt 32's target) is not met: cold mobile runs score 59–64 (medians, Prompt 34); Accessibility, Best Practices and SEO score 100 and CLS is 0. The main bundle's download and evaluation set the floor; closing the gap needs prerendering or server rendering, or a storefront first paint without MUI and framer-motion. Splitting out the admin (ruled out by the brief) reached only 51–55 [32, 34].
+- The cart drawer's opening (252ms at 4× CPU): making the page inert once the drawer has slid in would bring it to about 170ms, a change to the overlay contract [32].
+- App.css's universal `::-webkit-scrollbar` rule (inherited by the admin, never edited): scoped away from `html`, a restyle of `html` would no longer reach every element; the page's own scrollbar would then be the browser's default on desktop [32].
+- Dependencies: the package files were left as they were. `npm ci` reports 104 audit advisories (14 low, 45 moderate, 41 high, 4 critical), mostly in Create React App 5's build tooling (CRA is no longer maintained); the build prints Browserslist's caniuse-lite notice and `babel-preset-react-app`'s plugin notice [34].
+- Pre-existing admin issues found during QA (the admin changes only with the owner): the coupon form's expiry field shifts by the UTC offset on save; Add Product's category select has no accessible name; saving a shipping method drops its `createdAt`; duplicate category names are accepted; in JSON Server mode "Mark as paid" does not update the order's payment record (`api.js` mock) [34].
+- JSON Server mode only (`api.js` mock): changing the password stores nothing, and coupon refusals print amounts without digit grouping ("Minimum order amount is ₹15000"; checkout shows the API's own message by design). In production the Laravel API's rules and messages apply [22, 26, 34].
 
 ## 7. Remove or replace before launch
 
-- Demo reviews (all seeded reviews), demo orders, payments, refunds, returns and wallet ledger rows, demo leads created during QA.
-- Demo accounts and their plaintext passwords in `db.json` (`user@example.com`, `jane@example.com`, `mail4bappidas@gmail.com`, admin `admin@store.com`).
-- Placeholder images (`placehold.co` URLs on products, categories, hero, stories, steps) and the inline "Image coming soon" fallback as the only image on any product.
-- Placeholder prices, stock levels, specifications and model names.
-- Placeholder contact details, address, hours, social links; the "Draft for legal review" policy texts.
-- `.env.production` API URL (currently a Cloudways placeholder) and `REACT_APP_*` values.
-- `scripts/validate-db.js` may stay as a dev tool; `src/assets/click-sound-1.wav` and other dead code if not cleaned earlier.
+Consolidated by Prompt 34.
+
+- **Demo data in `db.json`:** all 26 seeded reviews and the ratings derived from them; the 11 demo orders with their payments, refunds, returns and wallet ledger rows (user 3's ₹2,302 store credit); coupon `usedCount` values; the four demo leads (furniture enquiries since Prompt 34, still demo).
+- **Demo accounts and their plaintext passwords in `db.json`:** `user@example.com`, `jane@example.com`, `mail4bappidas@gmail.com`, admin `admin@store.com`.
+- **Placeholder images:** the `placehold.co` URLs on products, categories, the hero, spaces, story blocks, promise steps and About, and the inline "Image coming soon" fallback as any product's only image.
+- **Placeholder catalogue and settings values:** prices, stock, specifications and model names; tax, COD, shipping and coupon settings (section 6).
+- **Placeholder contact details** (address, email, hours, social links in `constants.js` and Admin → Settings) and **every "Draft for legal review" policy** (`draft: true`, the 22 `// CONFIRM:` comments, `POLICY_LAST_UPDATED`).
+- **Placeholder constants:** `STOREFRONT_CONFIG.returnsWindowDays` (7) and `FREE_SHIPPING_THRESHOLD` (₹9,999, the seed's reference only); `SITE_URL_PLACEHOLDER` and `index.html`'s `og:url`/`twitter:url` (`https://urbanseat.example/`); a `Sitemap:` line in `robots.txt` once a sitemap exists.
+- **`.env.production`:** the API URL (a Cloudways placeholder) and the `REACT_APP_*` values (`REACT_APP_ENABLE_ANALYTICS=true` has no analytics code behind it).
+- **The checkout card form**, a visual placeholder (never validated or sent) until a gateway is connected.
+- **Dead code:** `getImageUrl`, `validateForm` and `isPasswordStrong` (`src/utils/helpers.js`), `useSound` and `src/assets/click-sound-1.wav`. `scripts/validate-db.js` and `scripts/check-contrast.js` may stay as dev tools.

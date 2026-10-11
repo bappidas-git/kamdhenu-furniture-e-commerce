@@ -1,6 +1,6 @@
 # A & S Urbanseat — Design System
 
-The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy"; Prompt 30: "Motion and micro-interactions"; Prompt 32: "Performance, SEO and conversion") and update a value here whenever they change it in the CSS.
+The reference every build prompt (02–34) reads for token names, values and usage rules. Written by Prompt 01 on 2026-10-07. Later prompts **append** sections (Prompt 06: "Primitives"; Prompt 29: "Voice and microcopy"; Prompt 30: "Motion and micro-interactions"; Prompt 32: "Performance, SEO and conversion"; Prompt 34: "Final QA and maintenance", §43) and update a value here whenever they change it in the CSS. Prompt 34 checked every token in `storefront-tokens.css` and every class in `storefront-base.css` against this document: all are described.
 
 - **Source of truth:** `src/theme/storefront-tokens.css`. If this document and the CSS disagree, the CSS wins; fix the document.
 - **Mirrors:** `src/theme/colors.js` (storefront MUI palette) and `src/theme/tokens.js` (`TOKENS`, the JS mirror for framer-motion and inline styles).
@@ -10,7 +10,7 @@ The reference every build prompt (02–34) reads for token names, values and usa
 
 ## 1. Purpose and how to look up a token
 
-The storefront is a premium, editorial, warm-minimalist boutique: warm paper surfaces, near-black ink, a deep navy taken from the logo's chair and a caramel accent taken from its wordmark; Playfair Display for display type (with a true italic for accent words) and Inter for UI; hairlines, sharp radii, generous whitespace, slow and quiet motion. No gradients (one exception: the photo scrim), no glassmorphism, no neon, no purple.
+The storefront is a premium, editorial, warm-minimalist boutique: warm paper surfaces, near-black ink, a deep navy taken from the logo's chair and a caramel accent taken from its wordmark; Playfair Display for display type (with a true italic for accent words) and Inter for UI; hairlines, sharp radii, generous whitespace, slow and quiet motion. No decorative gradients (the functional exceptions are the photo scrim and the skeleton shimmer; §16.8 also lists the two hard-stop drawings, a chevron and a strike line, that only look like lines), no glassmorphism, no neon, no purple.
 
 > **"Primary" is the ink, not a hue.** `--sf-color-primary` is the ink: primary buttons are ink with paper text and turn navy on hover. `--sf-color-secondary` is the navy, `--sf-color-accent` is the caramel. The boilerplate used `primary` for a purple; every consumer of `--sf-color-primary` now renders ink (light) or warm off-white (dark).
 
@@ -132,8 +132,8 @@ Why the light accent is `#ae773d` and not the logo's `#ddb185`: no caramel from 
 
 - Use them for the footer (always dark, also in dark mode), the hero, and navy bands (`tone="navy"`). Always pair them with the white logo.
 - Text on navy uses `--sf-color-on-dark` (the brand paper rather than the logo's pure white: the warm cast avoids glare and lets the white logo stay the brightest element).
-- **Photography:** text must sit where the scrim is at least `--sf-color-scrim` strength (the bottom-left 35 % of `--sf-gradient-scrim`). Measured over a pure-white photograph: on-dark text 5.77 : 1, the caramel accent 3.14 : 1 (display size only), the focus ring 3.14 : 1. Small text on photography (eyebrows, support lines) uses `--sf-color-on-dark` at full strength; the muted tone drops to 3.88 : 1 there. The scrim gradient is the only gradient the system allows.
-- `--sf-gradient-scrim` suits photography whose text fits its bottom-left 35 % (a tile with a short caption). A copy block too large for that zone gets a scrim built from `--sf-color-scrim` around the copy itself, as the home hero does (section 20.2).
+- **Photography:** text must sit where the scrim is at least `--sf-color-scrim` strength (the bottom-left 35 % of `--sf-gradient-scrim`). Measured over a pure-white photograph: on-dark text 5.77 : 1, the caramel accent 3.14 : 1 (display size only), the focus ring 3.14 : 1. Small text on photography (eyebrows, support lines) uses `--sf-color-on-dark` at full strength; the muted tone drops to 3.88 : 1 there. Apart from the skeleton shimmer (§16.8), the scrim is the only gradient the system allows; the hero and the space tiles build theirs from `--sf-color-scrim` (§20.2, §21.3).
+- `--sf-gradient-scrim` suits photography whose text fits its bottom-left 35 % (a tile with a short caption). A copy block too large for that zone gets a scrim built from `--sf-color-scrim` around the copy itself, as the home hero does (section 20.2). No surface uses `--sf-gradient-scrim` today (the hero and the space tiles both build their scrim from `--sf-color-scrim`); the token stays for a single-layer caption scrim.
 
 ### 3.4 Legacy names (kept so existing components keep working)
 
@@ -191,7 +191,7 @@ Rules:
 
 - One stylesheet, linked in `public/index.html` with `preconnect` to `fonts.googleapis.com` and `fonts.gstatic.com` (the duplicate CSS `@import` and the unused Material Icons stylesheet were removed):
   `https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;1,400&display=swap`
-- `display=swap` on every face. Google serves one variable `woff2` per face per unicode subset and the browser downloads only the subsets a page uses. Measured on a cold load: Inter latin + latin-ext (the ₹ sign lives in latin-ext) + Playfair roman latin (+ latin-ext when a serif line contains ₹) + Playfair italic latin = **4–5 files**. The hard ceiling for Latin-script content is 6 (3 faces × 2 subsets). Playfair downloads only on pages that render it.
+- `display=swap` on every face. Google serves one variable `woff2` per face per unicode subset and the browser downloads only the subsets a page uses. Measured on a cold load: Inter latin + latin-ext (the ₹ sign lives in latin-ext) + Playfair roman latin (+ latin-ext when a serif line contains ₹) + Playfair italic latin = **4–5 files** (Prompt 32 measured 4 on home and the product page, 3 on checkout, 1 on the admin, §42.6). The hard ceiling for Latin-script content is 6 (3 faces × 2 subsets). Playfair downloads only on pages that render it.
 - **Weights.** Playfair Display: 400, 400 italic, 500. Inter on the storefront: 400, 500, 600 (`--sf-font-bold` is 600). Inter 300 and 700 stay loaded **for the admin**: 300 renders SweetAlert's validation message (Admin → Returns), 700 the admin headings. All weights come from the same variable file, so they cost nothing extra. Storefront CSS must not use 300, 800 or 900; 800/900 in un-migrated modules currently render as 700.
 
 ### 5.3 Scale
@@ -354,7 +354,7 @@ Use `<Reveal>` (section 16.4), which is this recipe; stagger a group with `delay
 
 **Rules**
 - The light logo goes on paper, surface and sand. The white logo goes on navy, on dark-mode surfaces, on image scrims and on the dark footer. Never recolour, filter or tint the PNGs; never place the light logo on a dark surface.
-- Minimum rendered height: **28px** (mobile header), **40–48px** (desktop header), **56px** (auth modal, invoice).
+- Minimum rendered height: **28px** (mobile header), **40–48px** (desktop header at rest; the compact header, after 80px of scroll, scales the same logo to 36px, §17.2), **56px** (auth modal, invoice).
 - Clear space on all sides equal to the cap height of the "A": 34 % of the rendered logo height (≈ 10px at 28px, 14px at 40px, 19px at 56px).
 - The artwork already contains "Trusted Comfort for Every Home". Never repeat that line as text beside the logo.
 
@@ -376,7 +376,7 @@ Use `<Reveal>` (section 16.4), which is this recipe; stagger a group with `delay
 <BrandLogo onDark height={48} />                   {/* over a photo scrim */}
 ```
 
-It also renders outside `ThemeContextProvider` (it falls back to the `body.dark` class), so an error fallback can use it. The admin never imports it (Prompt 33 handles the admin's logos).
+It also renders outside `ThemeContextProvider` (it falls back to the `body.dark` class). The crash fallback (§38.9) still does not use it: that screen imports no storefront component, so it renders even when they fail. The admin never imports it (Prompt 33 gave the admin's sidebar and login raw `<img>`s of `LOGO_URLS`, §43.1).
 
 **Forced colours (Prompt 31).** A Windows contrast theme repaints the page but not an image, so a transparent PNG could vanish on the system canvas (the white logo on a white canvas). `BrandLogo` marks its artwork (`data-logo-variant="light"` / `"white"`), and under `forced-colors: active` the image keeps its own ground: brand paper behind the light logo, brand navy behind the white one (`forced-color-adjust: none`).
 
@@ -389,7 +389,7 @@ It also renders outside `ThemeContextProvider` (it falls back to the `body.dark`
 | `PLACEHOLDER_IMG` (inline SVG data URI in `src/utils/helpers.js`, label "Image coming soon") | `#f1ebe1` (sand) | `#686158` (muted) | 5.15 : 1 |
 | Seeded placeholder URLs | `f1ebe1` | `686158` | same |
 
-- These two hex values are the **only colour literals permitted outside the token files** (a data URI cannot read CSS variables). They are the light-mode tokens, so placeholders stay light in dark mode too, which is accepted.
+- These two hex values are the only colour literals in a storefront component outside the token files (a data URI cannot read CSS variables); every other permitted literal (static files, the crash fallback's, the admin-inherited rules) is listed in sections 12 and 13. They are the light-mode tokens, so placeholders stay light in dark mode too, which is accepted.
 - Seed pattern: `https://placehold.co/{w}x{h}/f1ebe1/686158?text=Name+With+Plus+Signs`. Sizes: products 1200x1500 (4:5 portrait), categories 1600x1000, hero 2400x1350.
 - While an image loads, its slot shows `--sf-color-sand` and reserves its box with `aspect-ratio`.
 
@@ -406,13 +406,13 @@ Copy these literally. Prompt 34 verifies they still match.
 | Pre-paint script `document.body.style.backgroundColor` (= `colors.js` `background.default`) | light `#faf7f2`, dark `#0a1426` |
 | Loading screen | light: `#faf7f2` + light logo + progress hairline `#ae773d`; dark: `#0a1426` + white logo + hairline `#ddb185` |
 | `db.json` `banners[].gradient` (must stay a string) | `#0b1f3f` |
-| `ErrorBoundary` fallbacks (§38.9), each written `var(--sf-<token>, <value>)` | light (`FALLBACK.light`): bg `#faf7f2`, surface `#ffffff`, sand `#f1ebe1`, border `#d9d0c3`, text `#1c1a17`, secondary `#4d463e`, primary `#1c1a17`, primary-hover `#0b1f3f`, primary-contrast `#faf7f2`, primary-soft `rgba(28, 26, 23, 0.06)`, focus `#ae773d`; dark (`FALLBACK.dark`): bg `#0a1426`, surface `#111d34`, sand `rgba(243, 238, 230, 0.06)`, border `rgba(243, 238, 230, 0.14)`, text `#f3eee6`, secondary `#cfc6b9`, primary `#f3eee6`, primary-hover `#ffffff`, primary-contrast `#0a1426`, primary-soft `rgba(243, 238, 230, 0.08)`, focus `#ddb185`; both: `--sf-font-display` → `Georgia, serif`, `--sf-font-sans` → `system-ui, sans-serif`, `--sf-text-display-md` → `2rem`, `--sf-text-base` → `1rem`, `--sf-text-sm` → `0.875rem`, `--sf-tap-target` → `44px`, `--sf-radius-md` → `4px`, `--sf-radius-sm` → `2px`. `ErrorBoundary.test.js` compares every colour with `storefront-tokens.css`. |
+| `ErrorBoundary` fallbacks (§38.9), each written `var(--sf-<token>, <value>)` | light (`FALLBACK.light`): bg `#faf7f2`, surface `#ffffff`, sand `#f1ebe1`, border `#d9d0c3`, text `#1c1a17`, secondary `#4d463e`, primary `#1c1a17`, primary-hover `#0b1f3f`, primary-contrast `#faf7f2`, primary-soft `rgba(28, 26, 23, 0.06)`, focus `#ae773d`; dark (`FALLBACK.dark`): bg `#0a1426`, surface `#111d34`, sand `rgba(243, 238, 230, 0.06)`, border `rgba(243, 238, 230, 0.14)`, text `#f3eee6`, secondary `#cfc6b9`, primary `#f3eee6`, primary-hover `#ffffff`, primary-contrast `#0a1426`, primary-soft `rgba(243, 238, 230, 0.08)`, focus `#ddb185`; both: `--sf-font-display` → `Georgia, serif`, `--sf-font-sans` → `system-ui, sans-serif` (the error detail's `<pre>` is `monospace`), `--sf-text-display-md` → `2rem`, `--sf-text-base` → `1rem`, `--sf-text-sm` → `0.875rem`, `--sf-tap-target` → `44px`, `--sf-radius-md` → `4px`, `--sf-radius-sm` → `2px`. `ErrorBoundary.test.js` compares every colour with `storefront-tokens.css`. |
 
 ---
 
 ## 13. Usage rules
 
-**Tokens only.** No hex, `rgb()` or font-family literals in components. Allowed exceptions: the two `PLACEHOLDER_IMG` values, `var(--token, fallback)` in `ErrorBoundary` (its light and dark `FALLBACK` sets, section 12 and §38.9; it is also the one component that writes a `<style>` element, for the hover and focus states inline styles cannot express), glyph SVGs drawn with `currentColor`, and the static files in section 12.
+**Tokens only.** No hex, `rgb()` or font-family literals in components. Allowed exceptions: the two `PLACEHOLDER_IMG` values, `var(--token, fallback)` in `ErrorBoundary` (its light and dark `FALLBACK` sets, section 12 and §38.9; it is also the one component that writes a `<style>` element, for the hover and focus states inline styles cannot express), glyph SVGs drawn with `currentColor`, the static files in section 12, and two kinds of rule that belong to the admin: `src/theme/adminTheme.js`, and the rules the admin inherits, never edited (`App.css`'s shared body font, scrollbar and SweetAlert rules; `index.css`'s body font and the boilerplate `code` font stack, which Admin → Shipping renders). The pre-React crash screen (`bootError.js`, Prompt 34) uses the tokens only.
 
 **Buttons.**
 - Primary: ink background (`--sf-color-primary`), paper text (`--sf-color-primary-contrast`), hover `--sf-color-primary-hover` (navy; white in dark mode).
@@ -527,7 +527,7 @@ Mirror check: colors.js and tokens.js match storefront-tokens.css ✓ · Contras
 
 ## 16. Primitives
 
-Written by Prompt 06. The shared building blocks every later prompt composes from: the `.sf-*` classes in `src/theme/storefront-base.css` (imported by `src/index.css` right after the tokens), three React primitives in `src/components/ui/`, the storefront MUI component overrides in `ThemeContext.js`, the storefront SweetAlert2 theme at the end of `App.css`, and `<MotionConfig reducedMotion="user">` around the storefront route.
+Written by Prompt 06. The shared building blocks every later prompt composes from: the `.sf-*` classes in `src/theme/storefront-base.css` (imported by `src/index.css` right after the tokens), the React primitives in `src/components/ui/` (three from Prompt 06; §16.4 has the barrel's full list), the storefront MUI component overrides in `ThemeContext.js`, the storefront SweetAlert2 theme at the end of `App.css`, and `<MotionConfig reducedMotion="user">` around the storefront route.
 
 ### 16.1 How the CSS primitives are built
 
@@ -677,7 +677,7 @@ Appended after the shared SweetAlert block and scoped `body.light:not(.admin-are
 
 - **Popup:** `--swal2-background` surface, `--swal2-color` ink, `--swal2-border` hairline, `--swal2-border-radius` radius md, `--sf-shadow-lg`; title in Playfair 22px 500; body sans 15px secondary; icons at 75% (`--swal2-icon-zoom`); backdrop `--sf-color-overlay`.
 - **Buttons:** 44px, sans 14px 500. Confirm = ink with paper text, navy on hover (white in dark mode). Cancel = ghost (1px ink inset border, `--sf-color-primary-soft` hover). Focus = `--sf-shadow-focus`. Press 0.99.
-- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` were left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out", since Prompt 22 the address delete in `Profile.js` (§32.4) and since Prompt 24 the order cancel in `OrderHistory.js` (§34.5) use it; "Clear all" in `WishlistContext.js` still passes a hex.
+- **Per-call colours still win.** A `confirmButtonColor` is set inline on the button by SweetAlert; the ink text and navy hover apply only to confirms *without* one (`:not([style*="--swal2-confirm-button-background-color"])`), so a per-call destructive colour keeps SweetAlert's white text and darkening hover. The hex literals in `OrderHistory.js`, `Profile.js` and `WishlistContext.js` were left for their prompts (switch them to the error token read with `getComputedStyle`, or to `customClass`). **Since Prompt 21** the destructive confirm is `customClass: { confirmButton: "sf-btn sf-btn--danger" }` with no `confirmButtonColor` (§31.8): SweetAlert 11 wraps its own selectors in `:where()`, so the one-class primitive wins its colours, hover and focus ring, and the text is primary-contrast in both modes (white on the dark-mode error would be 2.3 : 1). The account's "Sign out", since Prompt 22 the address delete in `Profile.js` (§32.4) and since Prompt 24 the order cancel in `OrderHistory.js` (§34.5) use it; "Clear all" in `WishlistContext.js` has used it too since Prompt 31 (focus starting on "Keep wishlist"), so no confirm passes a hex.
 - **Toasts** (cart, wishlist, auth; bottom-end): surface, hairline, `--sf-shadow-md`, radius md, sans 14px title (600) and text, a 2px accent timer bar.
 - **Icons:** SweetAlert 11 has no icon-colour variables, so its icons keep their own colours (only `--swal2-icon-zoom` and `--swal2-icon-animations` exist).
 - **Motion (Prompt 30):** popups and toasts fade in rising `--sf-rise-distance` over `--sf-duration` (`--sf-ease-out`) and leave over `--sf-duration-exit` (`--sf-ease-in-out`): the `sf-swal-in` / `sf-swal-out` keyframes, set through `--swal2-show-animation`, `--swal2-hide-animation` and their toast twins, replace SweetAlert's 50px drop with a 0.9 scale and the toast's wobble. Icons never animate (`--swal2-icon-animations: false`). The backdrop fades over `--sf-duration` in and `--sf-duration-exit` out; buttons change colour over `--sf-duration-fast` and press over `--sf-duration-press`; the close button and inputs ease their colour over `--sf-duration-fast`. The admin's SweetAlert motion is unchanged (verified).
@@ -844,7 +844,7 @@ Every drawer, sheet and modal on the storefront should behave the same way. The 
 | Top row | 60px plus the top inset, with a hairline below: `<BrandLogo height={28} />` (auto variant: the white logo in dark mode) and a 44px "Close menu" button, which takes focus on open |
 | Account block | **Guest:** the serif line "Sign in for faster checkout and order tracking." (20px), a `.sf-btn--primary --block` "Sign in" (`onClose(); onOpenAuth()`) and a `.sf-btn--ghost --block` "Create account" (`onOpenAuth("signup")`). **Signed in:** a 48px hairline circle with the serif initial (or the user's image), name, email, and a "My account" link (`/profile`). |
 | Shop | An accordion built by `groupCategoryTree` (`Header/groupCategoryTree.js`), the same grouping as the mega-menu. Department rows are 48px, in the display serif at 20px, with a plus/minus glyph (a swap, as in the footer). Only one department is open at a time (`aria-expanded`, `aria-controls`). The open panel (`role="group"`, named by its department) is indented 16px and lists "Shop all <Department>" (or the `navigationContent.js` `ctaLabel`), then each group as an eyebrow link (12px, 600, 0.16em, uppercase, ink) with its leaves beneath (sans 15px, secondary, 48px rows; deeper levels indented 16px more). A flat department is a plain link. "View all products" (`/products`) closes the section. A loading skeleton shows on the first read; on failure, a message and "Try again". |
-| Discover | New arrivals `/products?sort=newest` · Best sellers `/products?sort=popular` · Offers `/special-offers` (only while the deals page is enabled and its config has loaded) · Our story `/about` |
+| Discover | New arrivals `/products?sort=newest` · Most reviewed `/products?sort=popular` ("Best sellers" until Prompt 29, §39.5) · Offers `/special-offers` (only while the deals page is enabled and its config has loaded) · Our story `/about` |
 | Account | "My orders" (signed in) or "Track order" (guest) → `/orders` · "My wishlist" → `/wishlist`, with a `.sf-count` (`<CountDisc>`) and an `aria-label` that carries the number · "Sign out" (signed in: `logout()`, then `navigate("/")`) |
 | Settings | Help & support `/support` · "Dark mode": a `<button role="switch" aria-checked>` that calls `toggleTheme`, drawn as the `.sf-switch` pill |
 | Legal | Terms · Privacy · Cookies (13px, muted, 44px targets) and `© {year} {APP_NAME}` |
@@ -972,7 +972,7 @@ The copy is bottom-aligned, so when `font-display: swap` replaces a fallback fac
 - **Data:** `apiService.settings.get()` and `apiService.shipping.getMethods()`, once each on mount (`Promise.allSettled`). A failed read counts as no data, so it only drops the items that depend on it; with both failing, Easy returns and Secure payment remain.
 - **Layout:** paper (`--sf-color-bg`) between two hairlines, inside `.sf-container--wide`. From 1024px one 56px row (hairlines included), content-sized columns spread from the left content edge to the right; below 1024px a 2 × 2 grid (the details wrap on phones). Each item: a 16px outline icon (stroke 1.5) in `--sf-color-accent`, the label in sans 13px 500 ink, the detail in 12px `--sf-color-text-muted`, with a visually hidden comma between them for screen readers. `ul aria-label="Our assurances"`; no focusable elements.
 - **Loading:** until both reads settle, the full list is laid out invisibly (`visibility: hidden`, `aria-hidden`) under one `.sf-skeleton` line, and the strip carries `aria-busy`. The strip is therefore already at its loaded height (measured equal at 320–1440px), then the items fade in over `--sf-duration-slow` (no animation under reduced motion).
-- **Icons:** `trustIcons.js` holds the outline drawings `TrustBadges` used, keyed by the `TRUST_BADGE_CATALOG` icon names; `TrustBadges` and the strip import it. The footer still has its own copy of four of them.
+- **Icons:** `trustIcons.js` holds the outline drawings `TrustBadges` used, keyed by the `TRUST_BADGE_CATALOG` icon names; `TrustBadges`, the strip and (since Prompt 34) the footer's trust bar import it; the footer used to keep its own copy of four of them.
 
 ### 20.6 New contrast pairs
 
@@ -1116,7 +1116,7 @@ useEffect(() => { if (near) startTheRead(); }, [near]);
 | `verifiedLabel`, `emptyLabel`, `errorLabel` | "Verified purchase", "No customer reviews yet.", "Reviews could not be loaded just now." | the empty and error lines are muted eyebrows |
 | `skeletonCount`, `className` | 3, — | |
 
-- **Slide** (a sand panel, radius sm, 24–32px padding): the review text as a serif quote (Playfair 22px, `--sf-leading-tight`, typographic quotes) of at most 240 characters (`clampQuote`: cut at a word, ellipsis); then, above a hairline, the stars (`StarRating` 14px), the reviewer's name as stored, "Verified purchase" (success tone, check mark) only when `isVerifiedPurchase === true`, and the product's name (ink link with an accent underline, a 44px target through `::after`, Prompt 31) beside the short date (`formatDate(…, "short")` in a `<time>`). No avatar, title, place or invented date; a missing name, product or date is left out. The quote fills the slide, so every caption sits on the same line.
+- **Slide** (a sand panel, radius sm, 24–32px padding): the review text as a serif quote (Playfair 22px, `--sf-leading-tight`, typographic quotes) of at most 240 characters (`clampQuote`: cut at a word, ellipsis); then, above a hairline, the stars (`StarRating` 14px), the reviewer's name as stored, "Verified purchase" (success tone, check mark) only when `isVerifiedPurchase === true`, and the product's name (ink link with an accent underline, a 44px target through `::after`, Prompt 31) beside the short date (`formatDateIN(…, "short")`, "25 Sept 2026", in a `<time>`; `formatDate`, en-US, until Prompt 29). No avatar, title, place or invented date; a missing name, product or date is left out. The quote fills the slide, so every caption sits on the same line.
 - **Stars on sand are ink** (§4): each slide sets `--sf-color-star: var(--sf-color-text)`, which `StarRating` reads; the empty stars keep `--sf-color-border-strong` (3.19 : 1 on sand).
 - **Per view:** 1 below 768px, 2 at 768–1023px, 3 from 1024px; snap scrolling, no bleed.
 - **Controls** (only when the track overflows): one dot per review (a 24px-wide, 44px-tall target around a 6px mark: hollow border-strong, filled ink for the slides in view; WCAG 2.5.8 asks for 24 × 24; on touch screens, `(pointer: coarse)`, the dots are position marks only, too close together for a 44px target each: swiping and the 44px buttons move the carousel there, and the dots stay buttons for a keyboard and a screen reader; Prompt 31) on the left, the hairline previous/next squares on the right (the rail's). A dot scrolls its slide into view (as far as the track goes); the buttons scroll one page of whole slides; smooth, instant under reduced motion. While loading, an empty row of the controls' height holds their place.
@@ -1349,7 +1349,7 @@ Grid: three columns from 1024px, two below; column gap 24px from 768px and 16px 
 - **`ProductListRow`** (the list view; the card has no horizontal layout and stays Prompt 13's): a 4:5 thumbnail 160px wide (112px below 480px) with the card's keyline, chips ("Sold out", "Sale", "New", two at most) and placeholder fallback; the brand eyebrow and the serif name (20px) in one link (the thumbnail repeats it out of the tab order); the short description (15px, two lines); ink stars only with reviews; `PriceBlock size="md"` with its saving; the stock line; then a ghost "Add to cart" (`buildCartItem`; "Added" for 1.2s; "Sold out" and disabled at zero stock; named "Add to cart, <name>") and the 44px hairline wishlist disc (`aria-pressed`, the card's labels). Actions sit in a third column from 768px and under the text below it. `ProductListRowSkeleton` is its loading box.
 - **Loading:** `ProductCardSkeleton` (or row skeletons) × per page in the same grid, `aria-hidden`, in an `aria-busy` region. The loading region and the results region are separate elements (keyed), and a deep-linked category's chip is held by a skeleton pill, so the results replace the skeletons without anything moving.
 - **Error:** an `.sf-panel` with the serif title "We couldn't load the catalogue." (display-md), one line and a primary "Try again" (`fetchCatalog`).
-- **Empty:** on the page, the serif title "Nothing here yet.", one line (quoting the query when `search` is set) and a ghost "Clear all filters" when anything constrains the results.
+- **Empty:** on the page, the serif title "No pieces to show." ("Nothing here yet." until Prompt 29, §39.7), one line (quoting the query when `search` is set) and a ghost "Clear all filters" when anything constrains the results.
 
 ### 24.7 Pagination
 
@@ -1369,7 +1369,7 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 
 ### 25.1 Surface and stacking
 
-- A fixed, full-viewport surface in `--sf-color-bg` (paper; the navy-ink base in dark mode). No backdrop, blur or veil. It fades in over `--sf-duration` (`--sf-ease-out`) and out over `--sf-duration` (`--sf-ease-in-out`); under reduced motion it appears and goes at once.
+- A fixed, full-viewport surface in `--sf-color-bg` (paper; the navy-ink base in dark mode). No backdrop, blur or veil. It fades in over `--sf-duration` (`--sf-ease-out`) and out over `--sf-duration-exit` (`--sf-ease-in-out`); under reduced motion it only fades (the overlay contract since Prompt 30, §40).
 - **Two grid rows.** Row 1 is the top bar: `<BrandLogo height={28} />` (decorative here, `aria-hidden`) at the left of `.sf-container--wide`, 64px plus the top safe-area inset, a hairline below. The 44px "Close search" button sits over the bar's far end but comes last in the DOM, so Tab reaches it after the results. Row 2 scrolls (`overscroll-behavior: contain`; `scrollbar-gutter: stable` from 480px, so the column never shifts when results make it scroll).
 - **Column:** centred, `max-width: calc(64rem + 2 × --sf-gutter)` (three cards about the listing's width); 24px above the field on phones, `clamp(48px, 8vh, 80px)` from 768px; 64px plus the bottom inset below.
 - **z-index: `--sf-z-search` (1400).** Above the header (50), mega-menu (55), bottom nav (58), sticky bar (60), drawers and sheets (1000) and modals (1100), and above two legacy literals that were in the code: the cart drawer (1200/1300; Prompt 18 moved it to `--sf-z-overlay`, section 28.1) and the product page's mobile `AddToCartBar` (1300; Prompt 16 moved it to `--sf-z-stickybar`, section 26.6). At `--sf-z-modal` the sticky bar's buttons showed on top of the overlay on phones. Below SweetAlert (2000).
@@ -1393,7 +1393,7 @@ Written by Prompt 15. Files: `src/components/SearchModal/SearchModal.js` + `.mod
 | Loading | the catalogue is not here yet, or a query's first search has not settled | six `ProductCardSkeleton`s in the grid, in an `aria-busy` region; the department row as sand pills until the categories arrive; the hairline |
 | Results | matches | the count line, then up to `MAX_RESULTS` (12) storefront `ProductCard`s, and "View all N results" (`.sf-btn--ghost`, centred) when more match |
 | Nothing matched | no match | the serif line (`.sf-display-sm`) "Nothing matched “q”." (with " in <Department>" when one is pressed), "Try a room, a material or a department." and the department links |
-| Unavailable | the catalogue read failed | the serif line "Search is unavailable right now.", "Please check your connection and try again." and a primary "Try again", which reads the catalogue again (a failed read also retries on the next open) |
+| Unavailable | the catalogue read failed | the serif line "We couldn’t load the catalogue.", "Check your connection and try again." and a primary "Try again" (the wording since Prompt 29, §39), which reads the catalogue again (a failed read also retries on the next open) |
 
 - While a new query waits for its 300ms debounce, the last results (or the last "nothing matched") stay under the hairline; skeletons only show when there is nothing settled to show, so the grid never flickers between keystrokes.
 - The count line's height is held while loading, so the field, the department row, the count and the first card do not move when results replace the skeletons (measured equal in Chromium).
@@ -1481,20 +1481,20 @@ In order, with the gap above each:
 | Summary | `shortDescription`, sans 16px / 1.6, secondary, 52ch; 20px |
 | Hairline | 24px above and below |
 | Variants | `VariantSelector` (26.5) |
-| Quantity and stock | `QuantityStepper` and the stock status, "In stock" (success), "Only N left" (warning) or "Out of stock" (error), sans 14px 500, from the page's derived values only; 24px after the variants |
+| Quantity and stock | `QuantityStepper` and the stock status, "In stock" (success), "Only N left" (warning) or "Sold out" (error; "Out of stock" until Prompt 29). The only stock line on the page since Prompt 34 (the variant picker's own note repeated it), sans 14px 500, from the page's derived values only; 24px after the variants |
 | Actions | 20px; see below |
 | SKU | "SKU: …" 12px muted (the chosen variant's); 12px |
 | Hairline | 24px above and below |
 | Promises | `TrustBadges variant="grid"` (26.5) |
 | Delivery & returns | `DeliveryReturnsInfo` (26.5); 32px |
 
-- **Actions:** `Add to cart` (`.sf-btn--primary --lg --block`; "Added" with a check that settles in over `--sf-duration` for 1.4s; "Out of stock" and disabled at zero stock), `Buy now` (`.sf-btn--ghost --lg`), and the wishlist heart (a 48px hairline circle, `aria-pressed`, "Save to wishlist" / "Remove from wishlist", filled caramel when saved). Below a 26rem (416px) buy box, Add to cart takes its own row and Buy now and the heart share the next; from 26rem (container query) the three share one row. 52px tall below 980px, 56px from 980px. No gradient, no lift: the ink primary turns navy on hover.
+- **Actions:** `Add to cart` (`.sf-btn--primary --lg --block`; "Added" with a check that settles in over `--sf-duration` for 1.4s; "Sold out" and disabled at zero stock), `Buy now` (`.sf-btn--ghost --lg`), and the wishlist heart (a 48px hairline circle, `aria-pressed`, "Save to wishlist" / "Remove from wishlist", filled caramel when saved). Below a 26rem (416px) buy box, Add to cart takes its own row and Buy now and the heart share the next; from 26rem (container query) the three share one row. 52px tall below 980px, 56px from 980px. No gradient, no lift: the ink primary turns navy on hover.
 - **Announcement:** a visually hidden polite status region says what the shopper chose when they change the variant: "5 shelves, ₹3,449.00, Only 4 left". It stays empty on load.
 - **Not touched:** the page's derived values (price, compare price, discount, SKU, stock, low-stock threshold, the quantity ceiling and its clamp, the reviews blend) and the cart wiring (the cart line, `addToCart(line, quantity, options)`, Buy now's `{ openDrawer: false }` and `/checkout`) are byte-identical to the code before this prompt.
 
 ### 26.5 Components
 
-- **`VariantSelector`:** each attribute is an eyebrow with the chosen value beside it in ink, over 40px `.sf-chip` pills (ink fill when chosen, from the primitive's `[aria-checked="true"]`; a 44px hit area) or, for colour, shade and finish rows, 28px swatches (the data's `swatchHex`, a 1px `--sf-color-border-strong` boundary so a white swatch still shows on paper, a 2px ink ring 2px clear of the circle when chosen) in 44px targets. Sold out keeps its strike (a hairline across the chip; a paper line with control-tone edges across the swatch, so it reads on any colour) and is disabled; an option that only conflicts with another choice is dimmed and still snaps to a real variant. The chosen variant's note ("Only N left in this option" / "This option is out of stock") is kept. Keyboard: the ARIA radio-group pattern (one tab stop, the chosen option; the arrow keys, Home and End move the choice and skip sold-out options).
+- **`VariantSelector`:** each attribute is an eyebrow with the chosen value beside it in ink, over 40px `.sf-chip` pills (ink fill when chosen, from the primitive's `[aria-checked="true"]`; a 44px hit area) or, for colour, shade and finish rows, 28px swatches (the data's `swatchHex`, a 1px `--sf-color-border-strong` boundary so a white swatch still shows on paper, a 2px ink ring 2px clear of the circle when chosen) in 44px targets. Sold out keeps its strike (a hairline across the chip; a paper line with control-tone edges across the swatch, so it reads on any colour) and is disabled; an option that only conflicts with another choice is dimmed and still snaps to a real variant. The chosen variant's own note ("Only N left in this option" / "This option is sold out") was removed in Prompt 34: it repeated the page's stock line two lines lower, which states it once (and the option's announcement includes it). Keyboard: the ARIA radio-group pattern (one tab stop, the chosen option; the arrow keys, Home and End move the choice and skip sold-out options).
 - **`QuantityStepper`:** a 44px hairline pill with two 44px round buttons (sand on hover; the focus ring is not clipped) around the figure (sans 16px 500, tabular, a polite live region). It is a `group` named by `label` (default "Quantity"). The 32px `size="sm"` is kept.
 - **`SocialProof`:** one row: gold stars at 14px (12px at `sm`), then "4.6 · 12 reviews" in ink; with `onReviewsClick` it is a button styled as a link (a stone underline that turns caramel, a 2px focus outline, a 44px hit area) named "Rated 4.6 out of 5, 12 reviews". With no ratings it says "No reviews yet" in muted text, never "0.0".
 - **`TrustBadges`:** no tinted chips and no boxes: a 20px outline icon in the accent beside an eyebrow label in ink (tracking 0.1em up to 480px) over a 13px muted detail; a 2 × 2 grid (`variant="grid"`). A dynamic badge shows only while the live data backs it (no COD while it is switched off, no free shipping without a threshold, no returns at 0 days), the rule the footer and the assurance strip already follow; while `loading` it is a skeleton, so nothing is claimed early. Every badge keeps two lines' room, so the grid does not change height.
@@ -1576,7 +1576,7 @@ Inside the page's `.sf-container--wide`, after the first screen:
 ```
 
 - **Layout:** from 980px the heading, summary and bars in columns 1–5 and the reviews in 7–12; one column below.
-- **Summary:** the average to one place in Playfair at 48px (lining, tabular; "out of 5" visually hidden), the 18px gold stars (hidden from assistive technology: the figure says it), "Based on N rating(s)" in 14px muted. With no ratings the average is not shown at all: "No reviews yet" (the display-sm serif) and "Reviews come from verified orders and are published after moderation." (14px muted) take its place, once the read has settled.
+- **Summary:** the average to one place in Playfair at 48px (lining, tabular; "out of 5" visually hidden), the 18px gold stars (hidden from assistive technology: the figure says it), "Based on N rating(s)" in 14px muted. With no ratings the average is not shown at all: "No reviews yet" (the display-sm serif) and "Customers can review a piece from My orders once it arrives. Reviews appear after moderation." (14px muted; until Prompt 34 it claimed reviews "come from verified orders", which admin-added reviews are not) take its place, once the read has settled.
 - **Rating bars:** a list named "Ratings by star", five rows 5 → 1, each `role="img"` named "5 stars: 2 reviews" (singular forms where due): the digit and a 10px star glyph, a 6px sand track with an ink fill as wide as its share (`--share`), the count in muted. Never the star colour. Only once the reviews have loaded and there is at least one.
 - **Reviews:** a list of hairline-separated `article`s, 32px either side of each rule: the name (15px, 500, ink; "Anonymous" when missing), "Verified purchase" (an eyebrow in `--sf-color-success` after a check mark, only when `isVerifiedPurchase === true`), the short date in a `<time>` (left out when it does not parse), 14px gold stars, the title as an `h3` (Playfair 18px, 500), the body (16px / 1.7, secondary, 60ch), customer photos (a list, 72px, lazy, "Customer upload 1 of 2"), and "N people found this helpful" (12px muted, only above 0).
 - **States:** loading shows two skeleton reviews in an `aria-busy` column with a visually hidden "Loading reviews" (the summary keeps the store's figure meanwhile); a failed read says "Reviews could not be loaded just now." with a ghost "Try again", which reads again and moves focus to the section. No sort control and no form: reviews are written from Order History for delivered pieces and published after moderation.
@@ -1628,7 +1628,7 @@ Written by Prompt 18. Files: `src/components/CartDrawer/CartDrawer.js` + `.modul
 | Part | Spec |
 |---|---|
 | Header | 64px plus the top inset, a hairline below: "Your cart" (`h2`, `.sf-display-sm`) and the number of pieces ("3 items", 14px muted, `getCartItemCount`); a 44px "Close cart" |
-| Free delivery | Only once the shipping methods have been read and one of them has a threshold (28.3). The line, 14px secondary: "Add **₹3,752.00** more for free delivery" (the amount in ink 500), or "Free delivery unlocked" in `--sf-color-success` 500 after a check mark. Under it a 2px `--sf-color-sand` track with a `--sf-color-primary` fill scaled to `min(1, subtotal / threshold)` (`scaleX`, `--sf-duration-slow`, `--sf-ease-out`). Hairline below |
+| Free delivery | Only once the shipping methods have been read and one of them has a threshold (28.3). The line, 14px secondary: "Add **₹3,752.00** more for free delivery" (the amount in ink 500), or "Free delivery on this order" ("Free delivery unlocked" until Prompt 29) in `--sf-color-success` 500 after a check mark. Under it a 2px `--sf-color-sand` track with a `--sf-color-primary` fill scaled to `min(1, subtotal / threshold)` (`scaleX`, `--sf-duration-slow`, `--sf-ease-out`). Hairline below |
 | Line | Hairline-separated rows, 20px above and below. A 72 × 90 thumbnail (4:5, `object-fit: cover`, sand, a hairline frame, lazy, `onImageError`; a pointer-only link: `tabIndex -1`, `aria-hidden`). Beside it: the name (Playfair 15px, two-line clamp, a link to `productPath`; a caramel underline on hover) and "Remove" at the top right (13px secondary `.sf-btn--link`, 44px hit area, named "Remove <name>, <option>"); the option (12px muted); `PriceBlock size="sm"` (unit price and the struck compare-at price); then the stepper and the line total (sans 15px 500, "Line total" for screen readers) |
 | Stepper | A 36px hairline pill: two 36px buttons, each with a 44px target (`::after`), named "Decrease quantity" / "Increase quantity" inside a group named "Quantity, <name>, <option>", around the figure (14px 500, tabular, a polite live region). "−" is unavailable at 1; "+" is unavailable when the line's `stock` is a number and the quantity has reached it ("No more stock available" as its title). Unavailable means `aria-disabled` at 50%, not `disabled`, so focus stays on a button that has just reached its limit |
 | Promises | One quiet centred row under the lines (it wraps on two lines in the panel): 16px outline icons from `trustIcons.js` in the accent beside 11px uppercase labels (500, 0.12em) in muted: "Secure payment" · "Cash on Delivery" (only while `settings.payment.codEnabled`) · "Easy returns · 7 days" (`STOREFRONT_CONFIG.returnsWindowDays`, hidden at 0). Shown once the store data has settled; a list named "Our promises" |
@@ -1731,7 +1731,7 @@ Inside `.sf-container--wide`, on paper:
 | Config loading | `useDealsConfig().loading` | the hero's lines in sand (the eyebrow; the title's three / two / one lines below 768px / at 768–1023px / from 1024px; the subtitle's three / two; the countdown row) and the codes section with four ticket skeletons; `aria-busy`, a visually hidden "Loading offers" |
 | Switched off | `config.enabled === false` | centred like the product page's "not found": eyebrow "Offers", `h1` "No offers at the moment." (`.sf-display-md`), "The full collection is open as usual.", a primary large "Browse all furniture" → `/products`. The header, sidebar and footer drop their "Offers" links on their own (unchanged) |
 | Data loading | the three reads are pending | the real hero and codes heading; skeleton tickets (the admin's coupon count, else 4), deal cards (else 3), chip pills and grid cards (else 6, at most 9); `aria-busy`. Measured equal to the loaded page: 0 CLS at 360, 768 and 1440px with web fonts blocked |
-| Failed read | `products.getAll` or `categories.getAll` throws (`coupons.getActive` never does) | a sand `.sf-panel`: "We couldn't load the offers." (display-md `h2`), "Please check your connection and try again.", primary "Try again", which reads again; focus then moves to the codes section, or back to "Try again" if it fails again |
+| Failed read | `products.getAll`, `categories.getAll`, `coupons.getActive` or the deals config throws (the coupon and config reads rethrow since Prompt 32's follow-up, §42.8; a 404 is "none") | a sand `.sf-panel`: "We couldn’t load the offers." (display-md `h2`), "Check your connection and try again.", primary "Try again", which reads again; focus then moves to the codes section, or back to "Try again" if it fails again |
 | Nothing on offer | the deal of the day and the grid are both empty | serif `h2` "Nothing on offer right now.", "No pieces are reduced just now." (adding ", but the codes above still apply at checkout." when there are codes), ghost "Browse all furniture" |
 
 As before, the data read starts alongside the config read (the context's default config is enabled), so an enabled page loads in one round trip; when the config says "off", that read is dropped.
@@ -1875,7 +1875,7 @@ The shell sits inside the app's `<main>`: it adds no landmark besides the nav (i
 - **Chip row (up to 900px):** the same links as `.sf-chip`s in one row that scrolls sideways to the screen's edges (no scrollbar; `scroll-padding-inline` is the gutter); the current one is the ink chip (`Highlight` in forced colours); "Sign out" ends the row in muted text. Chips keep a 44px hit area (`::after`), and the row's 8px of vertical padding holds the hit areas and the focus rings. The identity block is not shown: the greeting names the user. On arrival, and whenever `active` changes, a current chip outside the row is scrolled to the row's middle (the row only, never the window).
 - **Items:** Profile `/profile` · Addresses `/profile?tab=addresses` · Orders `/orders` · Store credit `/profile?tab=wallet` · Wishlist `/wishlist` · Change password `/profile?tab=password` · Sign out. `aria-current="page"` on the item matching `active`.
 - **History:** a link to the page already on screen (a Profile tab on `/profile`) navigates with `replace`, so tabs never pile up history; links to other pages push as usual.
-- **Sign out:** a button (`aria-haspopup="dialog"`) that asks first: SweetAlert "Sign out?" / "You'll need to sign in again to access your account." (the question icon), confirm "Sign out" with `customClass: { confirmButton: "sf-btn sf-btn--danger" }`, cancel "Stay signed in". Confirmed: `logout()`, then `navigate("/")`. A failure calls `onSignOutError("Sign out failed. Please try again.")`, or shows an error toast without it.
+- **Sign out:** a button (`aria-haspopup="dialog"`) that asks first: SweetAlert "Sign out?" / "You’ll need to sign in again to see your account." (the question icon; the wording since Prompt 29, §39.6), confirm "Sign out" with `customClass: { confirmButton: "sf-btn sf-btn--danger" }`, cancel "Stay signed in". Confirmed: `logout()`, then `navigate("/")`. A failure calls `onSignOutError("We couldn’t sign you out. Try again in a moment.")` (`SIGN_OUT_FAILED`, the wording since Prompt 29), or shows an error toast without it.
 - It reads `useAuth().user` and fetches nothing.
 
 ### 31.4 The `?tab=` contract (`/profile`)
@@ -1898,7 +1898,7 @@ Once the session restore has settled, a guest on `/profile` (any tab) gets the s
 
 ### 31.6 The Profile section
 
-- A `.sf-card--hairline` inside `Reveal` (the surface; padding `clamp(20px, 4vw, 40px)`): the `h2` "Personal information" (`.sf-display-sm`), "Member since January 15, 2025" (14px muted; only with `createdAt`; `formatDate`), then the form.
+- A `.sf-card--hairline` inside `Reveal` (the surface; padding `clamp(20px, 4vw, 40px)`): the `h2` "Personal information" (`.sf-display-sm`), "Member since 15 January 2025" (14px muted; only with `createdAt`; `formatDateIN` since Prompt 29), then the form.
 - A `<form noValidate>` (Enter submits) of `.sf-field`s in two columns (20px between them, 24px between rows), one column up to 600px:
 
 | Field | `type` | `autocomplete` | Also |
@@ -1988,14 +1988,14 @@ Written by Prompt 22. Files: `src/pages/Profile/Profile.js` + `.module.css` (the
 | "Add address", "Add your first address", "Edit" | the form's heading (a reading position, no ring), brought under the sticky header if the form opened out of view |
 | Cancel, or a save | what opened the form: that card's "Edit", else "Add address" (or "Add your first address" when no address is left) |
 | A delete | the heading of the card that took the deleted one's place, else the one before it, else the empty state's line |
-| "Keep" (or Escape) in the delete confirm, or a delete that failed | that card's "Delete" |
+| "Keep address" (or Escape) in the delete confirm, or a delete that failed | that card's "Delete" |
 | "Set as default" | the same card's heading, which now reads "… Default" (its button has gone) |
 
 A focus move is requested together with the change that needs it (a counter state bumped in the same batch), so it runs after the render that shows the change, never after an earlier one. Each move uses `preventScroll` and scrolls only when the target is under the header or outside the window (§31.9). The delete confirm passes `returnFocus: false`, so the page alone moves focus around it: SweetAlert returns focus after its closing animation, by when React has reused the deleted card's Delete button for the card that took its place, so its own return would land on that card's Delete (found in Chromium; the unit tests stub SweetAlert).
 
 ### 32.4 The delete confirm
 
-SweetAlert, unchanged words: "Delete this address?" / "This address will be removed from your account." (the warning icon), "Delete" / "Keep", with `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor` (§31.8), and `returnFocus: false` (§32.3): `rgb(162, 56, 43)` with paper text in light mode, `rgb(236, 148, 131)` with navy-ink text in dark mode, 44px. A delete of the address being edited closes the form; a form open on a later address follows that address up the list (so its save replaces the right row). Deleting the default promotes the first remaining address, as before.
+SweetAlert, unchanged words: "Delete this address?" / "This address will be removed from your account." (the warning icon), "Delete" / "Keep address" (focus starting on the latter since Prompt 31), with `customClass: { confirmButton: "sf-btn sf-btn--danger" }` and no `confirmButtonColor` (§31.8), and `returnFocus: false` (§32.3): `rgb(162, 56, 43)` with paper text in light mode, `rgb(236, 148, 131)` with navy-ink text in dark mode, 44px. A delete of the address being edited closes the form; a form open on a later address follows that address up the list (so its save replaces the right row). Deleting the default promotes the first remaining address, as before.
 
 ### 32.5 Change password
 
@@ -2056,7 +2056,7 @@ Written by Prompt 23. Files: `src/pages/Profile/Profile.js` + `.module.css` (the
 
 The stylesheet shows one view and sets the other to `display: none`, which also takes it out of the accessibility tree.
 
-- **Date:** `formatDate(createdAt, "short")` ("Jun 14, 2026", en-US like every storefront date until Prompt 29) in a `<time dateTime>`, secondary. A missing date is a dash with "Date not recorded" for screen readers.
+- **Date:** `formatDateIN(createdAt, "short")` ("14 June 2026" style, en-IN since Prompt 29; "Jun 14, 2026" before) in a `<time dateTime>`, secondary. A missing date is a dash with "Date not recorded" for screen readers.
 - **Description:** the reason (15px ink; "Store credit added" / "Store credit used" when there is none). When the reason contains the order number (the API writes "Applied to order ORD-…", "Refund for order ORD-…", "Store credit returned — ORD-… cancelled"), that number is the link to `/orders` (`.sf-btn--link`, in the text's own size and weight, with the primitive's 44px hit area), so it never shows twice. A reason that does not name its order ("Refund for return RET-…") is followed by "Order <link>". "Refund REF-…" follows when the entry has a refund number (13px muted).
 - **Amount:** "+₹4,302.00" in `--sf-color-success` or "−₹1,000.00" in ink (500). The visible text is `aria-hidden`; a visually hidden "Credit of ₹4,302.00" / "Debit of ₹1,000.00" carries it (§33.8). The sign comes from `type` (anything but `"credit"` is a debit, as before), the figure from `Math.abs(amount)`.
 - **Balance:** the entry's own `balanceAfter` (secondary), or a dash with "Not recorded".
@@ -2071,11 +2071,11 @@ The stylesheet shows one view and sets the other to `display: none`, which also 
 | Loading | every opening of the tab, and after "Try again" | the card with its bar, the facts, the `h2`, then placeholders: the table's head over three rows of bars from 601px, three stacked entries up to 600px (`aria-hidden`) |
 | Ready | both reads resolved | the card, the facts, the ledger (or the empty panel) |
 | Empty | the ledger is empty (or not a list) | a sand `.sf-panel`: "No transactions yet." (`.sf-display-sm`) and "Refunds issued to store credit, and credit you spend at checkout, will appear here." (16px secondary); the card still shows the API's balance |
-| Error | either read rejects | a sand `.sf-panel` in place of the whole section: the `h2` "We couldn’t load your store credit." (`.sf-display-sm`), "Please check your connection and try again.", a primary "Try again" (full width up to 480px) that runs the same two reads |
+| Error | either read rejects | a sand `.sf-panel` in place of the whole section: the `h2` "We couldn’t load your store credit." (`.sf-display-sm`), "Check your connection and try again.", a primary "Try again" (full width up to 480px) that runs the same two reads |
 
 - A visit never shows an earlier visit's figures (the state resets when the tab closes), and a read that settles after the tab has closed, or after a newer read started, changes nothing.
 - **Try again:** focus waits on the section region while the reads run (the panel makes way for the skeletons), stays there when they succeed, and moves to the new "Try again" if they fail again, unless it has gone somewhere else meanwhile.
-- **Today the error panel cannot appear:** `wallet.getBalance` and `wallet.getTransactions` in `api.js` catch every failure and resolve `0` / `[]`, so a failed read looks like an empty wallet (the coupon read behaves the same, §29.6). The panel follows the moment those reads reject (Prompt 23's build log has the two-line change; `api.js` is not this prompt's to edit).
+- **The error panel appears since Prompt 32's follow-up:** `wallet.getBalance` and `wallet.getTransactions` rethrow a failed read (a 404, no wallet yet, is still ₹0 and an empty ledger), so a failure no longer looks like an empty wallet (§42.8). Until then they resolved `0` / `[]` on any failure.
 
 ### 33.6 Motion
 
@@ -2115,7 +2115,7 @@ The rules are the old page's, verbatim (a script compared them with the previous
 ### 34.2 The order card
 
 - `<li>` › `<article>` named by its `h3`, "Order ORD-…" ("Order" visually hidden). A `.sf-card--hairline` with no padding of its own: hairline-separated blocks 24px in from the edges (the actions row 16px top and bottom), `overflow: hidden`.
-- **Head:** the order number (sans 14px, 500, 0.06em tracking) and a borderless 44px copy button ("Copy order number ORD-…"; muted glyph, ink on hover; a check in the success tone for 2 seconds after a copy), pulled into the number's line box so the row keeps its height; under them "Placed on June 14, 2026" (14px muted, a `<time>`); the status badge on the right (under the date when the row runs out of room).
+- **Head:** the order number (sans 14px, 500, 0.06em tracking) and a borderless 44px copy button ("Copy order number ORD-…"; muted glyph, ink on hover; a check in the success tone for 2 seconds after a copy), pulled into the number's line box so the row keeps its height; under them "Placed on 14 June 2026" (14px muted, a `<time>`; `formatDateIN` since Prompt 29); the status badge on the right (under the date when the row runs out of room).
 - **Status badges** (`.sf-badge`, the eyebrow type), keyed by `STATUS_CONFIG`'s `className`: Processing `--ink`; Shipped `--info`; Delivered `--success`; Cancelled and Returned `--sand` with muted text (never red: cancelling is a normal outcome). On the sand Track panel the quiet badge is a hairline outline instead of a second sand layer (34.10).
 - **Body:** up to three thumbnails (56px wide at 4:5, sand while loading, a hairline frame, `alt` = the item's name, `loading="lazy"`, `onImageError`), a "+2 more" tile beyond three; the total on the right: the eyebrow "Total" over the figure in Playfair 20px with lining tabular figures (under the thumbnails on narrow cards).
 - **Actions:** ghost "Track" and "Details" (`aria-expanded`, `aria-controls`; a chevron that turns over `--sf-duration`); a ghost link "Return or exchange" (only while `isReturnEligible`); "Cancel order" (only while `isCancellable`), a text button in `--sf-color-error` with the error tint on hover, `aria-haspopup="dialog"`, "Cancelling…" and `aria-disabled` (with `data-busy`, full strength) while it runs, when every other "Cancel order" is unavailable too. Each name carries its order after the visible words, from a hidden suffix ("Track order ORD-…", "Details of order ORD-…", "Return or exchange order ORD-…", "Cancel order ORD-…"). Up to 600px the actions stack full width.
@@ -2124,7 +2124,7 @@ The rules are the old page's, verbatim (a script compared them with the previous
 ### 34.3 Track (the sand panel)
 
 - A `.sf-panel` across the card (square corners, a hairline above, 24px padding): the eyebrow `h4` "Tracking", the progress line or the closed note, then the facts under a hairline.
-- **Progress line:** `<ol aria-label="Delivery progress">` Placed · Processing · Shipped · Delivered. The stage comes from the derived label (Processing 1, Shipped 2, Delivered 3); only what the status fields imply is marked reached. Steps before the stage are done (a filled ink dot, an ink segment to the next, a hidden ", done"); the stage is current (`aria-current="step"`, the filled dot with a 1px ring 2px out, the label ink 500); later steps are not yet (a `--sf-color-border-strong` ring, a muted label, a hidden ", not yet", a border-strong segment). Dates only from the order: Placed = `createdAt`, Delivered = `deliveredAt` (`formatDate` short). Four in a row from 601px; a column up to 600px (dots on a vertical line).
+- **Progress line:** `<ol aria-label="Delivery progress">` Placed · Processing · Shipped · Delivered. The stage comes from the derived label (Processing 1, Shipped 2, Delivered 3); only what the status fields imply is marked reached. Steps before the stage are done (a filled ink dot, an ink segment to the next, a hidden ", done"); the stage is current (`aria-current="step"`, the filled dot with a 1px ring 2px out, the label ink 500); later steps are not yet (a `--sf-color-border-strong` ring, a muted label, a hidden ", not yet", a border-strong segment). Dates only from the order: Placed = `createdAt`, Delivered = `deliveredAt` (`formatDateIN` short since Prompt 29). Four in a row from 601px; a column up to 600px (dots on a vertical line).
 - **Cancelled or returned:** no line; one sentence from the status fields, in `deriveOrderStatus`'s order: "This order was returned."; "This order was cancelled on June 12, 2026." (`cancelledAt`; without it, "This order was cancelled."); "The payment for this order didn't go through." (payment failed); "The payment for this order was refunded." (payment refunded).
 - **Facts** (`<dl>`; the label column 7.5–9rem, stacked up to 480px): Tracking number (tabular; "Copy tracking number"; else "Not yet available" while processing or shipped, "Not available" otherwise) · Carrier: "Open carrier page" (`.sf-btn--link` with an external glyph, `target="_blank"`, `rel="noopener noreferrer"`, a hidden "(opens in a new tab)"; only for an `http(s)` address) · Status (the badge) · Refund (the old lines: "Refunded ₹4,302.00 to your store credit", "Refund in progress — typically 5–7 business days", "Refund delayed — our team is on it").
 
@@ -2147,7 +2147,7 @@ The rules are the old page's, verbatim (a script compared them with the previous
 | State | When | What shows |
 |---|---|---|
 | Loading | the session restore, every read, Refresh, Try again | three skeleton cards in the card's own line boxes (number, date, badge, two thumbnails, the total's two lines, two actions), `aria-hidden`, in an `aria-busy` region with a hidden "Loading your orders"; the toolbar stays |
-| Error | the orders read rejects | a sand `.sf-panel`: "We couldn't load your orders." (`.sf-display-sm`), "Please check your connection and try again.", a primary "Try again"; no toolbar, no count. Never "No orders yet." While the retry runs focus waits on the section; a second failure puts it on the new "Try again" |
+| Error | the orders read rejects | a sand `.sf-panel`: "We couldn’t load your orders." (`.sf-display-sm`), "Check your connection and try again.", a primary "Try again"; no toolbar, no count. Never "No orders yet." While the retry runs focus waits on the section; a second failure puts it on the new "Try again" |
 | Empty | no orders | a sand panel: "No orders yet.", "When you place an order, it appears here, ready to track.", a primary link "Browse furniture" (`/products`); no toolbar |
 | No match | a chip or the search leaves nothing | on the page: "No orders match.", "Try another order number or status.", a ghost "Show all orders" that clears both and moves focus to the first order |
 | Guest | no session once the restore has settled | the shell without the nav ("My account"), a sand panel: "Sign in to see your orders." (`.sf-display-sm`), "Your orders are linked to your account, where you can track, cancel, return or review them.", a primary "Sign in" and a ghost "Create account" (`openAuthModal`, `aria-haspopup="dialog"`; stacked full width up to 480px). No read and no redirect. After signing in the orders load in place and, once the dialog has gone, focus moves to the `h1` (§31.5) |
@@ -2221,7 +2221,7 @@ A hairline sand panel (`.sf-panel.sf-panel--hairline`, padding `clamp(20px, 3vw,
 ### 35.3 The toolbar
 
 - Left: a visible `<label>` "Sort by" (14px muted) and `#wishlist-sort`, an `.sf-select` (44px) with `SORT_OPTIONS`' labels, unchanged ("Recently Added", "Oldest First", "Price: Low to High", "Price: High to Low", "Highest Rated"). On phones the select takes the room left; every label fits at 360px.
-- Right: "Clear all", an `.sf-btn--link` in `--sf-color-error` (its underline turns the error tone on hover), `aria-label="Clear all saved pieces"`, `aria-haspopup="dialog"`, a 44px hit area through the primitive's `::after`. It calls `clearWishlist()`, whose confirm ("Clear wishlist?", "Clear All" / "Keep Items") is the context's, unchanged; it still passes a hex `confirmButtonColor` (§16.6: `WishlistContext.js` is not this page's to edit).
+- Right: "Clear all", an `.sf-btn--link` in `--sf-color-error` (its underline turns the error tone on hover), `aria-label="Clear all saved pieces"`, `aria-haspopup="dialog"`, a 44px hit area through the primitive's `::after`. It calls `clearWishlist()`, whose confirm is the context's: since Prompts 29 and 31, "Clear your wishlist?" with "Clear all" (`sf-btn sf-btn--danger`) and "Keep wishlist", focus starting on the latter (§39.6).
 - While the account's list loads, "Clear all" is `aria-disabled` and does nothing: a clear then would race the merge.
 
 ### 35.4 The pieces
@@ -2240,11 +2240,11 @@ A hairline sand panel (`.sf-panel.sf-panel--hairline`, padding `clamp(20px, 3vw,
 | Session restore | the first render of a load, while `AuthContext` restores the session (`isLoading`) | nothing (the page returns `null`, as Profile does): whether the rail or the banner belongs on the page is not known yet, and either arriving beside or above a page already drawn would move it |
 | Loading | the account's read after a sign-in or a reload with a session (`WishlistContext`'s `isLoading`); the first render with a new account, before the context has started that read | the toolbar ("Clear all" unavailable) over 3 to 6 skeleton pieces (the device's count, within those bounds): `ProductCardSkeleton`, then the stock line's and the actions' boxes, `aria-hidden`, in an `aria-busy` wrapper with a hidden "Loading your wishlist"; no count |
 | Pieces | at least one | the toolbar, the grid |
-| Empty | none | on the page: "Nothing saved yet." (`.sf-display-md`, the `h2`, `tabIndex -1`), "Use the heart on any piece to save it for later." (16px secondary), a primary link "Browse furniture" to `/products` (full width up to 480px); no toolbar, no count |
+| Empty | none | on the page: "Nothing saved yet." (`.sf-display-md`, the `h2`, `tabIndex -1`), "Pieces you save will wait here." (16px secondary; the wording since Prompt 29, §39.7), a primary link "Browse furniture" to `/products` (full width up to 480px); no toolbar, no count |
 
 The guest banner sits above whichever state applies. A reload with a session goes nothing → the rail over the skeleton → the account's pieces, never through an empty state or the device's own list first (the old page showed empty → device list → skeleton → list); a guest's reload goes nothing → the banner over the pieces; arriving from another page once the account's list has loaded shows the pieces at once, with no skeleton frame.
 
-Cold-load layout shift (Chromium, 900px-tall window, production build), at 1440 / 360px: 0.0005 / 0.0066 signed in, 0.0005 / 0.0084 as a guest (the old page: 0.031 / 0.055 signed in, 0 / 0 as a guest). What remains is the Playfair swap nudging the `h1` by a few pixels and, at 360px, the footer: while the restore renders nothing, its top sits 10px inside the window (`.main-content`'s `min-height: calc(100vh - 70px)` assumes a 70px header; the phone header is 60px), under the fixed bottom bar, and the page then pushes it down. Profile does the same; the rule is global (`App.css`).
+Cold-load layout shift (Chromium, 900px-tall window, production build), at 1440 / 360px: 0.0005 / 0.0066 signed in, 0.0005 / 0.0084 as a guest (the old page: 0.031 / 0.055 signed in, 0 / 0 as a guest). What remains is the Playfair swap nudging the `h1` by a few pixels and, at 360px, the footer: while the restore renders nothing, its top sits 10px inside the window (`.main-content`'s `min-height: calc(100vh - 70px)` assumed a 70px header; the phone header is 60px), under the fixed bottom bar, and the page then pushed it down. Profile did the same. Fixed in Prompt 34: below 1024px, where the header never compacts, `App.css` sizes `.main-content` from `--sf-header-height` instead.
 
 ### 35.6 Focus
 
@@ -2331,7 +2331,7 @@ Written by Prompt 26. Files: `src/pages/Checkout/Checkout.js` + `.module.css` (`
 
 - "Review your order": the lines ("Qty 2 × ₹4,499.00" and the line total), then three hairline blocks, each with an eyebrow `h3` and an "Edit" link button (named "Edit delivery address" / "Edit delivery method" / "Edit payment"): Deliver to (name, lines, phone), Delivery method (name, window, cost), Payment (the method, the credit applied, then "You will be charged ₹X." or "Pay ₹X in cash on delivery.", or "Paid in full with store credit (₹X).").
 - **The facts** beside Place order: "Amount payable" with the figure in the serif (20px), then a list named "About this order": "Delivery in 7–10 business days" (the chosen method), "Easy returns within 7 days of delivery" (none at 0), and "Secure payment", "Pay in cash on delivery" or "Paid in full with store credit".
-- **The failure alert:** an always-present `role="alert"` slot under the facts. When an attempt ends without an order: "We couldn't place your order. Nothing has been charged. Please try again." (error on its tint, an alert glyph). OrderContext's own "Order Failed" dialog opens first and hides the page from assistive tech, so the message comes in once that dialog has closed and handed focus back to Place order (at most 500ms later), and is announced. It goes when a new attempt starts and when the step changes.
+- **The failure alert:** an always-present `role="alert"` slot under the facts. When an attempt ends without an order: "We couldn’t place your order. Nothing has been charged. Try again in a moment." (the wording since Prompt 29) (error on its tint, an alert glyph). OrderContext's own "Order Failed" dialog opens first and hides the page from assistive tech, so the message comes in once that dialog has closed and handed focus back to Place order (at most 500ms later), and is announced. It goes when a new attempt starts and when the step changes.
 
 ### 36.8 States
 
@@ -2416,7 +2416,7 @@ Written by Prompt 27. Files: `src/pages/OrderConfirmation/OrderConfirmation.js` 
 - Centred. A 64px mark: a 1px ink circle (`currentColor` = `--sf-color-text`) and a 1.5px check drawn by one stroke (`pathLength="1"`, `stroke-dashoffset` 1 → 0 over `--sf-duration-slow` after `--sf-duration-fast`, `--sf-ease-out`). Once the animation ends the path takes `.markDrawn` (no animation, drawn): printing hides the thank-you and shows it again, which would otherwise restart the stroke.
 - The eyebrow, the `h1` (`.sf-display-lg`) "Thank you, *Bappi*." with the delivery address's first name as the accent italic (caramel; "Thank you." without a first name), then one line (17px secondary, 46ch) that says only what the status fields say (37.8).
 - **The order number:** a hairline chip (radius sm): the label "Order number" (12px eyebrow type, muted) over the number (17px, 500, 0.04em, tabular), and Order History's 44px borderless copy button (`aria-label` "Copy order number ORD-…"; muted glyph, ink on hover, a check in `--sf-color-success` while "Copied" shows). The note "Copied" (or "Couldn't copy") is a small ink tooltip over the button (`--sf-color-primary` with primary-contrast 12px text, radius md, `--sf-shadow-sm`; a `CanvasText` border in forced colours) inside a `role="status"` region that stays in the page; it goes after 2 seconds, and a second copy re-announces (a new key). The copy goes through `copyToClipboard`, so a refused copy says so.
-- "Placed on <time>June 12, 2026</time>" (14px muted; `formatDate`, en-US like every storefront date).
+- "Placed on <time>12 June 2026</time>" (14px muted; `formatDateIN`, en-IN like every storefront date since Prompt 29).
 
 ### 37.3 The facts row
 
@@ -2437,7 +2437,7 @@ Written by Prompt 27. Files: `src/pages/OrderConfirmation/OrderConfirmation.js` 
 | State | When | What shows |
 |---|---|---|
 | Loading | every read (arrival, Try again) | a visually hidden `h1` "Loading your order", then placeholders in the page's own line boxes (the mark, eyebrow, title, line and chip; three facts; the card's heading, two item rows and the two detail blocks), `aria-hidden`, in an `aria-busy` wrapper |
-| Error | the read rejects | a sand `.sf-panel`: the `h1` "We couldn't load your order." (`.sf-display-sm`), "Something went wrong while loading order ORD-…. Please check your connection and try again.", a primary "Try again" (the same read) and a ghost "Order history" (`/orders`) |
+| Error | the read rejects | a sand `.sf-panel`: the `h1` "We couldn’t load your order." (`.sf-display-sm`), "Check your connection and try again.", a primary "Try again" (the same read) and a ghost "My orders" (`/orders`). A 404 is not this state: since Prompt 34 it reads as "not found" (Laravel answers an unknown number with 404) |
 | Not found | no order in the answer | the same panel: "We couldn't find this order.", "Order ORD-… may have been placed in a different session.", a primary "Go to home" (`/`) and a ghost "Order history" |
 | Loaded | an order | 37.1 |
 
@@ -2621,7 +2621,7 @@ Written by Prompt 28. Files: `src/components/ContentPage/` (`ContentPage.js`, th
 - **Prefill:** `?order=` fills the order number (trimmed, at most 64 characters) and `?category=` the topic when it is one of `SUPPORT_CATEGORIES` (Order History's "Return or exchange" sends both; the confirmation page sends `?order=`). A signed-in shopper's name and email fill in too, never over anything typed.
 - **Validation** (on submit; `noValidate`): "Enter your name"; "Enter your email address" / "Enter a valid email address, like name@example.com"; "Enter a valid 10-digit mobile number" (only when a phone is given); "Enter a subject"; "Write your message" / "Write at least 20 characters". Each failing field takes `aria-invalid` and its message (`.sf-field__error`, after the hint in `aria-describedby`); focus moves to the first after the render that shows the messages.
 - **Sending:** "Sending…", `aria-disabled="true"` and `data-busy` (full ink, `cursor: progress`; the auth modal's busy state); focus stays on the button and a second press is ignored.
-- **A failed request:** an always-present `role="alert"` slot above the button receives "We couldn’t send your message. Please try again, or email us at info@…" (error on the error tint, 14px, a glyph; a `CanvasText` border in forced colours). The values stay.
+- **A failed request:** an always-present `role="alert"` slot above the button receives "We couldn’t send your message. Try again in a moment, or email us at info@…" (the wording since Prompt 29) (error on the error tint, 14px, a glyph; a `CanvasText` border in forced colours). The values stay.
 - **Sent:** the card gives way to a sand `.sf-panel` (`role="status"`, `tabIndex="-1"`, focused without a ring): a 28px check in `--sf-color-success`, the `h2` "Message sent.", "Thank you for writing to us. We reply during working hours." and a ghost "Send another message" (full width up to 600px), which brings the form back, empty (the shopper's name and email again when signed in), with focus on its `h2`.
 - **The request is the old one:** `apiService.leads.createContact(formData)` with `{ name, email, phone, orderNumber, category, subject, message }`, as typed (JSON Server: `POST /leads` with `type: "contact"`; Laravel: `POST /leads/contact`, 02_API_ENDPOINTS §M).
 
@@ -2644,8 +2644,9 @@ Written by Prompt 28. Files: `src/components/ContentPage/` (`ContentPage.js`, th
 - **Where:** the boundary wraps the whole app above the providers and the router, the admin included. So the fallback imports no stylesheet and no storefront component, reads no context, and is neutral (paper and ink; navy-ink and off-white in dark mode), never storefront chrome.
 - **Styling:** inline styles from the tokens, each written `var(--sf-<token>, <fallback>)`; the fallback is the token's own value (section 12 lists them) and applies only if the token stylesheet never loaded. `isDarkTheme()` (unchanged: `localStorage.theme` `"dark"` or `"light"`, else `prefers-color-scheme`) picks `FALLBACK.light` or `FALLBACK.dark`. A style attribute cannot express `:hover` or `:focus-visible`, so one `<style>` element, scoped to `[data-error-fallback]`, adds them: a 2px `--sf-color-focus` outline (offset 2px) on the buttons and the summary, and, on hover-capable devices, the primary's `--sf-color-primary-hover` fill and the ghost's `--sf-color-primary-soft` (`!important`, against the inline styles).
 - **Layout:** the page tone at full height, a centred surface card (at most 560px, padding `clamp(24px, 6vw, 48px)`, 1px `--sf-color-border`, radius md; 16px from the edges on phones).
-- **Content:** the wrapper is `role="alert"`; the `h1` "Something went wrong." (`--sf-font-display`, display-md, ink); "This page stopped working. Reload to try again, or start again from the home page." (16px / 1.6 secondary); "Reload" (primary: ink fill, paper text) and "Go home" (ghost: a 1px ink border), each at least 44px tall, 14px 500, 12px apart; then, under a hairline, `<details>` "Error details" (14px 500) holding the error's text in a sand `<pre>` (monospace 13px, at most 240px tall, scrolling, wrapping).
-- **Actions:** "Reload" calls `window.location.reload()`; "Go home" calls `window.location.assign("/")`, a full navigation that resets the broken tree even outside the router. `componentDidCatch` logs as before.
+- **Content:** the wrapper is `role="alert"`; the `h1` "Something went wrong." (`--sf-font-display`, display-md, ink); "This page stopped working. Reload to try again, or start again from the home page." (16px / 1.6 secondary); "Reload" (primary: ink fill, paper text) and "Back to home" (ghost: a 1px ink border; "Go home" until Prompt 29), each at least 44px tall, 14px 500, 12px apart; then, under a hairline, `<details>` "Error details" (14px 500) holding the error's text in a sand `<pre>` (monospace 13px, at most 240px tall, scrolling, wrapping).
+- **Actions:** "Reload" calls `window.location.reload()`; "Back to home" calls `window.location.assign("/")`, a full navigation that resets the broken tree even outside the router. `componentDidCatch` logs as before.
+- **Before React renders** (the bundle failing as it runs, a chunk that never loads), the boundary cannot catch anything. `src/index.js`'s `error` and `unhandledrejection` handlers then write the same screen into the still-empty `#root` with plain DOM (`renderBootError`, `src/components/ErrorBoundary/bootError.js`, Prompt 34): the same copy, actions and "Error details", styled by `.sf-boot-error` in `index.css` (tokens only) and the `sf-btn` primitives, the detail set as text, never parsed as HTML. It releases the loading screen (`react-loaded`). Once React has rendered, `#root` has content and it changes nothing (§43.2).
 
 ### 38.10 Focus and keyboard
 
@@ -2770,7 +2771,7 @@ ICU writes September's short form as "Sept"; that is correct en-IN and matches t
 | Cart drawer, checkout | Your cart is empty. | Pieces you add will wait here until you are ready to check out. | Browse furniture |
 | Orders | No orders yet. | When you place an order, it appears here, ready to track. | Browse furniture |
 | Listing | No pieces to show. | the case: search, filters or an empty catalogue | Clear all filters |
-| Reviews | No reviews yet. | Reviews come from verified orders and are published after moderation. | — |
+| Reviews | No reviews yet. | Customers can review a piece from My orders once it arrives. Reviews appear after moderation. | — |
 
 **Loading.** A skeleton in the final layout, plus a visually hidden line in the owner's words ("Loading your orders"). No "Please wait".
 
@@ -2900,7 +2901,7 @@ Every kind arrives with `OVERLAY_ENTER` (`--sf-duration`, `--sf-ease-out`) and l
 
 | What | How |
 |---|---|
-| "Added" (the card's quick add, the product page, the sticky bar) | the word and its check mount with `.sf-fade-in` (160ms, opacity); back to "Add to cart" after 1.2s |
+| "Added" (the card's quick add, the product page, the sticky bar) | the word and its check mount with `.sf-fade-in` (160ms, opacity); back to "Add to cart" after 1.2s on a card, 1.4s on the product page and its sticky bar (`ADDED_FOR_MS`, `ADDED_MS`; §39.4) |
 | "Copied" (offer codes, order numbers, the confirmation) | the check (and the word or bubble) mount with `.sf-fade-in`; back after 2s |
 | The wishlist heart | the fill fades in over 160ms (`fill-opacity`); no scale |
 | Quantity steppers | the number changes in place; `aria-live` announces it |
@@ -3064,7 +3065,7 @@ Written by Prompt 32. The measurements (Lighthouse before and after, bundle size
 
 ### 42.6 Fonts
 
-- Four files on a cold load: Inter latin and latin-ext (the ₹ sign), Playfair Display roman and italic latin; `display=swap`, `preconnect` to both Google hosts. The admin still gets Inter from the same stylesheet.
+- Four files on a cold load of home or a product page (three on checkout, one on the admin): Inter latin and latin-ext (the ₹ sign), Playfair Display roman and italic latin; `display=swap`, `preconnect` to both Google hosts. The admin still gets Inter from the same stylesheet.
 - **Fallback faces** (`storefront-tokens.css`): `"Playfair Display Fallback"` is a local Times New Roman (or Liberation Serif / Tinos) scaled to Playfair's width and vertical metrics: roman `size-adjust: 109.5%`, `ascent-override: 98.6%`, `descent-override: 22.8%`; italic `104.8%`, `103.1%`, `23.9%`; `line-gap-override: 0%`. While Playfair loads, a heading wraps and takes the height it will have, so the swap no longer moves the page. A device without these fonts (Android) skips the faces and falls back to Georgia or the default serif, as before.
 - A new web font gets a fallback face measured the same way; a change to Playfair's weights means measuring again.
 
@@ -3079,8 +3080,9 @@ Anything that arrives after the first paint holds the size it will have. Prompt 
 | Header department row, 1024–1279px | `.rowPending` holds the two lines the departments take while they load |
 | Special offers | the countdown and the hero's tag and line only from a saved admin config (§42.8) |
 | Display headings | the fallback faces (§42.6) |
+| Checkout, signed in, with the cart only on the account (saved on another device) | "Loading your cart…" until the account's cart has been read (`isCartReady`, §43.3), not "Your cart is empty." followed by the whole page (Prompt 34: 0.061 → 0.0001 at 360px) |
 
-Every storefront route measures under 0.05 at 360, 768, 1024 and 1440px (`BUILD_LOG`, Prompt 32).
+Every storefront route measures under 0.05 at 360, 768, 1024 and 1440px (`BUILD_LOG`, Prompts 32 and 34).
 
 ### 42.8 Conversion: presentation rules
 
@@ -3124,3 +3126,75 @@ Written by the follow-up to Prompt 32 that cut the cart drawer's opening (the pr
 - **Work nobody sees waits for the entrance:** the cart drawer starts loading checkout's chunk once it has slid in (`--sf-duration`), not in its first frame, and not during the slide (the chunk's stylesheet restyles the page when it arrives).
 - **Formatters are built once:** `formatCurrency` keeps one `Intl.NumberFormat` per currency. Build any other formatter at module level, as `productSpecs.js` does.
 - **What stays in the frame:** the drawer's own render, style and layout, framer-motion starting the entrance (§28.5), and the page behind it made `inert` (§19.1): a restyle of the whole page, about 85ms of the 252ms at 4× CPU, kept for the overlay contract.
+
+## 43. Final QA and maintenance
+
+Written by Prompt 34 on 2026-10-11, the last build session. The executed checklist and its evidence are in `prompts/QA_CHECKLIST.md`; the measurements and the consolidated client lists are in `prompts/BUILD_LOG.md`, Prompt 34. This section records what the final pass settled, for whoever maintains the storefront next.
+
+### 43.1 The admin's logos (Prompt 33)
+
+- The admin's sidebar (`src/components/AdminLayout/AdminLayout.js`) and login card (`src/pages/Admin/AdminLogin.js`) show raw `<img>`s of `LOGO_URLS` (`src/utils/constants.js`): `light` on the white surfaces in light mode, `white` on `#111927` in dark mode. The variant follows the shared theme mode already in scope (`useThemeContext().mode` in the layout, `isDarkMode` on the login page), so the AppBar's toggle swaps it at once.
+- Rendered 32px (sidebar) and 56px (login) tall with `width: auto`; `width`/`height` attributes 97 × 32 and 169 × 56 (`BrandLogo`'s rounding) hold the box while the file loads. Not `BrandLogo`: the admin imports no storefront component.
+- **The admin's code since the first commit (`91f7b51`)** differs in exactly three places, each owner-approved and recorded in the build log: the logo lines (Prompt 33); the logout confirm's `flushSync` and its new `AdminLayout.test.js` (Prompt 33's follow-up: the dashboard stayed hidden from screen readers after the confirm); `AdminProducts.js`'s variant spread (Prompt 03's follow-up: a save kept the variants' `attributes` and `swatchHex`). Screenshots of every admin page in both modes, and a computed-style comparison of every element, are identical outside the logo's box (QA checklist, section F).
+
+### 43.2 What Prompt 34 changed
+
+Presentation and copy fixes, each found in the walkthrough; no API call, schema, route or price rule changed.
+
+| Surface | Before | Now |
+|---|---|---|
+| Header utility strip | "Free delivery on orders above ₹…" built from `FREE_SHIPPING_THRESHOLD`, a constant: an Admin → Shipping change reached the drawer, footer, assurance strip and product page, not the header | `freeDeliveryLine(methods, formatCurrency)` (`CartDrawer/cartDelivery.js`) over the live methods (`readShippingMethods`, shared with the footer's read): "Free delivery on orders above ₹X" (the drawer's threshold: the lowest positive `freeAbove` among the active methods), "Free delivery on every order" when a method is free at any amount, nothing when there is no free delivery or before the read. `FREE_SHIPPING_THRESHOLD` is the seed's reference only (the validator checks it agrees with Standard's `freeAbove`). |
+| Product page, stock | stated twice: the page's line beside the quantity, and "Only N left in this option" / "This option is sold out" under the options | stated once, by the page ("In stock", "Only N left", "Sold out"); `VariantSelector` shows the options only, a sold-out option a disabled radio whose name ends "(sold out)" |
+| Special offers `h1` | the admin's title printed as text, `*word*` included | through `renderAccent` (§5.5): `*word*` is the accent italic, as on every other display heading; "Special offers" when the admin set none |
+| Reviews, empty state | "Reviews come from verified orders…" (untrue: Admin → Reviews can add one) | "Customers can review a piece from My orders once it arrives. Reviews appear after moderation." |
+| Auth sheet, a failed sign-in or sign-up | the alert in the sheet and a toast; at 360px the toast covered the submit button | the alert only (success toasts unchanged): "Check your email address and password, then try again." (wrong credentials), "An account with this email already exists. Sign in instead.", the API's own message when it sends one (`message` or `errors`, both branches), else "We couldn’t sign you in. Try again in a moment." / "We couldn’t create your account. Try again in a moment." |
+| Order confirmation, Laravel | a 404 for an unknown number showed "We couldn’t load your order." with Try again (JSON Server answers an empty list) | a 404 is "Order not found", as on the product page (§42.8); any other failure keeps the retry |
+| Crash before React renders | red and orange monospace text and the raw stack on a hard-coded `#1a1a2e` panel, written with `innerHTML` | the boundary's screen from the tokens (`bootError.js`, §38.9) |
+| Footer trust icons | a copy of the icon map | the one `TRUST_ICONS` map (`storefront/trustIcons.js`), shared with the trust badges |
+| Page area below 1024px | `.main-content` `min-height: calc(100vh - 70px)`, a taller header than the 60px phone and 64px tablet rows: a short page, or one still loading, showed the top 10px (phone) or 6px (tablet) of the footer inside the window | `calc(100vh - var(--sf-header-height, 70px))` (the header never compacts below 1024px; appended to `App.css` after the Tablet block, no admin-inherited rule touched) |
+| Checkout, signed in, cart only on the account | "Your cart is empty." until the account's cart arrived, then the whole page (CLS 0.061 at 360px) | "Loading your cart…" (`role="status"`, the page `aria-busy`) until it has been read (§43.3); CLS ≤ 0.0002 |
+
+### 43.3 `isCartReady`
+
+- `useCart().isCartReady` (`src/context/CartContext.js`): true for a guest (the device's cart is the cart); for a signed-in shopper, true once the account's saved cart has been read and merged, a failed read counting as read. It is derived during render (`loadedFor === user.id`), so even the first frame after sign-in is covered; sign-out clears `loadedFor`, so the next sign-in waits for that account's cart.
+- Read it before telling a signed-in shopper their cart is empty (checkout does). The drawer and the header's count do not need it: the device's lines show at once, and the account's arrive with the merge.
+
+### 43.4 The final exception register
+
+Every literal or gradient allowed outside the token files, consolidated from §12, §13 and §16.8. Prompt 34's greps found no other.
+
+| Kind | Allowed in | Why |
+|---|---|---|
+| Colour literals | `storefront-tokens.css` (the source), `colors.js` and `tokens.js` (mirrors) | the token system |
+| | `PLACEHOLDER_IMG` (`src/utils/helpers.js`, two values) | a data URI cannot read CSS variables |
+| | `ErrorBoundary`'s `FALLBACK` sets, each inside `var(--sf-<token>, <value>)` | the crash screen must render even if the token stylesheet never loaded (§38.9) |
+| | `public/index.html` (theme-color, the pre-paint script, the loading screen), `public/manifest.json` | static files load before any stylesheet (§12) |
+| | `db.json`: `banners[].gradient`, `variants[].swatchHex` | data |
+| | `src/theme/adminTheme.js`, the admin's files, and `App.css`'s admin-inherited rules (the scrollbars, `body.light`/`body.dark`/`body.admin-area`, SweetAlert) | the admin's; never edited (§13, Admin coupling) |
+| Font-family literals | the token files; `index.css`'s body rule and the boilerplate `code` stack (Admin → Shipping renders `<code>`); `App.css`'s body rule (admin-inherited) | §13 |
+| | `ErrorBoundary`'s fallbacks (`Georgia, serif`, `system-ui, sans-serif`; the error detail's `monospace`) and the text inside `PLACEHOLDER_IMG`'s SVG | as above |
+| | `font-family: inherit` (button resets in the footer and sidebar) | not a family name |
+| Gradients | the scrim, built from `--sf-color-scrim`: the hero's `.copy::before` and the home space tiles' `.spaceText::before` (mask or background ramps) | text on photography (§3.3, §20.2, §21.3) |
+| | the skeleton shimmer (`storefront-base.css`; the wallet card's, tinted `--sf-color-on-dark-soft`) | §16.8 |
+| | two hard-stop drawings that only look like lines: the select chevron (`storefront-base.css`) and the sold-out strike in `VariantSelector` | §16.8 |
+| | `--sf-gradient-scrim`, and the flat `--sf-gradient-primary`/`-hover` (one colour each; no consumer today) | tokens kept for later use |
+| | `App.css`'s admin-inherited scrollbar thumbs | the admin's; never edited |
+
+### 43.5 Data rules the validator enforces
+
+`node scripts/validate-db.js` (full mode) gained these checks in Prompt 34. Nothing was loosened; on the seed before Prompt 34 they report 16 problems, all fixed in the seed:
+
+- **Leads** are part of the boilerplate-catalogue scan (no electronics or fashion: two seeded leads still asked about a smartwatch and running shoes). `cart` must stay `[]` in the seed (a check from Prompt 05).
+- **Dimensions agree with the copy:** a description's "Overall size" must equal the product's `dimensions` (L × W × H, with an optional height range; round pieces "N cm diameter × M cm high"), and a "Height" listing must top out at `dimensions.height`.
+- **Returns and payments agree with their orders:** a processed full return leaves its order's `fulfillmentStatus` `"returned"`; a paid order has no pending payment.
+- **Coupon expiries end an Indian day:** `T18:29:59.000Z` (23:59:59 IST), never `T23:59:59Z`, which is 05:29 the next morning in India and printed as the next date.
+
+### 43.6 Maintainer checklist
+
+- [ ] `CI=true npm test -- --passWithNoTests` exits 0, and `CI=true npm run build` prints "Compiled successfully" (CI mode fails the build on any ESLint or webpack warning). Two notices print before compiling and are not build warnings: Browserslist's "caniuse-lite is outdated" and `babel-preset-react-app`'s note about `@babel/plugin-proposal-private-property-in-object`. Clearing either changes the package files, which this build left as they were.
+- [ ] After any seed edit, `node scripts/validate-db.js` passes in full mode; after any colour change, `node scripts/check-contrast.js` passes.
+- [ ] Tokens only (§13), with the exceptions in §43.4 and no others.
+- [ ] The admin: no change without the owner; `App.css`'s admin-inherited rules never edited; storefront globals scoped `body:not(.admin-area)`.
+- [ ] Storefront data goes through `apiService.*`: no `axios` or `fetch` outside `api.js`, no reliance on a JSON Server-only shape (`data[0]`, `.data.data`). `IS_MOCK_API` is read outside the services layer in one place, checkout's `gatewayConfigured`, so the demo never claims a payment gateway (Prompt 26).
+- [ ] Nothing the data does not show: no rating, count, urgency or claim without its source (§39.8). QA_CHECKLIST.md lists the greps.
+- [ ] Before launch: `prompts/00_INDEX.md` section 7.

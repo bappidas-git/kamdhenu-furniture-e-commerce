@@ -71,7 +71,7 @@ treatment) are **never** hardcoded in config — they're read from the live
 | **D** | Authentic social proof | `SocialProof`, `ReviewsSection`, `StarRating` | Real ratings/reviews only; verified-purchase badges; customer photos (UGC) when present; **honest empty states**. |
 | **E** | Trust signals near the decision | `TrustBadges`, `DeliveryReturnsInfo` | Config-driven badges + transparent shipping/COD/returns shown **upfront** from real data. |
 | **F** | Clear, standard CTAs | PDP buttons, `AddToCartBar`, `ProductCard` | Conventional copy ("Add to cart", "Buy now"), strong primary/secondary hierarchy, consistent storefront-wide. |
-| **G** | Micro-interactions that remove hesitation | `QuantityStepper`, add-to-cart "Added ✓" state, cart toast + mini-cart, skeletons | Immediate, satisfying feedback; never janky/ambiguous. |
+| **G** | Micro-interactions that remove hesitation | `QuantityStepper`, add-to-cart "Added" state, cart toast + mini-cart, skeletons | Immediate, satisfying feedback; never janky/ambiguous. |
 | **H** | Increase AOV — helpfully | `FrequentlyBoughtTogether`, `RelatedProducts` | Data-driven only; render nothing when there's no real data. |
 | **I** | Mobile-first & accessible | `AddToCartBar` (sticky), tokens (`--sf-tap-target`), focus styles, ARIA | Sticky mobile Add-to-Cart, ≥44px targets, keyboard nav, contrast, focus-visible everywhere. |
 
