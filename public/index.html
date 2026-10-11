@@ -15,8 +15,10 @@
     <meta name="author" content="A &amp; S Urbanseat" />
 
     <!-- Colour literals copied from prompts/DESIGN_SYSTEM.md (static files
-         cannot read CSS variables): paper #faf7f2, dark base #0a1426. -->
-    <meta name="theme-color" content="#faf7f2" />
+         cannot read CSS variables): paper #faf7f2, dark base #0a1426.
+         Browsers use the first theme-color whose media matches, so each tag
+         names its scheme; a browser that ignores media takes the paper. -->
+    <meta name="theme-color" content="#faf7f2" media="(prefers-color-scheme: light)" />
     <meta name="theme-color" content="#0a1426" media="(prefers-color-scheme: dark)" />
 
     <!-- Open Graph / Facebook. og:url is a placeholder until the production
@@ -188,6 +190,16 @@
         display: none;
       }
     </style>
+    <!-- Without JavaScript the splash would never leave (its hand-off and the
+         10s safety net are scripts) and its logo would never load: hide it so
+         the <noscript> message shows. Ignored whenever scripts run. -->
+    <noscript>
+      <style>
+        #loading-screen {
+          display: none;
+        }
+      </style>
+    </noscript>
   </head>
   <body>
     <noscript>You need to enable JavaScript to run this app.</noscript>

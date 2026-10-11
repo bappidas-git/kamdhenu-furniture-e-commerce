@@ -4704,3 +4704,127 @@ The same list as `00_INDEX.md` section 7:
 - **`.env.production`:** the API URL (a Cloudways placeholder) and the `REACT_APP_*` values (`REACT_APP_ENABLE_ANALYTICS=true` has no analytics code behind it).
 - **The checkout card form**, a visual placeholder (never validated or sent) until a gateway is connected.
 - **Dead code:** `getImageUrl`, `validateForm` and `isPasswordStrong` (`src/utils/helpers.js`), `useSound` and `src/assets/click-sound-1.wav`. `scripts/validate-db.js` and `scripts/check-contrast.js` may stay as dev tools.
+
+---
+
+## Prompt V2-01 — Brand identity wiring (max-effort re-verification of Prompt 02)
+
+**Date:** 2026-10-11. **V2 baseline:** `0b9153e490c87c0713c8c802f67185266da424a2` (`git rev-parse HEAD` before any V2 change; V2-02 to V2-05 diff against it).
+
+**Result:** every requirement of Prompt 02 was audited against the repository with evidence. The requirement matrix was committed before any edit (`8f6238a`); the full matrix, deep checks and evidence are in `prompts/prompt_V2/reports/V2-01_REPORT.md`.
+- **125 requirements** (scope, brand and design lines, the 7 guardrails, implementation notes, 8 acceptance criteria, 8 QA steps, the build-log contents).
+- **As found:** 113 met, 9 superseded by recorded later decisions, 1 gap, 2 partial.
+- **Two repairs**, both in `public/index.html`. **Now:** 116 met, 9 superseded, 0 gaps, 0 partial.
+- Nothing else changed: no constant, env key, token, brand line, manifest field, component, `api.js`, `db.json` or admin file. The production bundles are byte-identical to the baseline's.
+
+### Gaps found and fixed
+
+| # | Gap | Fix | File |
+|---|---|---|---|
+| R59 (and R108) | The dark `theme-color` never applied. The paper tag came first with no `media`, and browsers use the first `theme-color` whose `media` matches or is absent (the HTML standard's steps; Blink's `Document::ThemeColor()`), so dark mode got a paper browser bar above a navy-ink page | `media="(prefers-color-scheme: light)"` on the paper tag. Dark mode now resolves `#0a1426`; a browser that ignores `media` still takes the paper, as before; the values are unchanged | `public/index.html:17–22` |
+| R78 | With JavaScript off the splash never left: the hand-off and the 10s safety net are scripts. The fixed `z-index: 9999` splash covered the `<noscript>` message for good, with a broken-image logo (its `src` is set by script) and an endless hairline | `<noscript><style>#loading-screen { display: none; }</style></noscript>` at the end of `<head>`. Inert whenever scripts run: the built `index.html` differs from the baseline's by exactly the two insertions | `public/index.html:193–202` |
+
+No test pinned either value. A regression test would be a new test file, outside V2-01's file scope; it is finding F7.
+
+### Superseded decisions honoured (not gaps)
+
+- **Prompt 29:**
+  - the title, `og:title` and `twitter:title` in sentence case (R54, R60);
+  - `POLICY_LAST_UPDATED` "October 7, 2026" → "7 October 2026" (R9);
+  - `HERO_SUPPORT_LINES[1]` "Some made in our own workshop, the rest from makers we trust." (R36);
+  - the COD assurance label "Cash on Delivery" (R39);
+  - the `TRUST_BADGE_CATALOG` labels (R26).
+- **Prompt 28:** `ABOUT_INTRO` "Some of what we sell is made in our own workshop" (R38).
+- **Prompt 10:** the assurance strip prints `resolveTrustBadgeDetail("freeShipping")` ("Above ₹9,999") for delivery instead of the template (R40, deviation 4).
+- **Prompt 32:**
+  - `DEFAULT_PAGE_TITLE` and per-page titles (`usePageMeta`, R54);
+  - the splash logo through Cloudinary's resized WebP `srcset`, the PNG as the fallback (R73);
+  - `formatCurrency`'s cached formatter, the same output on 70 inputs (R18).
+- **Keys Prompt 02 left to their owners**, changed by those owners: `FREE_SHIPPING_THRESHOLD` (05), `TRUST_BADGES` (08), `FAQ_ITEMS` and `WHY_CHOOSE_US` (28), `ANIMATION_VARIANTS` (30).
+
+### Verified unchanged (selected)
+
+- **Env files:** `REACT_APP_NAME=A & S Urbanseat` in all three, parsed by CRA's `dotenv` to exactly that. `git diff 90402a2 -- .env*` holds only those three lines; `.env` keeps mock mode on `http://localhost:3001`.
+- **Contact facts:** byte-identical to the spec (the hours' two U+2013 dashes included). Re-read from `kamdhenufurniture.in/contact/` on 2026-10-11 and unchanged there.
+- **The rendered footer:** 32 loads at 360/768/1024/1440 in both modes. The `<address>` carries all four facts; the social list holds WhatsApp only; there is no Facebook, Instagram, YouTube or X link and no empty `href`.
+- **`index.html`:**
+  - `lang="en-IN"`; description **114 characters**; furniture-only keywords;
+  - complete OG and Twitter tags (`og:image` the light logo, 1286 × 426);
+  - icon links only to the six existing files, each `sizes` true to its pixels;
+  - the only colour literals `#faf7f2`, `#0a1426`, `#ae773d`, `#ddb185`, byte-matching `colors.js` and `storefront-tokens.css`;
+  - the pre-paint script on `backgroundColor`; the hide script and the font block byte-identical to the boilerplate and to Prompt 01.
+- **Splash:**
+  - the right logo and ground in all four combinations of device and saved theme, at four widths (216px at 360, 320px from 768, centred to the pixel);
+  - one 2px caramel hairline, still under reduced motion;
+  - the 10s safety net works.
+- **Manifest:** valid; Chromium reports no parse or installability error.
+- **`brandContent.js`:** every export; one accent per headline; support lines 12/12/11 words; no digit in the assurance templates; the header comment verbatim; no brand line copied into a component.
+- **Helpers:** `formatDate` and `formatNumber` byte-identical to `90402a2`.
+- **Trust signals:** none fabricated.
+
+### Evidence the Prompt 02 entry did not record (now recorded)
+
+- **Description length:** 114 characters.
+- **Splash contrast:**
+  - lettering 15.95 : 1 and tagline 15.60 : 1 on paper;
+  - the white logo 18.41 : 1 on the dark base;
+  - hairline 3.57 : 1 / 9.38 : 1 (decorative);
+  - the caramel wordmark 1.84 : 1, a logotype, exempt under WCAG 1.4.3.
+- **Slow 3G** (2s latency, 50 KB/s, 390px), both modes: the splash shows the right logo; the app painted at 13.4s and the splash left 7–9ms later (by the app; the safety timer was due at 15.6s); CLS 0.
+- **`/support`, `/help` and `/orders`** (signed in as `user@example.com`) show the contact values, and so does the invoice header.
+- **`/admin`:** login and dashboard at 1440 and 390 in both modes render on the admin's slate (`body.admin-area` wins), with the logo `alt` "A & S Urbanseat". The eight captures are pixel-identical before and after this change.
+- **Proposed copy the entry did not list:**
+  - the splash's accessible name "Loading A & S Urbanseat";
+  - the keywords;
+  - `POLICY_LAST_UPDATED` as a placeholder.
+
+### Findings handed to V2-05
+
+1. **F1.** The browser's theme colour follows the device setting, not the site's own light/dark switch. Following the switch needs `ThemeContext` (Prompt 01's file) to rewrite the tags; owner decision.
+2. **F2.** With site storage blocked the storefront shows only the crash screen. `ThemeContext.js:449` reads `localStorage` unguarded first; the other contexts, `authStorage.js` and `api.js` do too. Pre-existing; the protected files make it an owner decision. The pre-paint script itself is guarded.
+3. **F3.** `AdminOrders.js:367`'s "My E-Commerce Store" invoice fallback (admin only; the seed supplies the name).
+4. **F4.** The trust labels are typed inline instead of read from `TRUST_BADGE_CATALOG` (§39.9): "Secure payment" in `Footer.js`, `CartDrawer.js` and `Checkout.js`; "Cash on Delivery" in `Footer.js` and `CartDrawer.js`. A drift risk only.
+5. **F5.** `DESIGN_SYSTEM.md` §12 should name the light tag's new media query.
+6. **F6.** V2-05's admin-diff check should expect three owner-approved changes since `90402a2`, not only the logo lines: Prompt 33's logo lines, its `flushSync` follow-up with its test, and Prompt 03's variant spread (`00_INDEX.md` §5 item 28).
+7. **F7.** A regression test for the two `index.html` repairs.
+
+Observations with no change: the 0.6s fade-out has never shown (the boilerplate's `display: none` rule, which Prompt 32's hand-off relies on); on very slow links the 10s safety net can fire before the app paints; the splash `<img>` has no `src` in the markup; `og:image` is a transparent PNG; `settings.seo.metaTitle` is still Title Case. Details are in the report, §8.
+
+### Gate
+
+- `node scripts/validate-db.js`: `✓ all checks passed` (full and `--catalogue`). `db.json` unchanged (SHA-256 `3fc7f8f3…`).
+- `node scripts/check-contrast.js`: passes.
+- `CI=true npm test -- --passWithNoTests`: **86 suites, 1,429 tests, exit 0**, no console warning.
+- `npm run build` and `CI=true npm run build`: "Compiled successfully.", main JS 399.62 kB, CSS 34.97 kB gzip, with only the two dependency notices. In JSON Server mode the bundles are byte-identical to the baseline's.
+- **Browser**, a production build in JSON Server mode on a scratch `db.json`: 78 of 78 checks after the repair (76 of 78 before, the two failures being the gaps). Development server: 0 console errors or warnings over 14 loads.
+- **Diff:** `public/index.html`, this entry and the report. No admin file, `api.js` (SHA-256 `c32e6138…`) or `db.json`.
+
+### Needs client confirmation (identity, updated)
+
+- **Name and tagline:** "A & S Urbanseat"; "Trusted Comfort for Every Home" as printed in the logo ("Trusted comfort for every home" in running text).
+- **Brand lines, as they stand** (`src/content/brandContent.js`):
+  - `BRAND_PROMISE`;
+  - the three `HERO_HEADLINES` (the hero uses the first);
+  - the three `HERO_SUPPORT_LINES` (the hero uses the first; the second revised by 29);
+  - `NEWSLETTER_LINE`;
+  - `ABOUT_INTRO` (revised by 28);
+  - the four `ASSURANCE_ITEMS` labels and details.
+- **Document copy:**
+  - `APP_DESCRIPTION` (the listing's intro);
+  - the meta and manifest description;
+  - the title;
+  - the keywords;
+  - `short_name` "Urbanseat";
+  - the splash's accessible name.
+- **Contact facts:**
+  - the email (the old brand's `.com` domain), phone, WhatsApp and hours;
+  - the address "Assam, India", with no street or PIN;
+  - which is the source of truth: `constants.js` or Admin → Settings.
+- **Social profiles:** none but WhatsApp.
+- **Returns window:** `returnsWindowDays` 7.
+- **Held back until confirmed:** the warranty and support badges, and the reference site's "20+ years" / "20+ Years Warranty" / "Happy Clients" claims.
+- **`POLICY_LAST_UPDATED`:** the real review date once the draft policies are approved.
+- **Brand names:** may Nilkamal, Carlton and Winsome be named?
+- **Production domain:** for `og:url`, `twitter:url` and `SITE_URL_PLACEHOLDER`.
+- **Sharing image:** a flattened sharing image instead of the transparent logo.
+- **Browser bar colour:** whether it should follow the site's switch rather than the device (F1).

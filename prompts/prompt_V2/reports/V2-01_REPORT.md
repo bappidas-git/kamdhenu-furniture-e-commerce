@@ -4,7 +4,10 @@ V2 baseline: 0b9153e490c87c0713c8c802f67185266da424a2
 
 **Date:** 2026-10-11. **Re-verifies:** Prompt 02 (`prompts/02_brand-identity-wiring.md`, commit `a1318e6`). **Baseline:** the hash above is `git rev-parse HEAD` before any V2 change, for V2-02 to V2-05 to diff against.
 
-**Status:** matrix written before any edit. 125 requirements: 113 met, 9 superseded by a recorded later decision, 1 gap (R59) and 2 partial (R78, R108), the last three all in `public/index.html`; repairs follow in §6.
+**Status: complete, no row left as a gap or partial.**
+- **As found** (matrix committed before any edit, `8f6238a`): 125 requirements; 113 met, 9 superseded by a recorded later decision, 1 gap (R59) and 2 partial (R78, R108), all three in `public/index.html`.
+- **After V2-01's two repairs** (§6): 116 met (3 of them repaired here), 9 superseded, 0 gaps, 0 partial.
+- **Gate green** (§9). Seven findings handed to V2-05 (§7).
 
 ---
 
@@ -13,7 +16,7 @@ V2 baseline: 0b9153e490c87c0713c8c802f67185266da424a2
 - **Read in full:** `prompts/00_INDEX.md`, `prompts/02_brand-identity-wiring.md`, the `## Prompt 02` entry of `prompts/BUILD_LOG.md`, the V2 README and this prompt. Then every later build-log entry and `DESIGN_SYSTEM.md` was searched for `index.html`, `manifest`, `brandContent`, `constants.js`, `STOREFRONT_CONFIG`, `trustBadges`, `SUPPORT_`, `SOCIAL_LINKS`, `theme-color`, `loading screen`, `APP_NAME`, and the matching entries were read (Prompts 05, 08, 10, 12, 14, 28, 29, 30, 31, 32, 33, 34; §3 below).
 - **History:** `git show --stat a1318e6` and its full diff; `git log` of every in-scope file since `a1318e6`, and each later commit's diff to those files.
 - **Static checks:** scripts run from the session scratchpad (not committed), described with each row: a jsdom parse of `public/index.html` compared with `colors.js` and `storefront-tokens.css`; a byte-level comparison of the contact constants with the spec's text; CRA's own `dotenv` 10 + `dotenv-expand` 5 on each env file; a load of `brandContent.js` with word, sentence and accent counts; extraction of `formatCurrency`, `formatDate` and `formatNumber` from `helpers.js` at `90402a2` and `HEAD`; WCAG contrast for the splash.
-- **Browser checks** (Playwright 1.56, Chromium 141): a production build in JSON Server mode (`REACT_APP_API_URL=http://localhost:3001 REACT_APP_USE_MOCK_API=true CI=true npm run build`), served with `serve -s` on :5001; JSON Server on a **scratch copy** of `db.json` (`JSON_SERVER_DB`), so the seed was never written (SHA-256 `3fc7f8f3…` before and after). Results are "browser: <check id>" in the evidence column.
+- **Browser checks** (Playwright 1.56, Chromium 141): a production build in JSON Server mode (`REACT_APP_API_URL=http://localhost:3001 REACT_APP_USE_MOCK_API=true CI=true npm run build`), served with `serve -s`: the baseline build on :5001 (the "before" pass, which the matrix's statuses rest on) and the repaired build on :5002 (the "after" pass, §9). JSON Server ran on a **scratch copy** of `db.json` (`JSON_SERVER_DB`), so the seed was never written (SHA-256 `3fc7f8f3…` before and after). Results are "browser: <check id>" in the evidence column.
 - **Reference site:** `kamdhenufurniture.in` and `/contact/` re-read on 2026-10-11 (downloaded to the scratchpad and treated as data; only contact facts were extracted).
 - **Gate at the baseline:** `node scripts/validate-db.js` ✓ (full and `--catalogue`); `CI=true npm test -- --passWithNoTests` **86 suites, 1,429 tests, exit 0**; the mock-mode build "Compiled successfully." (main JS 399.59 kB, CSS 34.97 kB gzip, as Prompt 34 recorded), with only the two dependency notices `DESIGN_SYSTEM.md` §43.6 documents.
 
@@ -112,7 +115,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 
 | # | Requirement (Prompt 02) | Current state | Status | Evidence |
 |---|---|---|---|---|
-| R44 | Phone `+91 84729 18653` | constant; `tel:+918472918653` in the header strip, footer and contact facts | ✅ Met | R5; browser: 32 route loads, `tel:+918472918653` in the footer every time |
+| R44 | Phone `+91 84729 18653` | constant; `tel:+918472918653` in the header's utility strip (shown from 1024px), the footer and the contact facts | ✅ Met | R5; browser: 32 route loads, `tel:+918472918653` in the footer every time and in the header ("+91 84729 18653", visible at 1024 and 1440) |
 | R45 | WhatsApp `https://wa.me/918472919541` | `SOCIAL_LINKS.WHATSAPP`; footer, `ContactFacts` | ✅ Met | R8; browser: `wa.me/918472919541` in every footer |
 | R46 | `+91 98765 43210` (the site's template placeholder) not used | not the store's number anywhere. `9876543210` appears only as demo customer data in `db.json` and in test fixtures (observation O6) | ✅ Met | deep check 1 |
 | R47 | Email `info@kamdhenufurniture.com`, flagged (old brand and domain) | constant and comment; BUILD_LOG Prompt 02 and `00_INDEX.md` §6 | ✅ Met | `constants.js:149–153` |
@@ -132,7 +135,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R56 | Keywords: furniture and seating terms only | 12 terms (furniture, seating, chairs, sofas, dining tables, office chairs, office furniture, café furniture, restaurant furniture, outdoor furniture, home furniture, India); no electronics, fashion, beauty or sport | ✅ Met | `index.html:11–14`; banned-term scan: none |
 | R57 | Meta author | "A & S Urbanseat" | ✅ Met | `index.html:15` |
 | R58 | `theme-color`: the paper token | `#faf7f2`, equal to `--sf-brand-paper` and `LIGHT.background.default` | ✅ Met | `index.html:19`; byte match against both sources |
-| R59 | A second `theme-color` with `media="(prefers-color-scheme: dark)"` and the dark base, which dark mode uses | present, `#0a1426` (byte match), **but never used**. The first tag has no `media`, so it always matches. The HTML standard returns the first `theme-color` in tree order whose `media` matches or is absent, and Blink's `Document::ThemeColor()` does the same, so dark mode gets paper `#faf7f2` | ❌ Gap | `index.html:19–20`; WHATWG "obtain a page's theme color" steps; Chromium `third_party/blink/renderer/core/dom/document.cc` `Document::ThemeColor()`; browser: `theme-color/dark` resolves `#faf7f2` (FAIL) |
+| R59 | A second `theme-color` with `media="(prefers-color-scheme: dark)"` and the dark base, which dark mode uses | **Found:** present, `#0a1426` (byte match), but never used. The first tag had no `media`, so it always matched. The HTML standard returns the first `theme-color` in tree order whose `media` matches or is absent, and Blink's `Document::ThemeColor()` does the same, so dark mode got paper `#faf7f2`. **Repaired:** the paper tag carries `media="(prefers-color-scheme: light)"`, so dark mode now resolves `#0a1426`; a browser that ignores `media` still takes the first tag, paper, as before | ✅ Met: repaired by V2-01 (was a gap, §6) | before: `index.html:19–20`; WHATWG "obtain a page's theme color" steps; Chromium `third_party/blink/renderer/core/dom/document.cc` `Document::ThemeColor()`; browser `theme-color/dark` resolved `#faf7f2` (FAIL). After: `index.html:21–22`; browser `theme-color/light` → `#faf7f2`, `theme-color/dark` → `#0a1426`; dev server: 14 loads resolve the scheme's colour |
 | R60 | Open Graph title, description, type, site name | `og:type` website, `og:site_name`, `og:locale` en_IN, `og:title` = the title (sentence case), `og:description` = the description | ↪ Superseded by Prompt 29 (`og:title` in sentence case); others met | `index.html:24–35`; jsdom: og:title == title, og:description == description |
 | R61 | `og:url`: a placeholder domain, flagged | `https://urbanseat.example/`, with a comment; `SITE_URL_PLACEHOLDER` mirrors it; `00_INDEX.md` §6 and §7 | ✅ Met | `index.html:22–27`; `constants.js:20–23` |
 | R62 | `og:image` = the light logo URL, `og:image:width` 1286, `og:image:height` 426 | equal to `LOGO_URLS.light`; 1286 / 426; plus `og:image:alt` | ✅ Met | `index.html:36–42`; jsdom: og:image == LOGO_URLS.light |
@@ -151,7 +154,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R75 | No spinner stack, no "MY STORE" text, no gradient animation on `body` | none | ✅ Met | jsdom: 0 "gradient", no `gradientShift`; deep check 1 |
 | R76 | Under `prefers-reduced-motion` the hairline does not animate | `animation: none; transform: none` (a still, full-width line); the fade transition is dropped too | ✅ Met | `index.html:175–184`; browser: `reduced-motion/reduce` |
 | R77 | Keep the fade-out | the `fade-out` class, its 0.6s opacity transition and the 600ms `display: none` are byte-identical to the boilerplate. As in the boilerplate, `body.react-loaded #loading-screen { display: none }` removes the splash in the frame `react-loaded` lands, so the fade never shows (observation O1) | ✅ Met | R28; browser: at `react-loaded` the splash is already `display: none` (normal and timeout paths) |
-| R78 | Keep the 10s safety timeout (the loader can never stay up for good) | intact: with the bundle blocked the splash is up at 9s and gone at 11s. **But it needs JavaScript.** With JavaScript off the splash (`position: fixed`, `z-index: 9999`) covers the `<noscript>` message for good, its logo is a broken-image icon (the `src` is set by script) and the hairline runs forever | ⚠ Partial | `index.html:102–111, 193, 219–232, 309`; browser: `safety-timeout/10s` PASS; `nojs/noscript-visible` FAIL (the element at the top left is `loading-screen`), screenshot `nojs-1440.png` |
+| R78 | Keep the 10s safety timeout (the loader can never stay up for good) | **Found:** intact (with the bundle blocked the splash is up at 9s and gone at 11s), but it needs JavaScript. With JavaScript off the splash (`position: fixed`, `z-index: 9999`) covered the `<noscript>` message for good, its logo was a broken-image icon (the `src` is set by script) and the hairline ran forever. **Repaired:** a `<noscript><style>` in `<head>` hides the splash when scripts cannot run; with scripts on it is inert, and the bundles are byte-identical | ✅ Met: repaired by V2-01 (was partial, §6) | before: `index.html:102–111, 193, 219–232, 309`; browser `safety-timeout/10s` PASS, `nojs/noscript-visible` FAIL (the element at the top left was `loading-screen`). After: `index.html:193–202`; browser `nojs/noscript-visible` PASS (splash `display: none`, the message shown), `safety-timeout/10s` PASS; screenshots `before/nojs-1440.png`, `after/nojs-1440.png` |
 | R79 | Pre-paint script: same theme detection, `theme` key, `body.dark` / `body.light` | the same rule as `ThemeContext` (`saved === "dark" \|\| (!saved && prefers dark)`); the key and class names unchanged; `localStorage` wrapped in `try` (with storage blocked it still sets the class) | ✅ Met | `index.html:195–214`; `src/context/ThemeContext.js:447–468`; browser: `storage-blocked/pre-paint` |
 | R80 | `document.body.style.backgroundColor`, not the `background` shorthand | `backgroundColor` only; no `style.background =` | ✅ Met | `index.html:212`; jsdom check |
 | R81 | Solid colours equal to `LIGHT.background.default` / `DARK.background.default` | `#faf7f2` / `#0a1426`, byte match with `colors.js:43, 89` and the CSS; the body's computed `background-image` is `none` | ✅ Met | jsdom check; browser: `bodyInlineBg` and `bodyBgImage` in every splash row |
@@ -201,11 +204,11 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R105 | `APP_NAME` resolves to `A & S Urbanseat` in the three env files and the fallback; `APP_TAGLINE` as specified | yes | ✅ Met | R1, R2, R12–R14 |
 | R106 | `brandContent.js` exists with the listed exports, each line in the build log | yes | ✅ Met | R30, R34–R43 |
 | R107 | Contact, hours and social match the facts; placeholders recorded | yes | ✅ Met | R44–R52 |
-| R108 | `index.html`: new title, meta, OG and Twitter; `lang`; two `theme-color` tags; icons only to existing files; brand splash with the right logo per mode; solid pre-paint backgrounds; no purple | all present, but the dark `theme-color` never applies (R59) | ⚠ Partial | R53–R83 |
+| R108 | `index.html`: new title, meta, OG and Twitter; `lang`; two `theme-color` tags; icons only to existing files; brand splash with the right logo per mode; solid pre-paint backgrounds; no purple | all present. The dark `theme-color` never applied (R59) until V2-01's repair; it now does | ✅ Met: repaired by V2-01 (was partial, R59) | R53–R83 |
 | R109 | `manifest.json`: every field; icons resolve | yes | ✅ Met | R84–R91 |
 | R110 | `trustBadges` honest; `returnsWindowDays` flagged | yes | ✅ Met | R22–R25 |
 | R111 | Admin untouched (no admin file in the diff) | yes | ✅ Met | R94 |
-| R112 | `npm run build` passes with no new warnings | yes, at the baseline | ✅ Met | §1, gate at the baseline |
+| R112 | `npm run build` passes with no new warnings | yes, at the baseline and after the repair | ✅ Met | §1; §9 |
 
 ### 4.9 Test and QA
 
@@ -216,8 +219,8 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R115 | 3. 360, 768, 1024, 1440: the logo scales (60vw, at most 320px) and stays centred | 216px at 360 (60vw), 320px from 768; centre equal to the viewport's | ✅ Met | browser: `splash/*` (16 of 16) |
 | R116 | 4. `lang` and the logo `alt` | R53, R96 | ✅ Met | R53, R96 |
 | R117 | 5. `/support`, `/help`, `/orders` (signed in as `user@example.com`) and the footer show the contact values | the four facts in the footer on every load; Email, Phone, Hours on `/support` and `/help`; signed in, `/orders` lists ORD-20260315-0004, ORD-20250318-0002 and ORD-20250310-0001 with the same footer; the invoice header carries the name, address, email and phone | ✅ Met | browser: `route *` (32), `orders/signed-in`, `invoice/store-facts` |
-| R118 | 6. `npm run build` passes; `CI=true npm test -- --passWithNoTests` exits 0 | 86 suites, 1,429 tests, exit 0; build clean | ✅ Met | §1 |
-| R119 | 7. `/admin` login and dashboard unchanged | both render at 1440 and 390 in both modes with no console error; slate background; logo `alt` "A & S Urbanseat"; title stays `index.html`'s | ✅ Met | browser: `admin/*`; screenshots kept for the after-pass comparison |
+| R118 | 6. `npm run build` passes; `CI=true npm test -- --passWithNoTests` exits 0 | 86 suites, 1,429 tests, exit 0; build clean (baseline and after) | ✅ Met | §1; §9 |
+| R119 | 7. `/admin` login and dashboard unchanged | both render at 1440 and 390 in both modes with no console error; slate background; logo `alt` "A & S Urbanseat"; title stays `index.html`'s. Before and after V2-01's repair, the eight captures are pixel-identical | ✅ Met | browser: `admin/*` (4 of 4, both passes); pixel comparison 8 of 8 identical (§9) |
 | R120 | 8. The build-log entry under `## Prompt 02 — Brand identity wiring` | present | ✅ Met | BUILD_LOG line 104 |
 
 ### 4.10 What the Prompt 02 build-log entry had to contain
@@ -230,7 +233,11 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | R124 | Placeholders: email, address, hours, social, returns window, warranty omitted | all six, plus the phone note, the domain and the brand names | ✅ Met | lines 141–151 |
 | R125 | Stale "My Store" copy outside scope, with paths; the colour literals | both (`AdminOrders.js:367`, `Footer.js`, `Support.js:99–100`, `AboutUs.js:40`; the six literals) | ✅ Met | lines 153–164 |
 
-**Totals (as found, counted from the table):** 125 requirements. ✅ Met 113 · ↪ Superseded 9 (R9, R26, R36, R38, R39, R40, R54, R60, R73) · ❌ Gap 1 (R59) · ⚠ Partial 2 (R78, R108). R18 and R21 cite later changes that leave them met.
+**Totals, counted from the table.** 125 requirements.
+- **As found:** ✅ Met 113 · ↪ Superseded 9 (R9, R26, R36, R38, R39, R40, R54, R60, R73) · ❌ Gap 1 (R59) · ⚠ Partial 2 (R78, R108).
+- **Now:** ✅ Met 116 (R59, R78 and R108 repaired by V2-01) · ↪ Superseded 9 · ❌ 0 · ⚠ 0.
+
+R18 and R21 cite later changes that leave them met.
 
 ## 5. Deep checks (as listed in the V2-01 prompt)
 
@@ -242,7 +249,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
    A wider sweep (`e-commerce`, "online shopping", "shop the best", "ultimate destination", the boilerplate address, `support@`, `1800 102`, the purple hex values) finds only the admin-inherited `App.css` purple (documented, §43.4), a `CONFIRM` comment in `legalContent.js`, a comment example in `Profile.js` and demo addresses in `db.json`.
 2. **Env files.** `REACT_APP_NAME=A & S Urbanseat` in all three, parsed by CRA's `dotenv` 10.0.0 + `dotenv-expand` 5.1.0 to exactly `"A & S Urbanseat"`. `.env` keeps mock mode on `http://localhost:3001`. `git diff 90402a2 -- .env .env.example .env.production`: three `REACT_APP_NAME` lines and nothing else.
 3. **Contact facts.** Byte comparison of the constants with the spec's backticked text: APP_TAGLINE, SUPPORT_EMAIL, SUPPORT_PHONE, SUPPORT_ADDRESS, SUPPORT_HOURS (U+2013 ×2) all MATCH; APP_NAME fallback MATCH; WhatsApp URL as specified. **Rendered DOM** (32 loads of `/`, `/support`, `/help`, `/privacy`, light and dark, at 360/768/1024/1440; the phone-width Contact disclosure opened first): the footer `<address>` reads "Assam, India · info@kamdhenufurniture.com · +91 84729 18653 · Message us on WhatsApp (opens in a new tab) · Monday – Saturday: 9:00 AM – 7:00 PM IST, Sunday closed". It links `tel:+918472918653`, `mailto:info@kamdhenufurniture.com` and `https://wa.me/918472919541`. The "Social media" list holds exactly one link (WhatsApp); there is no link to Facebook, Instagram, YouTube or X, and no empty `href`.
-4. **`index.html`.** `lang="en-IN"`. Title superseded (R54). Description **114 characters**. Keywords furniture-only. OG and Twitter complete; `og:image` the light logo at 1286 × 426; `og:url` placeholder flagged. Two `theme-color` tags whose values byte-match `colors.js` and `storefront-tokens.css`, **but the dark one is never selected** (R59). Icon links only to existing files, each `sizes` true to the pixels (16, 32, 180; `favicon.ico` 16/32/48 with `sizes="any"`). No purple, no `body` gradient, no `gradientShift`.
+4. **`index.html`.** `lang="en-IN"`. Title superseded (R54). Description **114 characters**. Keywords furniture-only. OG and Twitter complete; `og:image` the light logo at 1286 × 426; `og:url` placeholder flagged. Two `theme-color` tags whose values byte-match `colors.js` and `storefront-tokens.css`, **but the dark one was never selected** (R59; repaired, §6.1). Icon links only to existing files, each `sizes` true to the pixels (16, 32, 180; `favicon.ico` 16/32/48 with `sizes="any"`). No purple, no `body` gradient, no `gradientShift`.
 5. **Pre-paint script.** `document.body.style.backgroundColor` with `#faf7f2` / `#0a1426` (= `LIGHT/DARK.background.default` today). The `theme` key and `body.dark`/`body.light` unchanged. The admin's `body.admin-area` background wins: computed `rgb(248, 250, 252)` / `rgb(11, 18, 32)` on login and dashboard.
 6. **Loading screen.**
    - Logo per mode, consistent with the pre-paint script, in all four combinations of device and saved theme (16/16).
@@ -250,7 +257,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
    - No animation under reduced motion; fade-out code and the 10s timeout intact (9s up, 11s gone).
    - `react-loaded` / `MutationObserver` byte-identical to the boilerplate; logo `min(60vw, 320px)`.
    - Splash contrast AA (R96).
-   - **Gap:** with JavaScript off the splash never leaves (R78).
+   - **Gap:** with JavaScript off the splash never left (R78; repaired, §6.2).
 7. **`manifest.json`.** Valid JSON. `name`, `short_name` "Urbanseat", `description`, `start_url` ".", `display` "standalone", `theme_color`/`background_color` `#faf7f2` (= the paper token). Icons are the 192 and 512 files with true sizes, `image/png`, `purpose: "any"`. Chromium parses it with no error and reports no installability error.
 8. **`brandContent.js`.**
    - Every export Prompt 02 lists exists, as a named export and in the default export.
@@ -266,7 +273,7 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
       - `AdminLayout.test.js`: the follow-up's test;
       - `AdminLogin.js`: logo lines only;
       - `AdminProducts.js`: Prompt 03's variant spread.
-    - That is the three owner-approved changes `00_INDEX.md` §5 item 28 records; none is Prompt 02's, and `adminTheme.js` is untouched. The V2-01 prompt expected "only Prompt 33's logo lines" (finding F7).
+    - That is the three owner-approved changes `00_INDEX.md` §5 item 28 records; none is Prompt 02's, and `adminTheme.js` is untouched. The V2-01 prompt expected "only Prompt 33's logo lines" (finding F6).
 11. **Build-log completeness.** The Prompt 02 entry contains the full list of proposed brand lines (as at `a1318e6`), the placeholders, the out-of-scope stale copy with paths, and the colour literals. Not in it, and now recorded by V2-01:
     - the meta description's length (114);
     - the splash contrast ratios;
@@ -278,7 +285,44 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 
 ## 6. Gaps found and repairs
 
-(Filled in after the repairs.)
+Both repairs are in `public/index.html`, inside Prompt 02's scope. They are the only code change V2-01 makes. The production bundles (every JS, CSS and asset file) are byte-identical to the baseline build's; the built `index.html` differs by exactly the two insertions below.
+
+### 6.1 R59 (and R108): the dark `theme-color` never applied
+
+- **Found.** The paper tag came first and had no `media`, so it matched in every mode. The HTML standard picks the first `theme-color` in tree order whose `media` matches or is absent, and Blink's `Document::ThemeColor()` does the same, so the dark tag could never be chosen. In dark mode the browser's bar (Android Chrome, Safari's tab bar, an installed app's title bar) was paper above a navy-ink page.
+- **Repair** (`public/index.html:17–22`): `media="(prefers-color-scheme: light)"` on the paper tag, plus two comment lines. The order is kept, so a browser that ignores `media` on `theme-color` still takes the paper, as before. The values are unchanged and still byte-match the tokens.
+- **Not done:**
+  - A third, media-less fallback tag: the spec and §12 ask for two, and in a browser that reads `media`, `prefers-color-scheme` always matches one of them.
+  - Following the site's own light/dark switch: finding F1.
+- **Re-verified:**
+  - Production build: `theme-color/light` → `#faf7f2` and `theme-color/dark` → `#0a1426`, resolved by the standard's steps with Chromium's own media evaluation.
+  - Development server: 14 loads resolve the scheme's colour.
+  - `usePageMeta.test.js`, which parses `index.html`, passes unchanged.
+
+### 6.2 R78: with JavaScript off, the splash never left
+
+- **Found.** The splash's hand-off (`src/index.js`) and its 10s safety net are scripts. Without JavaScript the fixed, `z-index: 9999` splash covered the `<noscript>` message for good; its logo was a broken-image icon (Prompt 02 sets the `src` from script, so only one variant downloads) and the hairline ran forever. The boilerplate had the same hole, but showed text instead of a broken image.
+- **Repair** (`public/index.html:193–202`): `<noscript><style>#loading-screen { display: none; }</style></noscript>` at the end of `<head>`, with a three-line comment. This is the one mechanism that applies exactly when scripts cannot run. With scripting on, the HTML parser reads `<noscript>` content as text and ignores it, so normal visits are untouched.
+- **Not done:** styling the no-JavaScript page; the boilerplate's sentence stays as it was.
+- **Re-verified:**
+  - `nojs/noscript-visible` passes: the splash computes `display: none` and the message is the first thing on the page (`after/nojs-1440.png`).
+  - With scripts on, all 16 splash rows, reduced motion, the 10s safety net and the Slow 3G loads pass as before.
+  - 25 of 25 screenshots taken in both passes (splash in four theme combinations, reduced motion, footer, support, orders, admin login and dashboard) are pixel-identical.
+
+### 6.3 Build-log completeness
+
+The original entry has everything Prompt 02's step 8 asked for (R121–R125). The evidence it did not record is now in the V2-01 entry, without rewriting Prompt 02's entry:
+- the description's length;
+- the splash contrast ratios;
+- a throttled load;
+- the `/support`, `/help` and `/orders` walk;
+- an admin render check;
+- `POLICY_LAST_UPDATED` as a placeholder;
+- the splash's accessible name and the keywords as copy for approval.
+
+### 6.4 Tests
+
+No Jest test pinned either value, so none changed. A regression test would be a new test file, which is outside V2-01's file scope; it is handed to V2-05 (F7).
 
 ## 7. Findings for V2-05
 
@@ -288,8 +332,9 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 | F2 | With site storage blocked (a browser set to block all site data), the storefront renders only the crash screen ("SecurityError: Access is denied for this document."). | first `src/context/ThemeContext.js:449` (`localStorage.getItem` in a `useState` initialiser, unguarded); also `CartContext`, `WishlistContext`, `AuthContext`, `src/utils/authStorage.js`, `src/services/api.js` | Pre-existing since the boilerplate. A full fix touches `api.js` and `authStorage.js`, which are protected. Prompt 02's own pre-paint script is guarded and works. |
 | F3 | The admin invoice falls back to "My E-Commerce Store" if `settings.store.name` is missing. | `src/pages/Admin/AdminOrders.js:367` | Admin file, owner only; the seed supplies "A & S Urbanseat". Known since Prompt 02. |
 | F4 | The trust-cue labels are typed inline in three promise rows instead of read from `TRUST_BADGE_CATALOG`, which §39.9 names as their home: "Secure payment" in `Footer.js:247`, `CartDrawer.js:325` and `Checkout.js:1640, 1835`; "Cash on Delivery" in `Footer.js:248` and `CartDrawer.js:329`. | those files | Outside V2-01's scope (component markup). The strings agree today and tests pin them; this is a drift risk only. |
-| F5 | `DESIGN_SYSTEM.md` §12's first row should name the light `theme-color` tag's media query once V2-01's fix lands (§6). | `prompts/DESIGN_SYSTEM.md` §12 | The design system is outside V2-01's file scope. |
+| F5 | `DESIGN_SYSTEM.md` §12's first row reads "`<meta name="theme-color">` (light) / `media="(prefers-color-scheme: dark)"`". Since V2-01 the light tag carries `media="(prefers-color-scheme: light)"` (§6.1); the values are unchanged. The row could name both queries and why (the first match wins). | `prompts/DESIGN_SYSTEM.md` §12 | The design system is outside V2-01's file scope; a wording update only. |
 | F6 | V2-05's check F expects the admin diff against `90402a2` to be "Prompt 33's logo lines only". It also holds Prompt 33's `flushSync` follow-up (with `AdminLayout.test.js`) and Prompt 03's `AdminProducts.js` variant spread, both owner-approved and recorded. | `00_INDEX.md` §5 item 28 | A documentation expectation, not a defect: V2-05 should compare against those three. |
+| F7 | No Jest test guards V2-01's two repairs: the light `theme-color` tag's `media` (so the dark tag can be chosen) and the `<noscript>` style that hides the splash. A test that parses `public/index.html` (as `usePageMeta.test.js` does) could pin both. | a new test, for example `src/publicIndex.test.js` | V2-01's file scope allows only a test that pins a value it corrects, and none existed; V2-05's scope includes regression tests. |
 
 ## 8. Observations (no change)
 
@@ -301,10 +346,53 @@ Status: `✅ Met` · `↪ Superseded by Prompt NN` (a recorded later decision, c
 - **O6.** The demo customers' phone (`+91 9876543210`, the reference site's template number) is demo data, removed before launch (`00_INDEX.md` §7); V2-04 owns the supporting data.
 - **O7.** `db.json` `settings.seo.metaTitle` keeps the old Title Case title. Prompt 29 proposed the change through the admin, and Prompt 32 does not read `settings.seo`.
 
-## 9. Gate
+## 9. Gate (after the repairs)
 
-(Filled in after the repairs.)
+| Check | Result |
+|---|---|
+| `node scripts/validate-db.js` | `✓ all checks passed`, in full mode and with `--catalogue`. `db.json` SHA-256 `3fc7f8f3…`, unchanged |
+| `node scripts/check-contrast.js` | every pairing meets its minimum; the mirror check passes |
+| `CI=true npm test -- --passWithNoTests` | **86 suites, 1,429 tests, exit 0** (91 s), no console warning; the same as at the baseline |
+| `npm run build` (default: `.env.production`, Laravel mode) | "Compiled successfully." main JS 399.62 kB, CSS 34.97 kB gzip, Prompt 34's figures. `CI=true npm run build`, which fails on any warning, gives the same. Only the two dependency notices of DESIGN_SYSTEM §43.6 print |
+| Build in JSON Server mode, baseline against repaired | 399.59 / 34.97 kB both. Every JS, CSS and asset file byte-identical; `index.html` differs by the two insertions of §6 |
+| Browser, production build, JSON Server mode on a scratch `db.json` | **after: 78 of 78.** Before: 76 of 78, the two failures being the gaps. The checks: 16 splash rows (four theme combinations × 360/768/1024/1440); reduced motion; the 10s safety net; Slow 3G in both modes; the served tags, icons and manifest; theme-color in both modes; 32 route loads (`/`, `/support`, `/help`, `/privacy` × 2 modes × 4 widths: contact block, social list, overflow, console); signed-in `/orders` and an invoice; the admin login and dashboard (2 modes × 1440/390); JavaScript off; storage blocked |
+| Development server (`npm start`, mock mode) | `/`, `/support`, `/help`, `/privacy`, `/about`, `/products`, `/admin` in both modes: **0 console errors or warnings** in 14 loads; per-page titles; the admin keeps `index.html`'s title |
+| Pixel comparison, before and after | 25 of 25 screenshots identical, including the eight admin login and dashboard captures |
+| Scope of the change | `public/index.html`, `prompts/BUILD_LOG.md`, this report. No admin file, `src/services/api.js` (SHA-256 `c32e6138…`, Prompt 34's) or `db.json` in the diff |
 
 ## 10. Needs client confirmation (identity)
 
-(Filled in after the repairs.)
+The current values. The prompts that changed a line are in brackets.
+
+- **Name and tagline:**
+  - "A & S Urbanseat" everywhere: env files, fallback, title, manifest, footer "© {year}", invoice, legal text.
+  - "Trusted Comfort for Every Home" as printed in the logo. In running text it is "Trusted comfort for every home" (the home page's title, [32]).
+- **Brand lines** (`src/content/brandContent.js`):
+  - `BRAND_PROMISE`: "Furniture made to be lived with, from our own workshop and the makers we trust." (footer).
+  - `HERO_HEADLINES`: "Seating for the way you *live*." (on the hero) · "Comfort, *quietly* made." · "Rooms that feel *finished*.".
+  - `HERO_SUPPORT_LINES`: "Chairs, sofas and tables for homes, offices, cafés and the open air." (on the hero) · "Some made in our own workshop, the rest from makers we trust." [29] · "Considered furniture for every room you live, work and gather in.".
+  - `NEWSLETTER_LINE`: "New pieces, care notes and the occasional offer. A few letters a month, nothing more.".
+  - `ABOUT_INTRO`: "A & S Urbanseat makes and selects furniture for the places people spend their days: homes, offices, cafés and outdoor spaces. Some of what we sell is made in our own workshop; the rest comes from makers we know well, such as Nilkamal, Carlton and Winsome. We put quality first, keep the customer at the centre and build trust one piece at a time." [28]
+  - `ASSURANCE_ITEMS`: "Free delivery" / "Free delivery above {threshold}" (the strip shows "Above ₹9,999" [10]) · "Easy returns" / "{days}-day returns on eligible pieces" · "Secure payment" / "Encrypted checkout for cards, UPI and net banking" · "Cash on Delivery" [29] / "Pay when your furniture arrives".
+  - About's headline, story, values and closing are Prompt 28's; see its entry.
+- **Document and app copy:**
+  - `APP_DESCRIPTION`: "Furniture and seating for homes, offices, cafés and outdoor spaces, made to be lived with." (the listing's intro [14]).
+  - Meta description, the manifest `description` and `DEFAULT_PAGE_DESCRIPTION`: "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust." (114 characters).
+  - The title: "A & S Urbanseat | Furniture and seating for home, office, café and outdoor" [29].
+  - The keywords: furniture, seating, chairs, sofas, dining tables, office chairs, office furniture, café furniture, restaurant furniture, outdoor furniture, home furniture, India.
+  - The manifest `short_name` "Urbanseat".
+  - The splash's accessible name "Loading A & S Urbanseat".
+- **Contact facts**, re-read from `kamdhenufurniture.in/contact/` on 2026-10-11 and unchanged there:
+  - phone `+91 84729 18653`; WhatsApp `+91 84729 19541` (`https://wa.me/918472919541`);
+  - email `info@kamdhenufurniture.com` (the old brand's `.com` domain);
+  - hours "Monday – Saturday: 9:00 AM – 7:00 PM IST, Sunday closed";
+  - address "Assam, India" (the street and PIN are missing);
+  - and which source is the truth: `constants.js` or Admin → Settings.
+- **Social profiles:** none except WhatsApp. Facebook, Instagram, YouTube and X appear once their URLs are added to `SOCIAL_LINKS`.
+- **Returns window:** `STOREFRONT_CONFIG.returnsWindowDays` 7, a placeholder.
+- **Trust claims held back:** the `warranty` and `support` badges. The reference site still says "20+ Years Warranty", "Since 20+ Years" and shows a "Happy Clients" counter (2026-10-11); none is used until confirmed.
+- **`POLICY_LAST_UPDATED`** "7 October 2026": the policies are drafts; set the real review date once they are approved.
+- **Brand names** Nilkamal, Carlton and Winsome in `ABOUT_INTRO`: may they be named?
+- **Production domain:** for `og:url`, `twitter:url` and `SITE_URL_PLACEHOLDER` (`https://urbanseat.example/` today).
+- **The sharing image:** the transparent 1286 × 426 logo today (O4); a flattened paper image would read better in previews.
+- **The browser's bar colour** now follows the device's light or dark setting (§6.1). Following the site's own switch instead is an owner decision (F1).
