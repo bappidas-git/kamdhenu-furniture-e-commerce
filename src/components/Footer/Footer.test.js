@@ -5,7 +5,7 @@ import "@testing-library/jest-dom";
 import apiService from "../../services/api";
 import { useDealsConfig } from "../../context/DealsConfigContext";
 import { BRAND_PROMISE } from "../../content/brandContent";
-import { STOREFRONT_CONFIG } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TRUST_BADGE_CATALOG } from "../../theme/tokens";
 import Footer from "./Footer";
 
 jest.mock("../../services/api", () => ({
@@ -224,6 +224,27 @@ test("never claims COD, free delivery or returns the data does not support", asy
     expect(footer()).not.toHaveTextContent(/24\/7|best price|guarantee/i);
   } finally {
     STOREFRONT_CONFIG.returnsWindowDays = days;
+  }
+});
+
+test("the promises carry the trust-badge catalogue's labels (DESIGN_SYSTEM §39.9, V2-05)", async () => {
+  const ids = ["securePayment", "cod", "easyReturns", "freeShipping"];
+  const labels = ids.map((id) => TRUST_BADGE_CATALOG[id].label);
+  ids.forEach((id) => {
+    TRUST_BADGE_CATALOG[id].label = `Renamed ${id}`;
+  });
+  try {
+    await renderFooter();
+    expect(promises()).toEqual([
+      "Renamed securePayment",
+      "Renamed cod",
+      "Renamed easyReturns, 7 days",
+      "Renamed freeShipping, Above ₹9,999",
+    ]);
+  } finally {
+    ids.forEach((id, index) => {
+      TRUST_BADGE_CATALOG[id].label = labels[index];
+    });
   }
 });
 

@@ -1,5 +1,6 @@
 import apiService from "../../services/api";
 import { categoryParam, getMainMenuCategories } from "../../utils/categories";
+import { isProductActive } from "../../utils/helpers";
 
 // =============================================================================
 // searchData — the search overlay's data rules
@@ -42,7 +43,8 @@ export const loadSearchData = () => {
     ])
       .then(([products, categories]) => {
         searchDataCache = {
-          products: Array.isArray(products) ? products : [],
+          // A product switched off in the admin is not searchable.
+          products: Array.isArray(products) ? products.filter(isProductActive) : [],
           categories: Array.isArray(categories) ? categories : [],
         };
         return searchDataCache;

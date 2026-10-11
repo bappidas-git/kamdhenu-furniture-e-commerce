@@ -8,7 +8,7 @@ import { useWishlist } from "../../context/WishlistContext";
 import apiService from "../../services/api";
 import { readSettings, readShippingMethods } from "../../services/sharedReads";
 import { categoryParam } from "../../utils/categories";
-import { formatCurrency, parseSpecifications } from "../../utils/helpers";
+import { formatCurrency, isProductActive, parseSpecifications, relatedLookup } from "../../utils/helpers";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import { Reveal, staggerDelay } from "../../components/ui";
@@ -294,7 +294,10 @@ const ProductDetails = () => {
 
       if (!isLatest()) return;
 
-      if (!data) {
+      // A product switched off in the admin is hidden on the storefront, its
+      // page included (isProductActive; the storefront filters isActive,
+      // 02_API_ENDPOINTS.md §B). JSON Server serves the row as it is.
+      if (!data || !isProductActive(data)) {
         setNotFound(true);
         return;
       }
@@ -394,7 +397,7 @@ const ProductDetails = () => {
     const cfg = STOREFRONT_CONFIG.aov;
     if (cfg.relatedProducts) {
       apiService.products
-        .getRelated(product, cfg.maxRelated)
+        .getRelated(relatedLookup(product), cfg.maxRelated)
         .then(keep(setRelatedProducts))
         .catch(() => keep(setRelatedProducts)([]));
     }

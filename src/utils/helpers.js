@@ -69,6 +69,25 @@ export const getProductMaxDiscount = (product) => {
   return 0;
 };
 
+// Whether a product may be shown on the storefront. Admin → Products can
+// switch a product off, and the storefront then hides it (01_DATABASE_SCHEMA.md,
+// products.isActive: "inactive hidden in related/FBT/storefront"). The Laravel
+// API's /products returns the active set, and the storefront filters isActive
+// as well (02_API_ENDPOINTS.md §B); JSON Server returns every row. So the
+// listing, search, the offers page, the home rails and the product page
+// filter here (V2-05).
+export const isProductActive = (product) =>
+  Boolean(product) && typeof product === "object" && product.isActive !== false;
+
+// The product as the related-products read should see it (products.getRelated).
+// api.js tops the "You may also like" rail up with pieces of "the same brand";
+// for a piece without a brand that meant every other unbranded piece (office
+// chairs beside a bedside table, V2-02 and V2-03). Passed without a brand, an
+// unbranded piece is topped up from its category and its tags only. A piece
+// with a brand is passed as it is.
+export const relatedLookup = (product) =>
+  product && !String(product.brand ?? "").trim() ? { ...product, brand: undefined } : product;
+
 // Pick the variant whose price matches the displayed (minimum) price, i.e. the
 // cheapest variant. Returns null for products without variants. Used so a
 // card's quick "Add to Cart" enqueues exactly the variant whose price is shown.

@@ -24,6 +24,7 @@ import ScrollToTop from "./components/ScrollToTop/ScrollToTop";
 import PageTransition from "./components/PageTransition/PageTransition";
 import SkipLink, { MAIN_CONTENT_ID } from "./components/SkipLink/SkipLink";
 import StorefrontRoot from "./components/StorefrontRoot/StorefrontRoot";
+import BrowserThemeColor from "./components/StorefrontRoot/BrowserThemeColor";
 import LazyPageBoundary from "./components/LazyPage/LazyPage";
 import AdminLayout from "./components/AdminLayout/AdminLayout";
 
@@ -112,6 +113,8 @@ function App() {
                         <MotionConfig reducedMotion="user">
                         {/* <html data-sf-storefront>: the root's storefront-only rules. */}
                         <StorefrontRoot />
+                        {/* The browser's theme-color follows the storefront's switch. */}
+                        <BrowserThemeColor />
                         <div className="App">
                           {/* "Skip to content" (<a class="sf-skip-link"
                               href="#main-content">): the first focusable

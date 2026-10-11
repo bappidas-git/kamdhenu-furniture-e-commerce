@@ -1,5 +1,13 @@
 import db from "../../db.json";
-import { formatCurrency, formatDate, formatDateIN, getCartSavings, parseSpecifications } from "./helpers";
+import {
+  formatCurrency,
+  formatDate,
+  formatDateIN,
+  getCartSavings,
+  isProductActive,
+  parseSpecifications,
+  relatedLookup,
+} from "./helpers";
 
 describe("parseSpecifications", () => {
   test("splits a seeded description into its prose and its specification pairs", () => {
@@ -153,5 +161,37 @@ describe("formatCurrency", () => {
     expect(formatCurrency(999)).toBe("₹999.00");
     expect(formatCurrency(1149.999, "USD")).toBe("$1,150.00");
     expect(formatCurrency(1149.999)).toBe("₹1,150.00");
+  });
+});
+
+describe("isProductActive (V2-05)", () => {
+  test("a product the admin switched off is not shown; every seeded product is", () => {
+    expect(isProductActive({ id: 1, isActive: false })).toBe(false);
+    expect(isProductActive({ id: 1, isActive: true })).toBe(true);
+    expect(isProductActive({ id: 1 })).toBe(true);
+    expect(isProductActive(null)).toBe(false);
+    expect(isProductActive(undefined)).toBe(false);
+    expect(db.products.every(isProductActive)).toBe(true);
+  });
+});
+
+describe("relatedLookup (V2-05)", () => {
+  test("an unbranded piece is passed without a brand, so related pieces are not matched on 'no brand'", () => {
+    const unbranded = db.products.find((p) => p.slug === "particle-board-bedside-table");
+    expect(unbranded.brand).toBe("");
+    const lookup = relatedLookup(unbranded);
+    expect(lookup.brand).toBeUndefined();
+    expect(lookup).not.toBe(unbranded);
+    expect({ ...lookup, brand: unbranded.brand }).toEqual(unbranded);
+    expect(relatedLookup({ id: 9, brand: null }).brand).toBeUndefined();
+    expect(relatedLookup({ id: 9, brand: "  " }).brand).toBeUndefined();
+    // No seeded product has brand undefined, so none matches the lookup's brand.
+    expect(db.products.some((p) => p.brand === lookup.brand)).toBe(false);
+  });
+
+  test("a branded piece is passed as it is", () => {
+    const branded = db.products.find((p) => p.brand === "Winsome");
+    expect(relatedLookup(branded)).toBe(branded);
+    expect(relatedLookup(null)).toBeNull();
   });
 });

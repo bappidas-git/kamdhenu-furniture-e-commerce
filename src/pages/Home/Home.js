@@ -37,11 +37,15 @@ import {
   onImageError,
   PLACEHOLDER_IMG,
   productPath,
+  relatedLookup,
 } from "../../utils/helpers";
 import {
   collectBrands,
+  FEATURED_COUNT,
+  FEATURED_POOL,
   loadFeaturedReviews,
   loadPromiseData,
+  mixFeatured,
   promiseBodyLayout,
   resolvePromiseBody,
 } from "./homeData";
@@ -60,11 +64,14 @@ import styles from "./Home.module.css";
 // Copy and media come from homeContent.js.
 //
 // Data: categories, featured and trending products in one Promise.all (each
-// read falls back to [] on failure); once featured has resolved, the "Complete
-// the space" anchor and its companions. The closing half reads lazily, each
-// section when it comes within a screen of the viewport: the catalogue for the
-// brand names, the approved reviews of the featured products, and the store
-// settings and shipping methods for the promise steps (rules in homeData.js).
+// read falls back to [] on failure); the featured rail takes eight of the
+// featured products, one department at a time (mixFeatured, V2-05), and both
+// rails leave out a product switched off in the admin. Once featured has
+// resolved, the "Complete the space" anchor and its companions. The closing
+// half reads lazily, each section when it comes within a screen of the
+// viewport: the catalogue for the brand names, the approved reviews of the
+// featured products, and the store settings and shipping methods for the
+// promise steps (rules in homeData.js).
 // Sections whose data is missing are hidden; nothing is invented to fill them.
 // =============================================================================
 
@@ -125,7 +132,7 @@ const loadCompleteTheSpace = async (featured = []) => {
   ).filter(unique);
   if (companions.length < 2) {
     const related = productList(
-      await apiService.products.getRelated(anchor, 4).catch(() => [])
+      await apiService.products.getRelated(relatedLookup(anchor), 4).catch(() => [])
     ).filter(unique);
     companions = [...companions, ...related];
   }
@@ -470,12 +477,13 @@ const Home = () => {
         const [cats, featured, trending] = await Promise.all([
           // One request with the header's and the footer's (sharedReads).
           readCategories().catch(() => []),
-          apiService.products.getFeatured(8).catch(() => []),
+          // A pool to choose the rail's mix of departments from (mixFeatured).
+          apiService.products.getFeatured(FEATURED_POOL).catch(() => []),
           apiService.products.getTrending(8).catch(() => []),
         ]);
         if (!active) return;
 
-        const featuredList = Array.isArray(featured) ? featured.slice(0, 8) : [];
+        const featuredList = mixFeatured(featured, Array.isArray(cats) ? cats : [], FEATURED_COUNT);
         // The sections that replace the skeletons (two rails of cards, the
         // space tiles) render as a transition: React works through them in
         // short slices, so the page stays responsive while they arrive
@@ -483,7 +491,7 @@ const Home = () => {
         startTransition(() => {
           setCategories(Array.isArray(cats) ? cats : []);
           setFeaturedProducts(featuredList);
-          setTrendingProducts(Array.isArray(trending) ? trending.slice(0, 8) : []);
+          setTrendingProducts(productList(trending).slice(0, 8));
           setLoading(false);
         });
 

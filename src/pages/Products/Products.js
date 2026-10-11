@@ -11,7 +11,7 @@ import {
   getCategoryScopeIds,
   orderCategoriesHierarchically,
 } from "../../utils/categories";
-import { getProductMinPrice } from "../../utils/helpers";
+import { getProductMinPrice, isProductActive } from "../../utils/helpers";
 import { APP_DESCRIPTION } from "../../utils/constants";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import { buildCategoryMap, matchesSearch } from "../../components/SearchModal/searchData";
@@ -309,7 +309,8 @@ const Products = () => {
         // One request with the header's and the footer's (sharedReads).
         readCategories(),
       ]);
-      setAllProducts(Array.isArray(productsData) ? productsData : []);
+      // A product switched off in the admin is not listed (isProductActive).
+      setAllProducts(Array.isArray(productsData) ? productsData.filter(isProductActive) : []);
       setCategories(Array.isArray(categoriesData) ? categoriesData : []);
     } catch (error) {
       console.error("Error fetching data:", error);

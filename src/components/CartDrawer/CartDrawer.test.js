@@ -4,7 +4,7 @@ import { act, fireEvent, render, screen, waitFor, within } from "@testing-librar
 import "@testing-library/jest-dom";
 import apiService from "../../services/api";
 import { CartProvider, useCart } from "../../context/CartContext";
-import { STOREFRONT_CONFIG, TOKENS } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TOKENS, TRUST_BADGE_CATALOG } from "../../theme/tokens";
 import db from "../../../db.json";
 import { preloadPageFor } from "../../pages/lazyPages";
 import CartDrawer from "./CartDrawer";
@@ -398,6 +398,28 @@ describe("promises", () => {
     const { dialog } = await openDrawer();
     await waitForStore(dialog);
     expect(labels(dialog)).toEqual(["Secure payment"]);
+  });
+
+  test("the labels are the trust-badge catalogue's (DESIGN_SYSTEM §39.9, V2-05)", async () => {
+    const ids = ["securePayment", "cod", "easyReturns"];
+    const saved = ids.map((id) => TRUST_BADGE_CATALOG[id].label);
+    ids.forEach((id) => {
+      TRUST_BADGE_CATALOG[id].label = `Renamed ${id}`;
+    });
+    try {
+      renderDrawer();
+      const { dialog } = await openDrawer();
+      await waitForStore(dialog);
+      expect(labels(dialog)).toEqual([
+        "Renamed securePayment",
+        "Renamed cod",
+        `Renamed easyReturns · , ${STOREFRONT_CONFIG.returnsWindowDays} days`,
+      ]);
+    } finally {
+      ids.forEach((id, index) => {
+        TRUST_BADGE_CATALOG[id].label = saved[index];
+      });
+    }
   });
 
   test("a failed settings read never claims cash on delivery", async () => {

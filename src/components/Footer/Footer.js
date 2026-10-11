@@ -12,7 +12,7 @@ import {
   SUPPORT_HOURS,
   SUPPORT_PHONE,
 } from "../../utils/constants";
-import { STOREFRONT_CONFIG, resolveTrustBadgeDetail } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TRUST_BADGE_CATALOG, resolveTrustBadgeDetail } from "../../theme/tokens";
 import { BRAND_PROMISE } from "../../content/brandContent";
 import { BrandLogo, Reveal } from "../ui";
 import Newsletter from "../Newsletter/Newsletter";
@@ -238,21 +238,24 @@ const Footer = () => {
     [categories]
   );
 
-  // The same rules as the product page's TrustBadges (resolveTrustBadgeDetail).
+  // The same rules as the product page's TrustBadges (resolveTrustBadgeDetail),
+  // and the same icons and labels (TRUST_BADGE_CATALOG, DESIGN_SYSTEM §39.9).
   const codAvailable = resolveTrustBadgeDetail("cod", { settings }) !== null;
   const trustItems = useMemo(() => {
     const days = STOREFRONT_CONFIG.returnsWindowDays;
     const freeDelivery = resolveTrustBadgeDetail("freeShipping", { shipping });
+    const badge = (id, detail) => ({
+      id,
+      icon: TRUST_BADGE_CATALOG[id].icon,
+      label: TRUST_BADGE_CATALOG[id].label,
+      ...(detail ? { detail } : {}),
+    });
     return [
-      { id: "securePayment", icon: "lock", label: "Secure payment" },
-      codAvailable && { id: "cod", icon: "cash", label: "Cash on Delivery" },
-      resolveTrustBadgeDetail("easyReturns") !== null && {
-        id: "easyReturns",
-        icon: "rotate",
-        label: "Easy returns",
-        detail: `${days} ${days === 1 ? "day" : "days"}`,
-      },
-      freeDelivery && { id: "freeShipping", icon: "truck", label: "Free delivery", detail: freeDelivery },
+      badge("securePayment"),
+      codAvailable && badge("cod"),
+      resolveTrustBadgeDetail("easyReturns") !== null &&
+        badge("easyReturns", `${days} ${days === 1 ? "day" : "days"}`),
+      freeDelivery && badge("freeShipping", freeDelivery),
     ].filter(Boolean);
   }, [codAvailable, shipping]);
 

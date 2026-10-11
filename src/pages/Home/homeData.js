@@ -1,6 +1,8 @@
 import apiService from "../../services/api";
 import { STOREFRONT_CONFIG, resolveTrustBadgeDetail } from "../../theme/tokens";
+import { getMainMenuCategories } from "../../utils/categories";
 import { APP_NAME } from "../../utils/constants";
+import { isProductActive } from "../../utils/helpers";
 
 // =============================================================================
 // Home page data rules for the closing half (Prompt 12)
@@ -9,8 +11,55 @@ import { APP_NAME } from "../../utils/constants";
 // and the "Our promise" steps. Every value shown comes from the catalogue, the
 // approved reviews, the shipping methods, the store settings or the stated
 // returns policy; when a value is missing the copy that needs it is left out,
-// never filled with a guess.
+// never filled with a guess. The featured rail's selection (V2-05) is here too.
 // =============================================================================
+
+// ── Featured rail ────────────────────────────────────────────────────────────
+
+// The rail shows FEATURED_COUNT pieces, chosen from up to FEATURED_POOL of the
+// products the admin flags as featured.
+export const FEATURED_COUNT = 8;
+export const FEATURED_POOL = 24;
+
+/**
+ * The featured rail: up to `limit` featured products, taken one department at
+ * a time in menu order (each department's in the order the API gave them), so
+ * every department with a featured piece appears before any shows a second.
+ * Taken in the API's order alone, the first eight were all from the first four
+ * departments, and the home and office-table pieces Prompt 04 featured "so the
+ * home page mixes home and office pieces" never showed (V2-02 F5, V2-03 F4).
+ * Pieces whose department is not in the menu follow, in the API's order;
+ * inactive pieces are left out. Without categories, the API's order stands.
+ */
+export const mixFeatured = (products, categories = [], limit = FEATURED_COUNT) => {
+  const list = (Array.isArray(products) ? products : []).filter(isProductActive);
+  const cats = Array.isArray(categories) ? categories : [];
+  const byId = new Map(cats.map((category) => [String(category.id), category]));
+  const departmentOf = (product) => {
+    let category = byId.get(String(product.categoryId));
+    const seen = new Set();
+    while (category && category.parentId != null && !seen.has(category.id)) {
+      seen.add(category.id);
+      category = byId.get(String(category.parentId));
+    }
+    return category ? String(category.id) : null;
+  };
+  const lanes = new Map(getMainMenuCategories(cats).map((department) => [String(department.id), []]));
+  const rest = [];
+  list.forEach((product) => {
+    const lane = lanes.get(departmentOf(product));
+    if (lane) lane.push(product);
+    else rest.push(product);
+  });
+  const mixed = [];
+  const queues = [...lanes.values()];
+  while (mixed.length < limit && queues.some((queue) => queue.length > 0)) {
+    queues.forEach((queue) => {
+      if (mixed.length < limit && queue.length > 0) mixed.push(queue.shift());
+    });
+  }
+  return [...mixed, ...rest].slice(0, limit);
+};
 
 // ── Brands we carry ──────────────────────────────────────────────────────────
 

@@ -2,6 +2,7 @@ import React from "react";
 import { act, render, screen, waitFor, within } from "@testing-library/react";
 import "@testing-library/jest-dom";
 import App from "./App";
+import { STORAGE_NAMES, installStorageFallback } from "./utils/storageFallback";
 
 // The storefront's routing (App.js): an unknown URL renders the 404 page inside
 // the storefront shell and stays on its URL (until Prompt 28 it redirected to
@@ -125,4 +126,27 @@ test("/about is titled Our story, with its intro's first sentence as the descrip
     "content",
     "A & S Urbanseat makes and selects furniture for the places people spend their days: homes, offices, cafés and outdoor spaces."
   );
+});
+
+// ── V2-05: site data blocked (V2-01, finding F2) ─────────────────────────────
+
+test("with site data blocked the storefront renders, on storage kept in memory", async () => {
+  const saved = STORAGE_NAMES.map((name) => [name, Object.getOwnPropertyDescriptor(window, name)]);
+  const blocked = () => {
+    throw new DOMException("Access is denied for this document.", "SecurityError");
+  };
+  saved.forEach(([name]) => Object.defineProperty(window, name, { configurable: true, get: blocked }));
+  try {
+    // What src/index.js does before React renders.
+    expect(installStorageFallback(window)).toEqual(STORAGE_NAMES);
+    // A saved theme keeps ThemeContextProvider away from window.matchMedia.
+    window.localStorage.setItem("theme", "light");
+    await renderAt("/");
+    expect(screen.getByTestId("shell-home")).toBeInTheDocument();
+    expect(screen.queryByText("Something went wrong.")).not.toBeInTheDocument();
+  } finally {
+    saved.forEach(([name, descriptor]) =>
+      descriptor ? Object.defineProperty(window, name, descriptor) : delete window[name]
+    );
+  }
 });

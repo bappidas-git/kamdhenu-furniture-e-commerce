@@ -401,7 +401,7 @@ Copy these literally. Prompt 34 verifies they still match.
 
 | Use | Value |
 |---|---|
-| `<meta name="theme-color">` (light) / `media="(prefers-color-scheme: dark)"` | `#faf7f2` / `#0a1426` |
+| `<meta name="theme-color">`, two tags, each naming its scheme: `media="(prefers-color-scheme: light)"` / `media="(prefers-color-scheme: dark)"` (browsers use the first tag whose media matches, so a light tag without `media` hides the dark one; V2-01). While a storefront page is shown, `BrowserThemeColor` sets both to the ground of the mode in use (from `colors.js`) and gives these values back when the storefront unmounts (§43.7) | `#faf7f2` / `#0a1426` |
 | `manifest.json` `background_color` / `theme_color` | `#faf7f2` / `#faf7f2` |
 | Pre-paint script `document.body.style.backgroundColor` (= `colors.js` `background.default`) | light `#faf7f2`, dark `#0a1426` |
 | Loading screen | light: `#faf7f2` + light logo + progress hairline `#ae773d`; dark: `#0a1426` + white logo + hairline `#ddb185` |
@@ -3189,6 +3189,8 @@ Every literal or gradient allowed outside the token files, consolidated from §1
 - **Returns and payments agree with their orders:** a processed full return leaves its order's `fulfillmentStatus` `"returned"`; a paid order has no pending payment.
 - **Coupon expiries end an Indian day:** `T18:29:59.000Z` (23:59:59 IST), never `T23:59:59Z`, which is 05:29 the next morning in India and printed as the next date.
 
+V2-02, V2-03 and V2-04 tightened it further (their reports list the rules). V2-05 added one: **at most 24 active featured products**, the home Featured rail's read (`FEATURED_POOL`, §43.7), so every department with a featured piece can reach the rail.
+
 ### 43.6 Maintainer checklist
 
 - [ ] `CI=true npm test -- --passWithNoTests` exits 0, and `CI=true npm run build` prints "Compiled successfully" (CI mode fails the build on any ESLint or webpack warning). Two notices print before compiling and are not build warnings: Browserslist's "caniuse-lite is outdated" and `babel-preset-react-app`'s note about `@babel/plugin-proposal-private-property-in-object`. Clearing either changes the package files, which this build left as they were.
@@ -3198,3 +3200,17 @@ Every literal or gradient allowed outside the token files, consolidated from §1
 - [ ] Storefront data goes through `apiService.*`: no `axios` or `fetch` outside `api.js`, no reliance on a JSON Server-only shape (`data[0]`, `.data.data`). `IS_MOCK_API` is read outside the services layer in one place, checkout's `gatewayConfigured`, so the demo never claims a payment gateway (Prompt 26).
 - [ ] Nothing the data does not show: no rating, count, urgency or claim without its source (§39.8). QA_CHECKLIST.md lists the greps.
 - [ ] Before launch: `prompts/00_INDEX.md` section 7.
+
+### 43.7 What V2-05 changed
+
+Written by Prompt V2-05 (`prompts/prompt_V2/`), the full regression after V2-01…V2-04 re-verified Prompts 02–05; the evidence is in `prompts/prompt_V2/reports/V2-05_REPORT.md`. No API call, schema, route or price rule changed, and `src/services/api.js` is as it was.
+
+| Surface | Before | Now |
+|---|---|---|
+| Home, the Featured rail | the first eight featured products in the API's order (by id in JSON Server): four departments, never the home or office-table pieces Prompt 04 featured so the home page mixes home and office pieces | `mixFeatured` (`src/pages/Home/homeData.js`): reads up to `FEATURED_POOL` (24) featured products and shows `FEATURED_COUNT` (8), one department at a time in menu order, each department's pieces in the API's order; pieces outside the menu follow |
+| A product switched off in Admin → Products | still listed, counted and found on the listing (and its `?search=`), in the search overlay, on the offers page (even while the admin's selection named it), in the home Featured and Trending rails, and its page opened (JSON Server serves every row; `02_API_ENDPOINTS.md` §B: "the storefront filters `isActive` client-side") | `isProductActive` (`src/utils/helpers.js`) filters each of those reads (the Trending rail through `Home.js`'s product filter); the product page says "We couldn’t find that piece." (the related and bundle reads already left it out) |
+| "You may also like" for an unbranded piece | `getRelated`'s same-brand top-up matched `"" === ""`: every other unbranded piece qualified, so office chairs and the outdoor sets filled a bedside table's rail | `relatedLookup` (`src/utils/helpers.js`) passes such a piece without a brand (the product page's read and the home "Complete the space" top-up); curated ids, the category, a real shared brand and shared tags work as before (Prompt 17's rule) |
+| The browser's theme colour | followed the device setting only, so a shopper who chose the other mode saw a bar that did not match the page | `BrowserThemeColor` (`src/components/StorefrontRoot/`), mounted beside `StorefrontRoot`: both tags take the mode's ground while a storefront page is shown and get `index.html`'s values back on unmount, so the admin keeps the device-based colour |
+| Site data blocked by the browser | reading `localStorage`/`sessionStorage` throws `SecurityError`; the providers' first render failed and every page showed the crash screen | `installStorageFallback` (`src/utils/storageFallback.js`), called by `src/index.js` before React renders, replaces a storage that cannot be read with one kept in memory: the visit works (theme, cart, wishlist, sign-in, checkout, the admin) and nothing is kept after it. Ordinary visits are untouched |
+| Trust cues in the footer, the cart drawer and checkout | labels typed inline | the labels of `TRUST_BADGE_CATALOG` (§39.9), so a rename reaches every promise row |
+
