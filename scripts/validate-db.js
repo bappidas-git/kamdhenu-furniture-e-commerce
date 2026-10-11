@@ -26,7 +26,17 @@
 // specifications read by the product page's own parser, and Prompt 34's size
 // check moved unchanged into catalogue mode (it still runs in full mode) and
 // extended to "Width × depth", bare "Width"/"Length"/"Depth", "Seat height"
-// and "Weight". Nothing was removed or loosened.
+// and "Weight". Nothing was removed or loosened. V2-03 (the max-effort
+// re-verification of Prompt 04) added the checks marked "V2-03": Prompt 04's
+// tree and its checklist product by product (name, leaf, brand, variants, price
+// band, type tag, SKU prefix), a material tag, the specification topics,
+// Winsome above the workshop pieces and the marble set the dearest, the flag,
+// compare-at and stock counts of the 38; and catalogue-wide: local terms keep
+// their gloss, "our own workshop" only on 47, 77, 79 and 81, the site's
+// labels nowhere, inches hedged, no medical claim, finish pairs true to the
+// options, weight capacity where the leaf gives one, Prompt 04's size pairs
+// against the fields, related pieces within their room, cross-department
+// bundles returned, and every office chair and desk bundled with each other.
 // =============================================================================
 
 const fs = require("fs");
@@ -181,6 +191,82 @@ const MATERIAL_TAGS = {
 // "Within the last six months" of the build: Prompt 03 ran on 2026-10-07.
 const BUILD_DATE = "2026-10-07T23:59:59.999Z";
 const WINDOW_START = "2026-04-07T00:00:00.000Z";
+// V2-03: Prompt 04's tree, by the ids its build log recorded:
+// id -> [name, slug, parent id, sortOrder].
+const TREE_04 = {
+  30: ["Living Room", "living-room", 5, 1], 31: ["Sofas", "sofas", 30, 1], 32: ["Sofa-cum-Beds", "sofa-cum-beds", 30, 2],
+  33: ["Centre Tables & Showcases", "centre-tables-showcases", 30, 3], 34: ["Bedroom", "bedroom", 5, 2],
+  35: ["Beds", "beds", 34, 1], 36: ["Mattresses", "mattresses", 34, 2], 37: ["Dressing Tables & Mirrors", "dressing-tables-mirrors", 34, 3],
+  38: ["Bedside & Bed Tables", "bedside-bed-tables", 34, 4], 39: ["Almirahs", "almirahs", 34, 5],
+  40: ["Alna Clothes Stands", "alna-clothes-stands", 34, 6], 41: ["Dining Room", "dining-room", 5, 3],
+  42: ["Dining Sets", "dining-sets", 41, 1], 43: ["Storage", "storage", 5, 4], 44: ["Racks", "racks", 43, 1],
+  45: ["Office Tables", "office-tables", 6, 1], 46: ["Computer Tables", "computer-tables", 6, 2],
+  47: ["Reading Tables", "reading-tables", 6, 3], 48: ["Dining Sets", "plastic-dining-sets", 1, 3], 49: ["Sofas", "plastic-sofas", 1, 4],
+};
+// V2-03: Prompt 04's proof-of-coverage checklist, product by product:
+// id -> [name, leaf slug, brand, variants, price band, type tag, SKU prefix].
+// Variants: [attribute, fewest, most], [attribute, [the exact values]] or null (`[]`).
+const SIZES_4 = ["Single", "Double", "Queen", "King"];
+const SHELVES_3 = ["3 shelves", "4 shelves", "5 shelves"];
+const PROMPT_04 = {
+  47: ["Wooden Sofa Set", "sofas", "A & S Urbanseat", ["Colour", 2, 3], [18000, 65000], "sofa", "LIV"],
+  48: ["L-Shaped Sofa", "sofas", "A & S Urbanseat", ["Colour", 2, 3], [18000, 65000], "sofa", "LIV"],
+  49: ["5-Seater Sofa Set", "sofas", "A & S Urbanseat", ["Colour", 2, 3], [18000, 65000], "sofa", "LIV"],
+  50: ["7-Seater Sofa Set", "sofas", "A & S Urbanseat", ["Colour", 2, 3], [18000, 65000], "sofa", "LIV"],
+  51: ["Steel Sofa-cum-Bed", "sofa-cum-beds", "", ["Colour", 2, 3], [14000, 35000], "sofa cum bed", "LIV"],
+  52: ["Wooden Sofa-cum-Bed", "sofa-cum-beds", "A & S Urbanseat", ["Colour", 2, 3], [14000, 35000], "sofa cum bed", "LIV"],
+  53: ["Wooden Centre Table", "centre-tables-showcases", "A & S Urbanseat", ["Finish", 2, 2], [6000, 22000], "centre table", "LIV"],
+  54: ["Wooden Showcase", "centre-tables-showcases", "A & S Urbanseat", ["Finish", 2, 2], [6000, 22000], "showcase", "LIV"],
+  55: ["King Size Bed", "beds", "A & S Urbanseat", ["Finish", 2, 2], [12000, 45000], "bed", "BED"],
+  56: ["Queen Size Bed", "beds", "A & S Urbanseat", ["Finish", 2, 2], [12000, 45000], "bed", "BED"],
+  57: ["Single Bed", "beds", "A & S Urbanseat", ["Finish", 2, 2], [12000, 45000], "bed", "BED"],
+  58: ["Carlton Mattress", "mattresses", "Carlton", ["Size", SIZES_4], [5500, 25000], "mattress", "BED"],
+  59: ["Nilkamal Mattress", "mattresses", "Nilkamal", ["Size", SIZES_4], [5500, 25000], "mattress", "BED"],
+  60: ["Plain Dressing Table", "dressing-tables-mirrors", "A & S Urbanseat", ["Finish", 2, 2], [6000, 18000], "dressing table", "BED"],
+  61: ["Large Dressing Table", "dressing-tables-mirrors", "A & S Urbanseat", ["Finish", 2, 2], [6000, 18000], "dressing table", "BED"],
+  62: ["Standing Mirror", "dressing-tables-mirrors", "A & S Urbanseat", ["Finish", 2, 2], [2500, 7000], "mirror", "BED"],
+  63: ["Wall Mirror", "dressing-tables-mirrors", "A & S Urbanseat", ["Finish", 2, 2], [2500, 7000], "mirror", "BED"],
+  64: ["Wooden Bedside Table", "bedside-bed-tables", "A & S Urbanseat", ["Finish", 2, 2], [1800, 6000], "bedside table", "BED"],
+  65: ["Particle-Board Bedside Table", "bedside-bed-tables", "", ["Finish", 2, 2], [1800, 6000], "bedside table", "BED"],
+  66: ["Folding Bed Table", "bedside-bed-tables", "", ["Colour", 2, 3], [1800, 6000], "bed table", "BED"],
+  67: ["Two-Door Almirah", "almirahs", "A & S Urbanseat", ["Finish", 2, 2], [9000, 25000], "almirah", "BED"],
+  68: ["Three-Door Almirah", "almirahs", "A & S Urbanseat", ["Finish", 2, 2], [9000, 25000], "almirah", "BED"],
+  69: ["Iron Alna (Clothes Stand)", "alna-clothes-stands", "", null, [1500, 5000], "alna", "BED"],
+  70: ["Wooden Alna (Clothes Stand)", "alna-clothes-stands", "A & S Urbanseat", null, [1500, 5000], "alna", "BED"],
+  71: ["Steel Storage Rack", "racks", "", ["Shelves", SHELVES_3], [3000, 9000], "rack", "STO"],
+  72: ["Wooden Storage Rack", "racks", "A & S Urbanseat", ["Shelves", SHELVES_3], [3000, 9000], "rack", "STO"],
+  73: ["4-Seater Dining Set", "dining-sets", "A & S Urbanseat", ["Finish", 2, 2], [15000, 60000], "dining set", "DIN"],
+  74: ["6-Seater Dining Set", "dining-sets", "A & S Urbanseat", ["Finish", 2, 2], [15000, 60000], "dining set", "DIN"],
+  75: ["Marble-Top Dining Set", "dining-sets", "A & S Urbanseat", ["Finish", 2, 2], [15000, 60000], "dining set", "DIN"],
+  76: ["Winsome Office Table", "office-tables", "Winsome", ["Size", 2, 2], [4000, 18000], "office table", "OFT"],
+  77: ["Workshop Office Table", "office-tables", "A & S Urbanseat", ["Size", 2, 2], [4000, 18000], "office table", "OFT"],
+  78: ["Winsome Computer Table", "computer-tables", "Winsome", ["Size", 2, 2], [4000, 18000], "computer table", "OFT"],
+  79: ["Workshop Computer Table", "computer-tables", "A & S Urbanseat", ["Size", 2, 2], [4000, 18000], "computer table", "OFT"],
+  80: ["Winsome Reading Table", "reading-tables", "Winsome", ["Size", 2, 2], [4000, 18000], "reading table", "OFT"],
+  81: ["Workshop Reading Table", "reading-tables", "A & S Urbanseat", ["Size", 2, 2], [4000, 18000], "reading table", "OFT"],
+  82: ["4-Seater Plastic Dining Set", "plastic-dining-sets", "Nilkamal", ["Colour", 2, 3], [5000, 11000], "dining set", "PLD"],
+  83: ["6-Seater Plastic Dining Set", "plastic-dining-sets", "Nilkamal", ["Colour", 2, 3], [5000, 11000], "dining set", "PLD"],
+  84: ["Nilkamal Plastic Sofa Set", "plastic-sofas", "Nilkamal", ["Colour", 2, 3], [9000, 16000], "sofa", "PLS"],
+};
+// The pieces the reference site marks own manufacturing or "Local Made": the
+// only ones whose copy, tags or name may say they come from our own workshop.
+const WORKSHOP_IDS = [47, 77, 79, 81];
+// Winsome above the workshop piece of the same type, size for size.
+const WINSOME_PAIRS = [[76, 77], [78, 79], [80, 81]];
+// The bundles Prompt 04 calls natural, by type tag ("dining set" + "centre
+// table" is not one); every other Prompt 04 piece bundles nothing.
+const BUNDLES_04 = {
+  sofa: ["centre table"], "centre table": ["sofa"], bed: ["mattress", "bedside table"], mattress: ["bed"],
+  "bedside table": ["bed"], "office table": ["office chair"], "computer table": ["office chair"], "reading table": ["office chair"],
+};
+const DESK_TYPES = ["office table", "computer table", "reading table"];
+// Leaves whose pieces seat or sleep people: their specifications give the capacity.
+const CAPACITY_LEAVES = ["sofas", "sofa-cum-beds", "beds", "mattresses", "dining-sets", "plastic-dining-sets", "plastic-sofas"];
+// Local terms the client's customers use, each with the plain-English gloss
+// the record that uses it must also carry (Prompt 04, guardrail 4).
+const LOCAL_TERMS = [[/\balmirahs?\b/i, /wardrobe/i, "almirah", "wardrobe"], [/\balnas?\b/i, /clothes stand/i, "alna", "clothes stand"], [/\bjhula\b/i, /swing/i, "jhula", "swing"]];
+// Material words a Prompt 04 tag may name, alone or in a compound such as "steel rack".
+const MATERIAL_WORDS_04 = ["solid wood", "engineered wood", "particle board", "wooden", "wood", "steel", "iron", "metal", "marble", "plastic", "polypropylene", "fabric", "foam", "glass", "laminate", "mesh", "leatherette", "cane"];
 
 // ---------------------------------------------------------------- helpers
 const failures = [];
@@ -655,6 +741,175 @@ products.forEach((p) => {
   });
 });
 
+// ---- V2-03: the catalogue rules of Prompt 04 ---------------------------------
+// Its tree, its checklist product by product, and the Prompt 03 content rules
+// those 38 products inherit. Catalogue-wide where every product already
+// passes (copy, sizes, relations); the checklist's own rules for the 38.
+const specsOf = (p) => parsedSpecs(p.description).specs;
+const copyText = (p) => `${p.name}\n${p.shortDescription}\n${p.description}\n${p.metaTitle}\n${p.metaDescription}`;
+// The room a Home Furniture piece belongs to: the ancestor directly under department 5.
+const roomOf = (catId) => {
+  let c = catById.get(String(catId));
+  for (let i = 0; c && c.parentId !== null && i < 20; i += 1) {
+    if (String(c.parentId) === "5") return c.id;
+    c = catById.get(String(c.parentId));
+  }
+  return null;
+};
+// A product's type for bundles: its Prompt 04 type tag, or an office chair or
+// centre table of Prompt 03 by its tags.
+const typeOf = (p) => PROMPT_04[p.id]?.[5] || ["office chair", "centre table"].find((t) => (p.tags || []).includes(t)) || null;
+Object.entries(TREE_04).forEach(([id, [name, slug, parentId, sortOrder]]) => {
+  const c = catById.get(id);
+  if (check(c, "tree", `Prompt 04 category ${id} (${slug}) missing`)) {
+    check(c.name === name && c.slug === slug && c.parentId === parentId && c.sortOrder === sortOrder && c.isActive,
+      `category ${id} (${c.slug})`, `must be "${name}" (${slug}), active, under ${parentId} at sortOrder ${sortOrder}`);
+  }
+});
+categories.filter((c) => c.id >= 30 && c.id <= 49).forEach((c) => {
+  check([1, 5, 6].includes(rootOf(c)), `category ${c.id} (${c.slug})`, "ids 30–49 belong to Plastic Furniture, Home Furniture or Office Tables & Desks");
+});
+// Local terms keep their gloss wherever a record uses them.
+const glossed = (where, text) => LOCAL_TERMS.forEach(([term, gloss, t, g]) => {
+  if (term.test(text)) check(gloss.test(text), where, `uses "${t}" without the gloss "${g}" in its own name or description`);
+});
+categories.forEach((c) => glossed(`category ${c.id} (${c.slug})`, `${c.name}\n${c.description}`));
+check(!/company made|local made/i.test(JSON.stringify({ categories, products })), "catalogue", "the reference site's labels \"Company Made\"/\"Local Made\" must not appear");
+const lowerRun = (s) => String(s).toLowerCase().replace(/-/g, " ");
+products.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const d = p.dimensions || {};
+  const specs = specsOf(p);
+  const copy = copyText(p);
+  glossed(at, `${p.name}\n${p.shortDescription}\n${p.description}`);
+  // "Made in our own workshop" only where the site marks own manufacturing or Local Made.
+  const workshop = /our own workshop/i.test(copy) || (p.tags || []).includes("workshop made") || /^Workshop /.test(p.name);
+  check(workshop === WORKSHOP_IDS.includes(p.id), at, workshop ? "claims our own workshop, which the reference site marks only for 47, 77, 79 and 81" : "must say it is made in our own workshop (the reference site marks it own manufacturing / Local Made)");
+  check(!/orthop|spine|medical|doctor|therapeutic|back pain/i.test(copy), at, "makes a medical claim");
+  // Inches are hedged like centimetres and kilograms.
+  specs.filter((s) => /\d\s*in\b/.test(s.value) && !/approx\./.test(s.value))
+    .forEach((s) => fail(at, `"${s.key}: ${s.value}" gives a size in inches without "approx."`));
+  // A "Finish" pair cannot call every option wood grain when one is a plain colour.
+  const finish = specs.find((s) => s.key.toLowerCase() === "finish")?.value || "";
+  (p.variants || []).filter((v) => v.attributes?.Finish && /white|black|grey|gray|cream/i.test(v.attributes.Finish)).forEach((v) => {
+    check(!/wood[- ]?grain/i.test(finish) || finish.toLowerCase().includes(v.attributes.Finish.toLowerCase()), at, `"Finish: ${finish}" does not describe the ${v.attributes.Finish} option`);
+  });
+  // Weight capacity applies to a piece when another piece of its leaf states one.
+  const leafHasCapacity = products.some((q) => q.id !== p.id && q.categoryId === p.categoryId && specsOf(q).some((s) => s.key.toLowerCase() === "weight capacity"));
+  if (leafHasCapacity) check(specs.some((s) => s.key.toLowerCase() === "weight capacity"), at, "gives no weight capacity, which the other pieces of its leaf give");
+  // The size pairs Prompt 04 uses, against the dimension fields.
+  specs.forEach(({ key, value }) => {
+    const k = key.toLowerCase();
+    const box = value.match(new RegExp(`${N}\\s*×\\s*${N}\\s*×\\s*${N}\\s*cm`));
+    const pair = value.match(new RegExp(`${N}\\s*×\\s*${N}`));
+    if (["three-seater size", "sofa size", "table size"].includes(k)) {
+      check(box && Number(box[1]) === d.length && Number(box[2]) === d.width && Number(box[3]) === d.height, at, `"${key}: ${value}" ≠ dimensions ${d.length} × ${d.width} × ${d.height}`);
+    }
+    if (k === "top size") check(pair && Number(pair[1]) === d.length && Number(pair[2]) === d.width, at, `"${key}: ${value}" ≠ dimensions ${d.length} × ${d.width} (L × W)`);
+    if (k === "sizes" && /cm/.test(value)) {
+      const all = [...value.matchAll(new RegExp(`${N}\\s*×\\s*${N}`, "g"))];
+      const big = all[all.length - 1];
+      const high = value.match(new RegExp(`${N}\\s*cm high`));
+      check(big && Number(big[1]) === d.length && Number(big[2]) === d.width && high && Number(high[1]) === d.height, at, `"${key}: ${value}": the largest size and height must equal dimensions ${d.length} × ${d.width} × ${d.height}`);
+    }
+    if (k === "thickness") { const cm = value.match(new RegExp(`\\(${N}\\s*cm\\)`)); check(cm && Number(cm[1]) === d.height, at, `"${key}: ${value}" ≠ height ${d.height} cm`); }
+    if (k === "mattress size") { const cm = value.match(new RegExp(`approx\\.\\s*${N}\\s*×\\s*${N}\\s*cm`)); check(cm && Number(cm[1]) <= d.width && Number(cm[2]) <= d.length, at, `"${key}: ${value}" does not fit the bed's ${d.length} × ${d.width} cm`); }
+  });
+  // Related pieces of Home Furniture stay in their room; a room with fewer
+  // than four pieces names all its own first, then the rest of the department.
+  const room = roomOf(p.categoryId);
+  if (room) {
+    const own = products.filter((q) => q.isActive && q.id !== p.id && roomOf(q.categoryId) === room).map((q) => q.id);
+    const rel = p.relatedProductIds || [];
+    if (own.length >= 3) rel.forEach((id) => check(own.includes(id), at, `related product ${id} is outside its room`));
+    else check(JSON.stringify(rel.slice(0, own.length).sort()) === JSON.stringify([...own].sort()), at, `related ids must start with its room's own pieces (${own.join(",")})`);
+  }
+  // A bundle that crosses departments is returned, unless the other piece's
+  // two slots already hold pieces of this one's department.
+  (p.frequentlyBoughtTogetherIds || []).forEach((id) => {
+    const q = prodById.get(String(id));
+    if (!q || deptOf(q.categoryId) === deptOf(p.categoryId)) return;
+    const back = q.frequentlyBoughtTogetherIds || [];
+    const full = back.length >= 2 && back.every((x) => deptOf(prodById.get(String(x))?.categoryId) === deptOf(p.categoryId));
+    check(back.includes(p.id) || full, at, `bundles ${id} across departments, which neither bundles it back nor has its two slots full`);
+  });
+  // Every high- or low-back office chair bundles a desk.
+  if (typeOf(p) === "office chair") check((p.frequentlyBoughtTogetherIds || []).some((id) => DESK_TYPES.includes(typeOf(prodById.get(String(id)) || {}))), at, "an office chair must bundle an office, computer or reading table");
+});
+
+// ---- V2-03: the 38 products of Prompt 04's checklist --------------------------
+const P04 = products.filter((p) => Object.prototype.hasOwnProperty.call(PROMPT_04, p.id));
+P04.forEach((p) => {
+  const at = `product ${p.id} (${p.slug})`;
+  const [name, leaf, brand, rule, band, type, prefix] = PROMPT_04[p.id];
+  const vs = p.variants || [];
+  const specs = specsOf(p);
+  const keys = specs.map((s) => s.key.toLowerCase());
+  check(p.name === name && catSlugOf(p) === leaf && p.isActive, at, `must be "${name}", active, in ${leaf}`);
+  check(p.brand === brand, at, `brand must be "${brand}"`);
+  check(p.sku.startsWith(`${prefix}-`), at, `SKU must start ${prefix}-`);
+  check((p.tags || []).includes(type), at, `tags must include the type "${type}"`);
+  // Variants as the checklist line asks.
+  const attr = vs.length ? Object.keys(vs[0].attributes || {})[0] : null;
+  if (rule === null) check(vs.length === 0, at, "must have no variants (`[]`)");
+  else if (Array.isArray(rule[1])) check(attr === rule[0] && JSON.stringify(vs.map((v) => v.attributes?.[rule[0]])) === JSON.stringify(rule[1]), at, `variants must be ${rule[0]}: ${rule[1].join(" / ")}`);
+  else check(attr === rule[0] && vs.length >= rule[1] && vs.length <= rule[2], at, `variants must be ${rule[0]}, ${rule[1]}–${rule[2]} options`);
+  if (attr && ["Size", "Shelves"].includes(attr)) check(vs.every((v, i) => i === 0 || v.price > vs[i - 1].price), at, `${attr} prices must rise option by option`);
+  const prices = vs.length ? vs.map((v) => v.price) : [p.price];
+  check(prices.every((x) => x >= band[0] && x <= band[1]), at, `prices ${prices.join(" / ")} outside the band ${band.join("–")}`);
+  // A tag naming a material its specifications use, alone or in a compound.
+  const specText = lowerRun(`${p.name} ${specs.map((s) => s.value).join(" ")}`);
+  const material = (p.tags || []).some((t) => MATERIAL_WORDS_04.some((w) => new RegExp(`(^| )${w}( |$)`).test(lowerRun(t)) && specText.includes(w === "wooden" ? "wood" : w)));
+  check(material, at, "tags must name a material its specifications use (alone or in a compound such as \"steel rack\")");
+  // The specification topics, where each applies.
+  check(keys.some((k) => /material|frame|construction|^top$|upholstery|base/.test(k)), at, "the specifications must give the material");
+  check(keys.some((k) => /size|width × depth/.test(k)), at, "the specifications must give the size");
+  check(keys.includes("care"), at, "the specifications must give the care");
+  if (CAPACITY_LEAVES.includes(leaf)) check(keys.some((k) => /seating capacity|sleeping capacity|^configuration$/.test(k)) || (leaf === "mattresses" && keys.includes("sizes")), at, "the specifications must give the seating or sleeping capacity");
+  if (leaf !== "mattresses") {
+    const surface = specs.filter((s) => /material|frame|top/.test(s.key.toLowerCase())).map((s) => s.value).join(" ");
+    check(keys.includes("finish") || /polish|laminat|powder-coated|sealed|moulded/i.test(surface) || ["Finish", "Colour"].includes(attr), at, "the specifications must give the finish, or the options must");
+  }
+  // Related: its leaf's other pieces first.
+  const siblings = P04.filter((q) => q.id !== p.id && q.categoryId === p.categoryId).map((q) => q.id);
+  const rel = p.relatedProductIds || [];
+  check(rel.slice(0, Math.min(siblings.length, rel.length)).every((id) => siblings.includes(id)), at, `related ids must list its leaf's other pieces first (${siblings.join(",")})`);
+  // Bundles: natural ones only.
+  (p.frequentlyBoughtTogetherIds || []).forEach((id) => {
+    const q = prodById.get(String(id));
+    check(q && (BUNDLES_04[type] || []).includes(typeOf(q)), at, `bundle ${id} is not a natural one for a ${type}`);
+  });
+  check(p.createdAt >= WINDOW_START && p.createdAt <= BUILD_DATE, at, `createdAt ${p.createdAt} is not within the six months before the build`);
+});
+check(P04.length === 38 && JSON.stringify(P04.map((p) => p.id)) === JSON.stringify(Object.keys(PROMPT_04).map(Number)), "coverage", `Prompt 04's checklist has 38 products (47–84), found ${P04.length}`);
+// Every desk bundles an office chair that bundles it back.
+P04.filter((p) => DESK_TYPES.includes(PROMPT_04[p.id][5])).forEach((p) => {
+  check((p.frequentlyBoughtTogetherIds || []).some((id) => typeOf(prodById.get(String(id)) || {}) === "office chair" && (prodById.get(String(id)).frequentlyBoughtTogetherIds || []).includes(p.id)),
+    `product ${p.id} (${p.slug})`, "a desk must bundle an office chair that bundles it back");
+});
+WINSOME_PAIRS.forEach(([w, s]) => {
+  const a = prodById.get(String(w));
+  const b = prodById.get(String(s));
+  if (a && b) check(a.variants.length === b.variants.length && a.variants.every((v, i) => v.price > b.variants[i].price), "prices", `${a.name} must cost more than ${b.name}, size for size`);
+});
+const dining = P04.filter((p) => PROMPT_04[p.id][1] === "dining-sets");
+check(dining.length && Math.max(...dining.map((p) => p.price)) === prodById.get("75")?.price, "prices", "the Marble-Top Dining Set must be the dearest dining set");
+const compared04 = P04.filter((p) => p.comparePrice > 0).length;
+check(compared04 / 38 >= 0.25 && compared04 / 38 <= 0.4, "prices", `${compared04} of Prompt 04's 38 products have a comparePrice; give roughly a third one`);
+let low04 = 0;
+let soldOut04 = 0;
+P04.forEach((p) => (p.variants.length ? p.variants : [{ stock: p.stock }]).forEach((v) => {
+  if (v.stock === 0) soldOut04 += 1;
+  else if (v.stock <= p.lowStockThreshold) low04 += 1;
+}));
+check(low04 >= 2 && low04 <= 3, "stock", `Prompt 04's products need 2–3 deliberately low-stock variants (found ${low04})`);
+check(soldOut04 >= 1 && soldOut04 <= 2, "stock", `Prompt 04's products need 1–2 sold-out variants (found ${soldOut04})`);
+const flagged04 = (k) => P04.filter((p) => p[k]);
+check(flagged04("featured").length >= 4 && flagged04("featured").length <= 6 && flagged04("featured").some((p) => deptOf(p.categoryId) === 5) && flagged04("featured").some((p) => deptOf(p.categoryId) === 6),
+  "flags", `featured: ${flagged04("featured").length} of Prompt 04's products (4–6, home and office pieces both)`);
+check(flagged04("trending").length >= 3 && flagged04("trending").length <= 4, "flags", `trending: ${flagged04("trending").length} of Prompt 04's products (3–4)`);
+check(flagged04("hot").length >= 1 && flagged04("hot").length <= 2, "flags", `hot: ${flagged04("hot").length} of Prompt 04's products (1–2)`);
+
 // ---------------------------------------------------------------- full mode
 const pushRef = (where, productId, variantId) => {
   const p = prodById.get(String(productId));
@@ -974,6 +1229,8 @@ row("Brands", [...new Set(products.map((p) => p.brand).filter(Boolean))].join(",
 row("Low-stock / out-of-stock variants", `${lowStockVariants} / ${outOfStockVariants}`);
 row("Prompt 03 set (V2-02)", `${P03.length} products: compare-at ${compared03}, low ${low03} / sold out ${soldOut03}, `
   + `featured ${flagged03("featured").length} / trending ${flagged03("trending").length} / hot ${flagged03("hot").length}`);
+row("Prompt 04 set (V2-03)", `${P04.length} products: compare-at ${compared04}, low ${low04} / sold out ${soldOut04}, `
+  + `featured ${flagged04("featured").length} / trending ${flagged04("trending").length} / hot ${flagged04("hot").length}`);
 DEPARTMENTS.forEach(([id, slug]) => row(`  dept ${id} ${slug}`, `${products.filter((p) => deptOf(p.categoryId) === id).length} products`));
 COVERAGE.forEach(([slug, n]) => row(`  ${slug}`, `${slugCount[slug] || 0}/${n}`));
 if (!CATALOGUE_ONLY) {

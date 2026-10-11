@@ -4939,3 +4939,136 @@ A field-by-field walk of both seeds finds exactly the 10 values of the table abo
   - the featured, trending and hot flags;
   - the related pieces, including the Outdoor pair's plastic picks;
   - the bundles.
+
+---
+
+## Prompt V2-03 — Catalogue data II (max-effort re-verification of Prompt 04)
+
+**Date:** 2026-10-11. **Start:** `8b9e2eb` (V2-02 merged); the V2 baseline stays `0b9153e`. `db.json` SHA-256 `887637ee…` before, `d689a95f…` after.
+
+**Result:** every requirement of Prompt 04, and every Prompt 03 content rule its products inherit, was audited with evidence for categories 30–49, the 38 reference-site products (47–84) and the office chairs' bundles. The requirement matrix was committed before any edit (`6914125`); the full matrix, the audit and the evidence are in `prompts/prompt_V2/reports/V2-03_REPORT.md`.
+- **228 requirements** (scope; the reference-site inventory line by line; the 20 categories and the departments; all 38 products individually; the brand and design rules with each of the 15 price bands; the 7 guardrails; the implementation notes and the validator; 5 acceptance criteria; 6 QA steps; the build-log obligations; the V2-03 deep checks).
+- **As found:** 187 met, 4 superseded by or kept under a recorded decision, 10 gaps, 27 partial (24 of them product rows inheriting a gap).
+- **Now:** 224 met, 4 superseded, 0 gaps, 0 partial.
+- **How:** V2-02's audit script was not in the repository, so it was rebuilt (same rule ids where a rule carries over) and extended: **2,435 checks** run with the storefront's own functions loaded through Babel (`parseSpecifications`, `slugify`, `getProductMinPrice`, `buildCartItem`, the variant helpers, `getMainMenuCategories`, `orderCategoriesHierarchically`, `getCategoryScopeIds`, `groupCategoryTree`, `searchProducts`, `collectBrands`, `buildSpecRows`): 37 failures before, 0 after. A Playwright suite on a JSON Server-mode build against a scratch `db.json`: 95 of 95 before, 103 of 103 after (8 checks on the repaired records added).
+- **Reference site re-checked** (the home page, `/product/` and its 62 category and model pages, 2026-10-11): **no range or model added or removed since 2026-10-06**; nothing was added to the catalogue. Wording differences for the client: the Mattress range's styles now read "All Brands, Carlton, Nilkamal"; the alnas' model pages call them a "storage cabinet"; the office-table model page is "Branded Office Table"; the local tables are "locally made"; the "Own Manufacturing" block is a template on every category page; the site still claims "20+ Years Warranty" (not used).
+
+### Proof of coverage (38, final ids)
+
+| Site range → model | Category (id) | Product (id) | brand |
+|---|---|---|---|
+| Sofa → Wooden / L-Shaped / 5 Seater / 7 Seater | `sofas` (31) | 47 Wooden Sofa Set · 48 L-Shaped Sofa · 49 5-Seater Sofa Set · 50 7-Seater Sofa Set | A & S Urbanseat |
+| Sofa Cum Bed → Steel / Wooden | `sofa-cum-beds` (32) | 51 Steel Sofa-cum-Bed · 52 Wooden Sofa-cum-Bed | "" / A & S Urbanseat |
+| Center Table → Wooden; Showcase → Wooden | `centre-tables-showcases` (33) | 53 Wooden Centre Table · 54 Wooden Showcase | A & S Urbanseat |
+| Bed → King / Queen / Single | `beds` (35) | 55 King Size Bed · 56 Queen Size Bed · 57 Single Bed | A & S Urbanseat |
+| Mattress → Carlton / Nilkamal | `mattresses` (36) | 58 Carlton Mattress · 59 Nilkamal Mattress | Carlton / Nilkamal |
+| Dressing → Plain / Big Size / Standing Mirror / Wall Mirror | `dressing-tables-mirrors` (37) | 60 Plain Dressing Table · 61 Large Dressing Table · 62 Standing Mirror · 63 Wall Mirror | A & S Urbanseat |
+| Bed Set Table → Wooden / Particle Board; Bed Table → Folding | `bedside-bed-tables` (38) | 64 Wooden Bedside Table · 65 Particle-Board Bedside Table · 66 Folding Bed Table | A & S Urbanseat / "" / "" |
+| Almari → Two Doors / 3 Doors | `almirahs` (39) | 67 Two-Door Almirah · 68 Three-Door Almirah | A & S Urbanseat |
+| Alna → Iron / Wooden | `alna-clothes-stands` (40) | 69 Iron Alna (Clothes Stand) · 70 Wooden Alna (Clothes Stand) | "" / A & S Urbanseat |
+| Rack → Steel / Wooden | `racks` (44) | 71 Steel Storage Rack · 72 Wooden Storage Rack | "" / A & S Urbanseat |
+| Dining → 4 Sitter / 6 Sitter / Marble | `dining-sets` (42) | 73 4-Seater Dining Set · 74 6-Seater Dining Set · 75 Marble-Top Dining Set | A & S Urbanseat |
+| Office Table → Winsome / Local Made | `office-tables` (45) | 76 Winsome Office Table · 77 Workshop Office Table | Winsome / A & S Urbanseat |
+| Computer Table → Winsome / Local Made | `computer-tables` (46) | 78 Winsome Computer Table · 79 Workshop Computer Table | Winsome / A & S Urbanseat |
+| Reading Table → Winsome / Local Made | `reading-tables` (47) | 80 Winsome Reading Table · 81 Workshop Reading Table | Winsome / A & S Urbanseat |
+| Plastic Dining → 4 Seater / 6 Seater | `plastic-dining-sets` (48) | 82 4-Seater Plastic Dining Set · 83 6-Seater Plastic Dining Set | Nilkamal |
+| Plastic Sofa → Nilkamal | `plastic-sofas` (49) | 84 Nilkamal Plastic Sofa Set | Nilkamal |
+
+38 products on 16 leaves; departments Plastic 21, Office Chairs 16, Café 10, Outdoor 2, Home 29, Office Tables & Desks 6 (84). The report's §6 gives each model's variants and placeholder prices.
+
+### Gaps found and fixed
+
+| # | Gap | Fix | Records |
+|---|---|---|---|
+| R68 | Category copy promised a feature one of its two products lacks: "…reading and study tables with a shelf for books" (81 has a drawer only) | "…with a drawer for stationery", true of both | category 47 (`description`) |
+| R69, R186 | "Almirah" used without its gloss outside the almirahs' own records (guardrail 4: the gloss belongs to the record that uses the term) | "almirah(s) (wardrobe(s))" in each sentence | category 34; products 56, 62, 69 (`description`) |
+| R139 | Specification topics "where they apply": 52 gave no capacity (51 does); 72 and the Winsome tables gave no weight capacity (their leaf's other piece does) | 52 "Sleeping capacity: 2"; 72 "Weight capacity: approx. 25 kg per shelf"; 76, 78, 80 "approx. 40 / 30 / 25 kg on top" (the workshop tables' figures) | products 52, 72, 76, 78, 80 (`description`) |
+| R140 | The mattresses' nominal inch sizes were not hedged (V2-02's F4) | "Sizes: approx. Single 36 × 78, …" | products 58, 59 (`description`) |
+| R142 | "Finish: (Laminated) wood grain" beside a Frosty White option | "Finish: Walnut wood-grain or Frosty White laminate" | products 60, 63, 65 (`description`) |
+| R153 | Related ids outside the room: the showcase named a rack, the iron alna a rack, though the Living Room holds 8 pieces and the Bedroom 16 | 54: 72 → 49 (5-Seater Sofa Set); 69: 71 → 62 (Standing Mirror) | products 54, 69 (`relatedProductIds`) |
+| R158 | Office tables ↔ office chairs in one direction only for the reading tables: 80 and 81 bundled 25, which bundled 79 | 25 bundles [80, 81] (was [79]); 79 keeps its mutual 24. Every desk now has a chair that returns it; the three one-way chair → desk links meet a desk whose two slots hold two chairs | product 25 (`frequentlyBoughtTogetherIds`, the scope's one Prompt 03 field) |
+| R164 | 16 products named no material in their tags (Prompt 03's tag rule; V2-02's F3) | "fabric sofa" (48–50), "engineered wood" (60, 61, 63, 66, 67, 68, 77, 79, 81), "wooden" (62), "pre-laminated engineered wood" (76, 78, 80). Measured: one-word tags would have changed 6 related rails through `getRelated`'s tag top-up; these change none | 16 products (`tags`) |
+| R198 | The validator asserted counts, the tree's parents, brands, the leaf rule and three variant rules only | every machine-checkable Prompt 04 rule (below) | `scripts/validate-db.js` |
+| R215 | Prompt 04's entry says "`costPrice` is about 65–70% of price" | the correct figure, recorded here: **60.6–68.2%** (66 at 60.6%, 69 at 61.8%, six more below 65%); Prompt 04's entry stays as written | this entry |
+
+All data edits were made by one script: exact, once-only replacements (or arrays checked before they are set) on the parsed records, written back as 2-space JSON without a trailing newline; `updatedAt` not moved. No test pinned any changed value; "almirah" still finds 2 pieces (a pinned count).
+
+### Validator assertions added (catalogue mode; full mode runs them too)
+
+- **Constants:** `TREE_04`; `PROMPT_04` (each of the 38: name, leaf, brand, variants, price band, type tag, SKU prefix); `WORKSHOP_IDS`; `WINSOME_PAIRS`; `BUNDLES_04`; `CAPACITY_LEAVES`; `LOCAL_TERMS`; `MATERIAL_WORDS_04`.
+- **Catalogue-wide** (every product already passed):
+  - the tree of categories 30–49; ids 30–49 under departments 1, 5 or 6;
+  - local terms glossed in the record that uses them; "Company Made"/"Local Made" nowhere;
+  - "our own workshop" on exactly 47, 77, 79, 81; no medical claim; inch sizes hedged;
+  - "Finish" pairs true to plain-colour options; a weight capacity wherever the leaf gives one;
+  - Prompt 04's size pairs ("Three-seater size", "Sofa size", "Table size", "Top size", "Sizes … high", "Thickness", "Mattress size") against the fields;
+  - related ids within the room for Home Furniture;
+  - cross-department bundles returned (or meeting a full pair of slots); every high- and low-back office chair bundles a desk.
+- **The 38:**
+  - the checklist line by line (name, leaf, brand, SKU prefix, type tag, variants and rising sizes and shelves, the price band);
+  - a tag naming a material the specifications use;
+  - the topics: material, size and care, capacity on seats and beds, the finish;
+  - leaf siblings first among related ids; natural bundles only;
+  - created within the six months before the build; exactly 38;
+  - every desk bundles a chair that returns it; Winsome above workshop size for size; marble the dearest dining set;
+  - compare-at on 25–40%; 2–3 low-stock and 1–2 sold-out options; featured 4–6 with home and office, trending 3–4, hot 1–2.
+- **Summary row:** "Prompt 04 set (V2-03)".
+- **Self-test:** 47 faults seeded into scratch copies, every one reported (84 problems over 8 runs, each exit 1). The baseline seed fails with exactly the audit's 37 failures; the repaired seed passes in both modes. ESLint: the same 4 pre-existing warnings before and after.
+
+### Superseded decisions honoured (not gaps)
+
+- **Prompt 05:** `rating`/`totalReviews` of 47, 55, 58, 64, 74, 76, 81 from approved reviews (V2-04 owns them); the collections that reference products.
+- **Prompt 04's recorded deviation, carried by Prompts 07, 19 and 34:** `plastic-sofas` keeps its single product (the site lists one plastic sofa; the flyout and the offers chip use the leaf; `00_INDEX.md` §6 leaves it to the client). Merging it would change or retire a URL; a second model would be invented.
+- **Prompt 07:** the flyouts built from this tree (the header Prompt 04 saw had none).
+- **Prompt 15:** "table" finds 33 on the listing (30 when Prompt 04 ran).
+- **Prompt 16:** the arrow keys in the variant selector, which Prompt 04 saw fail.
+- **Prompt 34:** the beds' "Overall size" in L × W × H order (kept).
+- **Prompt 29 (§39.9):** category and product copy is the client's; V2-03 changed only what Prompt 04's own rules require (a false claim, a missing gloss, a missing or contradicted specification), no voice.
+
+### Identity stability (before → after)
+
+The audit's snapshots compared field by field: **30 comparisons, 0 changed**:
+- the 18 collections, their order and every record count;
+- the 43 categories' ids, slugs, parents, key order, menu flags and `sortOrder`;
+- the 84 products' ids, slugs, SKUs, category placements, key orders, dimension keys, ratings and review counts;
+- all 199 variants' ids, SKUs, key orders and attribute keys;
+- SHA-256 of the 16 other collections, of products 1–46 without their relation fields, and of categories 1–29.
+
+A field-by-field walk of both seeds finds exactly the 34 values above (2 category descriptions, 13 product descriptions, 16 tag lists, 2 related lists, 1 bundle list), and `git diff --stat db.json` shows 35 insertions and 18 deletions. Admin save without change, before and after the repair, alters only the mock's `updatedAt`.
+
+### Findings handed on
+
+1. **F1 (V2-05 / owner).** `getRelated` tops up curated ids with any product of the same brand or a shared tag, in catalogue order: 23 of the 38 pages' related rails show another department's pieces. The curated ids stay within the room or department; the fix is in `api.js` (protected).
+2. **F2 (V2-04).** Dated before their product exists: orders ORD-20250318-0002 (→ 76), ORD-MQC1HWSZ-CAN8 (→ 63), ORD-MQDVIQCV-30A9 (→ 82) and review 4 (→ 76).
+3. **F3 (V2-04).** Seeded demo reviews with health effects: review 17 on the Carlton Mattress ("My shoulder aches have eased…") and review 11 ("Back pain is better", the only hit of the V2-03 prompt's medical grep in `db.json`). The mattress copy itself makes no such claim.
+4. **F4 (V2-05 / owner).** In JSON Server mode the home Featured rail shows the first 8 featured in catalogue order, all Prompt 03's; Prompt 04's five featured pieces never appear there (V2-02's F5). The fix is in `api.js`, the home page's limit or Prompt 03's flags.
+
+### Gate
+
+- `node scripts/validate-db.js --catalogue` and full mode: `✓ all checks passed`.
+- `CI=true npm test -- --passWithNoTests`: **86 suites, 1,429 tests, exit 0**, no console warning.
+- `npm run build` and `CI=true npm run build`: "Compiled successfully.", main JS 399.62 kB, CSS 34.97 kB gzip, only the documented dependency notices. In JSON Server mode all 35 build files are byte-identical to the baseline's.
+- **Browser** (Playwright, JSON Server mode, scratch `db.json`): 103 of 103 after (95 of 95 before):
+  - the department row and the Home, Office Tables & Desks and Plastic flyouts, every link;
+  - `/products` 84 with pagination; the 16 new leaves and 7 parents, each equal to the data name by name; `home-furniture` 29, `bedroom` 16 (bedroom only);
+  - all 38 product pages (`h1`, price, specification rows, prose); the mattress's sizes changing the price (₹8,999 → ₹23,999, "Only 4 left"); both racks' shelves; the Winsome table's sizes; arrow keys and End;
+  - two lines in the cart drawer; search "almirah" 2, "alna" 2, "table" 33, "mattress" 5;
+  - "Brands we carry": Carlton · Nilkamal · Winsome · A & S Urbanseat;
+  - 360/768/1024/1440: no overflow, all 43 categories in the filter rail or sheet, 4:5 images; the category filter by keyboard;
+  - the admin: 43 categories and 84 products, every new record's edit dialog with its variants; save without change alters only `updatedAt`;
+  - the repaired records on the page (two listing introductions, four "Complete the set" sections, two related rails); console clean.
+- **Development server:** 0 console errors or warnings over 20 loads (light and dark).
+- **Diff:** `db.json` (34 field values), `scripts/validate-db.js`, the report and this entry. No `src/services/api.js` (SHA-256 `c32e6138…`), admin, `public/`, test or other `src/` file.
+
+### Needs client confirmation (these ranges, refreshed)
+
+- **Names:** all 38, in particular "Large Dressing Table" for "Big Size" and "Workshop …" for the "Local Made" tables.
+- **Prices and stock:** all prices, compare-at prices (13), cost prices and stock levels.
+- **Specifications, dimensions, weights, colours and finishes**, including V2-03's additions: 52's sleeping capacity; the weight capacities of 72, 76, 78 and 80; the mattress sizes, now "approx."; the finish wording of 60, 63 and 65.
+- **Own-manufacturing attribution:** "made in our own workshop" on 47, 77, 79, 81 and `A & S Urbanseat` on the workshop-made pieces; the site's model pages call the local tables "locally made".
+- **Nilkamal on the plastic dining sets** (82, 83): the site names Nilkamal only for the plastic sofa and the mattress. Also Carlton, Winsome, the five unbranded items, and whether the brand names may be shown.
+- **The alna:** our gloss "clothes stand" against the site's "storage cabinet".
+- **`plastic-sofas` with one product:** keep it, add a model, or merge the leaf.
+- **Category copy** for the 20 categories, including 34 "almirahs (wardrobes)" and 47 "with a drawer for stationery".
+- **Copy statements no data backs:** 82 "the table is folded into a corner"; 58 "arrives roll-free".
+- **Merchandising:** the flags (and F4); the related pieces (54 and 69 now within their rooms); the bundles (25 now names both reading tables); the material tags on 16 pieces.

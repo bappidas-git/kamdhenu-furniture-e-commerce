@@ -494,7 +494,7 @@
       "id": 34,
       "name": "Bedroom",
       "slug": "bedroom",
-      "description": "Beds, mattresses, dressing tables, almirahs and clothes stands for a calm, well-ordered bedroom.",
+      "description": "Beds, mattresses, dressing tables, almirahs (wardrobes) and clothes stands for a calm, well-ordered bedroom.",
       "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Bedroom",
       "parentId": 5,
       "isActive": true,
@@ -676,7 +676,7 @@
       "id": 47,
       "name": "Reading Tables",
       "slug": "reading-tables",
-      "description": "Compact reading and study tables with a shelf for books, sized for a child's room or a corner.",
+      "description": "Compact reading and study tables with a drawer for stationery, sized for a child's room or a corner.",
       "image": "https://placehold.co/1600x1000/f1ebe1/686158?text=Reading+Tables",
       "parentId": 6,
       "isActive": true,
@@ -2879,7 +2879,8 @@
       "createdAt": "2026-06-28T17:00:00.000Z",
       "updatedAt": "2026-07-26T17:00:00.000Z",
       "frequentlyBoughtTogetherIds": [
-        79
+        80,
+        81
       ],
       "relatedProductIds": [
         24,
@@ -4641,6 +4642,7 @@
         "l-shaped sofa",
         "corner sofa",
         "sectional",
+        "fabric sofa",
         "living room"
       ],
       "featured": false,
@@ -4729,6 +4731,7 @@
         "sofa set",
         "5 seater",
         "3+2",
+        "fabric sofa",
         "living room"
       ],
       "featured": false,
@@ -4817,6 +4820,7 @@
         "sofa set",
         "7 seater",
         "3+2+1+1",
+        "fabric sofa",
         "living room",
         "large"
       ],
@@ -4932,7 +4936,7 @@
       "slug": "wooden-sofa-cum-bed",
       "sku": "LIV-SCB-02",
       "shortDescription": "A wooden-framed sofa that pulls out into a double bed, with storage under the seat.",
-      "description": "A wooden sofa-cum-bed for a living room that sometimes becomes a guest room. The seat slides forward and the back folds down to make a flat double bed.\n\nThere is a storage well under the seat for the spare pillows and blankets, so the bedding is always where the bed is.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Sofa size: approx. 195 × 90 × 85 cm; Bed size: approx. 195 × 140 × 42 cm; Storage: Under-seat box; Care: Vacuum the cushions, dust the wood with a dry cloth",
+      "description": "A wooden sofa-cum-bed for a living room that sometimes becomes a guest room. The seat slides forward and the back folds down to make a flat double bed.\n\nThere is a storage well under the seat for the spare pillows and blankets, so the bedding is always where the bed is.\n\nSpecifications: Frame: Solid wood and engineered wood; Upholstery: Fabric over high-density foam; Sofa size: approx. 195 × 90 × 85 cm; Bed size: approx. 195 × 140 × 42 cm; Sleeping capacity: 2; Storage: Under-seat box; Care: Vacuum the cushions, dust the wood with a dry cloth",
       "categoryId": 32,
       "brand": "A & S Urbanseat",
       "images": [
@@ -5151,7 +5155,7 @@
         53,
         47,
         50,
-        72
+        49
       ]
     },
     {
@@ -5238,7 +5242,7 @@
       "slug": "queen-size-bed",
       "sku": "BED-BED-02",
       "shortDescription": "A wooden queen size bed with a clean headboard, sized for a 60 × 78 inch mattress.",
-      "description": "A queen size bed for the master bedroom that has to leave room for an almirah and a dressing table. Two adults sleep comfortably, and the walkway stays clear.\n\nThe headboard is plain and upright, so it sits well against a painted or textured wall. The bed takes a standard 60 × 78 inch mattress.\n\nSpecifications: Material: Solid wood and engineered wood; Finish: Polished wood; Mattress size: 60 × 78 in (approx. 152 × 198 cm); Overall size: approx. 210 × 165 × 100 cm; Sleeping capacity: 2; Care: Dust with a dry cloth, avoid standing water",
+      "description": "A queen size bed for the master bedroom that has to leave room for an almirah (wardrobe) and a dressing table. Two adults sleep comfortably, and the walkway stays clear.\n\nThe headboard is plain and upright, so it sits well against a painted or textured wall. The bed takes a standard 60 × 78 inch mattress.\n\nSpecifications: Material: Solid wood and engineered wood; Finish: Polished wood; Mattress size: 60 × 78 in (approx. 152 × 198 cm); Overall size: approx. 210 × 165 × 100 cm; Sleeping capacity: 2; Care: Dust with a dry cloth, avoid standing water",
       "categoryId": 35,
       "brand": "A & S Urbanseat",
       "images": [
@@ -5394,7 +5398,7 @@
       "slug": "carlton-mattress",
       "sku": "BED-MAT-01",
       "shortDescription": "A Carlton foam mattress with a quilted cover, in single, double, queen and king sizes.",
-      "description": "A Carlton mattress with a medium-firm feel: layered foam under a soft quilted cover, for a bed that feels the same night after night.\n\nChoose the size to match the bed; the price changes with the size. The mattress arrives roll-free and ready to place.\n\nSpecifications: Brand: Carlton; Construction: Layered foam with a quilted fabric cover; Feel: Medium-firm; Thickness: approx. 6 in (15 cm); Sizes: Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
+      "description": "A Carlton mattress with a medium-firm feel: layered foam under a soft quilted cover, for a bed that feels the same night after night.\n\nChoose the size to match the bed; the price changes with the size. The mattress arrives roll-free and ready to place.\n\nSpecifications: Brand: Carlton; Construction: Layered foam with a quilted fabric cover; Feel: Medium-firm; Thickness: approx. 6 in (15 cm); Sizes: approx. Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
       "categoryId": 36,
       "brand": "Carlton",
       "images": [
@@ -5488,7 +5492,7 @@
       "slug": "nilkamal-mattress",
       "sku": "BED-MAT-02",
       "shortDescription": "A Nilkamal foam mattress in single, double, queen and king sizes, for everyday beds.",
-      "description": "A Nilkamal foam mattress with an even, supportive feel and a breathable fabric cover. A dependable choice for the master bed, the children's room or the guest bed.\n\nChoose the size to match the bed; the price changes with the size.\n\nSpecifications: Brand: Nilkamal; Construction: Foam core with a fabric cover; Feel: Medium; Thickness: approx. 5 in (12.5 cm); Sizes: Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
+      "description": "A Nilkamal foam mattress with an even, supportive feel and a breathable fabric cover. A dependable choice for the master bed, the children's room or the guest bed.\n\nChoose the size to match the bed; the price changes with the size.\n\nSpecifications: Brand: Nilkamal; Construction: Foam core with a fabric cover; Feel: Medium; Thickness: approx. 5 in (12.5 cm); Sizes: approx. Single 36 × 78, Double 48 × 78, Queen 60 × 78, King 72 × 78 in; Care: Turn every three months, air in shade",
       "categoryId": 36,
       "brand": "Nilkamal",
       "images": [
@@ -5582,7 +5586,7 @@
       "slug": "plain-dressing-table",
       "sku": "BED-DRS-01",
       "shortDescription": "A compact wooden dressing table with a mirror, two drawers and a stool.",
-      "description": "A compact dressing table with a tall mirror, two drawers for the everyday things and a matching stool that tucks underneath.\n\nPlain lines keep it easy to place beside a bed or in an alcove, and the top is wide enough for the daily routine without clutter.\n\nSpecifications: Material: Engineered wood with wooden legs; Finish: Laminated wood grain; Overall size: approx. 80 × 40 × 150 cm; Storage: 2 drawers; Includes: Mirror and stool; Care: Wipe with a dry cloth, clean the mirror with glass cleaner",
+      "description": "A compact dressing table with a tall mirror, two drawers for the everyday things and a matching stool that tucks underneath.\n\nPlain lines keep it easy to place beside a bed or in an alcove, and the top is wide enough for the daily routine without clutter.\n\nSpecifications: Material: Engineered wood with wooden legs; Finish: Walnut wood-grain or Frosty White laminate; Overall size: approx. 80 × 40 × 150 cm; Storage: 2 drawers; Includes: Mirror and stool; Care: Wipe with a dry cloth, clean the mirror with glass cleaner",
       "categoryId": 37,
       "brand": "A & S Urbanseat",
       "images": [
@@ -5629,6 +5633,7 @@
         "a & s urbanseat",
         "dressing table",
         "mirror",
+        "engineered wood",
         "bedroom",
         "compact"
       ],
@@ -5705,6 +5710,7 @@
         "large",
         "mirror",
         "storage",
+        "engineered wood",
         "bedroom"
       ],
       "featured": false,
@@ -5731,7 +5737,7 @@
       "slug": "standing-mirror",
       "sku": "BED-MIR-01",
       "shortDescription": "A full-length standing mirror in a wooden frame that leans or stands on its own.",
-      "description": "A full-length mirror in a wooden frame, for checking the whole outfit before you leave. It stands on its own stand or leans against the wall.\n\nThe tilt can be set to suit the room, and the frame is slim enough for the corner beside an almirah.\n\nSpecifications: Frame: Solid wood; Glass: Clear mirror glass; Overall size: approx. 50 × 45 × 160 cm; Mirror size: approx. 40 × 140 cm; Finish: Polished wood; Care: Clean with glass cleaner, dust the frame",
+      "description": "A full-length mirror in a wooden frame, for checking the whole outfit before you leave. It stands on its own stand or leans against the wall.\n\nThe tilt can be set to suit the room, and the frame is slim enough for the corner beside an almirah (wardrobe).\n\nSpecifications: Frame: Solid wood; Glass: Clear mirror glass; Overall size: approx. 50 × 45 × 160 cm; Mirror size: approx. 40 × 140 cm; Finish: Polished wood; Care: Clean with glass cleaner, dust the frame",
       "categoryId": 37,
       "brand": "A & S Urbanseat",
       "images": [
@@ -5779,6 +5785,7 @@
         "mirror",
         "standing mirror",
         "full length mirror",
+        "wooden",
         "bedroom"
       ],
       "featured": false,
@@ -5805,7 +5812,7 @@
       "slug": "wall-mirror",
       "sku": "BED-MIR-02",
       "shortDescription": "A framed wall mirror for the bedroom, the entrance or above a wash basin.",
-      "description": "A framed wall mirror for the bedroom, the entrance or above the wash basin. Simple enough to suit any wall.\n\nIt comes with fixings for a straight hang, in a portrait orientation.\n\nSpecifications: Frame: Engineered wood; Glass: Clear mirror glass; Overall size: approx. 60 × 3 × 90 cm; Mounting: Wall hooks included; Finish: Wood-grain laminate; Care: Clean with glass cleaner, dust the frame",
+      "description": "A framed wall mirror for the bedroom, the entrance or above the wash basin. Simple enough to suit any wall.\n\nIt comes with fixings for a straight hang, in a portrait orientation.\n\nSpecifications: Frame: Engineered wood; Glass: Clear mirror glass; Overall size: approx. 60 × 3 × 90 cm; Mounting: Wall hooks included; Finish: Walnut wood-grain or Frosty White laminate; Care: Clean with glass cleaner, dust the frame",
       "categoryId": 37,
       "brand": "A & S Urbanseat",
       "images": [
@@ -5852,6 +5859,7 @@
         "a & s urbanseat",
         "mirror",
         "wall mirror",
+        "engineered wood",
         "bedroom",
         "entrance"
       ],
@@ -5955,7 +5963,7 @@
       "slug": "particle-board-bedside-table",
       "sku": "BED-BST-02",
       "shortDescription": "A light particle-board bedside table with a drawer, for budget-friendly bedrooms.",
-      "description": "A practical bedside table in laminated particle board, with a drawer and a small cabinet below.\n\nLight to move and simple to keep clean, it suits rented flats, guest rooms and children's rooms.\n\nSpecifications: Material: Laminated particle board; Finish: Wood-grain laminate; Overall size: approx. 40 × 35 × 50 cm; Storage: 1 drawer, 1 cabinet; Weight capacity: approx. 10 kg on top; Care: Wipe with a dry cloth, keep away from water",
+      "description": "A practical bedside table in laminated particle board, with a drawer and a small cabinet below.\n\nLight to move and simple to keep clean, it suits rented flats, guest rooms and children's rooms.\n\nSpecifications: Material: Laminated particle board; Finish: Walnut wood-grain or Frosty White laminate; Overall size: approx. 40 × 35 × 50 cm; Storage: 1 drawer, 1 cabinet; Weight capacity: approx. 10 kg on top; Care: Wipe with a dry cloth, keep away from water",
       "categoryId": 38,
       "brand": "",
       "images": [
@@ -6079,6 +6087,7 @@
         "folding table",
         "laptop table",
         "breakfast table",
+        "engineered wood",
         "bedroom"
       ],
       "featured": false,
@@ -6154,6 +6163,7 @@
         "wardrobe",
         "2 door",
         "storage",
+        "engineered wood",
         "bedroom"
       ],
       "featured": false,
@@ -6229,6 +6239,7 @@
         "wardrobe",
         "3 door",
         "storage",
+        "engineered wood",
         "bedroom"
       ],
       "featured": true,
@@ -6255,7 +6266,7 @@
       "slug": "iron-alna-clothes-stand",
       "sku": "BED-ALN-01",
       "shortDescription": "An iron alna, the clothes stand for the shirts and sarees you will wear again.",
-      "description": "An alna is the clothes stand every home needs: a place for the shirt, saree or towel that is not going back in the almirah yet.\n\nThis one is made of powder-coated iron with three hanging bars and a bottom shelf for footwear or a bag.\n\nSpecifications: Material: Powder-coated iron; Hanging bars: 3; Overall size: approx. 90 × 40 × 150 cm; Bottom shelf: Yes; Weight capacity: approx. 20 kg; Care: Wipe with a dry cloth",
+      "description": "An alna is the clothes stand every home needs: a place for the shirt, saree or towel that is not going back in the almirah (wardrobe) yet.\n\nThis one is made of powder-coated iron with three hanging bars and a bottom shelf for footwear or a bag.\n\nSpecifications: Material: Powder-coated iron; Hanging bars: 3; Overall size: approx. 90 × 40 × 150 cm; Bottom shelf: Yes; Weight capacity: approx. 20 kg; Care: Wipe with a dry cloth",
       "categoryId": 40,
       "brand": "",
       "images": [
@@ -6297,7 +6308,7 @@
         70,
         67,
         68,
-        71
+        62
       ]
     },
     {
@@ -6440,7 +6451,7 @@
       "slug": "wooden-storage-rack",
       "sku": "STO-RCK-02",
       "shortDescription": "An open wooden rack in three, four or five shelves for books, plants and display.",
-      "description": "An open wooden rack for books, plants, baskets and the pieces you want on display, at home in a study, a living room or a kitchen.\n\nChoose three, four or five shelves; the price and height change with the shelf count.\n\nSpecifications: Material: Solid wood; Finish: Polished natural wood; Shelves: 3, 4 or 5; Width × depth: approx. 80 × 35 cm; Height: approx. 100 / 130 / 160 cm (3 / 4 / 5 shelves); Care: Dust with a dry cloth",
+      "description": "An open wooden rack for books, plants, baskets and the pieces you want on display, at home in a study, a living room or a kitchen.\n\nChoose three, four or five shelves; the price and height change with the shelf count.\n\nSpecifications: Material: Solid wood; Finish: Polished natural wood; Shelves: 3, 4 or 5; Width × depth: approx. 80 × 35 cm; Height: approx. 100 / 130 / 160 cm (3 / 4 / 5 shelves); Weight capacity: approx. 25 kg per shelf; Care: Dust with a dry cloth",
       "categoryId": 44,
       "brand": "A & S Urbanseat",
       "images": [
@@ -6747,7 +6758,7 @@
       "slug": "winsome-office-table",
       "sku": "OFT-OFF-01",
       "shortDescription": "A Winsome office table with a pedestal of drawers and a cable-managed top.",
-      "description": "A Winsome office table for a cabin or a manager's desk: a wide work surface, a lockable pedestal of drawers and grommets that keep cables tidy.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood, metal handles; Sizes: approx. 120 × 60 cm or 150 × 75 cm, 75 cm high; Storage: 3-drawer pedestal, top drawer lockable; Cable management: Desk grommets; Care: Wipe with a damp cloth",
+      "description": "A Winsome office table for a cabin or a manager's desk: a wide work surface, a lockable pedestal of drawers and grommets that keep cables tidy.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood, metal handles; Sizes: approx. 120 × 60 cm or 150 × 75 cm, 75 cm high; Storage: 3-drawer pedestal, top drawer lockable; Cable management: Desk grommets; Weight capacity: approx. 40 kg on top; Care: Wipe with a damp cloth",
       "categoryId": 45,
       "brand": "Winsome",
       "images": [
@@ -6793,6 +6804,7 @@
         "office table",
         "desk",
         "executive desk",
+        "pre-laminated engineered wood",
         "office"
       ],
       "featured": true,
@@ -6867,6 +6879,7 @@
         "a & s urbanseat",
         "office table",
         "desk",
+        "engineered wood",
         "office",
         "workshop made"
       ],
@@ -6897,7 +6910,7 @@
       "slug": "winsome-computer-table",
       "sku": "OFT-CMP-01",
       "shortDescription": "A Winsome computer table with a keyboard tray, CPU bay and an open shelf.",
-      "description": "A Winsome computer table with a sliding keyboard tray, a ventilated bay for the CPU and a shelf for the printer or files.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 90 × 60 cm or 120 × 60 cm, 75 cm high; Features: Keyboard tray, CPU bay, open shelf; Finish: Wood-grain laminate; Care: Wipe with a damp cloth",
+      "description": "A Winsome computer table with a sliding keyboard tray, a ventilated bay for the CPU and a shelf for the printer or files.\n\nChoose the size that fits the room; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 90 × 60 cm or 120 × 60 cm, 75 cm high; Features: Keyboard tray, CPU bay, open shelf; Finish: Wood-grain laminate; Weight capacity: approx. 30 kg on top; Care: Wipe with a damp cloth",
       "categoryId": 46,
       "brand": "Winsome",
       "images": [
@@ -6943,6 +6956,7 @@
         "computer table",
         "desk",
         "work from home",
+        "pre-laminated engineered wood",
         "office"
       ],
       "featured": false,
@@ -7017,6 +7031,7 @@
         "computer table",
         "desk",
         "work from home",
+        "engineered wood",
         "workshop made"
       ],
       "featured": false,
@@ -7045,7 +7060,7 @@
       "slug": "winsome-reading-table",
       "sku": "OFT-RDG-01",
       "shortDescription": "A Winsome study table with a book shelf and a drawer, sized for a child's room.",
-      "description": "A Winsome reading table with a raised shelf for books and a drawer for stationery, sized for a student's room.\n\nChoose the size that fits; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 75 × 50 cm or 90 × 60 cm, 75 cm high; Storage: Book shelf, 1 drawer; Finish: Wood-grain laminate; Care: Wipe with a damp cloth",
+      "description": "A Winsome reading table with a raised shelf for books and a drawer for stationery, sized for a student's room.\n\nChoose the size that fits; the price changes with the size.\n\nSpecifications: Brand: Winsome; Material: Pre-laminated engineered wood; Sizes: approx. 75 × 50 cm or 90 × 60 cm, 75 cm high; Storage: Book shelf, 1 drawer; Finish: Wood-grain laminate; Weight capacity: approx. 25 kg on top; Care: Wipe with a damp cloth",
       "categoryId": 47,
       "brand": "Winsome",
       "images": [
@@ -7091,6 +7106,7 @@
         "reading table",
         "study table",
         "kids",
+        "pre-laminated engineered wood",
         "office"
       ],
       "featured": false,
@@ -7165,6 +7181,7 @@
         "reading table",
         "study table",
         "kids",
+        "engineered wood",
         "workshop made"
       ],
       "featured": false,
