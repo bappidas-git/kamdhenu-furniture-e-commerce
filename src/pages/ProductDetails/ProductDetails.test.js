@@ -806,7 +806,7 @@ test("Specifications: the parsed pairs, then the fields, in a table of row heade
   expect(specRows()).toEqual([
     ["Material", "Polypropylene panels with a hinged front cover"],
     ["Shelves", "2, 3, 4 or 5"],
-    ["Width", "approx. 62 cm"],
+    ["Width × depth", "approx. 62 × 33 cm"],
     ["Height", "approx. 42 / 60 / 78 / 96 cm (2 / 3 / 4 / 5 shelves)"],
     ["Pairs per shelf", "approx. 4"],
     ["Assembly", "Interlocking, no tools needed"],
