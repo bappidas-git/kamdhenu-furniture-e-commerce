@@ -293,7 +293,7 @@ test("featured coupons follow the admin's order and show their terms", async () 
 
   const [welcome, flat] = within(region("Codes to use at checkout.")).getAllByRole("listitem");
   expect(welcome).toHaveTextContent("₹500 off");
-  expect(welcome).toHaveTextContent("₹500 off your first order above ₹5,000");
+  expect(welcome).toHaveTextContent("₹500 off orders above ₹5,000");
   expect(welcome).toHaveTextContent("Minimum order ₹5,000");
   expect(welcome).not.toHaveTextContent("Up to");
   expect(within(welcome).getByText(/Expires/)).toHaveTextContent(/^Expires \d{1,2} [A-Z][a-z]{2} 2027$/);

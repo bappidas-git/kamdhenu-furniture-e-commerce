@@ -6,7 +6,7 @@
       "subtitle": "Light, sturdy chairs and tables for every corner of the home",
       "cta": "Shop plastic furniture",
       "link": "/products?category=plastic-furniture",
-      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
+      "gradient": "#0b1f3f"
     },
     {
       "id": 2,
@@ -14,7 +14,7 @@
       "subtitle": "Seating that keeps up with long working days",
       "cta": "Shop office chairs",
       "link": "/products?category=office-chairs",
-      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
+      "gradient": "#0b1f3f"
     },
     {
       "id": 3,
@@ -22,7 +22,7 @@
       "subtitle": "Sofas, beds and storage made to be lived with",
       "cta": "Shop home furniture",
       "link": "/products?category=home-furniture",
-      "gradient": "linear-gradient(#0b1f3f, #0b1f3f)"
+      "gradient": "#0b1f3f"
     }
   ],
   "users": [
@@ -7801,7 +7801,7 @@
       "taxAmount": 2160,
       "total": 14159,
       "paymentMethod": "cod",
-      "paymentStatus": "pending",
+      "paymentStatus": "voided",
       "fulfillmentStatus": "cancelled",
       "shippingStatus": "pending",
       "trackingNumber": null,
@@ -7824,6 +7824,12 @@
           "by": "Customer",
           "action": "Order cancelled",
           "note": "Cancelled by customer"
+        },
+        {
+          "at": "2026-06-12T01:46:10.397Z",
+          "by": "Customer",
+          "action": "Payment voided",
+          "note": "No captured payment to refund"
         }
       ],
       "cancelReason": "Cancelled by customer"
@@ -7953,7 +7959,7 @@
       "orderNumber": "ORD-MQB0JHUB-9KL6",
       "shiprocketOrderId": null,
       "createdAt": "2026-06-12T14:19:48.371Z",
-      "updatedAt": "2026-06-12T14:49:17.688Z",
+      "updatedAt": "2026-06-12T14:49:17.716Z",
       "id": 7,
       "statusHistory": [
         {
@@ -8042,7 +8048,7 @@
       "orderNumber": "ORD-MQC1HWSZ-CAN8",
       "shiprocketOrderId": null,
       "createdAt": "2026-06-13T07:34:20.243Z",
-      "updatedAt": "2026-06-13T12:57:28.282Z",
+      "updatedAt": "2026-06-13T12:57:28.351Z",
       "statusHistory": [
         {
           "at": "2026-06-13T07:34:20.243Z",
@@ -8304,7 +8310,7 @@
       "orderNumber": "ORD-MQDVIQCV-30A9",
       "shiprocketOrderId": null,
       "createdAt": "2026-06-14T14:22:33.199Z",
-      "updatedAt": "2026-06-20T06:24:29.131Z",
+      "updatedAt": "2026-06-20T06:24:29.157Z",
       "statusHistory": [
         {
           "at": "2026-06-14T14:22:33.200Z",
@@ -8348,7 +8354,7 @@
       ],
       "reason": "defective",
       "reasonDetails": "The recline lock slips back after a few minutes.",
-      "status": "approved",
+      "status": "refunded",
       "refundAmount": 16519,
       "refundStatus": "processed",
       "refundMethod": "original_payment",
@@ -8748,7 +8754,7 @@
     {
       "id": 1,
       "code": "WELCOME500",
-      "description": "₹500 off your first order above ₹5,000",
+      "description": "₹500 off orders above ₹5,000",
       "type": "fixed",
       "value": 500,
       "minOrderAmount": 5000,
@@ -8852,8 +8858,8 @@
       "status": "pending",
       "isVerifiedPurchase": true,
       "helpfulCount": 0,
-      "createdAt": "2026-06-24T08:40:00.000Z",
-      "updatedAt": "2026-06-24T08:40:00.000Z"
+      "createdAt": "2026-09-27T08:40:00.000Z",
+      "updatedAt": "2026-09-27T08:40:00.000Z"
     },
     {
       "id": 3,
@@ -8866,8 +8872,8 @@
       "status": "approved",
       "isVerifiedPurchase": true,
       "helpfulCount": 6,
-      "createdAt": "2026-02-20T11:00:00.000Z",
-      "updatedAt": "2026-02-21T08:00:00.000Z"
+      "createdAt": "2026-08-20T11:00:00.000Z",
+      "updatedAt": "2026-08-21T08:00:00.000Z"
     },
     {
       "id": 4,
@@ -8880,8 +8886,8 @@
       "status": "approved",
       "isVerifiedPurchase": true,
       "helpfulCount": 4,
-      "createdAt": "2026-02-21T15:30:00.000Z",
-      "updatedAt": "2026-02-22T08:00:00.000Z"
+      "createdAt": "2026-08-21T15:30:00.000Z",
+      "updatedAt": "2026-08-22T08:00:00.000Z"
     },
     {
       "id": 5,
@@ -8904,7 +8910,7 @@
       "userName": "Rituparna B.",
       "rating": 5,
       "title": "Our living room finally feels finished",
-      "body": "The cushions are firm in a good way and the wood has a nice even polish. Delivery took nine days and the team set it up for us.",
+      "body": "The cushions are firm in a good way and the wood has a nice even polish. Delivery took nine days, within the time we were quoted.",
       "status": "approved",
       "isVerifiedPurchase": false,
       "helpfulCount": 9,
@@ -8960,7 +8966,7 @@
       "userName": "Nikita R.",
       "rating": 4,
       "title": "Good chair for home office",
-      "body": "Easy to assemble and the height adjustment works well. The armrests are a bit hard for long calls.",
+      "body": "Easy to assemble and the height adjustment works well. The seat foam is a little firm for long calls.",
       "status": "approved",
       "isVerifiedPurchase": false,
       "helpfulCount": 7,
@@ -8973,8 +8979,8 @@
       "userId": null,
       "userName": "Debojit H.",
       "rating": 5,
-      "title": "Back pain is better",
-      "body": "I sit eight or nine hours a day and this has been much easier on my lower back than my old chair.",
+      "title": "Comfortable through long workdays",
+      "body": "I sit eight or nine hours a day. The high back and the tilt make those days far more comfortable than my old chair did.",
       "status": "approved",
       "isVerifiedPurchase": false,
       "helpfulCount": 4,
@@ -9057,8 +9063,8 @@
       "userId": null,
       "userName": "Poonam S.",
       "rating": 5,
-      "title": "Sleeping much better",
-      "body": "Replaced a ten-year-old mattress with this one. My shoulder aches have eased within two weeks.",
+      "title": "A big step up from our old mattress",
+      "body": "Replaced a ten-year-old mattress with this one. It feels even from edge to edge and has kept its shape so far.",
       "status": "approved",
       "isVerifiedPurchase": false,
       "helpfulCount": 3,
@@ -9242,7 +9248,7 @@
       "stock": 21,
       "trending": true,
       "hot": false,
-      "addedAt": "2026-06-14T13:57:44.901Z",
+      "addedAt": "2026-08-14T13:57:44.901Z",
       "userId": 3,
       "id": 1
     },
@@ -9284,7 +9290,7 @@
       "stock": 50,
       "trending": false,
       "hot": false,
-      "addedAt": "2026-06-14T13:57:57.354Z",
+      "addedAt": "2026-08-14T13:57:57.354Z",
       "userId": 3,
       "id": 2
     },
@@ -9337,7 +9343,7 @@
       "stock": 103,
       "trending": false,
       "hot": false,
-      "addedAt": "2026-06-14T13:57:59.358Z",
+      "addedAt": "2026-08-14T13:57:59.358Z",
       "userId": 3,
       "id": 3
     }
@@ -9449,7 +9455,7 @@
       "lowStockEmail": "info@kamdhenufurniture.com"
     },
     "seo": {
-      "metaTitle": "A & S Urbanseat | Furniture & Seating for Home, Office, Café and Outdoor",
+      "metaTitle": "A & S Urbanseat | Furniture and seating for home, office, café and outdoor",
       "metaDescription": "Furniture and seating for homes, offices, cafés and outdoor spaces, from our own workshop and the makers we trust.",
       "googleAnalyticsId": "",
       "facebookPixelId": ""
