@@ -1,6 +1,7 @@
 import { resolveTrustBadgeDetail } from "../../theme/tokens";
 import db from "../../../db.json";
-import { activeMethods, deliveryEstimate, freeDeliveryThreshold, methodRate } from "./cartDelivery";
+import { activeMethods, deliveryEstimate, freeDeliveryLine, freeDeliveryThreshold, methodRate } from "./cartDelivery";
+import { formatCurrency } from "../../utils/helpers";
 
 const method = (overrides) => ({
   id: 1,
@@ -118,5 +119,29 @@ describe("deliveryEstimate", () => {
     expect(deliveryEstimate([])).toBeNull();
     expect(deliveryEstimate(null)).toBeNull();
     expect(deliveryEstimate(undefined)).toBeNull();
+  });
+});
+
+describe("freeDeliveryLine (the header's utility strip)", () => {
+  test("names the seeded threshold, as the drawer and the footer do", () => {
+    expect(freeDeliveryLine(activeMethods(db.shipping_methods), formatCurrency)).toBe(
+      "Free delivery on orders above ₹9,999.00"
+    );
+  });
+
+  test("follows an Admin → Shipping change of the threshold", () => {
+    expect(freeDeliveryLine([method({ freeAbove: 4999 }), EXPRESS], formatCurrency)).toBe(
+      "Free delivery on orders above ₹4,999.00"
+    );
+  });
+
+  test("a method free at any amount: free on every order", () => {
+    expect(freeDeliveryLine([STANDARD, EXPRESS, FREE_SHIPPING], formatCurrency)).toBe("Free delivery on every order");
+  });
+
+  test("says nothing when no method is free, or before the methods are read", () => {
+    expect(freeDeliveryLine([EXPRESS], formatCurrency)).toBe("");
+    expect(freeDeliveryLine([], formatCurrency)).toBe("");
+    expect(freeDeliveryLine(null, formatCurrency)).toBe("");
   });
 });

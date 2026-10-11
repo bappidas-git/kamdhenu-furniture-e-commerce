@@ -338,6 +338,26 @@ describe("an empty cart", () => {
     expect(screen.queryByRole("list", { name: "Checkout progress" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: PRIMARY })).not.toBeInTheDocument();
   });
+
+  test("a signed-in shopper's saved cart is read first: 'Loading your cart…', never a false empty state (Prompt 34)", async () => {
+    // Nothing on this device; the account holds a line saved on another one.
+    const pending = deferred();
+    apiService.cart.getCart.mockReturnValueOnce(pending.promise);
+    await renderCheckout({ cart: [], settle: false });
+    expect(firstPaint).not.toMatch(/Your cart is empty/);
+    expect(screen.getByText("Loading your cart…")).toHaveAttribute("role", "status");
+    expect(screen.queryByText("Your cart is empty.")).not.toBeInTheDocument();
+    await act(async () => pending.resolve([CHAIR(2)]));
+    expect(await screen.findByRole("heading", { level: 2, name: /Your cart$/ })).toBeInTheDocument();
+    expect(screen.queryByText("Your cart is empty.")).not.toBeInTheDocument();
+    expect(screen.queryByText("Loading your cart…")).not.toBeInTheDocument();
+  });
+
+  test("a guest with nothing on the device sees the empty state at once (no account to read)", async () => {
+    await renderCheckout({ cart: [], user: null, settle: false });
+    expect(screen.getByRole("heading", { level: 2, name: "Your cart is empty." })).toBeInTheDocument();
+    expect(screen.queryByText("Loading your cart…")).not.toBeInTheDocument();
+  });
 });
 
 // ---------------------------------------------------------------------------

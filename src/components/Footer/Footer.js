@@ -16,6 +16,7 @@ import { STOREFRONT_CONFIG, resolveTrustBadgeDetail } from "../../theme/tokens";
 import { BRAND_PROMISE } from "../../content/brandContent";
 import { BrandLogo, Reveal } from "../ui";
 import Newsletter from "../Newsletter/Newsletter";
+import { TRUST_ICONS } from "../storefront/trustIcons";
 import styles from "./Footer.module.css";
 
 // =============================================================================
@@ -87,38 +88,6 @@ const SOCIAL = [
     path: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z",
   },
 ];
-
-// Outline icons for the trust bar (the same drawings as the product page's
-// TrustBadges), stroked in currentColor.
-const TRUST_ICONS = {
-  lock: (
-    <>
-      <rect x="3" y="11" width="18" height="11" rx="2" />
-      <path d="M7 11V7a5 5 0 0110 0v4" />
-    </>
-  ),
-  cash: (
-    <>
-      <rect x="2" y="6" width="20" height="12" rx="2" />
-      <circle cx="12" cy="12" r="2.5" />
-      <path d="M6 12h.01M18 12h.01" />
-    </>
-  ),
-  rotate: (
-    <>
-      <polyline points="1 4 1 10 7 10" />
-      <path d="M3.51 15a9 9 0 102.13-9.36L1 10" />
-    </>
-  ),
-  truck: (
-    <>
-      <rect x="1" y="3" width="15" height="13" />
-      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8" />
-      <circle cx="5.5" cy="18.5" r="2.5" />
-      <circle cx="18.5" cy="18.5" r="2.5" />
-    </>
-  ),
-};
 
 // The accepted-payment marks: one-colour line drawings on a 48 × 32 card
 // (the frame is drawn by CSS-coloured strokes, the marks in currentColor).

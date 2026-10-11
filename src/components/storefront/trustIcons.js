@@ -3,7 +3,8 @@ import React from "react";
 // The outline drawings behind the storefront's trust cues, keyed by the icon
 // names in TRUST_BADGE_CATALOG (src/theme/tokens.js). Each is the inside of a
 // 24 × 24 viewBox, stroked in currentColor; the consumer supplies the <svg>
-// and its size. Used by TrustBadges (product page) and AssuranceStrip (home).
+// and its size. Used by TrustBadges (product page), AssuranceStrip (home) and
+// the footer's trust bar.
 export const TRUST_ICONS = {
   shield: (
     <>

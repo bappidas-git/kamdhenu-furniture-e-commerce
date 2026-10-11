@@ -245,10 +245,15 @@ const OrderConfirmation = () => {
       const data = response?.data || response?.order || response;
       setOrder(data || null);
     } catch (err) {
-      // A failed request is not "order not found" — offer a retry instead.
-      console.error("Failed to fetch order:", err);
       setOrder(null);
-      setFetchError(true);
+      // A 404 is the API saying there is no such order (Laravel answers an
+      // unknown number with 404; JSON Server with an empty list), so it reads
+      // as "not found", as on the product page (Prompt 34). Any other failed
+      // request is not "order not found": offer a retry instead.
+      if (err?.response?.status !== 404) {
+        console.error("Failed to fetch order:", err);
+        setFetchError(true);
+      }
     } finally {
       setLoading(false);
     }

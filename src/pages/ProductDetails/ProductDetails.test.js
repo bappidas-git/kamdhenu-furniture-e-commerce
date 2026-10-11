@@ -480,8 +480,9 @@ test("choosing a variant updates the price, SKU, stock and Sale chip, and announ
   expect(info().queryByText("Save ₹300.00")).not.toBeInTheDocument();
   expect(screen.queryByText("Sale")).not.toBeInTheDocument();
   expect(info().getByText("SKU:")).toHaveTextContent("SKU: PLE-SHR-03-5S");
+  // Stated once, beside the quantity (the variant picker no longer repeats it).
   expect(info().getByText("Only 4 left")).toBeInTheDocument();
-  expect(info().getByText("Only 4 left in this option")).toBeInTheDocument();
+  expect(info().queryByText(/left in this option/)).not.toBeInTheDocument();
   expect(statusRegion()).toHaveTextContent("5 shelves, ₹3,449.00, Only 4 left");
 });
 
@@ -813,7 +814,7 @@ test("Specifications: the parsed pairs, then the fields, in a table of row heade
     ["Brand", "Nilkamal"],
     ["SKU", "PLE-SHR-03-2S"],
     ["Weight", "6.8 kg"],
-    ["Dimensions (L × W × H)", "62 × 33 × 98 cm"],
+    ["Dimensions (L × W × H)", "62 × 33 × 96 cm"],
     ["Category", "Shoe Racks"],
     ["Tags", product("covered-plastic-shoe-rack").tags.join("")],
   ]);
@@ -915,7 +916,7 @@ test("reviews: an unreviewed piece says so honestly", async () => {
   const region = within(reviewsRegion());
   await waitFor(() => expect(region.getByText("No reviews yet.")).toBeInTheDocument());
   expect(
-    region.getByText("Reviews come from verified orders and are published after moderation.")
+    region.getByText("Customers can review a piece from My orders once it arrives. Reviews appear after moderation.")
   ).toBeInTheDocument();
   expect(region.queryByRole("article")).not.toBeInTheDocument();
   expect(within(pageNav()).getByRole("link", { name: "Reviews" })).toBeInTheDocument();

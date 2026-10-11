@@ -559,7 +559,7 @@ const ProductDetails = () => {
     [product, selectedVariant, quantity, addToCart]
   );
 
-  // Primary CTA with a brief, satisfying "Added ✓" confirmation (the cart toast
+  // Primary CTA with a brief, satisfying "Added" confirmation (the cart toast
   // + mini-cart drawer also fire from CartContext).
   const handleAddClick = useCallback(() => {
     if (isOutOfStock) return;

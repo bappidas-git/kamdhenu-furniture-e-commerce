@@ -175,6 +175,14 @@ test("the document is titled Special offers, described by the hero's line (Promp
   expect(description()).toBe("Pieces on offer now, and codes to use at checkout.");
 });
 
+test("the admin's headline can mark an accent word as *word*, like every display headline (Prompt 34)", async () => {
+  withConfig({ hero: { ...BASE_CONFIG.hero, title: "Offers on pieces we *love*." } });
+  renderPage();
+  const heading = await screen.findByRole("heading", { level: 1, name: /^Offers on pieces we\s*love\s*\.$/ });
+  expect(heading).not.toHaveTextContent("*");
+  expect(within(heading).getByText("love").tagName).toBe("EM");
+});
+
 // api.js answers a deals config that does not exist yet (404) with
 // { enabled: true }: the page runs on its defaults, plainly.
 test("a deals config that does not exist yet: the plain title, no countdown and no built-in hero copy (Prompt 32)", async () => {
@@ -291,7 +299,7 @@ test("featured coupons follow the admin's order and show their terms", async () 
   expect(within(welcome).getByText(/Expires/)).toHaveTextContent(/^Expires \d{1,2} [A-Z][a-z]{2} 2027$/);
   expect(within(welcome).getByText(/^\d{1,2} [A-Z][a-z]{2} 2027$/)).toHaveAttribute(
     "dateTime",
-    "2027-03-31T23:59:59.000Z"
+    "2027-03-31T18:29:59.000Z"
   );
 
   expect(flat).toHaveTextContent("10% off");

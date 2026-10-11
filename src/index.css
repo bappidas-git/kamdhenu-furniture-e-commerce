@@ -54,3 +54,74 @@ html {
 .swal2-container {
   z-index: 2000 !important;
 }
+
+/* The crash screen written into an empty #root when the app fails before React
+   renders (src/components/ErrorBoundary/bootError.js): ErrorBoundary's card,
+   from the tokens. Without this stylesheet it falls back to the browser's
+   defaults, which stay readable. */
+.sf-boot-error {
+  display: grid;
+  place-items: center;
+  min-height: 100vh;
+  padding: var(--sf-space-8) var(--sf-gutter);
+  background-color: var(--sf-color-bg);
+  color: var(--sf-color-text);
+  font-family: var(--sf-font-sans);
+}
+
+.sf-boot-error__card {
+  width: 100%;
+  max-width: 34rem;
+  text-align: center;
+}
+
+.sf-boot-error__title {
+  margin: 0 0 var(--sf-space-3);
+  font-family: var(--sf-font-display);
+  font-size: var(--sf-text-display-sm);
+  font-weight: var(--sf-font-medium);
+  line-height: var(--sf-leading-heading);
+  letter-spacing: var(--sf-tracking-display);
+}
+
+.sf-boot-error__line {
+  margin: 0 auto var(--sf-space-6);
+  max-width: var(--sf-measure);
+  color: var(--sf-color-text-secondary);
+  line-height: var(--sf-leading-body);
+}
+
+.sf-boot-error__actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--sf-space-3);
+}
+
+.sf-boot-error__details {
+  margin-top: var(--sf-space-8);
+  padding-top: var(--sf-space-2);
+  border-top: var(--sf-hairline);
+  color: var(--sf-color-text-secondary);
+  text-align: left;
+}
+
+.sf-boot-error__details summary {
+  padding: var(--sf-space-3) 0;
+  font-size: var(--sf-text-sm);
+  cursor: pointer;
+}
+
+.sf-boot-error__details pre {
+  margin: var(--sf-space-1) 0 0;
+  padding: var(--sf-space-4);
+  max-height: 15rem;
+  overflow: auto;
+  border-radius: var(--sf-radius-sm);
+  background-color: var(--sf-color-sand);
+  color: var(--sf-color-text);
+  font: inherit;
+  font-size: var(--sf-text-xs);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

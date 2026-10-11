@@ -357,7 +357,7 @@ const StepHeading = ({ index, headingRef, children }) => (
 
 const Checkout = () => {
   const navigate = useNavigate();
-  const { cartItems, getCartTotal, getCartItemCount, updateQuantity, removeFromCart, clearCart } = useCart();
+  const { cartItems, isCartReady, getCartTotal, getCartItemCount, updateQuantity, removeFromCart, clearCart } = useCart();
   const { user, isAuthenticated, openAuthModal } = useAuth();
   const { isLoading: authLoading } = useAuth();
   const { createOrder } = useOrder();
@@ -787,6 +787,24 @@ const Checkout = () => {
   // account and the saved cart arrive together on the next one, so a reload
   // never flashes the empty state.
   if (authLoading) return null;
+
+  // A signed-in shopper whose device holds no lines: their account's saved cart
+  // is still being read (it may hold pieces added on another device), so say
+  // so rather than "Your cart is empty." (Prompt 34: that flashed before the
+  // account's lines arrived, then the whole page replaced it).
+  if (cartItems.length === 0 && !orderPlaced && !isCartReady) {
+    return (
+      <div className={styles.page} aria-busy="true">
+        <header className={styles.header}>
+          <Breadcrumb items={[{ label: "Checkout" }]} />
+          <h1 className={cx("sf-display-md", styles.title)}>Checkout</h1>
+        </header>
+        <p className={styles.loadingLine} role="status">
+          Loading your cart…
+        </p>
+      </div>
+    );
+  }
 
   if (cartItems.length === 0 && !orderPlaced) {
     return (

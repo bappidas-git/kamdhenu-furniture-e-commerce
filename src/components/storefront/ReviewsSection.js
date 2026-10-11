@@ -10,8 +10,10 @@ import styles from "./ReviewsSection.module.css";
 // Renders ONLY the real, approved reviews it is handed (the API already filters
 // to status="approved"). Reviews are written from Order History for delivered
 // pieces and published after moderation in the admin, so there is no write
-// form here, and no sorting. The summary average + count are passed in by the
-// page (its reviews blend), never invented here.
+// form here, and no sorting. The admin can also add reviews of its own, so the
+// empty state never claims they all come from verified orders (Prompt 34).
+// The summary average + count are passed in by the page (its reviews blend),
+// never invented here.
 //
 // Look (Prompt 17): an editorial section. From 980px, the eyebrow, the serif
 // heading, the summary (a 48px serif average, stars and "Based on N
@@ -236,7 +238,7 @@ const ReviewsSection = forwardRef(function ReviewsSection(
               <div className={styles.empty}>
                 <p className={styles.emptyTitle}>No reviews yet.</p>
                 <p className={styles.note}>
-                  Reviews come from verified orders and are published after moderation.
+                  Customers can review a piece from My orders once it arrives. Reviews appear after moderation.
                 </p>
               </div>
             )

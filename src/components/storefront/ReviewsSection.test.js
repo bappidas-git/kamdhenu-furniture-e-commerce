@@ -95,7 +95,7 @@ test("no ratings: no average at all, an honest line instead", () => {
   renderSection({ reviews: [], totalRatingsCount: 0, displayAvg: 0 });
   expect(screen.getByText("No reviews yet.")).toBeInTheDocument();
   expect(
-    screen.getByText("Reviews come from verified orders and are published after moderation.")
+    screen.getByText("Customers can review a piece from My orders once it arrives. Reviews appear after moderation.")
   ).toBeInTheDocument();
   expect(screen.queryByText("0.0")).not.toBeInTheDocument();
   expect(screen.queryByText(/Based on/)).not.toBeInTheDocument();

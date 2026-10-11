@@ -167,6 +167,49 @@ test("a guest's cart is never written to an account", async () => {
   expect(apiService.cart.addToCart).not.toHaveBeenCalled();
 });
 
+// isCartReady (Prompt 34): checkout waits for it before it says the cart is
+// empty, so a cart saved on another device is never reported as empty while
+// the account's read is still on its way.
+describe("isCartReady", () => {
+  test("a signed-in cart is ready once the account's saved cart has been read", async () => {
+    let finishRead;
+    apiService.cart.getCart.mockImplementationOnce(
+      () =>
+        new Promise((resolve) => {
+          finishRead = resolve;
+        })
+    );
+    renderCart();
+    await waitFor(() => expect(apiService.cart.getCart).toHaveBeenCalled());
+    expect(latest.isCartReady).toBe(false);
+
+    await act(async () => finishRead([row(7, 2, 1)]));
+    expect(latest.isCartReady).toBe(true);
+    expect(screen.getByTestId("lines")).toHaveTextContent("2-v1×1");
+  });
+
+  test("a failed read counts as read: the device's lines are the cart", async () => {
+    jest.spyOn(console, "error").mockImplementation(() => {});
+    apiService.cart.getCart.mockImplementationOnce(() => Promise.reject(new Error("Network Error")));
+    renderCart({ device: [line(4, 1)] });
+    await waitFor(() => expect(latest.isCartReady).toBe(true));
+    expect(screen.getByTestId("lines")).toHaveTextContent("4-v1×1");
+    console.error.mockRestore();
+  });
+
+  test("a guest's cart is the device's, so it is ready at once", () => {
+    render(
+      <AuthProvider>
+        <CartProvider>
+          <Probe />
+        </CartProvider>
+      </AuthProvider>
+    );
+    expect(latest.isCartReady).toBe(true);
+    expect(apiService.cart.getCart).not.toHaveBeenCalled();
+  });
+});
+
 // ── The toasts and the two contexts (the follow-up to Prompt 32) ───────────────
 // An add that opens the drawer holds its toast until the drawer has painted and
 // slid in: SweetAlert's classes on <html> restyled the whole page inside the

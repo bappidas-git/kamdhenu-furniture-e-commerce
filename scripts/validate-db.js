@@ -15,7 +15,10 @@
 // and leaf checks; Prompt 05 added the supporting-data checks (settings,
 // shipping and FREE_SHIPPING_THRESHOLD, coupons, order money math, payments,
 // refunds, returns, reviews, wishlist, deals, banners, leads). Prompt 34
-// extends the full-mode checks rather than loosening anything here.
+// extended the full-mode checks (nothing loosened): leads in the boilerplate
+// scan, "Overall size"/"Height" specs against the dimension fields, a full
+// return leaving its order "returned", no pending payment on a paid order, and
+// coupon expiries at the end of an Indian day.
 // =============================================================================
 
 const fs = require("fs");
@@ -435,6 +438,7 @@ if (!CATALOGUE_ONLY) {
   check(Array.isArray(db.cart) && db.cart.length === 0, "cart", "must stay []");
   check(!/electronic|smartwatch|earbud|laptop|t-shirt|running shoe/i.test(JSON.stringify({
     o: orders, r: returns, p: payments, f: refunds, w: db.wishlist, b: db.banners, c: coupons, d: db.dealsConfig, v: db.reviews,
+    l: db.leads, // Prompt 34: leads 3 and 4 still asked about a smartwatch and running shoes
   })), "supporting data", "still mentions the boilerplate's electronics/fashion catalogue");
 
   // settings
@@ -612,6 +616,68 @@ if (!CATALOGUE_ONLY) {
   });
   (db.leads || []).filter((l) => l.orderNumber).forEach((l) => {
     check(orders.some((o) => o.orderNumber === l.orderNumber), `lead ${l.id}`, `orderNumber ${l.orderNumber} matches no order`);
+  });
+
+  // ---- Prompt 34: what a shopper or the admin would see disagree ------------
+  // The product page prints the description's "Specifications:" pairs and,
+  // beside them, the dimension fields as "Dimensions (L × W × H)". An "Overall
+  // size" must give the fields' three figures in that order (a height range
+  // ends at the field's height), and a "Height" listing several options must
+  // top out at it.
+  const specPairs = (description) => {
+    const paras = String(description || "").replace(/\r\n?/g, "\n").trim().split(/\n[^\S\n]*\n\s*/);
+    const m = /^specifications\s*:\s*([\s\S]*)$/i.exec(paras[paras.length - 1] || "");
+    if (!m) return [];
+    return m[1].split(/\s*;\s*/).map((part) => {
+      const at = part.indexOf(": ");
+      return at > 0 ? [part.slice(0, at).trim().toLowerCase(), part.slice(at + 2).trim()] : null;
+    }).filter(Boolean);
+  };
+  const N = "(\\d+(?:\\.\\d+)?)"; // a figure, as a capture group
+  products.forEach((p) => {
+    const at = `product ${p.id} (${p.slug})`;
+    const d = p.dimensions || {};
+    specPairs(p.description).forEach(([key, value]) => {
+      if (key === "overall size") {
+        const box = value.match(new RegExp(`${N}\\s*×\\s*${N}\\s*×\\s*${N}(?:\\s*[–-]\\s*${N})?\\s*cm`));
+        const round = value.match(new RegExp(`${N}\\s*cm diameter\\s*×\\s*${N}\\s*cm high`));
+        const [l, w, h] = box ? [box[1], box[2], box[4] || box[3]].map(Number) : round ? [round[1], round[1], round[2]].map(Number) : [];
+        if (box || round) {
+          check(l === d.length && w === d.width && h === d.height, at,
+            `"Overall size: ${value}" ≠ dimensions ${d.length} × ${d.width} × ${d.height} (L × W × H)`);
+        }
+      }
+      if (key === "height") {
+        const heights = (value.split("(")[0].match(/\d+(?:\.\d+)?/g) || []).map(Number);
+        if (heights.length) check(Math.max(...heights) === d.height, at, `"Height: ${value}" tops out at ${Math.max(...heights)}, dimensions say ${d.height}`);
+      }
+    });
+  });
+
+  // A processed full return leaves its order "returned" (api.js's return
+  // cascade writes fulfillmentStatus "returned"); My orders and the
+  // confirmation page read that state.
+  returns.filter((r) => r.refundStatus === "processed").forEach((r) => {
+    const o = orderById.get(String(r.orderId));
+    if (!o) return;
+    const ordered = (o.items || []).reduce((a, it) => a + (Number(it.quantity) || 0), 0);
+    const returned = (r.items || []).reduce((a, it) => a + (Number(it.quantity) || 0), 0);
+    if (returned >= ordered) check(o.fulfillmentStatus === "returned", `order ${o.id} (${o.orderNumber})`, `returned in full by ${r.returnNumber}, but fulfillmentStatus is ${o.fulfillmentStatus}`);
+  });
+
+  // An order marked paid has no payment still waiting (Admin → Payments would
+  // say pending while Admin → Orders says paid).
+  orders.filter((o) => o.paymentStatus === "paid").forEach((o) => {
+    const p = payments.find((x) => String(x.orderId) === String(o.id));
+    if (p) check(p.status !== "pending", `payment ${p.id}`, `pending, but order ${o.orderNumber} is paid`);
+  });
+
+  // Coupons end at 23:59:59 in the store's time zone (Asia/Kolkata, UTC+5:30):
+  // 18:29:59Z. A 23:59:59Z expiry is 05:29 the next morning in India, so the
+  // offers page and the admin (both local dates) would show the next day.
+  coupons.filter((c) => c.expiresAt).forEach((c) => {
+    check(!/T23:59:59(\.\d{3})?Z$/.test(c.expiresAt), `coupon ${c.id} (${c.code})`,
+      `expiresAt ${c.expiresAt} is the end of a UTC day; use 18:29:59Z (23:59:59 in India)`);
   });
 
 }

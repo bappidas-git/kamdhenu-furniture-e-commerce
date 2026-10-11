@@ -202,27 +202,6 @@
   pointer-events: none;
 }
 
-/* ---- The chosen variant's honest stock note -------------------------------- */
-.selectedMeta {
-  margin-top: calc(var(--sf-space-3) * -1);
-  font-family: var(--sf-font-sans);
-  font-size: 0.8125rem; /* 13px */
-  font-weight: var(--sf-font-medium);
-  line-height: var(--sf-leading-normal);
-}
-
-.selectedMeta:empty {
-  display: none;
-}
-
-.metaLow {
-  color: var(--sf-color-warning);
-}
-
-.metaOos {
-  color: var(--sf-color-error);
-}
-
 /* ---- Windows contrast themes -------------------------------------------------- */
 @media (forced-colors: active) {
   .swatchChip {

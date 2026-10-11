@@ -6,6 +6,7 @@ import apiService from "../../services/api";
 import { AuthProvider, useAuth } from "../../context/AuthContext";
 import { useBodyScrollLocked } from "../ui/useFocusTrap";
 import AuthModal from "./AuthModal";
+import Swal from "sweetalert2";
 
 // The dialog runs against the real AuthProvider, mounted the way Header mounts
 // it (open={authModalOpen}, onClose={closeAuthModal}, defaultTab=
@@ -503,25 +504,31 @@ test("a failed sign-in shows the request's message as an alert and keeps what wa
   fill(dialog, "Email address", "user@example.com");
   fill(dialog, "Password", "wrong-password");
   fireEvent.click(submitButton(dialog, "Sign in"));
-  await within(dialog).findByText("Invalid email or password");
+  await within(dialog).findByText("Check your email address and password, then try again.");
   const alert = within(dialog).getAllByRole("alert").find((a) => a.textContent);
-  expect(alert).toHaveTextContent("Invalid email or password");
+  expect(alert).toHaveTextContent("Check your email address and password, then try again.");
   expect(within(dialog).getByLabelText("Email address")).toHaveValue("user@example.com");
   expect(within(dialog).getByLabelText("Password")).toHaveValue("wrong-password");
   expect(screen.getByTestId("open")).toHaveTextContent("true");
   expect(submitButton(dialog, "Sign in")).not.toHaveAttribute("aria-disabled");
 });
 
-test("a request error from the API reaches the alert", async () => {
-  apiService.auth.login.mockRejectedValue(new Error("Network Error"));
+test("a request error from the API reaches the alert in the API's words", async () => {
+  apiService.auth.login.mockRejectedValue(
+    Object.assign(new Error("Request failed with status code 401"), {
+      response: { status: 401, data: { message: "These credentials do not match our records." } },
+    })
+  );
   jest.spyOn(console, "error").mockImplementation(() => {});
   renderModal();
   const { dialog } = await openSignIn();
   fill(dialog, "Email address", "user@example.com");
   fill(dialog, "Password", "password123");
   fireEvent.click(submitButton(dialog, "Sign in"));
-  expect(await within(dialog).findByText("Network Error")).toBeInTheDocument();
-  expect(within(dialog).getAllByRole("alert").find((a) => a.textContent)).toHaveTextContent("Network Error");
+  expect(await within(dialog).findByText("These credentials do not match our records.")).toBeInTheDocument();
+  expect(within(dialog).getAllByRole("alert").find((a) => a.textContent)).toHaveTextContent(
+    "These credentials do not match our records."
+  );
   console.error.mockRestore();
 });
 
@@ -734,7 +741,8 @@ test("an empty phone is sent as an empty string", async () => {
   expect(apiService.auth.register).toHaveBeenCalledWith(expect.objectContaining({ phone: "" }));
 });
 
-test("an email already in use shows the API's message and keeps the form", async () => {
+test("an email already in use says so in the storefront's words and keeps the form", async () => {
+  // The mock API's duplicate-email error (api.js) reads "… Please log in instead."
   const taken = new Error("An account with this email already exists. Please log in instead.");
   taken.code = "EMAIL_TAKEN";
   apiService.auth.register.mockRejectedValue(taken);
@@ -743,12 +751,51 @@ test("an email already in use shows the API's message and keeps the form", async
   fillSignUp(dialog, { "Email address": "user@example.com" });
   fireEvent.click(submitButton(dialog, "Create account"));
   expect(
-    await within(dialog).findByText("An account with this email already exists. Please log in instead.")
+    await within(dialog).findByText("An account with this email already exists. Sign in instead.")
   ).toBeInTheDocument();
   expect(within(dialog).getAllByRole("alert").find((a) => a.textContent)).toHaveTextContent(
-    "An account with this email already exists. Please log in instead."
+    "An account with this email already exists. Sign in instead."
   );
   expect(within(dialog).getByLabelText("Email address")).toHaveValue("user@example.com");
   expect(within(dialog).getByLabelText("First name")).toHaveValue("Asha");
   expect(within(dialog).getByRole("tab", { name: "Create account" })).toHaveAttribute("aria-selected", "true");
 });
+test("a failed sign-in or sign-up fires no toast: the alert above the button says it (Prompt 34)", async () => {
+  Swal.fire.mockClear();
+  apiService.auth.login.mockResolvedValue(null);
+  renderModal();
+  const { dialog } = await openSignIn();
+  fill(dialog, "Email address", "user@example.com");
+  fill(dialog, "Password", "wrong-password");
+  fireEvent.click(submitButton(dialog, "Sign in"));
+  await within(dialog).findByText("Check your email address and password, then try again.");
+  expect(Swal.fire).not.toHaveBeenCalled();
+});
+
+test("the API's own validation message reaches the alert (Laravel 422)", async () => {
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  const taken = Object.assign(new Error("Request failed with status code 422"), {
+    response: { status: 422, data: { message: "The email has already been taken." } },
+  });
+  apiService.auth.register.mockRejectedValue(taken);
+  renderModal();
+  const { dialog } = await openCreateAccount();
+  fillSignUp(dialog, { "Email address": "user@example.com" });
+  fireEvent.click(submitButton(dialog, "Create account"));
+  expect(await within(dialog).findByText("The email has already been taken.")).toBeInTheDocument();
+  console.error.mockRestore();
+});
+
+test("a request that never reached the API says so in the storefront's words", async () => {
+  apiService.auth.login.mockRejectedValue(new Error("Network Error"));
+  jest.spyOn(console, "error").mockImplementation(() => {});
+  renderModal();
+  const { dialog } = await openSignIn();
+  fill(dialog, "Email address", "user@example.com");
+  fill(dialog, "Password", "password123");
+  fireEvent.click(submitButton(dialog, "Sign in"));
+  expect(await within(dialog).findByText("We couldn’t sign you in. Try again in a moment.")).toBeInTheDocument();
+  expect(within(dialog).queryByText("Network Error")).not.toBeInTheDocument();
+  console.error.mockRestore();
+});
+

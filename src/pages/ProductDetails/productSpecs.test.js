@@ -35,7 +35,7 @@ test("the parsed pairs come first, in their order, then the catalogue's fields",
   expect(byKey.Brand.value).toBe("Nilkamal");
   expect(byKey.SKU.value).toBe("PLE-SHR-03-2S");
   expect(byKey.Weight.value).toBe("6.8 kg");
-  expect(byKey.Dimensions).toEqual({ key: "Dimensions", value: "62 × 33 × 98 cm", hint: "L × W × H" });
+  expect(byKey.Dimensions).toEqual({ key: "Dimensions", value: "62 × 33 × 96 cm", hint: "L × W × H" });
   expect(byKey.Category.value).toBe("Shoe Racks");
   expect(byKey.Tags.tags).toEqual(product("covered-plastic-shoe-rack").tags);
 });

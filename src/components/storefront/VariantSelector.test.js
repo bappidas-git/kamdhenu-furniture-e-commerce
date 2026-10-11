@@ -92,13 +92,13 @@ test("colour rows are swatches with the data's colours; sold out is disabled", (
   expect(tabStops()).toEqual(["-1", "-1", "0"]);
 });
 
-test("the chosen variant's stock note: only N left, or sold out", () => {
+test("states no stock of its own: the page says it once, beside the quantity", () => {
   const { rerender } = render(<VariantSelector variants={SHELVES} value={SHELVES[2]} />);
-  expect(screen.getByText("Only 4 left in this option")).toBeInTheDocument();
+  expect(screen.queryByText(/left in this option|left$/)).not.toBeInTheDocument();
   rerender(<VariantSelector variants={SHELVES} value={SHELVES[3]} />);
-  expect(screen.getByText("This option is sold out")).toBeInTheDocument();
-  rerender(<VariantSelector variants={SHELVES} value={SHELVES[1]} />);
-  expect(screen.queryByText(/left in this option|sold out/)).not.toBeInTheDocument();
+  expect(screen.queryByText(/This option is sold out/)).not.toBeInTheDocument();
+  // A sold-out option is still marked on its own control.
+  expect(screen.getByRole("radio", { name: /5 shelves \(sold out\)/ })).toBeDisabled();
 });
 
 test("a choice unavailable with the other attribute stays clickable and snaps to a real variant", () => {

@@ -127,10 +127,12 @@ export const CURRENCIES = {
 export const DEFAULT_CURRENCY = CURRENCIES.INR;
 
 // Shipping
-// Single source of truth for the free-shipping threshold. Mirrors the
-// Standard shipping method's `freeAbove` value in db.json (₹9,999, a
-// placeholder awaiting client confirmation) and is shared by the Header banner
-// and the CartDrawer progress bar. scripts/validate-db.js checks they agree.
+// The seeded free-delivery threshold: the Standard shipping method's
+// `freeAbove` in db.json (₹9,999, a placeholder awaiting client confirmation).
+// scripts/validate-db.js checks the two agree. The storefront itself reads the
+// live shipping methods (the header line, the cart drawer, the footer and the
+// assurance strip), so an Admin → Shipping change reaches every surface; this
+// constant is the seed's reference only.
 export const FREE_SHIPPING_THRESHOLD = 9999;
 
 // Social links. The Footer renders an icon only for entries with a non-empty
