@@ -3,11 +3,13 @@ import { PROMISE_STEPS } from "../../content/homeContent";
 import { STOREFRONT_CONFIG } from "../../theme/tokens";
 import db from "../../../db.json";
 import {
+  FEATURED_COUNT,
   MAX_REVIEWS,
   collectBrands,
   formatDeliveryDays,
   loadFeaturedReviews,
   loadPromiseData,
+  mixFeatured,
   promiseBodyLayout,
   promiseValues,
   resolvePromiseBody,
@@ -27,6 +29,49 @@ const RETURNS_DAYS = STOREFRONT_CONFIG.returnsWindowDays;
 afterEach(() => {
   STOREFRONT_CONFIG.returnsWindowDays = RETURNS_DAYS;
   jest.clearAllMocks();
+});
+
+// ── Featured rail ────────────────────────────────────────────────────────────
+
+describe("mixFeatured", () => {
+  const CATEGORIES = db.categories.filter((c) => c.isActive !== false);
+  const FEATURED = db.products.filter((p) => p.featured);
+  const categoryById = new Map(CATEGORIES.map((c) => [c.id, c]));
+  const departmentOf = (p) => {
+    let c = categoryById.get(p.categoryId);
+    while (c && c.parentId != null) c = categoryById.get(c.parentId);
+    return c.id;
+  };
+
+  test("takes one piece per department in menu order before any second (V2-05)", () => {
+    const rail = mixFeatured(FEATURED, CATEGORIES);
+    expect(rail.map((p) => p.id)).toEqual([1, 21, 37, 19, 47, 76, 11, 31]);
+    expect(rail).toHaveLength(FEATURED_COUNT);
+    expect(rail.slice(0, 6).map(departmentOf)).toEqual([1, 2, 3, 4, 5, 6]);
+    // The first eight by id alone reach four departments.
+    expect(new Set(FEATURED.slice(0, 8).map(departmentOf)).size).toBe(4);
+  });
+
+  test("keeps each department's own order and the limit", () => {
+    const rail = mixFeatured(FEATURED, CATEGORIES, 14);
+    const plastic = rail.filter((p) => departmentOf(p) === 1).map((p) => p.id);
+    expect(plastic).toEqual([1, 11, 12]);
+    expect(rail).toHaveLength(14);
+    expect(mixFeatured(FEATURED, CATEGORIES, 3).map((p) => p.id)).toEqual([1, 21, 37]);
+  });
+
+  test("leaves out inactive pieces; without categories the API's order stands", () => {
+    const withOff = FEATURED.map((p) => (p.id === 21 ? { ...p, isActive: false } : p));
+    expect(mixFeatured(withOff, CATEGORIES).map((p) => p.id)).not.toContain(21);
+    expect(mixFeatured(FEATURED, []).map((p) => p.id)).toEqual(FEATURED.slice(0, 8).map((p) => p.id));
+    expect(mixFeatured(null, CATEGORIES)).toEqual([]);
+  });
+
+  test("pieces of a department outside the menu follow the menu's", () => {
+    const outside = { ...FEATURED[0], id: 999, categoryId: 777 };
+    const rail = mixFeatured([outside, ...FEATURED.slice(0, 3)], CATEGORIES, 8);
+    expect(rail.map((p) => p.id)).toEqual([1, 11, 12, 999]);
+  });
 });
 
 // ── Brands we carry ──────────────────────────────────────────────────────────

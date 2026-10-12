@@ -5271,3 +5271,62 @@ All data edits were made by one script (`repair.cjs`, the report's Appendix B): 
 - **Images:** the placeholder (`placehold.co`) photography.
 - **Prices:** placeholder prices, stock and specifications; the placeholder tax, COD, delivery and coupon settings.
 - **Accounts:** `user@example.com` / `password123`, `jane@example.com` / `password123`, `mail4bappidas@gmail.com` / `Bappi@12345`, admin `admin@store.com` / `admin123`, with their plaintext passwords.
+
+---
+
+## Prompt V2-05 — Full regression and sign-off
+
+**Date:** 2026-10-11. **Start:** `4b6127a` (V2-04 merged); the V2 baseline stays `0b9153e`. `db.json` SHA-256 `a15d361a…`, unchanged by this prompt; `src/services/api.js` SHA-256 `c32e6138…`, unchanged. Report: `prompts/prompt_V2/reports/V2-05_REPORT.md`; sign-off: `prompts/prompt_V2/reports/V2_SIGN_OFF.md`.
+
+**Result:** Prompt 34's final QA re-run as the V2-05 checklist (A–F) on the repository after V2-01…V2-04, with extra depth on every surface the V2 changes reach. Every row passes. Five defects found and fixed, each with regression tests that fail before the fix; all 26 findings the V2 reports handed forward closed (15 fixed, 11 not a defect, each with its reason); zero known issues.
+
+### Impact map (report §2)
+
+- **V2 changed no bundled source:** `git diff --stat 0b9153e..4b6127a -- src ':(exclude)src/**/*.test.js'` is empty; `api.js`, `package*.json`, `server.js` and `.env*` are untouched. The app-visible differences are 70 `db.json` values (V2-02 10, V2-03 34, V2-04 26; no id, slug, SKU, key or record count) and V2-01's two `index.html` insertions.
+- **Every path traced to its consumers:** product copy and specifications → the product page, its specifications table, JSON-LD and search; tags → search, the related rail and the Tags row; relations → the related rail and "Complete the set"; category copy → the listing's introduction and description; orders, returns, reviews, the coupon and the wishlist rows → My orders, the confirmation and invoice, the home carousel, the offers page, the wishlist and the admin; `settings.seo` and `banners` → no storefront consumer. Each consumer is exercised by a browser suite.
+
+### Defects found and fixed (report §4)
+
+| # | Defect | Fix | Files | Tests |
+|---|---|---|---|---|
+| D1 | The home Featured rail showed the first eight featured products by id: four departments, never Prompt 04's home and office-table pieces (V2-02 F5, V2-03 F4) | `mixFeatured`: up to 24 featured read, 8 shown, one department at a time in menu order | `src/pages/Home/homeData.js`, `Home.js` | `homeData.test.js` (4), `Home.test.js` (1, and the updated expectations) |
+| D2 | A product switched off in the admin stayed on the listing, its search, the search overlay, the offers page, the home rails, and its page opened (found by this pass) | `isProductActive` on every storefront read (`02_API_ENDPOINTS.md` §B: the storefront filters `isActive`); the product page treats it as not found | `src/utils/helpers.js`, `Products.js`, `searchData.js`, `SpecialOffers.js`, `ProductDetails.js`, `Home.js` | `Products`, `searchData`, `SpecialOffers`, `Home`, `ProductDetails`, `helpers` (1 each) |
+| D3 | An unbranded piece's related rail was topped up with every other unbranded piece (`"" === ""`; V2-02 F1, V2-03 F1) | `relatedLookup`: an unbranded piece is looked up without a brand (product page, "Complete the space"); `api.js` unchanged | `src/utils/helpers.js`, `ProductDetails.js`, `Home.js` | `helpers` (2), `ProductDetails` (1, and one assertion) |
+| D4 | The browser's colour ignored the site's light/dark switch (V2-01 F1) | `BrowserThemeColor`: both `theme-color` tags follow the mode while a storefront page is shown; `index.html`'s values return on unmount (the admin keeps them) | `src/components/StorefrontRoot/BrowserThemeColor.js` (new), `src/App.js` | `BrowserThemeColor.test.js` (2), `publicIndex.test.js` (2) |
+| D5 | With site data blocked, every page showed the crash screen (V2-01 F2) | `installStorageFallback`, called by `src/index.js` before React renders: a storage that throws is replaced, for the visit, by one kept in memory; no admin file, `api.js` or `authStorage.js` changed | `src/utils/storageFallback.js` (new), `src/index.js` | `storageFallback.test.js` (6), `App.test.js` (1) |
+
+Also fixed: the footer's, cart drawer's and checkout's trust cues take their labels from `TRUST_BADGE_CATALOG` (V2-01 F4; `Footer.js`, `CartDrawer.js`, `Checkout.js`; a test each in `Footer.test.js` and `CartDrawer.test.js`); `DESIGN_SYSTEM.md` §12's `theme-color` row (V2-01 F5); a test that pins V2-01's two `index.html` repairs (V2-01 F7, `src/publicIndex.test.js`); `00_INDEX.md` §6's coupon line (V2-04 F1). The validator gained one rule (tightened only): at most 24 active featured products, the rail's read.
+
+**Proof the tests guard the fixes:** with the consumers reverted to `HEAD` (the new helpers kept), 10 tests fail, all of them V2-05's; with the trust-label change reverted, the two label tests fail; without the storage fallback, the blocked-storage render shows the crash screen. All pass with the fixes.
+
+### Findings closed (report §3)
+
+- **Fixed in this pass (`5d7e3cf`):** V2-01 F1, F2, F4, F5, F7; V2-02 F1 and V2-03 F1 (the empty brand); V2-02 F5 and V2-03 F4; V2-04 F1.
+- **Fixed earlier in V2:** V2-02 F3 and F4 (`eb62f33`, V2-03); V2-02 F2 and V2-03 F2 (the reviews' dates) and V2-03 F3 (`a3e3d74`, V2-04).
+- **Not a defect, with the reason in the report:** V2-01 F3 (the admin invoice's fallback cannot show while the seed validates), F6 (a documentation expectation; the admin's three owner-approved changes verified); V2-02 F1 and V2-03 F1 for real shared tags and brands (Prompt 17's rule); V2-02 F2, V2-03 F2 and V2-04 F8 for the orders (kept on purpose, V2-04 §8.1); V2-02 F6 (wording), F7 (the mock's `updatedAt`, F3 worded so); V2-04 F2, F3, F7 (admin or `api.js` mock, owner list), F4 (Prompt 19's rule), F5 (demonstrated in C8), F6 (the contract allows `sku: ""`).
+
+### Gate
+
+- `node scripts/validate-db.js` (`--catalogue` and full): `✓ all checks passed`; the new rule refuses a scratch copy with 25 featured.
+- `CI=true npm test -- --passWithNoTests`: **89 suites, 1,456 tests**, exit 0, no console output (start: 86 suites, 1,429 tests). 27 tests added, none removed; `Home.test.js`'s expectations updated where Prompt 04 proves them wrong (the rail, the pool size, the carousel's reviews).
+- `CI=true npm run build`: "Compiled successfully.", zero warnings; main JS 400.28 kB gzip (+0.66 kB), CSS 34.97 kB (unchanged); +0.68 kB in all. JSON Server mode: "Compiled successfully."
+- `node scripts/check-contrast.js`: every pairing meets its minimum; the mirrors match.
+- ESLint on the changed files: nothing new (test files keep exactly the findings they had at `HEAD`).
+- **Browser** (Playwright, the production build in JSON Server mode, a scratch `db.json` reset before every writing suite): 668 of 668 on the final build; 650 of 660 on the start-of-pass build (the five defects; a harness fault in C1.1; F3, which then counted the admin coupon form's documented expiry rewrite in the same row as the rule).
+- **Development console:** no unexplained error or warning in 132 loads (light, and dark with reduced motion); only the documented notices (framer-motion's reduced-motion notice, the deliberate unknown URL's 404, Admin → Leads' `hover` warning).
+- **Lighthouse:** Accessibility, Best Practices and SEO 100 on every run; CLS 0 on every run; Performance medians 62–76 on the final build (59–78 at the start of the pass): Prompt 32's 85 is not met, as Prompt 34 recorded (an owner decision, index §6).
+- **Contract:** no JSON Server-only shape, `fetch` or `axios` outside `api.js`; `api.js` unchanged (`git diff 90402a2 -- src/services/api.js` identical to the V2 baseline's).
+- **Admin:** `git diff 90402a2` on the admin's files = the three owner-approved commits (`704888b`, `44ddfd9`, `e198f0a`); this pass touched no admin file and not `AdminContext.js`.
+- **Identity:** a 626-line dump of every id, slug, SKU, variant, order line and key order, from the V2 baseline's `db.json` and the final one: identical.
+
+### Data restored
+
+Every suite that writes ran against a scratch copy of the seed (`JSON_SERVER_DB`), reset before and after: the orders placed in C6, C8's cancel cascade and review, C13's leads, the admin edits of C11, C12 and F, X3's switched-off products and the storage suite's sign-ins lived only there. The repository's `db.json` was never written: SHA-256 `a15d361a…` at the start, after every suite and at the end.
+
+### Documents updated
+
+`prompts/QA_CHECKLIST.md` (`## V2 re-run (after Prompts V2-01…V2-04)`, the original results kept); `prompts/00_INDEX.md` (the status line, the effort note, `prompts/prompt_V2/` with one line per V2 prompt, §5's test counts and item 31, §6: the coupon line and the open questions found or closed); `prompts/DESIGN_SYSTEM.md` (§12's row, §43.5's rule list, §43.7); `V2-05_REPORT.md`; `V2_SIGN_OFF.md`.
+
+### Status
+
+Build complete with zero known issues. Prompts 02–05 were re-verified at max effort by V2-01…V2-04 and the whole application re-tested by V2-05: every prompt's output meets the max-effort standard. No prompt output rests on medium-effort work alone. Decisions still open for the client or the owner are in `00_INDEX.md` §6 and §7.

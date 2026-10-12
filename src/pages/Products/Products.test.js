@@ -232,6 +232,26 @@ test("with no category the page is All furniture", async () => {
   expect(chips()).not.toBeInTheDocument();
 });
 
+test("a product switched off in the admin is not listed, counted or found (V2-05)", async () => {
+  // 01_DATABASE_SCHEMA.md: an inactive product is hidden from the storefront.
+  apiService.products.getAll.mockResolvedValue(
+    PRODUCTS.map((p) => (p.id === 2 ? { ...p, isActive: false } : p))
+  );
+  const { unmount } = renderAt("/products?category=plastic-essentials-armchairs");
+  await waitForResults();
+  expect(resultsText()).toBe("Showing 2 pieces");
+  expect(screen.getAllByRole("article").map(articleName)).toEqual([
+    "Classic Plastic Armchair",
+    "Slat-Back Plastic Armchair",
+  ]);
+  expect(within(rail()).getByRole("checkbox", { name: counted("Chairs with Arms", 2) })).toBeChecked();
+  unmount();
+
+  renderAt("/products?search=ribbed");
+  await waitForResults();
+  expect(screen.getAllByRole("article").map(articleName)).toEqual(["Ribbed-Back Plastic Chair"]);
+});
+
 test("several categories read as a list in the title", async () => {
   renderAt("/products?category=sofas,beds");
   expect(

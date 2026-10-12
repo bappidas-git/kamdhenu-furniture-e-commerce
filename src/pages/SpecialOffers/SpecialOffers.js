@@ -15,6 +15,7 @@ import {
   getProductMinPrice,
   getProductMaxDiscount,
   copyToClipboard,
+  isProductActive,
 } from "../../utils/helpers";
 import {
   rupees,
@@ -516,7 +517,9 @@ const SpecialOffers = () => {
           apiService.coupons.getActive(),
         ]);
         if (cancelled) return;
-        setProducts(Array.isArray(productsData) ? productsData : []);
+        // A product switched off in the admin is never on offer, even if a
+        // saved selection still names it (isProductActive).
+        setProducts(Array.isArray(productsData) ? productsData.filter(isProductActive) : []);
         setCategories(Array.isArray(categoriesData) ? categoriesData : []);
         setCoupons(Array.isArray(couponsData) ? couponsData : []);
       } catch (error) {

@@ -923,6 +923,11 @@ check(soldOut04 >= 1 && soldOut04 <= 2, "stock", `Prompt 04's products need 1–
 const flagged04 = (k) => P04.filter((p) => p[k]);
 check(flagged04("featured").length >= 4 && flagged04("featured").length <= 6 && flagged04("featured").some((p) => deptOf(p.categoryId) === 5) && flagged04("featured").some((p) => deptOf(p.categoryId) === 6),
   "flags", `featured: ${flagged04("featured").length} of Prompt 04's products (4–6, home and office pieces both)`);
+// The home Featured rail reads at most 24 featured products (FEATURED_POOL in
+// src/pages/Home/homeData.js) and takes one department at a time (V2-05), so
+// every featured piece must fit in that read or a department can drop out.
+const featuredAll = products.filter((p) => p.featured && p.isActive);
+check(featuredAll.length <= 24, "flags", `featured: ${featuredAll.length} active products in all; the home rail reads at most 24`);
 check(flagged04("trending").length >= 3 && flagged04("trending").length <= 4, "flags", `trending: ${flagged04("trending").length} of Prompt 04's products (3–4)`);
 check(flagged04("hot").length >= 1 && flagged04("hot").length <= 2, "flags", `hot: ${flagged04("hot").length} of Prompt 04's products (1–2)`);
 

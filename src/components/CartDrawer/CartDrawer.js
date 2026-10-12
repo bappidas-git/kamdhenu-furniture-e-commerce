@@ -12,7 +12,7 @@ import {
   PLACEHOLDER_IMG,
   onImageError,
 } from "../../utils/helpers";
-import { STOREFRONT_CONFIG, TOKENS, resolveTrustBadgeDetail } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TOKENS, TRUST_BADGE_CATALOG, resolveTrustBadgeDetail } from "../../theme/tokens";
 import useFocusTrap, { useBodyScrollLock } from "../ui/useFocusTrap";
 import { preloadPageFor } from "../../pages/lazyPages";
 import { overlayBackdropMotion, overlayPanelMotion } from "../ui/motionPresets";
@@ -320,20 +320,19 @@ const CartDrawer = ({ open, onClose }) => {
   const ratio = showProgress ? Math.min(1, Math.max(0, subtotal / threshold)) : 0;
 
   // ---- Promises: shown once the store data has settled ----------------------
+  // Icons and labels from TRUST_BADGE_CATALOG (DESIGN_SYSTEM §39.9).
+  const badge = (id, detail) => ({
+    id,
+    icon: TRUST_BADGE_CATALOG[id].icon,
+    label: TRUST_BADGE_CATALOG[id].label,
+    ...(detail ? { detail } : {}),
+  });
   const trustItems = store
     ? [
-        { id: "securePayment", icon: "lock", label: "Secure payment" },
-        resolveTrustBadgeDetail("cod", { settings: store.settings }) !== null && {
-          id: "cod",
-          icon: "cash",
-          label: "Cash on Delivery",
-        },
-        resolveTrustBadgeDetail("easyReturns") !== null && {
-          id: "easyReturns",
-          icon: "rotate",
-          label: "Easy returns",
-          detail: daysLabel(STOREFRONT_CONFIG.returnsWindowDays),
-        },
+        badge("securePayment"),
+        resolveTrustBadgeDetail("cod", { settings: store.settings }) !== null && badge("cod"),
+        resolveTrustBadgeDetail("easyReturns") !== null &&
+          badge("easyReturns", daysLabel(STOREFRONT_CONFIG.returnsWindowDays)),
       ].filter(Boolean)
     : [];
 

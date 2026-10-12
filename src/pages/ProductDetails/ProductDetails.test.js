@@ -345,6 +345,17 @@ test("an unknown slug shows the not-found state with a way back to the shop", as
   expect(currentPath()).toBe("/products/no-such-piece");
 });
 
+test("a product switched off in the admin is not found, by slug or by id (V2-05)", async () => {
+  const off = { ...product("ribbed-back-plastic-armchair"), isActive: false };
+  apiService.products.getBySlug.mockImplementation(async (slug) => (slug === off.slug ? off : product(slug)));
+  apiService.products.getById.mockImplementation(async (id) => (String(id) === String(off.id) ? off : product(id)));
+  renderAt(`/products/${off.slug}`);
+  expect(await title()).toHaveTextContent("We couldn’t find that piece.");
+  await flush();
+  expect(screen.queryByRole("button", { name: "Add to cart" })).not.toBeInTheDocument();
+  expect(apiService.products.getRelated).not.toHaveBeenCalled();
+});
+
 // ── Document metadata and structured data (Prompt 32) ─────────────────────
 
 // The page writes <head>, which has no roles to query.
@@ -977,6 +988,8 @@ test("no curated companions, no set; related pieces come from getRelated", async
   await loaded();
   expect(screen.queryByRole("region", { name: accentName("Complete the set.") })).not.toBeInTheDocument();
   expect(apiService.products.getRelated).toHaveBeenCalledWith(expect.objectContaining({ id: 11 }), 10);
+  // A branded piece is looked up as it is.
+  expect(apiService.products.getRelated.mock.calls[0][0]).toBe(product("covered-plastic-shoe-rack"));
   const rail = screen.getByRole("group", { name: "Related pieces" });
   expect(within(rail).getAllByRole("article")).toHaveLength(2);
   expect(screen.getByRole("region", { name: accentName("You may also like.") })).toBeInTheDocument();
@@ -1033,4 +1046,17 @@ test("headings run h1, then h2 sections, then h3 review titles", async () => {
     [2, "Complete the set."],
     [2, "You may also like."],
   ]);
+});
+
+test("an unbranded piece's related read is not matched on 'no brand' (V2-05)", async () => {
+  const unbranded = product("particle-board-bedside-table");
+  expect(unbranded.brand).toBe("");
+  renderAt(`/products/${unbranded.slug}`);
+  await loaded();
+  const [lookup, limit] = apiService.products.getRelated.mock.calls[0];
+  expect(limit).toBe(10);
+  expect(lookup.id).toBe(unbranded.id);
+  expect(lookup.brand).toBeUndefined();
+  expect(lookup.relatedProductIds).toEqual(unbranded.relatedProductIds);
+  expect(lookup.tags).toEqual(unbranded.tags);
 });

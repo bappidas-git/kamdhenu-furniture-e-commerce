@@ -10,7 +10,7 @@ import { IS_MOCK_API } from "../../services/baseURL";
 import Breadcrumb from "../../components/Breadcrumb/Breadcrumb";
 import TRUST_ICONS from "../../components/storefront/trustIcons";
 import { prefersReducedMotion } from "../../components/ui/motionPresets";
-import { STOREFRONT_CONFIG, TOKENS } from "../../theme/tokens";
+import { STOREFRONT_CONFIG, TOKENS, TRUST_BADGE_CATALOG } from "../../theme/tokens";
 import {
   formatCurrency,
   getCartSavings,
@@ -1637,7 +1637,7 @@ const Checkout = () => {
       ? { icon: <CheckGlyph size={16} />, text: "Paid in full with store credit" }
       : paymentMethod === "cod"
       ? { icon: <TrustIcon name="cash" />, text: "Pay by Cash on Delivery" }
-      : { icon: <TrustIcon name="lock" />, text: "Secure payment" };
+      : { icon: <TrustIcon name="lock" />, text: TRUST_BADGE_CATALOG.securePayment.label };
     return (
       <div className={styles.facts}>
         <p className={styles.factsAmount}>
@@ -1831,11 +1831,13 @@ const Checkout = () => {
     // while the window is above 0, delivery from the chosen (else Standard)
     // method. Drawn once both reads have settled, so nothing pops in.
     const delivery = deliveryCue(selectedShipping || standardMethod(shippingMethods));
+    // The badge labels from TRUST_BADGE_CATALOG (DESIGN_SYSTEM §39.9).
+    const { securePayment, cod, easyReturns } = TRUST_BADGE_CATALOG;
     const cues = [
-      { key: "secure", icon: "lock", text: "Secure payment" },
-      storeSettings && codEnabled ? { key: "cod", icon: "cash", text: "Cash on Delivery available" } : null,
+      { key: "secure", icon: "lock", text: securePayment.label },
+      storeSettings && codEnabled ? { key: "cod", icon: "cash", text: `${cod.label} available` } : null,
       returnsDays > 0
-        ? { key: "returns", icon: "rotate", text: `Easy returns · ${returnsDays} ${returnsDays === 1 ? "day" : "days"}` }
+        ? { key: "returns", icon: "rotate", text: `${easyReturns.label} · ${returnsDays} ${returnsDays === 1 ? "day" : "days"}` }
         : null,
       delivery ? { key: "delivery", icon: "truck", text: delivery } : null,
     ].filter(Boolean);

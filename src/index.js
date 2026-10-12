@@ -6,6 +6,7 @@ import "./pages/lazyPages";
 import "./index.css";
 import App from "./App";
 import { renderBootError } from "./components/ErrorBoundary/bootError";
+import { installStorageFallback } from "./utils/storageFallback";
 // import reportWebVitals from "./reportWebVitals";
 
 // Catch any JS errors that occur before or outside React's tree. While #root
@@ -19,6 +20,10 @@ window.onerror = function (msg, src, line, col, error) {
 window.addEventListener("unhandledrejection", function (event) {
   renderBootError(document.getElementById("root"), String(event.reason));
 });
+
+// With site data blocked, reading storage throws and the providers' first
+// render would fail: such a visit runs on storage kept in memory (V2-05).
+installStorageFallback(window);
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(

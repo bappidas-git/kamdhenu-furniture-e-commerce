@@ -442,6 +442,20 @@ test("a picked piece without a discount shows no saving line", async () => {
   expect(within(today).queryByText(/^You save/)).not.toBeInTheDocument();
 });
 
+test("a pick switched off in the admin is not on offer, in the deal of the day or the grid (V2-05)", async () => {
+  // 01_DATABASE_SCHEMA.md: an inactive product is hidden from the storefront,
+  // even while the saved selection still names it.
+  const off = new Set([CONFIG.dealOfTheDayIds[0], CONFIG.featuredProductIds[0]]);
+  apiService.products.getAll.mockResolvedValue(
+    PRODUCTS.map((p) => (off.has(p.id) ? { ...p, isActive: false } : p))
+  );
+  renderPage();
+  const today = await findRegion("Deal of the day.");
+  expectCards(today, CONFIG.dealOfTheDayIds.slice(1).map((id) => product(id).name));
+  const all = region("7 pieces on offer.");
+  expectCards(all, CONFIG.featuredProductIds.slice(1).map((id) => product(id).name));
+});
+
 test("cards add to the cart exactly as before and toggle the wishlist", async () => {
   wishlisted.add(21);
   renderPage();

@@ -303,4 +303,14 @@ describe("loadSearchData", () => {
     await expect(loadSearchData()).resolves.toEqual({ products: [], categories: [] });
     expect(apiService.products.getAll).toHaveBeenCalledTimes(2);
   });
+
+  test("a product switched off in the admin is not searchable (V2-05)", async () => {
+    apiService.products.getAll.mockResolvedValue([product(1), product(2, { isActive: false }), product(3)]);
+    apiService.categories.getAll.mockResolvedValue(TREE);
+    const { products } = await loadSearchData();
+    expect(products.map((p) => p.id)).toEqual([1, 3]);
+    const map = buildCategoryMap(TREE);
+    const { groups } = buildCategoryNav(TREE);
+    expect(searchProducts(products, map, groups, "Product", "All").map((p) => p.id)).toEqual([1, 3]);
+  });
 });

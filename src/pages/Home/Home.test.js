@@ -18,6 +18,7 @@ import {
 import { buildCartItem } from "../../utils/helpers";
 import db from "../../../db.json";
 import Home from "./Home";
+import { FEATURED_POOL, mixFeatured } from "./homeData";
 
 jest.mock("../../services/api", () => ({
   __esModule: true,
@@ -94,7 +95,10 @@ afterEach(() => {
 const product = (id) => db.products.find((p) => p.id === id);
 const productsFor = (ids = []) => ids.map(product).filter(Boolean);
 const CATEGORIES = db.categories.filter((c) => c.isActive !== false);
-const FEATURED = db.products.filter((p) => p.featured).slice(0, 8);
+// What products.getFeatured(FEATURED_POOL) answers from the seed (all 14), and
+// the rail the page makes of it: eight, one department at a time (V2-05).
+const FEATURED_ANSWER = db.products.filter((p) => p.featured);
+const FEATURED = mixFeatured(FEATURED_ANSWER, CATEGORIES);
 const TRENDING = db.products.filter((p) => p.trending).slice(0, 8);
 const ANCHOR = db.products.find((p) => p.slug === COMPLETE_THE_SPACE.anchorProductSlug);
 
@@ -116,7 +120,7 @@ const approvedReviewsFor = (id) =>
 // what a product's reviews read returns.
 const serve = ({
   categories = CATEGORIES,
-  featured = FEATURED,
+  featured = FEATURED_ANSWER,
   trending = TRENDING,
   anchor = ANCHOR,
   bundle,
@@ -203,7 +207,8 @@ test("reads each source once: categories, featured, trending, then the anchor", 
   serve();
   await renderHome();
   expect(apiService.categories.getAll).toHaveBeenCalledTimes(1);
-  expect(apiService.products.getFeatured).toHaveBeenCalledWith(8);
+  // A pool of the featured pieces, so the rail can take every department (V2-05).
+  expect(apiService.products.getFeatured).toHaveBeenCalledWith(FEATURED_POOL);
   expect(apiService.products.getTrending).toHaveBeenCalledWith(8);
   expect(apiService.products.getBySlug).toHaveBeenCalledWith(COMPLETE_THE_SPACE.anchorProductSlug);
   expect(apiService.products.getFrequentlyBoughtTogether).toHaveBeenCalledWith(ANCHOR, 4);
@@ -305,6 +310,47 @@ test("featured and trending rails list their products and link to valid listings
   );
   const trendingRail = within(trending).getByRole("group", { name: HOME_SECTIONS.trending.railLabel });
   expect(within(trendingRail).getAllByRole("listitem")).toHaveLength(TRENDING.length);
+});
+
+test("the featured rail takes one piece per department before any second (Prompt 04, V2-05)", async () => {
+  serve();
+  await renderHome();
+  const rail = screen.getByRole("group", { name: HOME_SECTIONS.featured.railLabel });
+  const cards = within(rail).getAllByRole("article");
+  expect(cards).toHaveLength(FEATURED.length);
+  cards.forEach((card, index) => expect(card).toHaveAccessibleName(FEATURED[index].name));
+  const categoryById = new Map(CATEGORIES.map((c) => [c.id, c]));
+  const departmentOf = (p) => {
+    let c = categoryById.get(p.categoryId);
+    while (c && c.parentId != null) c = categoryById.get(c.parentId);
+    return c.slug;
+  };
+  // The first six cards: the six departments, in menu order; home and office
+  // tables included, which the first eight featured by id never reached.
+  expect(FEATURED.slice(0, 6).map(departmentOf)).toEqual([
+    "plastic-furniture",
+    "office-chairs",
+    "cafe-restaurant-chairs",
+    "outdoor-furniture",
+    "home-furniture",
+    "office-tables-desks",
+  ]);
+});
+
+test("a product switched off in the admin is left out of both rails", async () => {
+  const [off] = FEATURED_ANSWER;
+  const [offTrending] = TRENDING;
+  serve({
+    featured: FEATURED_ANSWER.map((p) => (p.id === off.id ? { ...p, isActive: false } : p)),
+    trending: TRENDING.map((p) => (p.id === offTrending.id ? { ...p, isActive: false } : p)),
+  });
+  await renderHome();
+  const featuredRail = screen.getByRole("group", { name: HOME_SECTIONS.featured.railLabel });
+  const trendingRail = screen.getByRole("group", { name: HOME_SECTIONS.trending.railLabel });
+  expect(within(featuredRail).queryByRole("article", { name: off.name })).not.toBeInTheDocument();
+  expect(within(featuredRail).getAllByRole("listitem")).toHaveLength(8);
+  expect(within(trendingRail).queryByRole("article", { name: offTrending.name })).not.toBeInTheDocument();
+  expect(within(trendingRail).getAllByRole("listitem")).toHaveLength(TRENDING.length - 1);
 });
 
 test("rails show skeletons while loading and disappear when empty", async () => {
@@ -533,7 +579,7 @@ test("reviews come from the featured products' approved reviews, newest first", 
     (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
   );
   expect(slides).toHaveLength(expected.length);
-  expect(expected).toHaveLength(7);
+  expect(expected).toHaveLength(10);
   expect(slides[0]).toHaveTextContent(expected[0].body);
   expect(slides[0]).toHaveTextContent(expected[0].userName);
   const shoeRack = product(expected[0].productId);
@@ -541,8 +587,12 @@ test("reviews come from the featured products' approved reviews, newest first", 
     "href",
     `/products/${shoeRack.slug}`
   );
-  // None of the seeded verified reviews belongs to these products.
-  expect(carousel).not.toHaveTextContent("Verified purchase");
+  // The badge marks exactly the verified reviews (John's review of the Winsome
+  // Office Table, now in the rail, is one).
+  expect(Array.from(slides, (slide) => slide.textContent.includes("Verified purchase"))).toEqual(
+    expected.map((review) => review.isVerifiedPurchase === true)
+  );
+  expect(expected.filter((r) => r.isVerifiedPurchase).map((r) => r.productId)).toEqual([76]);
 });
 
 test("pending and rejected reviews never appear", async () => {

@@ -1,8 +1,10 @@
 # A & S Urbanseat Storefront — Build Prompt Index
 
-**Status:** Build complete — zero known issues (2026-10-11). All 34 prompts have run (prompts generated 2026-10-06); `BUILD_LOG.md` records each, and `QA_CHECKLIST.md` is the final pass with its evidence. Decisions still open for the client or the owner are in sections 6 and 7. Before any further change, read this file, `BUILD_LOG.md` and `DESIGN_SYSTEM.md` (§43 is the maintainer checklist).
+**Status:** Build complete — zero known issues (2026-10-11). All 34 prompts have run (prompts generated 2026-10-06), and Prompts 02–05 were re-verified at max effort by `prompts/prompt_V2/` (V2-01…V2-05): V2-01 to V2-04 re-checked them requirement by requirement and repaired what fell short, and V2-05 re-ran the full regression, closed every finding and signed off (`prompts/prompt_V2/reports/V2_SIGN_OFF.md`). Every prompt's output now meets the max-effort standard. `BUILD_LOG.md` records each prompt, and `QA_CHECKLIST.md` is the final pass with its evidence (its "V2 re-run" section is the latest). Decisions still open for the client or the owner are in sections 6 and 7. Before any further change, read this file, `BUILD_LOG.md` and `DESIGN_SYSTEM.md` (§43 is the maintainer checklist).
 
-**How to run a prompt:** open a fresh session on the repository, run `npm ci` if `node_modules` is missing, start `npm run server` (JSON Server on :3001 reading `db.json`) and `npm start` (CRA on :3000; `.env` selects mock mode), paste the prompt file's content, and let the session finish with its build-log entry. The repository started with no unit tests and ends the build with 86 Jest suites (1,429 tests); `CI=true npm test -- --passWithNoTests` must exit 0 and `npm run build` must pass after every change.
+**Effort:** Prompts 01 and 06–34 ran at max effort. Prompts 02–05 first ran at medium effort; V2-01 (Prompt 02), V2-02 (03), V2-03 (04) and V2-04 (05) re-verified them at max effort, and V2-05 re-ran the whole QA after those repairs. No prompt's output rests on medium-effort work alone.
+
+**How to run a prompt:** open a fresh session on the repository, run `npm ci` if `node_modules` is missing, start `npm run server` (JSON Server on :3001 reading `db.json`) and `npm start` (CRA on :3000; `.env` selects mock mode), paste the prompt file's content, and let the session finish with its build-log entry. The repository started with no unit tests and ends the build with 89 Jest suites (1,456 tests, after V2-05); `CI=true npm test -- --passWithNoTests` must exit 0 and `npm run build` must pass after every change.
 
 ---
 
@@ -46,6 +48,18 @@
 | 34 | `34_final-qa-and-parity.md` | Full walkthrough, parity, admin diff, `QA_CHECKLIST.md`, zero known issues | 01–33 |
 
 Sequencing rules honoured: design system first; brand identity and catalogue data before any surface; primitives and shell before pages; polish → admin logo → final QA last; every storefront surface has exactly one owner (section 3).
+
+### 1.1 V2 re-verification (`prompts/prompt_V2/`, run after Prompt 34)
+
+Prompts 02–05 ran at medium effort; these five re-verified them at max effort, in order. Each writes its report in `prompts/prompt_V2/reports/` and a build-log entry.
+
+| # | File | Objective (one line) | Report |
+|---|---|---|---|
+| V2-01 | `prompt_V2/01_V2_brand-identity-wiring-audit.md` | Re-verify Prompt 02 (brand identity wiring) requirement by requirement; repair the gaps | `V2-01_REPORT.md` |
+| V2-02 | `prompt_V2/02_V2_catalogue-client-ranges-audit.md` | Re-verify Prompt 03 (the category tree and the 46 client-range products) | `V2-02_REPORT.md` |
+| V2-03 | `prompt_V2/03_V2_catalogue-reference-ranges-audit.md` | Re-verify Prompt 04 (the 38 reference-site products, relations and coverage) | `V2-03_REPORT.md` |
+| V2-04 | `prompt_V2/04_V2_supporting-data-integrity-audit.md` | Re-verify Prompt 05 (settings, coupons, reviews, orders and their cascades, the validator's full mode) | `V2-04_REPORT.md` |
+| V2-05 | `prompt_V2/05_V2_full-regression-and-sign-off.md` | Re-run the final QA after V2-01…V2-04, fix every defect, close every finding, sign off | `V2-05_REPORT.md`, `V2_SIGN_OFF.md` |
 
 ---
 
@@ -168,17 +182,18 @@ Contexts (`Auth`, `Cart`, `Wishlist`, `Order`, `DealsConfig`, `Admin`) keep thei
 23. **Two `SearchModal` instances** (Header + BottomNav): Prompt 09 kept both (only one can be open; routing the bottom bar through the header's would need lifted state in `Header.js`).
 24. **Admin theme toggle** flips the storefront mode too (shared `theme` key); pre-existing and unchanged.
 25. **Placeholder images** stay on `placehold.co` URLs in neutral tones (the boilerplate's approach) with the inline `PLACEHOLDER_IMG` fallback; real photography replaces them through the admin with no code change.
-26. **Node/tests.** `node_modules` is absent (`npm ci` per session). No tests existed at the start; the build ends with 86 Jest suites and 1,429 tests.
+26. **Node/tests.** `node_modules` is absent (`npm ci` per session). No tests existed at the start; the build ended with 86 Jest suites and 1,429 tests, and V2-05 brought them to 89 and 1,456.
 27. **Contract (Prompt 34).** No storefront code relies on a JSON Server-only shape (`data[0]`, `.data.data`) or calls `axios`/`fetch` outside `api.js`. `IS_MOCK_API` is read outside the services layer in one place, checkout's gateway note (Prompt 26), so the demo never claims a payment gateway. `api.js` is byte-identical to `origin/main`; since the first commit it carries Prompt 32's two owner-approved follow-ups (failed wallet, coupon and deals reads rethrow; one shared catalogue read), with both branches intact.
 28. **Admin since the first commit (Prompt 34).** Three owner-approved changes, nothing else: Prompt 03's variant spread in `AdminProducts.js`, Prompt 33's logo lines, and Prompt 33's logout-confirm fix (`flushSync`) with its test. Screenshots and computed styles of every admin page are identical outside the logo's box.
 29. **Repeat reads kept on purpose (Prompt 34).** Checkout and the offers page read the settings, shipping methods or categories again when their chunk arrives (after the shell's reads, Prompt 32): checkout prices an order from its own read, never from an earlier answer.
 30. **Console notices that are not defects (Prompt 34).** In development with reduced motion on, framer-motion 10.18 logs "You have Reduced Motion enabled on your device…" once per page load (production builds are silent; it comes with honouring the setting through `MotionConfig`). An unknown product URL logs the browser's 404 line and `api.js`'s own `console.error`; the page shows its not-found state. The build prints two dependency notices before compiling (Browserslist's caniuse-lite data, `babel-preset-react-app`'s plugin note); clearing them changes the package files (section 6).
+31. **V2-05's fixes (2026-10-11; `DESIGN_SYSTEM.md` §43.7).** The home Featured rail mixes the departments (eight of up to 24 featured pieces, one department at a time); a product switched off in the admin leaves the listing, search, offers page, home rails and its own page, as `02_API_ENDPOINTS.md` §B expects of the storefront; an unbranded piece's related rail is no longer topped up with every other unbranded piece; the browser's colour follows the storefront's light/dark switch; with site data blocked the storefront runs on storage kept in memory for the visit; the footer's, drawer's and checkout's trust cues take their labels from `TRUST_BADGE_CATALOG`. No API call, schema, route or price rule changed; `api.js` and the admin are untouched.
 
 ---
 
 ## 6. Needs client confirmation
 
-Consolidated by Prompt 34 from every build-log entry (01–34): decisions for the client or the owner, not defects. The prompts that raised each item are in brackets; their build-log entries carry the detail.
+Consolidated by Prompt 34 from every build-log entry (01–34), and refreshed by V2-05 from the V2 reports: decisions for the client or the owner, not defects. The prompts that raised each item are in brackets (V2-0N for the V2 prompts); their build-log entries and reports carry the detail.
 
 **Brand and design**
 
@@ -189,7 +204,10 @@ Consolidated by Prompt 34 from every build-log entry (01–34): decisions for th
 **Catalogue**
 
 - Every product name, description, specification, dimension, weight, configuration, colour, finish, price, compare-at and cost price, and stock level (placeholders) [03, 04].
-- "Lobby Set" and "Jhula (Garden Swing)": our reading of "Looby set" and "Julna", with their Small/Large contents [03].
+- "Lobby Set" and "Jhula (Garden Swing)": our reading of "Looby set" and "Julna", with their Small/Large contents and real measurements per size (the dimension and weight fields hold the Large's) [03, V2-02].
+- The reference site, re-checked on 2026-10-11, added or removed no range or model since 2026-10-06; its wording differences are in `V2-03_REPORT.md` §4. Among them: its model pages call both alnas a "storage cabinet" (our gloss is "clothes stand"), and its local tables "locally made" (our "made in our own workshop" stays flagged) [V2-03].
+- Facts V2-03 added to the specifications: 52's "Sleeping capacity: 2"; the weight capacities of 72 (approx. 25 kg per shelf) and the Winsome tables 76, 78 and 80; the mattresses' nominal sizes, now "approx."; the finish "Walnut wood-grain or Frosty White laminate" on 60, 63 and 65. Copy no data backs: 82 "the table is folded into a corner", 58 "arrives roll-free" [V2-03].
+- Some demo orders are dated before the products they contain (orders 1–5, January to March 2026, come before every product's `createdAt`; the order numbers encode their dates): keep the demo data as is, or date the products before 2026-01-15 [V2-04].
 - Brand attributions: Nilkamal on the plastic pieces (the reference site names it only for the plastic sofa and the mattress), Carlton and Winsome, the unbranded items, and "A & S Urbanseat" on workshop pieces; whether these brand names may be shown (home page, About) [02, 03, 04, 12, 28].
 - "Made in our own workshop": used on the four pieces the reference site marks as own manufacturing (47, 77, 79, 81), in the home story, About and the meta description. "20+ years", "since 20+ years" and warranty claims: not used anywhere until confirmed [02, 04, 11, 28].
 - Category copy, the tier names Essentials and Premium, the single-product Plastic Sofas leaf, and department names short enough for one row at 1024–1279px [03, 04, 07].
@@ -203,7 +221,7 @@ Consolidated by Prompt 34 from every build-log entry (01–34): decisions for th
 - Returns: the 7-day window (`STOREFRONT_CONFIG.returnsWindowDays`), eligibility, collection or drop-off, exchanges, and refund timing ("typically 5–7 business days"); returns are handled through Support (no self-service form) [02, 05, 24, 28].
 - Cash on Delivery: no fee, no minimum, a ₹50,000 cap; whether the assurance strip, the promise steps and the cart should mention the cap [05, 10, 12, 18, 26].
 - GST at 18%, shown on top of tax-exclusive prices as "Tax (18% GST)" [05, 26, 27].
-- Coupons: the five codes, values, minimums, caps, limits and expiry dates. WELCOME500 and NEWHOME20 say "first order", which neither the mock nor the coupon logic checks: the Laravel API enforces it, or the descriptions drop it [05, 29].
+- Coupons: the five codes, values, minimums, caps, limits and expiry dates. NEWHOME20 says "first order" (WELCOME500 no longer does: "₹500 off orders above ₹5,000", V2-04), which neither the mock nor the coupon logic checks: the Laravel API enforces it, or the description drops it [05, 29, V2-04].
 - Payment: which methods the store takes and through which gateway (Razorpay and Stripe are both off, so the card form stays a placeholder and no gateway note shows), the brand names in the method descriptions, the bank list, the payment marks [08, 26].
 - Store credit: whether it expires ("It never expires" is held back), the facts' wording, the name "Store credit" [21, 23].
 - Special offers: the selection and the hero copy in the deals config; the countdown's ticking seconds (minutes only would be calmer); the deals hero title "Offers on pieces we *love*." (typed with the asterisks, it now renders the accent, Prompt 34); `DEFAULT_DEALS_HERO`'s "Limited Time … don't miss out!" in `dealsConfig.js`, shown only for a saved config without a hero (the file is protected; Prompt 29 proposed replacement copy) [05, 19, 29, 34].
@@ -224,6 +242,7 @@ Consolidated by Prompt 34 from every build-log entry (01–34): decisions for th
 - The production domain (`og:url`, `SITE_URL_PLACEHOLDER`), a sitemap generated from the catalogue and served from that domain, per-page link previews (need prerendering or server rendering), and shipping and returns as structured data [02, 32].
 - Real photography (hero, spaces, story blocks, promise steps, portrait-safe category photos, products, About) and whether press or client logos exist (the slot shows nothing without a data source) [07, 10–12, 28].
 - Checks that need the public URL or tools this build did not have: Google's Rich Results Test, and screen-reader walk-throughs with NVDA and VoiceOver [31, 32, 34].
+- The sharing image (`og:image`) is the light logo on a transparent background; a preview that draws transparency dark shows ink lettering on dark, and `summary_large_image` crops towards 2 : 1. A flattened paper version (with the production domain) would read better [V2-01].
 
 **Owner decisions (technical)**
 
@@ -231,8 +250,12 @@ Consolidated by Prompt 34 from every build-log entry (01–34): decisions for th
 - The cart drawer's opening (252ms at 4× CPU): making the page inert once the drawer has slid in would bring it to about 170ms, a change to the overlay contract [32].
 - App.css's universal `::-webkit-scrollbar` rule (inherited by the admin, never edited): scoped away from `html`, a restyle of `html` would no longer reach every element; the page's own scrollbar would then be the browser's default on desktop [32].
 - Dependencies: the package files were left as they were. `npm ci` reports 104 audit advisories (14 low, 45 moderate, 41 high, 4 critical), mostly in Create React App 5's build tooling (CRA is no longer maintained); the build prints Browserslist's caniuse-lite notice and `babel-preset-react-app`'s plugin notice [34].
-- Pre-existing admin issues found during QA (the admin changes only with the owner): the coupon form's expiry field shifts by the UTC offset on save; Add Product's category select has no accessible name; saving a shipping method drops its `createdAt`; duplicate category names are accepted; in JSON Server mode "Mark as paid" does not update the order's payment record (`api.js` mock) [34].
-- JSON Server mode only (`api.js` mock): changing the password stores nothing, and coupon refusals print amounts without digit grouping ("Minimum order amount is ₹15000"; checkout shows the API's own message by design). In production the Laravel API's rules and messages apply [22, 26, 34].
+- Pre-existing admin issues found during QA (the admin changes only with the owner): the coupon form's expiry field shifts by the UTC offset on save, and drops the seconds (`T18:29:59.000Z` comes back `T18:29:00.000Z` from a save without change); Add Product's category select has no accessible name; saving a shipping method drops its `createdAt`; duplicate category names are accepted; in JSON Server mode "Mark as paid" does not update the order's payment record (`api.js` mock); Admin → Leads logs a development-only React warning (`hover` reaching the DOM through `motion.tr`); Admin → Returns builds its actions from the return's status alone (the seed and the validator keep status and refund in step); the printed invoice falls back to "My E-Commerce Store" when `settings.store.name` is empty (the validator requires it) [34, V2-01, V2-04, V2-05].
+- The related rail ("You may also like", Prompt 17's rule inside `api.js`: curated, then the same category, then a shared tag or brand): shared tags such as the tiers "essentials" and "premium", "living room", or the A & S Urbanseat brand bring other departments' pieces into the top-up. Preferring the same department would change that rule in `api.js`. Since V2-05 an unbranded piece no longer matches every other unbranded piece [V2-02, V2-03, V2-05].
+- The offers page shows whatever the admin picks as a deal of the day, as picked; a pick without a discount shows no saving line. Whether the admin should be able to pick an undiscounted piece (the seed's picks are all discounted, and the validator checks it) [V2-04].
+- Orders placed on the storefront store `sku: ""` (no cart line carries a SKU; the contract allows it), so the admin's order view and invoice show no SKU for them. Carrying the variant SKU through the cart would fill it [V2-04].
+- A product switched off after a shopper saved, carted or viewed it stays in their wishlist, cart or home "Recently viewed" rail as the snapshot their device saved (its link opens "We couldn’t find that piece."); the Laravel API re-validates every line when the order is placed. Whether those pieces should say "No longer available" [V2-05].
+- JSON Server mode only (`api.js` mock): changing the password stores nothing, and coupon refusals print amounts without digit grouping ("Minimum order amount is ₹15000"; checkout shows the API's own message by design); a live admin action stamps `updatedAt` a few milliseconds before the event it appends, so validate a scratch copy only after restoring it. In production the Laravel API's rules and messages apply [22, 26, 34, V2-04].
 
 ## 7. Remove or replace before launch
 
